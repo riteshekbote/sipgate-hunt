@@ -32,3 +32,5 @@ www.sipgate.de
 **Web surface only:** [80, 443]
 
 ## 2026-09-02 21:56:19 UTC
+
+## 2026-09-02 23:58:18 UTC
