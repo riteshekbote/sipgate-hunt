@@ -22,3 +22,11 @@ www.sipgate.de
 - `mail.sipgate.de` -> `ghs.google.com`
 - `app.sipgate.de` -> `web-redirects.service.sipgate.net`
 - `login.sipgate.de` -> `web-redirects.service.sipgate.net`
+
+## DEEP SERVICE SCAN 2026-09-02 (read-only connect+banner)
+**Host:** `app.sipgate.de` | **Ports:** [80, 443]
+**Web surface only:** [80, 443]
+
+## DEEP SERVICE SCAN 2026-09-02 (read-only connect+banner)
+**Host:** `login.sipgate.de` | **Ports:** [80, 443]
+**Web surface only:** [80, 443]
