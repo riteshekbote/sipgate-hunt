@@ -1,0 +1,44 @@
+## 2026-09-03 17:19:01 UTC [target] (model bigpickle)
+[NEW] login.sipgate.com exposed as Apache+Keycloak realm `sipgate-apps`, OAuth2 IMPLICIT flow (response_type=token) with redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=/ — the real customer app login (in-scope, sipgate-owned).
+[NEW] app.sipgate.com SPA: `/implicit-auth-redirect` reads client-controlled `redirect` from search, stores token, then `history.replace(redirect)` unvalidated (main.js `ImplicitAuthenticator`, main-C3206pWE.js).
+[NEW] OIDC discovery signals: grant `password`(ROPC), `client_secret_jwt`, id_token algs incl HS256/512, PKCE `plain`+`S256`.
+[CHANGED] dev.sipgate.de resolves to sipgate IP 217.10.68.23 but dead (no HTTP 80/443, timeout) — abandoned host, owned IP, no takeover.
+[PRIO] login.sipgate.com,7.05,tech_exposure(OAuth/Keycloak/JWT)+business_value(auth gate)
+[PRIO] app.sipgate.com,6.85,tech_exposure(OAuth2 implicit+client redirect)+business_value(customer dashboard)
+[PRIO] dev.sipgate.de,2.50,attack_surface(dead host only)
+[HYP] OAuth implicit token leakage via client-side unvalidated redirect on post-login handler
+class: OATH
+asset: app.sipgate.com/implicit-auth-redirect?redirect=<attacker>
+confidence: 45
+reasoning: JS confirms `ImplicitAuthenticator` reads `redirect` from location.search and after `initializeFromToken({access})` (token persisted to localStorage) does `history.replace(redirect)` with NO origin/allowlist validation; `redirect_uri` embeds attacker-influenced value into the same flow.
+evidence_needed: browser confirms `history.replace('https://evil.example')` causes off-origin navigation (leaks/denies) OR only same-origin path push (no leak); verify token present in url fragment/history/referrer to attacker.
+verify_steps: HUMAN browser: craft auth URL redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example, complete login, observe final destination and whether access_token reaches attacker-controlled origin (NC, no live customer data).
+impact: if off-origin nav: access token + from_idp exfil -> full customer account compromise (ATO). If same-origin only: low open redirect. Severity: HIGH if confirmed, LOW otherwise.
+testability: HUMAN_ONLY
+[HYP] Keycloak id_token alg confusion (HS256 enabled alongside RS256) for auth bypass
+class: AUTH
+asset: login.sipgate.com/auth/realms/sipgate-apps
+confidence: 35
+reasoning: OIDC discovery lists id_token_signing_alg_values_supported incl HS256/512 alongside RS256/PS/ES; JWT alg-confusion applies only if any sipgate verifier validates token with RS256 public key as HMAC secret. Realm `sipgate-apps`, token_endpoint also allows client_secret_jwt.
+evidence_needed: identify an app-endpoint token verifier that accepts attacker HS256-signed token (public key as secret) — requires a scoped verifier and live testing on test/sandbox, never live auth data.
+verify_steps: passive config review only; active verify requires sandbox/test token endpoint and is AUTH_HELPED/HUMAN (no live customer-data bypass per scope).
+impact: forged tokens -> authentication bypass across app -> full account takeover. Severity: CRITICAL if verifier flawed.
+testability: HUMAN_ONLY
+[HYP] ROPC/password grant + client_secret_jwt enabled enables credential/secret abuse
+class: AUTH
+asset: login.sipgate.com token endpoint
+confidence: 25
+reasoning: grant_types_supported includes `password`(ROPC) and token_endpoint_auth_methods_supported includes client_secret_jwt/private_key_jwt; ROPC enables credential-stuffing/offline guesses; client_secret_jwt risks alg confusion on client auth.
+evidence_needed: demonstrate an affected confidential client uses client_secret_jwt and its secret/JWK is derivable, or ROPC leaks PII — mostly brute/rate-limit territory which is REJECTED.
+verify_steps: not actionable without rate-limit bypass or secret leak; low confidence, config-only.
+impact: account-session abuse / ATO; Severity: HIGH if a real client reachable, otherwise config hardening issue.
+testability: HUMAN_ONLY
+[PARKED] OAuth implicit token theft via open redirect (conf 45): code path confirmed unvalidated, but `history.replace(external)` in React Router typically pushes same-origin path (404), not off-origin — token stored in localStorage first, so fragment-based leak likely absent. Confidence below 50; needs live browser to resolve. Retained as top.
+[PARKED] Keycloak alg-confusion (conf 35): config signal only (HS256 listed is standard Keycloak realm metadata, not proof of vulnerable verifier); REJECTED-adjacent (known-vulnerable library without program-specific exploit). Dropped from FINAL.
+[PARKED] ROPC/password grant (conf 25): config-only, brute-force/rate-limit class is REJECTED. Dropped.
+[PARKED] dev.sipgate.de (conf 20): abandoned host on owned IP; no dangling CNAME to attacker-controllable service -> not a takeover. Dropped.
+[FINAL] survivors: OAuth implicit client-side redirect confirm (conf 45, HUMAN_ONLY) — only defensible non-REJECTED candidate; rest parked.
+[NEXT] HUMAN: open a private-tab full login flow on `https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example` via the standard login, and report final URL + whether access_token/from_idp appear in history/referrer/network to the attacker origin; do NOT use live customer accounts (sandbox/test creds only).
+[LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin. Class signal: unvalidated client redirect is not by itself token theft.
+[LEARN] REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reachable flawed verifier; treat as config hardening, not a vulnerability.
+[RISK] sipgate: 15 — Customer-facing Keycloak OAuth implicit flow + a confirmed unvalidated client-side `redirect` on the post-login handler warrant a human browser confirmation; but static analysis indicates the token is stored before navigation and React-router treats external targets as same-origin paths, so the high-impact token-theft chain is likely NOT real. Remaining signals are config-level/REJECTED. No confirmed in-scope vulnerability this cycle; risk primarily the unconfirmed redirect behavior.
