@@ -57,3 +57,28 @@ testability: PASSIVE
 [LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scope`), no Host-header bypass found; redirect_uri validation correct (invalid URI → 400); treat as hardened config, not a vulnerability.
 [LEARN] ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/account/balance/payment) — a legitimate high-value target if a client credential or DCR bypass is ever obtained.
 [RISK] sipgate: 10 — On the api surface the OIDC `third-party` realm is well-hardened: redirect_uri strictly validated, token endpoint requires valid client auth, DCR blocked by a Trusted Hosts policy, and the only publicly leaked API client credential is inert (`invalid_client`). Broad sensitive scopes exist but are unreachable without a valid client grant or DCR bypass, neither demonstrable passively. No confirmed in-scope API vulnerability this cycle.
+## 2026-09-03 22:31:36 UTC [target] (model bigpickle)
+class: AUTH
+asset: login.sipgate.com/auth/realms/third-party
+confidence: 25
+reasoning: Leaked demo credential returns invalid_client (revoked). DCR gated by Trusted Hosts policy. No bypass found. Broad scopes (contacts/sms/account/balance/payment) unreachable without valid client grant.
+evidence_needed: Registered third-party client_id+secret or DCR bypass (none found)
+verify_steps: PASSIVE only. GET DCR discovery/resource and realm page; enumerate client_id guesses at realm auth endpoint (distinguished 400 only)
+impact: HIGH if reachable (social-scoped customer data); not currently demonstrable
+testability: PASSIVE
+class: AUTH
+asset: login.sipgate.com/auth/realms/sipgate-apps
+confidence: 30
+reasoning: OIDC discovery lists HS256/384/512 and client_secret_jwt. Only exploitable if a sipgate verifier validates an RS-signed token using RS public key as HMAC secret — no such verifier identified. Standard Keycloak metadata, not proof of flawed verifier.
+evidence_needed: Locate verifier accepting attacker HS256-signed token (public key as secret)
+verify_steps: passive config review; active verify requires sandbox (HUMAN_ONLY)
+impact: CRITICAL if flawed verifier found; currently unproven
+testability: HUMAN_ONLY
+class: OATH
+asset: app.sipgate.com/implicit-auth-redirect?redirect=<attacker>
+confidence: 45
+reasoning: `ImplicitAuthenticator` reads `redirect` from location.search, persists token to localStorage, calls `history.replace(h)` with no origin validation. Token stored BEFORE navigation — fragment-based leak unlikely.
+evidence_needed: Browser confirms `history.replace('https://evil.example')` causes off-origin navigation carrying token/referrer, or only same-origin path push (no leak)
+verify_steps: HUMAN: private-tab login via redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example; report final URL and whether access_token reaches attacker origin (sandbox creds only)
+impact: HIGH if off-origin → token exfil → full account compromise; LOW if same-origin-only
+testability: HUMAN_ONLY

@@ -915,3 +915,75 @@ STEP 6 — LEARNING:
 
 STEP 7 — RISK:
 [RISK] sipgate: 10 — On the api surface the OIDC `third-party` realm is well-hardened: redirect_uri strictly validated, token endpoint requires valid client auth, DCR blocked by a Trusted Hosts policy, and the only publicly leaked API client credential is inert (`invalid_client`). Broad sensitive scopes exist but are unreachable without a valid client grant or DCR bypass, neither demonstrable passively. No confirmed in-scope API vulnerability this cycle.
+===== ANALYST bigpickle 2026-09-03 22:33:27 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m• [0mExplore sipgate infrastructure[90m Explore Agent[0m
+[0m✓ [0mExplore sipgate infrastructure[90m Explore Agent[0m
+## STEP 1 — DELTA
+- [NEW] `api.sipgate.com` third-party realm confirmed live, exposing high-value scopes (contacts/sms/account/balance/payment)
+- [CHANGED] Leaked demo OAuth client from `rest-api-examples/.npmrc.dist` → returns `invalid_client` (revoked/inert)
+- [CHANGED] Third-party realm DCR endpoint gated by Keycloak Trusted Hosts policy (POST → `insufficient_scope`); Host-header bypass failed; redirect_uri validation correct
+- [NO_CHANGE] `app.sipgate.com/implicit-auth-redirect` unvalidated `redirect=` param (REJECTED statically: token stored in localStorage before navigation)
+- [NO_CHANGE] `dev.sipgate.de` dead (owned IP, no takeover); `mail.sipgate.de` → ghs.google.com
+
+## STEP 2 — PRIORITIZE
+- [PRIO] `api.sipgate.com`/third-party realm, 6.90 — tech_exposure(OIDC/OAuth/JWT/DCR)+business_value(high-value scopes)+attack_surface(7)
+- [PRIO] `login.sipgate.com` Keycloak, 6.80 — auth gate, implicit flow accepted
+- [PRIO] `app.sipgate.com`, 6.50 — customer dashboard, redirect param residual
+- [PRIO] `www.sipgate.de`, 5.15 — marketing, low value
+
+## STEP 3 — HYPOTHESES
+
+**[HYP] Third-party-realm client-credential obtainable via DCR trust-bypass or leaked grants**
+class: AUTH
+asset: login.sipgate.com/auth/realms/third-party
+confidence: 25
+reasoning: Leaked demo credential returns invalid_client (revoked). DCR gated by Trusted Hosts policy. No bypass found. Broad scopes (contacts/sms/account/balance/payment) unreachable without valid client grant.
+evidence_needed: Registered third-party client_id+secret or DCR bypass (none found)
+verify_steps: PASSIVE only. GET DCR discovery/resource and realm page; enumerate client_id guesses at realm auth endpoint (distinguished 400 only)
+impact: HIGH if reachable (social-scoped customer data); not currently demonstrable
+testability: PASSIVE
+
+**[HYP] `sipgate-apps` id_token/client-auth signature confusion (HS256 alongside RS256)**
+class: AUTH
+asset: login.sipgate.com/auth/realms/sipgate-apps
+confidence: 30
+reasoning: OIDC discovery lists HS256/384/512 and client_secret_jwt. Only exploitable if a sipgate verifier validates an RS-signed token using RS public key as HMAC secret — no such verifier identified. Standard Keycloak metadata, not proof of flawed verifier.
+evidence_needed: Locate verifier accepting attacker HS256-signed token (public key as secret)
+verify_steps: passive config review; active verify requires sandbox (HUMAN_ONLY)
+impact: CRITICAL if flawed verifier found; currently unproven
+testability: HUMAN_ONLY
+
+**[HYP] `app.sipgate.com` post-login redirect= open-redirect / destination-confusion**
+class: OATH
+asset: app.sipgate.com/implicit-auth-redirect?redirect=<attacker>
+confidence: 45
+reasoning: `ImplicitAuthenticator` reads `redirect` from location.search, persists token to localStorage, calls `history.replace(h)` with no origin validation. Token stored BEFORE navigation — fragment-based leak unlikely.
+evidence_needed: Browser confirms `history.replace('https://evil.example')` causes off-origin navigation carrying token/referrer, or only same-origin path push (no leak)
+verify_steps: HUMAN: private-tab login via redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example; report final URL and whether access_token reaches attacker origin (sandbox creds only)
+impact: HIGH if off-origin → token exfil → full account compromise; LOW if same-origin-only
+testability: HUMAN_ONLY
+
+## STEP 4 — SELF-CRITIQUE
+- **[PARKED]** Third-party client-credential acquisition (conf 25) — below 40 threshold; hardened on all vectors
+- **[PARKED]** Web-realm signature-confusion (conf 30) — config signal only, no flawed verifier; REJECTED-adjacent
+- **[DROPPED]** ROPC/password grant, broad scope list, dev.sipgate.de, network DoS, SSL-TLS, Keycloak config — all REJECTED-class
+
+**[FINAL] survivors:**
+1. `app.sipgate.com` redirect= (conf 45, HUMAN_ONLY) — only non-REJECTED candidate ≥ 40
+2. Third-party client-credential (conf 25, PASSIVE) — retained as api-target thread
+
+## STEP 5 — NEXT ACTION
+**[NEXT] PROBE:** GET `https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/registrations/openid-connect` and `https://login.sipgate.com/auth/realms/third-party/` with a normal browser User-Agent (read-only) to close out residual public-registration or open-redirect surface on the third-party realm. Once confirmed, queue human browser test for the app redirect-chain.
+
+## STEP 6 — LEARNING
+- **[LEARN] REJECTED SECRET** @ `api.sipgate.com` third-party OAuth — leaked demo credential returns `invalid_client` (revoked/inert, example-code-only)
+- **[LEARN] REJECTED AUTH** @ `login.sipgate.com` third-party realm — DCR gated by Trusted Hosts; redirect_uri validation correct; treat as hardened config
+- **[LEARN] ACCEPTED AUTH** @ `api.sipgate.com` — OIDC third-party realm with high-value scopes (contacts/sms/account/balance/payment) is a legitimate target if credential/DCR bypass obtained
+- **[CROSS-CONFIRMED] REJECTED OATH** @ `app.sipgate.com/implicit-auth-redirect` — token stored in localStorage before navigation; React Router resolves same-origin; fragment not forwarded off-origin
+- **[CROSS-CONFIRMED] REJECTED AUTH** @ `login.sipgate.com` Keycloak — HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not proof of flawed verifier
+
+## STEP 7 — RISK
+**[RISK] sipgate: 10** — Third-party realm hardened on redirect_uri validation, client-auth, DCR trust, and dead demo credential. Broad sensitive scopes unreachable without valid client grant or DCR bypass (neither demonstrable passively). App redirect-chain below confirmed-vuln threshold without live browser. No confirmed in-scope vulnerability this cycle; risk primarily the unconfirmed redirect behavior and the monitored high-value API scope surface.
