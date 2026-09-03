@@ -197,3 +197,781 @@ testability: PASSIVE
 **STEP 7 — RISK**
 
 [RISK] sipgate: 78 — High-value VoIP/SaaS platform with OIDC implicit flow, wildcard WS origins, multi-tenant customer dashboards; primary risk is token leakage via fragment/Referer and potential redirect_uri misconfiguration.
+===== ANALYST nemotron3 2026-09-03 20:17:13 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://www.sipgate.de/
+200
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://login.sipgate.com/
+302 https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth?response_type=token&client_id=sipgate-app-web&redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=/
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://app.sipgate.com/
+200
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://sipgate.de/
+301 https://www.sipgate.de/
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://app.sipgate.de/
+301 https://login.sipgate.com/
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://login.sipgate.de/
+000
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/implicit-auth-redirect?redirect=/ | head -200
+<!doctype html>
+<html lang="" translate="no">
+	<head>
+		<meta charset="utf-8" />
+		<title>sipgate</title>
+
+		<!-- Make the page behave sensibly on mobile devices -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<!-- Vendor-specific configs -->
+		<link rel="manifest" href="/site.webmanifest" />
+		<meta name="msapplication-config" content="/browserconfig.xml" />
+
+		<!-- Prevent chrome from auto-translating our page -->
+		<meta name="google" content="notranslate" />
+
+		<!-- Colors for menu bars etc. -->
+		<meta name="theme-color" content="#000000" />
+		<meta name="msapplication-TileColor" content="#000000" />
+		<meta name="msapplication-navbutton-color" content="#000000" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="#000000" />
+
+		<!-- Allow adding to homescreen -->
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+
+		<!-- Prevent browser from making phonenumbers clickable -->
+		<meta name="format-detection" content="telephone=no" />
+
+		<!-- Icons -->
+		<link rel="icon" sizes="16x16 32x32" href="/favicons/favicon.ico" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
+		<link rel="apple-touch-icon" href="/favicons/apple/apple-touch-icon.png" />
+
+		<!-- Font Preloading -->
+		<link
+			rel="preload"
+			href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin=""
+		/>
+
+		<script>
+			if (!/^app\.local/.test(window.location.hostname)) {
+				console.log(
+					'%cStop!',
+					'color:red; font-size:60px; font-weight: bold; -webkit-text-stroke: 1px black;'
+				);
+				console.log(
+					'%cThis is a browser feature intended for developers. If someone told you to copy and paste something here, it is a scam and will give them access to your sipgate account.',
+					'font-size: 18px;'
+				);
+				console.log(
+					'%cDas ist eine Funktion, welche für Entwickler vorgesehen ist. Falls Ihnen jemand gesagt hat, hier etwas hin zu kopieren und auszuführen, ist das eine Falle. Derjenige kann danach Zugriff auf ihr sipgate Konto erhalten',
+					'font-size: 18px;'
+				);
+			}
+		</script>
+
+		<script>
+			(function () {
+				try {
+					localStorage.setItem('test', 'test');
+					localStorage.removeItem('test');
+				} catch (e) {
+					window.location.href = '/yunocookie.html';
+				}
+			})();
+		</script>
+
+		<style>#root,body,html{height:100%;margin:0;padding:0;width:100%}@media print{#root,body,html{height:auto}}noscript{align-items:center;display:flex;font-family:sans-serif;height:100%;justify-content:center;text-align:center}noscript p{margin-bottom:4rem}</style>
+
+		<style>@keyframes loading-animation-grow{0%{stroke-dasharray:2.8225 138.3041}50%{stroke-dasharray:21.1689 119.9576}to{stroke-dasharray:2.8225 138.3041}}@keyframes loading-animation-move{0%{stroke-dashoffset:1.4112}to{stroke-dashoffset:-139.7153}}#loading-animation{--logo-width:50px;--fadeout-animation:0.35s;align-items:center;background-color:#fff;bottom:0;display:none;justify-content:center;left:0;opacity:1;position:fixed;right:0;top:0;transition:opacity var(--fadeout-animation) cubic-bezier(.685,.03,.695,.99);z-index:10000000}.script #loading-animation{display:flex}#loading-animation.exit{opacity:0}#loading-animation .background{display:none}#loading-animation .content{align-items:center;display:flex;height:100%;justify-content:center;position:absolute;width:100%}#loading-animation .content .logo{display:none}#loading-animation .content svg{width:var(--logo-width)}#loading-animation .content svg .spinner{stroke:#000;animation:loading-animation-grow 1.2s cubic-bezier(.355,.005,.315,.8) infinite,loading-animation-move 1.2s cubic-bezier(.355,.005,.315,1) infinite}</style>
+		<script type="module" crossorigin src="/assets/main-C3206pWE.js" integrity="sha384-JV5c2HxWKNatj2V+S3CO1VIiE9DrXCdHi6/LDhuSTVabquY0talH4F1OL0kCqsZC"></script>
+		<link rel="modulepreload" crossorigin href="/assets/chunk-CernVdwh.js" integrity="sha384-uILkyZ2n65/hJcSSKTdDrDMN87YYUWqO34RrNDsCwjm27WNsBDwfxqdzYohmf1o/">
+		<link rel="modulepreload" crossorigin href="/assets/preload-helper-rov5CBGT.js" integrity="sha384-8InSgMswcsm3QCJHLGMdkfiCGDIpbPF6GICb5tM0n57hnytd/rkZ2MYqDXXGpKOn">
+		<link rel="modulepreload" crossorigin href="/assets/datetime-Bg9M5dlC.js" integrity="sha384-SLwk2ljke25ZZc4rEdT1/FULRoEzLrDjr8lM7gADPG6xCWwrMYLV3JRaXZembDTj">
+		<link rel="modulepreload" crossorigin href="/assets/alertManager-CR3OwFaI.js" integrity="sha384-x8Qs2uAD/xGE4kr1tNcnxjJg5XIn9BBucTDgNx3lj2XKzRlnIbB8x3VoL/7I+954">
+		<link rel="modulepreload" crossorigin href="/assets/selectors-Ha8aXEmA.js" integrity="sha384-kkCu8bcrCWp4V3NjubzkyKLMBxbr1RiHUGsb0bnmVR+9uWtN/d90tttYyQfeDTGM">
+		<link rel="modulepreload" crossorigin href="/assets/types-CYN05_7p.js" integrity="sha384-oNh9z85vLiHxxN+BAhqOtVeGm1yKgVk4hkz1pqBXszddcsVN3J2jtetFmubS3WBP">
+		<link rel="modulepreload" crossorigin href="/assets/aria-id-CNzcc1wy.js" integrity="sha384-cIakr2c0nm9cvZCXgTqALM7wbA4EY8RA0f3P6Un1pctGbrvY6eAE4zw2hnj5oQV3">
+		<link rel="modulepreload" crossorigin href="/assets/environment-D9ixW1Um.js" integrity="sha384-rktOFEMx2aE34zMJE/8uHBDum88mwHaqWii/vwg/NnN5b0vA2knGgxgxgFoVzPUL">
+		<link rel="modulepreload" crossorigin href="/assets/merge-refs-6VZKPg6C.js" integrity="sha384-DpJ6isbVJeSkpNdRxPEqOUgPklMJJVLo9ug24JSBe+VFRongB1IyD1VRpb0x4+Yj">
+		<link rel="stylesheet" crossorigin href="/assets/main-B43Poju_.css" integrity="sha384-Qr9cFkZhxfzQxncnycRl6z/n6uZvdonjFeLgNFwONkKRM3YavghD2Vbfi4x03p/X">
+	</head>
+
+	<body>
+		<script>
+			document.body.classList.add('script');
+		</script>
+
+		<div id="root">
+			<noscript>
+				<div>
+					<h1>JavaScript aktivieren oder installieren!</h1>
+					<p>
+						Um die Web-App nutzen zu können, müssen Sie
+						<a href="http://enable-javascript.com/de" target="_blank"
+							>JavaScript in Ihrem Browser aktivieren.</a
+						>
+					</p>
+
+					<h1>Enable or install JavaScript!</h1>
+					<p>
+						In order to use the web-app, you have to enable
+						<a href="http://enable-javascript.com/en" target="_blank"
+							>JavaScript in your browser.</a
+						>
+					</p>
+				</div>
+			</noscript>
+		</div>
+
+		<div id="overlay-portal"></div>
+
+		<div id="loading-animation">
+			<div class="background"></div>
+
+			<div class="content">
+				<img
+					class="logo"
+					src="data:image/png;base64,
+                        iVBORw0KGgoAAAANSUhEUgAAAGUAAACUCAYAAACKsudzAAAACXBIWXMAABYlAAAWJQFJUiTwAAAM
+                        +0lEQVR42u2dPagkWRXHz62q2VnHXXeZYXZ1d/wYZVlXdAJXUBRERMHAQEQMDMRgQQwEwURMBCPB
+                        yESMRCPFxMBMA8HESDAyMDAQURBRRHd2nNd1j1NulZw98z/n3vrqd/u9W9B0d3VVd9X53f/5ulXv
+                        BWamupS1hBOCstWBhgrlfAGcJKSSoJRwIKFCKQNEcYDOC8opZRfhokM55VQvXDQoFynvDhcBykUs
+                        hMKpQrkMVWk4JSiXqU0QTgHKZe3bhBKh1CbaRmC2glKBbAhmCygVyMZg1kKpQHYAswZKBbITmKVQ
+                        KpAdwVQoBYJZAqUC2RnMXCgVSGFQKpAjgalQCgSTC6UCKQxKBXJkMBVKgWBSUCqQCqWCSUGpQCqU
+                        CiYFpQKpUCqUCqVwMAhKBVKh1KVCOQEwGkoFUqHUpUI5ETAVSuFQKpAC3VeFUmBKXKGcM4wKpVAg
+                        FUqBQCqUwmBUKIUCqVAKBFKhFAajQikUSIVSGIwKpVAgFUqBQCqUwmBUKIUCqVAKBFKhLFu68bmv
+                        UMpYrowKkY97Fcr5LI+Mz414lmD+XaEcd7lqgJgeE6h/7gGlgnl4edSAoNcNS/vg8bcKZb/ldQl3
+                        ZUGaXv+lQtl2uZbpriQE9PzHCmWb5fVKHRoOKcOjbVqx7g9bQLmsYB7LcFdT3JCKIAEnAKDD9r+v
+                        UOYvjydANGr0B8NlBQB12O93Fco8GMFwV3q0EwDTODGmFeuHDsBv10K5DGCeWBk3OkNdLXg97f+b
+                        CsVenlSxgEB21RixpAUwW2O/AOD+ukJ5GEYwQAQnbjSOi5LbtJmp8q+WQrloYK6rEa4DM4oblmE7
+                        pR5LZe1oQw3tlxUK0Q0QK4IRrBsRpJH7QbFjCuYMoKCkYfjs50uhnDqYG4nWiA7gnaGeThmbAKjG
+                        CfCNysSm7/7ZZYNyMyNuIBhBjfIA3FSjEgCtAgIq0aobPv/pUiinBuamk+qiAN0CtaDKPahA3hrK
+                        Q+6xBaCm7/jJUiinAuapRNyQxtEjXNcgVgsFuTZyADVGp2Da/8cXGcrTRkalX7dGUNcpLTn1R2sk
+                        Di1QkaVYORB+uBRKqWDeaLgrbdDOGMmdMYIDCNABBHupLJ2REXCVqC3z/YsE5U3GaG2UETpDLdI4
+                        nRGULfVY2RcZamjFcSPFfm8plJLAPANSztYYmVdA7EDtdrk/KyBIfY2oTQjEKyvoM2jXfHcNlPMG
+                        8yzIlnSx1qrPEIDOGPmoTmkIz6NIeCEBQ8ci7e6+sxbKeYG55bihKT50oB/lBWsvdQ4OjAb0xRqQ
+                        AOiYpTM2Ekr+9looxwRzS43ETlXaCE5jpLOo0rZmFRsQI4Ix6kkNmA702lDRKSF+awsoxwDzFmD4
+                        zgHRqqyoES7GUwORPZNoBXkNojEyL1kfMYhb03F/8xSg3FYBXKawE5gOKKFTStCGJZAVeZV/BOlu
+                        q2obMjrHXm8MXUP2jS2g7AHn7SB7ahUQaZAriZHfApfFoP2BsqJuhOKpCMWbAKYEUDeaVdb29S2h
+                        bAXmOaWEVkAJQClWkzHV5kBwgtF28VRAxoi3lIHAyN/52tZQ1oJ5p1BEI2A0ChIK1p0DIBCeW2ej
+                        MUlq5HcAXgNUw06LhUA3WcalabB9dQ8oS8C8ICAMz1eBm9KjvgWVeev0mZChkbtpjOyICE8LNyDl
+                        tWIJJToE0+Mr5/2vz98zHthVUG+QEdDRnAeDyrwBoxG5K0sJLI6DMpSI+mIo3hD4LbnPl/eCkoJz
+                        ZzzhR4QRpeGvKKNLt9Ml0k89Z8EqhuiWSlAuzXNllgKsK2MslXhX8H9pbygIzIuj0a+omkMHd92O
+                        6AAIXQM0zsl6RZ9uSDIY5S2IR60DDiUE5ECdXn/xGFCGm2mGO51+8eDxA5U9aRidcitNxvwFiiNk
+                        +PtGuSNUDFpVeDDiDPqcE8fSGINoWPfS3lD+M+b5w/PfHzx+RK9eiX6fXr2RszPkr31uBxRBxomT
+                        MQIt/y5HfgDdX912jyrWoNgSjToGZWT6fL6wJ5TDeHA8QnjlwePP9OrFaIN6Xh7XSzenb4OWymEw
+                        wkjEAQZ+nQhfwUJgOwKpLYFWPoHv0gqy3FYwsjX5/vN7QJlAsHh/GAEMIP40quVfo1sb1p+Jk5/2
+                        68VIjcaJ6dil6w9WRmXlKnSVHwxYVnZlvbfAEVCI3vdzW0OJwkASSj+CGdzY3QePv46Pl0cFDVDu
+                        CXUFATeCyaRopLdRnTAD4wYABW2vVYXmUhrDwJ4SrcE17f/ZraBEkG2xMG4/Pt8fjT+A+cf4fHdc
+                        d2+Ew+PztB+LR1C/pQeAPB4rwHPCjYUEHHLilHZ91vcT2G7a5jNbQImJNHga7XE09v1REXeF+5ri
+                        y33xeS+U0yvYpJRIavTLQNsLw7LhToIR1xqQPgcAt1H7I/XluLzh9afXQokZtQkLMJOx+9GVSYW8
+                        ImLP2fj6TADp6bV/ekO6NwLqlCfaG/UJeq/jEymX1zjr2Ans6PcQ9E+tmQ7mGVW8jA0HoYD7AsIU
+                        V3qxrhfPBwUiKgg6wWA1SuW2wTlelFZb27CjJlSvsKEW+fqTay+c4BlQpDGjcEtnom45A0qJ4jUr
+                        5RzEb/TAhelBEWYMJG1kNlyUZ2QC39EYA2Byt5/Y4hIjzux3ITCsYLDI0qSrO4jtogBwUJBIpcGs
+                        XF1K+Tr9JqA6FA/YqJuCkwGi2Dbs9/EtLludA4UUDJ0ynwkwZ8JlSRi9gsEiu7NcmB4U0i0xgKnj
+                        iQat3VcAcS04cSs4RefHtrjqnmcCZBVjpHoOwsAHFX+ien8A7kun0QRij5W6swJhHb9VtKa2a5yu
+                        gwT50S3u5OIFEDWYIFTQKzC9UsmkFFbbRmF06cp6I0PToDgR0FF8oUQmF4xkw6tfPrLVjag8c18G
+                        7oQMI/dALWgbHatkHDk4QZ+dIjg4cdTKyjzlMHBfev8Pb/HHDXihulAQ1q6MlMG1aqIK9FIZ+jd0
+                        Oq2VwI4RdXodQbrMoIsgW0YNUBxycR/a4g/mzIGCTpTBaJUQCACREM4UPFb761omgj6dl1larR2U
+                        BFj1ipWOa9f1wf+9OQKUkHBflAAjDa2BRGM9K5BIMVa6zAkwWl0NOH4UK9hJIKb1H0BQtnJfIXMf
+                        dnpY0TE0Sql7w1XpQG+lzjFxTijYsxGbyOi3kaOYYbv3bwFlTePMUwoZMSAaKmLgvhjEGgLzNXqq
+                        wDomyw1FI00mp1YJ4LuH5X0lQEFwvNSZlFqiAYBB14AAMKQQb6ogp6MRMu2iQb74/w9WpMRre/4p
+                        KNqt9PTw5BdSkd4HQdUKRDHNUw3PMD4Zcyv6O99bAhTrZClTLWy4KxIZGRt1i3RfvVG7sJF1xYwC
+                        cw6gKVm4sxbKVnPInJHBacMGJ9aQCvDkqCICd8UOgOgMppBIqcmYm5me77yG1II2y5aT+rlQrEJT
+                        Z2HawMjloe+KBhxr6tmKNcFwc5RIi9+9Bsoe1yNxZhFnGSwCd8Oi20zO9tb3WlPOXrrMoCZBWVgE
+                        anlXLpSlLZS91ZIyZDRcVA4QNoI/G4MnKJc6NxYP+73wUKDJhLLnZZScWYRGI13NMXIERWnMhJyr
+                        FjLa//p9VNX+86cCxdouGp1dNuoQcgBEYHBOdBusjnLKnVkd4+dhSpYxyRVp32UOFHYyIc5ociLD
+                        xQQYcuKZ1WbhRB9w+uy5pVD2BjMnbnHCaJaicqAQUBBShqcWdgacnmp+h1m8nCgUz2Be3dFnpNpW
+                        TMn57WDYDfW6bq+FsicYTuT61nFwAlbMiBFkVPvRCNwx0afzjlee1223zC8IypZq8eDlujF22kA8
+                        A4re723J3svM675iIVByRzE7NQ45tU9IpMcMlG3VMXrdW7eGsgeYNVC8qj84qrBGurfeW5dzbMPy
+                        5qwu5cJrieNOQOY2Q1NxxUqPKZFaU6JwZKOK91zarezWcWFQci+8yFGLlzlZ+/eZ35uzXr5+do5R
+                        1twKEY8EJWQGek8tBOqYMMNdpYI7mvSaPn9mrlH2uj9lresKC3tlqanlnO1TqpiTDg/L08eGshQM
+                        bwSTnWPxLsrgDNcTE/03Snz/IiBbQVkCZi8oc5TCRuBeohb0e08tPcEt7w6ORwCSchlM6fmZVBIQ
+                        jIQhdWWL3P7mmpPb65btY0DJcWG0QDmpzMq7z/PGFkbc6y9OxB2BpFxHzFRWylURzbtq8vpWxtvz
+                        z4DEI0HhTNeWUhBnfoZgXd/ScHv/wZy4AxDLgCGzoMt1U6lUelqe3Npox/jTUrJS3qtfZhk5ZLqv
+                        XMXI10/sZaxjQdkaTOoO5NwRTzOATM9v2NtQx4SyJZwcpeQG+hQU+f7xYxjoPKBsASdnZjI30Ott
+                        0BzIY8c0zHlCWQNnrlIIxJlUdnjtvAxSApQlgLz5/NQEVMp9XTtvI5QGJQcQumh6DZRHSzvxkqGg
+                        5eCoA6W/aN3V0k/y1KBciuW/eIY5UXJah2MAAAAASUVORK5CYII="
+				/>
+
+				<svg viewBox="0 0 52 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<g
+						class="spinner"
+						stroke-linecap="round"
+						stroke-dasharray="2.8225 138.3041"
+						stroke-dashoffset="1.4112"
+					>
+						<path
+							d="
+                                M 26.2718 3.3269
+                                C 20.9237 3.32665 15.7247 5.08954 11.4798 8.34261
+                                C 7.23494 11.5957 4.18091 16.1575 2.79062 21.3216
+                                C 1.40032 26.4858 1.75132 31.9643 3.78927 36.9088
+                                C 5.82722 41.8534 9.43843 45.9881 14.0638 48.6729
+[0m
+[0m$ [0mcurl -s https://login.sipgate.com/auth/realms/sipgate-apps/.well-known/openid-configuration | jq .
+{
+  "issuer": "https://login.sipgate.com/auth/realms/sipgate-apps",
+  "authorization_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth",
+  "token_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token",
+  "introspection_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token/introspect",
+  "userinfo_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/userinfo",
+  "end_session_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/logout",
+  "frontchannel_logout_session_supported": true,
+  "frontchannel_logout_supported": true,
+  "jwks_uri": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/certs",
+  "check_session_iframe": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/login-status-iframe.html",
+  "grant_types_supported": [
+    "authorization_code",
+    "implicit",
+    "refresh_token",
+    "password",
+    "client_credentials",
+    "urn:ietf:params:oauth:grant-type:device_code",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "acr_values_supported": [
+    "0",
+    "1"
+  ],
+  "response_types_supported": [
+    "code",
+    "none",
+    "id_token",
+    "token",
+    "id_token token",
+    "code id_token",
+    "code token",
+    "code id_token token"
+  ],
+  "subject_types_supported": [
+    "public",
+    "pairwise"
+  ],
+  "id_token_signing_alg_values_supported": [
+    "PS384",
+    "ES384",
+    "RS384",
+    "HS256",
+    "HS512",
+    "ES256",
+    "RS256",
+    "HS384",
+    "ES512",
+    "PS256",
+    "PS512",
+    "RS512"
+  ],
+  "id_token_encryption_alg_values_supported": [
+    "RSA-OAEP",
+    "RSA-OAEP-256",
+    "RSA1_5"
+  ],
+  "id_token_encryption_enc_values_supported": [
+    "A256GCM",
+    "A192GCM",
+    "A128GCM",
+    "A128CBC-HS256",
+    "A192CBC-HS384",
+    "A256CBC-HS512"
+  ],
+  "userinfo_signing_alg_values_supported": [
+    "PS384",
+    "ES384",
+    "RS384",
+    "HS256",
+    "HS512",
+    "ES256",
+    "RS256",
+    "HS384",
+    "ES512",
+    "PS256",
+    "PS512",
+    "RS512",
+    "none"
+  ],
+  "userinfo_encryption_alg_values_supported": [
+    "RSA-OAEP",
+    "RSA-OAEP-256",
+    "RSA1_5"
+  ],
+  "userinfo_encryption_enc_values_supported": [
+    "A256GCM",
+    "A192GCM",
+    "A128GCM",
+    "A128CBC-HS256",
+    "A192CBC-HS384",
+    "A256CBC-HS512"
+  ],
+  "request_object_signing_alg_values_supported": [
+    "PS384",
+    "ES384",
+    "RS384",
+    "HS256",
+    "HS512",
+    "ES256",
+    "RS256",
+    "HS384",
+    "ES512",
+    "PS256",
+    "PS512",
+    "RS512",
+    "none"
+  ],
+  "request_object_encryption_alg_values_supported": [
+    "RSA-OAEP",
+    "RSA-OAEP-256",
+    "RSA1_5"
+  ],
+  "request_object_encryption_enc_values_supported": [
+    "A256GCM",
+    "A192GCM",
+    "A128GCM",
+    "A128CBC-HS256",
+    "A192CBC-HS384",
+    "A256CBC-HS512"
+  ],
+  "response_modes_supported": [
+    "query",
+    "fragment",
+    "form_post",
+    "query.jwt",
+    "fragment.jwt",
+    "form_post.jwt",
+    "jwt"
+  ],
+  "registration_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/clients-registrations/openid-connect",
+  "token_endpoint_auth_methods_supported": [
+    "private_key_jwt",
+    "client_secret_basic",
+    "client_secret_post",
+    "tls_client_auth",
+    "client_secret_jwt"
+  ],
+  "token_endpoint_auth_signing_alg_values_supported": [
+    "PS384",
+    "ES384",
+    "RS384",
+    "HS256",
+    "HS512",
+    "ES256",
+    "RS256",
+    "HS384",
+    "ES512",
+    "PS256",
+    "PS512",
+    "RS512"
+  ],
+  "introspection_endpoint_auth_methods_supported": [
+    "private_key_jwt",
+    "client_secret_basic",
+    "client_secret_post",
+    "tls_client_auth",
+    "client_secret_jwt"
+  ],
+  "introspection_endpoint_auth_signing_alg_values_supported": [
+    "PS384",
+    "ES384",
+    "RS384",
+    "HS256",
+    "HS512",
+    "ES256",
+    "RS256",
+    "HS384",
+    "ES512",
+    "PS256",
+    "PS512",
+    "RS512"
+  ],
+  "authorization_signing_alg_values_supported": [
+    "PS384",
+    "ES384",
+    "RS384",
+    "HS256",
+    "HS512",
+    "ES256",
+    "RS256",
+    "HS384",
+    "ES512",
+    "PS256",
+    "PS512",
+    "RS512"
+  ],
+  "authorization_encryption_alg_values_supported": [
+    "RSA-OAEP",
+    "RSA-OAEP-256",
+    "RSA1_5"
+  ],
+  "authorization_encryption_enc_values_supported": [
+    "A256GCM",
+    "A192GCM",
+    "A128GCM",
+    "A128CBC-HS256",
+    "A192CBC-HS384",
+    "A256CBC-HS512"
+  ],
+  "claims_supported": [
+    "aud",
+    "sub",
+    "iss",
+    "auth_time",
+    "name",
+    "given_name",
+    "family_name",
+    "preferred_username",
+    "email",
+    "acr"
+  ],
+  "claim_types_supported": [
+    "normal"
+  ],
+  "claims_parameter_supported": true,
+  "scopes_supported": [
+    "openid",
+    "authorization:oauth2:clients:read",
+    "phonelines:parallelforwardings:write",
+    "history:write",
+    "channels:events:write",
+    "devices:sims:orders:write",
+    "users:defaultdevice:write",
+    "groups:devices:write",
+    "audiofiles:write",
+    "microprofile-jwt",
+    "cx:statistics:write",
+    "sessions:sms:write",
+    "cx:management:write",
+    "groups:write",
+    "groups:read",
+    "sim:card:order:write",
+    "users:read",
+    "faxlines:write",
+    "groups:faxlines:read",
+    "groups:forwardings:write",
+    "groups:users:read",
+    "notifications:write",
+    "faxlines:numbers:read",
+    "phonelines:devices:write",
+    "phonelines:read",
+    "callrestrictions:write",
+    "all",
+    "blacklist:read",
+    "settings:write",
+    "devices:read",
+    "phones:read",
+    "callrestrictions:read",
+    "frontdesk:read",
+    "phonelines:voicemails:read",
+    "phones:write",
+    "balance:read",
+    "phonelines:sipgateio:read",
+    "portings:read",
+    "users:busyonbusy:write",
+    "contracts:read",
+    "sms:callerid:read",
+    "devices:sim:write",
+    "devices:localprefix:read",
+    "acds:statistics:read",
+    "frontdesk:statistics:read",
+    "settings:sipgateio:read",
+    "openid",
+    "settings:sipgateio:write",
+    "phonelines:forwardings:read",
+    "history:read",
+    "appbookings:read",
+    "phonelines:numbers:read",
+    "devices:tariffannouncement:write",
+    "trunk:read",
+    "channels:write",
+    "account:write",
+    "phonelines:parallelforwardings:read",
+    "events:write",
+    "autorecording:greeting:read",
+    "phonelines:voicemails:write",
+    "devices:callerid:write",
+    "sessions:write",
+    "addresses:write",
+    "devices:singlerowdisplay:write",
+    "ivrs:read",
+    "acds:statistics:write",
+    "log:webhooks:read",
+    "labels:write",
+    "sessions:fax:write",
+    "groups:forwardings:read",
+    "acr",
+    "events:read",
+    "groups:numbers:read",
+    "portings:write",
+    "user:notification:write",
+    "rtcm:read",
+    "notifications:read",
+    "authorization:oauth:clients:write",
+    "sessions:calls:write",
+    "conferencerooms:write",
+    "phonelines:busyonbusy:write",
+    "sms:write",
+    "phonelines:write",
+    "internal",
+    "appbookings:write",
+    "phonelines:blockanonymous:write",
+    "numbers:read",
+    "phonelines:sipgateio:log:read",
+    "contacts:write",
+    "cx:statistics:read",
+    "account:read",
+    "channels:read",
+    "ivrs:write",
+    "web-origins",
+    "phonelines:sipgateio:write",
+    "acds:write",
+    "phonelines:voicemails:greetings:write",
+    "autorecording:greeting:write",
+    "users:role:write",
+    "sms:callerid:write",
+    "devices:localprefix:write",
+    "simcards:order:write",
+    "user:notification:read",
+    "address",
+    "devices:sim:read",
+    "devices:forwardings:read",
+    "devices:callerid:read",
+    "rtcm:write",
+    "addresses:read",
+    "channels:events:read",
+    "authorization:oauth2:clients:write",
+    "voicemails:read",
+    "users:write",
+    "devices:singlerowdisplay:read",
+    "devices:tariffannouncement:read",
+    "faxlines:read",
+    "frontdesk:write",
+    "trunks:write",
+    "blacklist:write",
+    "numbers:write",
+    "email",
+    "phonelines:devices:read",
+    "roles",
+    "audiofiles:read",
+    "profile",
+    "settings:read",
+    "devices:forwardings:write",
+    "payment:methods:read",
+    "contracts:write",
+    "sms:read",
+    "contracts:crm:read",
+    "conferencerooms:read",
+    "push_device:register",
+    "phone",
+    "cx:management:read",
+    "third-party",
+    "phonelines:forwardings:write",
+    "labels:read",
+    "devices:write",
+    "phonelines:busyonbusy:read",
+    "payment:methods:write",
+    "phonelines:blockanonymous:read",
+    "offline_access",
+    "contacts:read",
+    "acds:read",
+    "authorization:oauth:clients:read",
+    "frontdesk:statistics:write",
+    "groups:voicemails:read",
+    "phonelines:voicemails:greetings:read"
+  ],
+  "request_parameter_supported": true,
+  "request_uri_parameter_supported": true,
+  "require_request_uri_registration": true,
+  "code_challenge_methods_supported": [
+    "plain",
+    "S256"
+  ],
+  "tls_client_certificate_bound_access_tokens": true,
+  "revocation_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/revoke",
+  "revocation_endpoint_auth_methods_supported": [
+    "private_key_jwt",
+    "client_secret_basic",
+    "client_secret_post",
+    "tls_client_auth",
+    "client_secret_jwt"
+  ],
+  "revocation_endpoint_auth_signing_alg_values_supported": [
+    "PS384",
+    "ES384",
+    "RS384",
+    "HS256",
+    "HS512",
+    "ES256",
+    "RS256",
+    "HS384",
+    "ES512",
+    "PS256",
+    "PS512",
+    "RS512"
+  ],
+  "backchannel_logout_supported": true,
+  "backchannel_logout_session_supported": true,
+  "device_authorization_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth/device",
+  "backchannel_token_delivery_modes_supported": [
+    "poll",
+    "ping"
+  ],
+  "backchannel_authentication_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/ext/ciba/auth",
+  "backchannel_authentication_request_signing_alg_values_supported": [
+    "PS384",
+    "ES384",
+    "RS384",
+    "ES256",
+    "RS256",
+    "ES512",
+    "PS256",
+    "PS512",
+    "RS512"
+  ],
+  "require_pushed_authorization_requests": false,
+  "pushed_authorization_request_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/ext/par/request",
+  "mtls_endpoint_aliases": {
+    "token_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token",
+    "revocation_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/revoke",
+    "introspection_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token/introspect",
+    "device_authorization_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth/device",
+    "registration_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/clients-registrations/openid-connect",
+    "userinfo_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/userinfo",
+    "pushed_authorization_request_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/ext/par/request",
+    "backchannel_authentication_endpoint": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/ext/ciba/auth"
+  }
+}
+[0m
+[0m$ [0mcurl -s -I https://app.sipgate.com/ | grep -i content-security-policy
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk wss://ws-eu.pusher.com stats.pusher.com sentry.io api-iam.intercom.io nexus-websocket-a.intercom.io nexus-websocket-b.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io *.zopim.com *.zdassets.com *.zendesk.com wss://*.zopim.com https://amp.sipgate.de *.instana.io https://status.sipgate.de/ https://integration.sipgate.cloud https://docs.google.com *.didww.com/v3/public_keys; script-src 'unsafe-eval' 'unsafe-inline' 'self' stats.pusher.com connect.facebook.com connect.facebook.net *.cloudfront.net www.google-analytics.com *.google.com www.googletagmanager.com www.googleadservices.com sjs.bizographics.com bat.bing.com snap.licdn.com *.doubleclick.net *.linkedin.com secure.adnxs.com js.intercomcdn.com widget.intercom.io data: *.zopim.com *.zdassets.com *.instana.io; style-src 'unsafe-inline' 'self' *.google.com firebasestorage.googleapis.com static.sipgate.com data: blob: *.zdassets.com; font-src 'self' fonts.intercomcdn.com js.intercomcdn.com static.sipgate.com data: *.zdassets.com *.zopim.com; frame-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com https://player.vimeo.com *.zdassets.com *.zopim.com; child-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com; worker-src 'self' blob:; img-src *.googleusercontent.com *.facebook.com 'self' *.gstatic.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net firebasestorage.googleapis.com www.google-analytics.com *.doubleclick.net *.google.com *.google.de bat.bing.com *.linkedin.com secure.adnxs.com js.intercomcdn.com downloads.intercomcdn.com static.intercomassets.com data: *.zopim.com *.zdassets.com *.zopim.io; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net js.intercomcdn.com blob: *.zopim.com *.zdassets.com data:; frame-ancestors 'self' *.sipgate.com *.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa;
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/main-C3206pWE.js | head -500
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068dab7740013PEDUD5Aw6QhkF
+
+ems)}render(){return null}},SatelliteRedirect=connect(mapStateToProps$3,mapDispatchToProps$3)(PureSatelliteRedirect),LoadableDialogWrapper=lazyLoadWithoutSpinner(()=>__vitePreload(()=>import(`./DialogWrapper-CQxCv_Ga.js`),__vite__mapDeps([306,1,254,44,56,9,246,10,184,185,247,52,53,37,38,36,34,39,59,210,211,307,298,299,135,136,137,85,84,86,12,15,103,126,273,88,291,155,156,172,302,295,304,233,61,27,230,208,16,244,138,177,13,24,22,212,6,14,63,89,220,180,181,65,40,308,265,223,142,67,23,309]))),LoadableWebphoneWrapper=lazyLoad(()=>__vitePreload(()=>import(`./WebphoneWrapper-CEQat_GL.js`),__vite__mapDeps([310,1,247,307,24,65,308,311]))),LoadableMicrosoftPresenceRedirectView=lazyLoad(()=>__vitePreload(()=>import(`./ExternalPresenceRedirectView-9xBMbURM.js`),__vite__mapDeps([312,1,313,314]))),LoadableMicrosoftPresenceCallbackView=lazyLoad(()=>__vitePreload(()=>import(`./ExternalPresenceCallbackView-BW7NDvAc.js`),__vite__mapDeps([315,1,313,314]))),mapStateToProps$2=s=>({tacs:s.tacs,userinfo:s.userinfo,translations:s.translations,appProperties:s.appProperties,events:s.events,contracts:s.contracts,users:s.users,links:s.links}),mapDispatchToProps$2={fetchTacs,fetchUserInfo,fetchContracts,fetchTranslations,fetchAppProperties,fetchEvents,forceFetchRestrictions,fetchLinks,fetchUsers},AuthenticatedRoot=class extends import_react.Component{componentDidMount(){auth_default.initializeFromLocalStorage(),this.props.fetchEvents(),this.props.fetchTacs(),this.props.fetchUserInfo(),this.props.fetchAppProperties(),this.props.fetchContracts(),this.props.forceFetchRestrictions(),this.props.fetchLinks(),this.props.userinfo.fetched&&this.props.fetchTranslations({locale:this.props.userinfo.data.locale}),this.initiateInstana(),this.initiateAmplitude()}componentDidUpdate(s){if(this.props.userinfo.fetched&&this.props.userinfo.data.locale!==s.userinfo.data?.locale&&this.props.fetchTranslations({locale:this.props.userinfo.data.locale}),!s.tacs.fetched||!s.userinfo.fetched||!s.contracts.fetched||!s.users.fetched?(this.initiateInstana(),this.initiateAmplitude()):this.props.location!==s.location&&reportPageView(this.props.location.pathname),forcePath.regex.test(this.props.location.pathname)&&this.props.events.fetched&&this.props.links.fetched&&selectForceEvents(this.props.events).length===0){window.location.replace(this.props.links.items.startUpPageUrl);return}if(!forcePath.regex.test(this.props.location.pathname)&&this.props.events.fetched&&selectForceEvents(this.props.events).length>0){this.props.history.replace(forcePath.build());return}if(!welcomePath.regex.test(this.props.location.pathname)&&!welcomePathUk.regex.test(this.props.location.pathname)&&this.props.events.fetched&&this.props.userinfo.fetched&&selectForceEvents(this.props.events).length===0&&selectEventByName(this.props.events,`WELCOMECOMMAND`)){let s=welcomePath.build();this.props.userinfo.data.locale===`en_GB`&&(s=welcomePathUk.build()),this.props.history.replace(s);return}let u=`/dialog/agents-qualification`,p=s.location.pathname.includes(u),m=this.props.location.pathname.includes(u),h=this.props.location.pathname.includes(`/openid-connect`);if(!p&&!m&&!h&&this.props.events.fetched&&selectForceEvents(this.props.events).length===0&&selectEventByName(this.props.events,`AGENTSLEADQUALIFICATIONCOMMAND`)){this.props.history.replace(u);return}this.props.location.pathname!==s.location.pathname&&(reportEvent(`Navigation `,{meta:{pathname:this.props.location.pathname}}),observeAgentsLocation(this.props.location.pathname))}initiateAmplitude(){!this.props.tacs.fetched||!this.props.userinfo.fetched||!this.props.contracts.fetched||!this.props.users.fetched||this.props.tacs.accepted&&this.props.userinfo.data.product===`team`&&initAmplitude(this.props.userinfo.data,getUser(this.props.users.items,this.props.userinfo.data.sub))}initiateInstana(){!this.props.tacs.fetched||!this.props.userinfo.fetched||(this.props.tacs.accepted?(init$1(this.props.userinfo.data),reportPageView(this.props.location.pathname)):uninit())}render(){if(this.props.events.fetched&&this.props.translations.fetched&&this.props.userinfo.fetched&&selectForceEvents(this.props.events).length>0)return(0,import_jsx_runtime.jsx)(import_jsx_runtime.Fragment,{children:(0,import_jsx_runtime.jsx)(SessionProvider,{userinfo:this.props.userinfo.data,children:(0,import_jsx_runtime.jsxs)(Switch$1,{children:[(0,import_jsx_runtime.jsx)(Route,{path:saferPayCallbackPath.path,component:SaferPayCallback}),(0,import_jsx_runtime.jsx)(Route,{path:forcePath.path,component:ForceWebView})]})})});if(this.props.events.fetched&&this.props.userinfo.fetched&&this.props.translations.fetched&&selectEventByName(this.props.events,`WELCOMECOMMAND`)){let s=welcomePath.path;return this.props.userinfo.data.locale===`en_GB`&&(s=welcomePathUk.path),(0,import_jsx_runtime.jsx)(import_jsx_runtime.Fragment,{children:(0,import_jsx_runtime.jsx)(SessionProvider,{userinfo:this.props.userinfo.data,children:(0,import_jsx_runtime.jsx)(Switch$1,{children:(0,import_jsx_runtime.jsx)(Route,{path:s,component:WelcomeView})})})})}if(!this.props.translations.fetched||!this.props.userinfo.fetched||!this.props.events.fetched||!this.props.appProperties.fetched||!this.props.links.fetched)return(0,import_jsx_runtime.jsx)(LogoSpinner,{});let s=this.props.userinfo.data.sub;return(0,import_jsx_runtime.jsxs)(SessionProvider,{userinfo:this.props.userinfo.data,children:[(0,import_jsx_runtime.jsx)(LanguageAttributeUpdater,{}),(0,import_jsx_runtime.jsx)(SatelliteRedirect,{}),(0,import_jsx_runtime.jsxs)(DialogProvider,{children:[(0,import_jsx_runtime.jsxs)(Switch$1,{children:[(0,import_jsx_runtime.jsx)(Route,{path:`/tac/:productId`,component:Tac}),(0,import_jsx_runtime.jsx)(Route,{path:`/wbciOptIn/*`,component:WbciOptInRedirect_default}),(0,import_jsx_runtime.jsx)(Route,{path:`/logout`,component:LogoutView_default}),(0,import_jsx_runtime.jsx)(Route,{path:`/postverification`,component:AfterVideoIdentView_default}),(0,import_jsx_runtime.jsx)(Route,{path:saferPayCallbackPath.path,component:SaferPayCallback}),(0,import_jsx_runtime.jsx)(Route,{path:googleContactCallbackPath.path,component:GoogleContactCallback}),(0,import_jsx_runtime.jsx)(Route,{path:`/:webuserId(w\\d+)/(.*)`,component:UserRedirect_default}),(0,import_jsx_runtime.jsx)(Route,{path:`/batch-users/:jobId`,component:BatchUsersControlView}),(0,import_jsx_runtime.jsx)(Route,{path:csvMappingPath.path,component:CSVMappingView}),(0,import_jsx_runtime.jsx)(Route,{path:softphonePath.path,render:()=>(0,import_jsx_runtime.jsx)(LoadableWebphoneWrapper,{webuserId:s})},`phone`),(0,import_jsx_runtime.jsx)(Redirect,{from:`/gsuite`,to:softphonePath.path}),(0,import_jsx_runtime.jsx)(Redirect,{from:`/force/(.*)`,to:this.props.links.items.startUpPageUrl}),(0,import_jsx_runtime.jsx)(Route,{path:workspaceLoginPath.path,render:()=>(0,import_jsx_runtime.jsx)(WorkspaceLogin_default,{path:workspaceLoginPath.path})}),(0,import_jsx_runtime.jsx)(Route,{path:externalPresenceRedirectPath.path,render:()=>(0,import_jsx_runtime.jsx)(LoadableMicrosoftPresenceRedirectView,{})}),(0,import_jsx_runtime.jsx)(Route,{path:externalPresenceCallbackPath.path,render:()=>(0,import_jsx_runtime.jsx)(LoadableMicrosoftPresenceCallbackView,{})}),(0,import_jsx_runtime.jsx)(Route,{render:()=>(0,import_jsx_runtime.jsx)(AuthenticatedLayout_default,{webuserId:s})})]}),(0,import_jsx_runtime.jsx)(LoadableDialogWrapper,{})]})]})}},AuthenticatedRoot_default=connect(mapStateToProps$2,mapDispatchToProps$2)(AuthenticatedRoot),mainContainer=`ElectronLoginRedirect__mainContainer_8bc7d`,container=`ElectronLoginRedirect__container_55ad7`,icon=`ElectronLoginRedirect__icon_e6836`,leftSide=`ElectronLoginRedirect__leftSide_613c7`,loginHeadline=`ElectronLoginRedirect__loginHeadline_7161f`,loginDescription=`ElectronLoginRedirect__loginDescription_7444e`,buttonContainer=`ElectronLoginRedirect__buttonContainer_69a9e`,clipboardInput=`ElectronLoginRedirect__clipboardInput_b7a45`,inputField=`ElectronLoginRedirect__inputField_61c59`,ElectronLoginRedirect_module_default={"visually-hidden":`ElectronLoginRedirect__visually-hidden_ff582`,mainContainer,container,icon,leftSide,loginHeadline,loginDescription,buttonContainer,clipboardInput,inputField},useInfoToast=()=>{let s=useToast();return(0,import_react.useCallback)((u,p)=>s({type:`info`,title:u,description:p}),[s])},ClipboardButton=s=>{let u=useTranslate(),p=useInfoToast();return(0,import_jsx_runtime.jsx)(Button$1,{"aria-label":u(`CLIPBOARD_COPY`),onClick:async()=>{await navigator.clipboard.writeText(s.text),p(u(`CLIPBOARD_COPY_INFO_TOAST_TITLE`)),s.onCopied?.()},icon:`copy`,iconOnly:!0,variant:s.variant??`quiet`,size:s.size})},neo_shapes_default=`data:image/svg+xml,%3csvg%20width='512'%20height='512'%20viewBox='0%200%20512%20512'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cg%20clip-path='url(%23clip0_65823_6092)'%3e%3cpath%20fill-rule='evenodd'%20clip-rule='evenodd'%20d='M66.96%200H181.04C218.021%200%20248%2029.979%20248%2066.96C248%2091.0729%20235.254%20112.209%20216.133%20123.999C235.254%20135.788%20248%20156.924%20248%20181.037C248%20218.018%20218.021%20247.997%20181.04%20247.997H66.9601C29.9791%20247.997%206.10352e-05%20218.018%206.10352e-05%20181.037C6.10352e-05%20156.924%2012.7457%20135.788%2031.8673%20123.999C12.7456%20112.209%200%2091.0729%200%2066.96C0%2029.979%2029.979%200%2066.96%200Z'%20fill='%23DEFF00'/%3e%3cpath%20fill-rule='evenodd'%20clip-rule='evenodd'%20d='M512%2033.0343C512%2055.1678%20504.484%2092.5654%20478.431%20132.963C490.969%20120.92%20512%20129.759%20512%20147.264V228.193C512%20239.132%20503.116%20248.001%20492.16%20248.001H411.098C393.423%20248.001%20384.57%20226.666%20397.069%20214.187L397.636%20213.62C357.986%20239.072%20320.203%20247.599%20297.088%20247.599H283.84C272.883%20247.599%20264%20238.73%20264%20227.791V214.565C264%20192.613%20271.393%20155.647%20296.93%20115.63C284.331%20126.785%20264%20117.954%20264%20100.74V19.8106C264%208.87183%20272.883%200.00292969%20283.84%200.00292969H364.901C382.331%200.00292969%20391.182%2020.7493%20379.44%2033.2918C418.697%208.37354%20456.006%200%20478.912%200H492.16C503.117%200%20512%208.8689%20512%2019.8077V33.0343Z'%20fill='%23AABCFF'/%3e%3cpath%20fill-rule='evenodd'%20clip-rule='evenodd'%20d='M69.4399%20264.001C92.9092%20264.001%20112.917%20278.819%20120.619%20299.61C169.667%20265.211%20216.896%20253.552%20237.674%20274.329C254.162%20290.817%20250.224%20323.962%20230.706%20361.454C241.692%20369.227%20247.999%20378.304%20247.999%20387.999C247.999%20400.649%20237.261%20412.245%20219.404%20421.268C227.938%20430.897%20233.119%20443.564%20233.119%20457.442C233.119%20487.574%20208.692%20512.002%20178.559%20512.002C155.091%20512.002%20135.084%20497.185%20127.382%20476.396C78.3343%20510.794%2031.1051%20522.453%2010.3276%20501.676C-6.16089%20485.187%20-2.22232%20452.041%2017.2975%20414.547C6.30922%20406.773%200%20397.695%200%20387.999C0%20375.35%2010.7369%20363.754%2028.5919%20354.731C20.0601%20345.103%2014.8801%20332.437%2014.8801%20318.561C14.8801%20288.428%2039.3074%20264.001%2069.4399%20264.001Z'%20fill='%23FF7200'/%3e%3cpath%20fill-rule='evenodd'%20clip-rule='evenodd'%20d='M264%20297.001C264%20278.776%20278.774%20264.001%20297%20264.001H479C497.225%20264.001%20512%20278.776%20512%20297.001C512%20315.226%20497.225%20330.001%20479%20330.001H471.956C495.361%20338.866%20512%20361.49%20512%20388.001C512%20414.512%20495.361%20437.136%20471.956%20446.001H479C497.225%20446.001%20512%20460.776%20512%20479.001C512%20497.226%20497.225%20512.001%20479%20512.001H297C278.774%20512.001%20264%20497.226%20264%20479.001C264%20460.776%20278.774%20446.001%20297%20446.001H304.044C280.639%20437.136%20264%20414.512%20264%20388.001C264%20361.49%20280.639%20338.866%20304.044%20330.001H297C278.774%20330.001%20264%20315.226%20264%20297.001Z'%20fill='%23006660'/%3e%3c/g%3e%3cdefs%3e%3cclipPath%20id='clip0_65823_6092'%3e%3crect%20width='512'%20height='512'%20fill='white'/%3e%3c/clipPath%3e%3c/defs%3e%3c/svg%3e`,mapStateToProps$1=s=>({}),mapDispatchToProps$1={fetchTranslations},FaxdruckerLoginView=class extends import_react.Component{componentDidMount(){this.props.fetchTranslations({locale:navigator.language.startsWith(`en`)?`en_GB`:`de_DE`})}getLoginLink=()=>{let s=`sipgate-apps`,u=`${src_default$1.appWeb}/faxdrucker-login`,p=`${src_default$1.authentication.keycloak}/realms/${s}/protocol/openid-connect/auth?client_id=sipgate_faxdrucker_win&response_type=code&redirect_uri=${u}`,m=`${src_default$1.authentication.keycloak}/realms/${s}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(p)}`;return(0,import_jsx_runtime.jsx)(`p`,{className:ElectronLoginRedirect_module_default.loginDescription,children:this.props.translate.markdown.inline(`FAXDRUCKER_LOGIN_HELP_LINK_TEXT`,m)})};render(){let s=new URLSearchParams(this.props.location.search).get(`code`);return s?(0,import_jsx_runtime.jsx)(`div`,{className:ElectronLoginRedirect_module_default.mainContainer,children:(0,import_jsx_runtime.jsxs)(`div`,{className:ElectronLoginRedirect_module_default.container,children:[(0,import_jsx_runtime.jsxs)(`div`,{className:ElectronLoginRedirect_module_default.leftSide,children:[(0,import_jsx_runtime.jsx)(Headline,{className:ElectronLoginRedirect_module_default.loginHeadline,children:this.props.translate.markdown.inline(`FAXDRUCKER_LOGIN_HEADLINE`)}),(0,import_jsx_runtime.jsxs)(HeadingBoundary,{children:[(0,import_jsx_runtime.jsx)(`p`,{className:ElectronLoginRedirect_module_default.loginDescription,children:this.props.translate(`FAXDRUCKER_LOGIN_DESCRIPTION`)}),(0,import_jsx_runtime.jsx)(`div`,{className:ElectronLoginRedirect_module_default.buttonContainer,children:(0,import_jsx_runtime.jsxs)(`div`,{className:ElectronLoginRedirect_module_default.clipboardInput,children:[(0,import_jsx_runtime.jsx)(`input`,{className:ElectronLoginRedirect_module_default.inputField,defaultValue:s,name:`code`}),(0,import_jsx_runtime.jsx)(ClipboardButton,{text:s,size:`large`})]})}),this.getLoginLink()]})]}),(0,import_jsx_runtime.jsx)(`img`,{className:ElectronLoginRedirect_module_default.icon,alt:this.props.translate(`FAXDRUCKER_REDIRECT_ICON`),src:neo_shapes_default})]})}):(0,import_jsx_runtime.jsx)(PageNotFoundRedirect_default,{})}},FaxdruckerLoginView_default=withTranslate(connect(mapStateToProps$1,mapDispatchToProps$1)(FaxdruckerLoginView)),ElectronLoginRedirect=class extends import_react.Component{SOFTPHONE_LINK=`softphone://login/authenticate#code=${encodeURIComponent(this.props.code)}`;componentDidMount(){this.openSoftphone()}openSoftphone=()=>{setTimeout(()=>{let s=document.createElement(`a`);s.setAttribute(`href`,this.SOFTPHONE_LINK),s.click()},0)};getLoginLink=()=>{let s=`sipgate-apps`,u=`${src_default$1.authentication.accessCodeLoginUrl}&scope=offline_access`,p=`${src_default$1.authentication.keycloak}/realms/${s}/protocol/openid-connect/auth?client_id=desktop-app&response_type=code&redirect_uri=${u}`,m=`${src_default$1.authentication.keycloak}/realms/${s}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(p)}`;return(0,import_jsx_runtime.jsx)(`p`,{className:ElectronLoginRedirect_module_default.loginDescription,children:this.props.translate.markdown.inline(`SOFTPHONE_LOGIN_HELP_LINK_TEXT`,m)})};render(){return(0,import_jsx_runtime.jsx)(`div`,{className:ElectronLoginRedirect_module_default.mainContainer,children:(0,import_jsx_runtime.jsxs)(`div`,{className:ElectronLoginRedirect_module_default.container,children:[(0,import_jsx_runtime.jsxs)(`div`,{className:ElectronLoginRedirect_module_default.leftSide,children:[(0,import_jsx_runtime.jsx)(Headline,{className:ElectronLoginRedirect_module_default.loginHeadline,children:this.props.translate.markdown.inline(`SOFTPHONE_LOGIN_HEADLINE`)}),(0,import_jsx_runtime.jsxs)(HeadingBoundary,{children:[(0,import_jsx_runtime.jsx)(`p`,{className:ElectronLoginRedirect_module_default.loginDescription,children:this.props.translate(`SOFTPHONE_LOGIN_DESCRIPTION`)}),(0,import_jsx_runtime.jsxs)(`div`,{className:ElectronLoginRedirect_module_default.buttonContainer,children:[(0,import_jsx_runtime.jsx)(ExternalLink,{button:!0,size:`xlarge`,to:this.SOFTPHONE_LINK,children:this.props.translate(`SOFTPHONE_LOGIN_BUTTON`)}),(0,import_jsx_runtime.jsxs)(`div`,{className:ElectronLoginRedirect_module_default.clipboardInput,children:[(0,import_jsx_runtime.jsx)(`input`,{className:ElectronLoginRedirect_module_default.inputField,defaultValue:this.props.code,name:`code`}),(0,import_jsx_runtime.jsx)(ClipboardButton,{text:this.props.code,size:`large`})]})]}),this.getLoginLink()]})]}),(0,import_jsx_runtime.jsx)(`img`,{className:ElectronLoginRedirect_module_default.icon,alt:this.props.translate(`SOFTPHONE_REDIRECT_ICON`),src:neo_shapes_default})]})})}},mapStateToProps=s=>({}),mapDispatchToProps={fetchTranslations},SoftphoneLoginView=class extends import_react.Component{componentDidMount(){this.props.fetchTranslations({locale:navigator.language.startsWith(`en`)?`en_GB`:`de_DE`}),window.addEventListener(`beforeunload`,this.loadTranslations)}componentWillUnmount(){window.removeEventListener(`beforeunload`,this.loadTranslations)}loadTranslations=()=>{setTimeout(()=>this.props.fetchTranslations({locale:navigator.language.startsWith(`en`)?`en_GB`:`de_DE`}),150)};render(){let s=new URLSearchParams(this.props.location.search).get(`code`);return s?(0,import_jsx_runtime.jsx)(ElectronLoginRedirect,{translate:this.props.translate,code:s}):(0,import_jsx_runtime.jsx)(PageNotFoundRedirect_default,{})}},SoftphoneLoginView_default=withTranslate(connect(mapStateToProps,mapDispatchToProps)(SoftphoneLoginView)),Root=()=>(useTheme(),(0,import_react.useEffect)(()=>{let s=document.getElementById(`loading-animation`);s&&(setTimeout(()=>{s.remove()},600),s.classList.add(`exit`))},[]),(0,import_jsx_runtime.jsx)(DocumentTitleProvider,{children:(0,import_jsx_runtime.jsx)(AppToastProvider,{children:(0,import_jsx_runtime.jsxs)(`div`,{style:{height:`100%`},children:[(0,import_jsx_runtime.jsxs)(Switch$1,{children:[(0,import_jsx_runtime.jsx)(Route,{path:`/authenticate`,component:TokenAuthenticator}),(0,import_jsx_runtime.jsx)(Route,{path:`/implicit-auth-redirect`,component:ImplicitAuthenticator}),(0,import_jsx_runtime.jsx)(Route,{path:`/app-login`,component:SoftphoneLoginView_default}),(0,import_jsx_runtime.jsx)(Route,{path:`/faxdrucker-login`,component:FaxdruckerLoginView_default}),(0,import_jsx_runtime.jsx)(Route,{component:AuthenticatedRoot_default})]}),(0,import_jsx_runtime.jsx)(WarningSnackbar_default,{}),(0,import_jsx_runtime.jsx)(PoliteLiveRegion_default,{}),(0,import_jsx_runtime.jsx)(AlertRoot,{}),(0,import_jsx_runtime.jsx)(ModalScrollLock,{})]})})}));init_moment();function processRelativeTime(s,u,p,m){var h={m:[`eine Minute`,`einer Minute`],h:[`eine Stunde`,`einer Stunde`],d:[`ein Tag`,`einem Tag`],dd:[s+` Tage`,s+` Tagen`],w:[`eine Woche`,`einer Woche`],M:[`ein Monat`,`einem Monat`],MM:[s+` Monate`,s+` Monaten`],y:[`ein Jahr`,`einem Jahr`],yy:[s+` Jahre`,s+` Jahren`]};return u?h[p][0]:h[p][1]}var de_default=hooks.defineLocale(`de`,{months:`Januar_Februar_März_April_Mai_Juni_Juli_August_September_Oktober_November_Dezember`.split(`_`),monthsShort:`Jan._Feb._März_Apr._Mai_Juni_Juli_Aug._Sep._Okt._Nov._Dez.`.split(`_`),monthsParseExact:!0,weekdays:`Sonntag_Montag_Dienstag_Mittwoch_Donnerstag_Freitag_Samstag`.split(`_`),weekdaysShort:`So._Mo._Di._Mi._Do._Fr._Sa.`.split(`_`),weekdaysMin:`So_Mo_Di_Mi_Do_Fr_Sa`.split(`_`),weekdaysParseExact:!0,longDateFormat:{LT:`HH:mm`,LTS:`HH:mm:ss`,L:`DD.MM.YYYY`,LL:`D. MMMM YYYY`,LLL:`D. MMMM YYYY HH:mm`,LLLL:`dddd, D. MMMM YYYY HH:mm`},calendar:{sameDay:`[heute um] LT [Uhr]`,sameElse:`L`,nextDay:`[morgen um] LT [Uhr]`,nextWeek:`dddd [um] LT [Uhr]`,lastDay:`[gestern um] LT [Uhr]`,lastWeek:`[letzten] dddd [um] LT [Uhr]`},relativeTime:{future:`in %s`,past:`vor %s`,s:`ein paar Sekunden`,ss:`%d Sekunden`,m:processRelativeTime,mm:`%d Minuten`,h:processRelativeTime,hh:`%d Stunden`,d:processRelativeTime,dd:processRelativeTime,w:processRelativeTime,ww:`%d Wochen`,M:processRelativeTime,MM:processRelativeTime,y:processRelativeTime,yy:processRelativeTime},dayOfMonthOrdinalParse:/\d{1,2}\./,ordinal:`%d.`,week:{dow:1,doy:4}});init_moment();var en_gb_default=hooks.defineLocale(`en-gb`,{months:`January_February_March_April_May_June_July_August_September_October_November_December`.split(`_`),monthsShort:`Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec`.split(`_`),weekdays:`Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday`.split(`_`),weekdaysShort:`Sun_Mon_Tue_Wed_Thu_Fri_Sat`.split(`_`),weekdaysMin:`Su_Mo_Tu_We_Th_Fr_Sa`.split(`_`),longDateFormat:{LT:`HH:mm`,LTS:`HH:mm:ss`,L:`DD/MM/YYYY`,LL:`D MMMM YYYY`,LLL:`D MMMM YYYY HH:mm`,LLLL:`dddd, D MMMM YYYY HH:mm`},calendar:{sameDay:`[Today at] LT`,nextDay:`[Tomorrow at] LT`,nextWeek:`dddd [at] LT`,lastDay:`[Yesterday at] LT`,lastWeek:`[Last] dddd [at] LT`,sameElse:`L`},relativeTime:{future:`in %s`,past:`%s ago`,s:`a few seconds`,ss:`%d seconds`,m:`a minute`,mm:`%d minutes`,h:`an hour`,hh:`%d hours`,d:`a day`,dd:`%d days`,M:`a month`,MM:`%d months`,y:`a year`,yy:`%d years`},dayOfMonthOrdinalParse:/\d{1,2}(st|nd|rd|th)/,ordinal:function(s){var u=s%10;return s+(~~(s%100/10)==1?`th`:u===1?`st`:u===2?`nd`:u===3?`rd`:`th`)},week:{dow:1,doy:4}}),ScrollToTop=()=>{let{pathname:s}=useLocation(),u=(0,import_react.useRef)(s);return(0,import_react.useEffect)(()=>{let p=s.includes(`/dialog/`),m=u.current.includes(`/dialog/`),h=s.includes(`/transcription/`),_=u.current.includes(`/transcription/`);!p&&!m&&!h&&!_&&document.getElementById(`main-content`)?.scrollTo(0,0),u.current=s},[s]),null};startPollingService(),prepareGlobalInstanaFunction(),LicenseInfo.setLicenseKey(`69652765dee867ed6c9a46e1bb566718Tz0xMzA5NDAsRT0xODE1ODY4Nzk5MDAwLFM9cHJlbWl1bSxMTT1hbm51YWwsUFY9UTEtMjAyNixRPTE1LEFUPXNpbmdsZSxLVj0y`);var store=createStore$2();setupListeners(store.dispatch),(0,import_client.createRoot)(document.getElementById(`root`)).render((0,import_jsx_runtime.jsx)(ErrorHandler,{children:(0,import_jsx_runtime.jsx)(`div`,{style:{height:`100%`},children:(0,import_jsx_runtime.jsx)(Provider,{store,children:(0,import_jsx_runtime.jsx)(FocusTrapProvider,{children:(0,import_jsx_runtime.jsx)(PandaProvider,{children:(0,import_jsx_runtime.jsx)(AudioPlayerProvider,{children:(0,import_jsx_runtime.jsxs)(BrowserRouter,{children:[(0,import_jsx_runtime.jsx)(ScrollToTop,{}),(0,import_jsx_runtime.jsx)(Root,{})]})})})})})})}));export{useGetCallingCodeForExtensionQuery as $,SectionSurface as $_,revokeSipgateIoCancellation as $a,createListenerMiddleware as $b,selectVoicemail as $c,changeSim as $d,useDeviceLocalPrefix as $f,trackAgents as $g,csvMappingPath as $h,selectEasyProducts as $i,forceFetchSms as $l,useBusinessTypes as $m,useGetDidwwAddressesQuery as $n,selectFaxlinesForOwnersFromState as $o,selectContactByContactId as $p,useDeleteAnonymousForwardingMutation as $r,useConferenceRoomActions as $s,getDecadeEnd as $t,hasActiveForwardingSteps as $u,useEventCallback$1 as $v,ClickAwayListener as $y,formatAddressCity as A,fetchUserInfo as A_,isCanceled as Aa,Switch$1 as Ab,selectById$11 as Ac,replaceStepInUnconditionalSet as Ad,getUnlinkedMobileDevices as Af,userAreaDevicesPath as Ag,isInFrontdeskIntegrationContext as Ah,useFrontdeskFeatures as Ai,useTrunkActions as Al,hasUploadedAvatar as Am,isValidPhonenumberForRegion as An,selectMultiUserChannels as Ao,fetchDeviceContracts as Ap,useCreateIvrMutation as Ar,isHolidayDateBasedForwarding as As,validateMaxLength as At,selectByTokenId as Au,DataGridDetailPanelToggle as Av,Alert as Ay,validateLatin1Extended as B,hasKey as B_,useApiClients as Ba,require_path_to_regexp as Bb,useWebphoneViews as Bc,createLocalEvent as Bd,selectDevice as Bf,useCanUseChannelsRestriction as Bg,channelPath as Bh,useChannelInbox as Bi,useTrunkContractActions as Bl,useUserCallRestrictionActions as Bm,ViewConsumer as Bn,selectPhonenumbersByRouting as Bo,isDataSnackContract as Bp,useGetChannelLegacyStatisticsActivation as Br,deleteAudioFile as Bs,validateCommaSeparatedEmails as Bt,setActiveAudioFileGreeting$1 as Bu,GridColumnsPanel as Bv,isDisabled as By,useContacts as C,isClassicPBXCustomer as C_,useSipgateAppNotificationActions as Ca,identifier_default as Cb,PersistenceLevels as Cc,makeSetUnconditional as Cd,getMobileDeviceById as Cf,sharedContactDetailPath as Cg,selectSmsCallerIds as Ch,useFrontdesk as Ci,setUserEmail as Cl,useViewStack as Cm,PandaOneColumnLayout as Cn,selectChannelsByUserId as Co,formatNettoCost as Cp,useTypedContactCenterStatisticsQuery as Cr,getCustomDateBasedForwardingsInPast as Cs,validateIBAN as Ct,usePersonalAccessTokenActions as Cu,Select as Cv,VisualMeta as Cy,CenteredLogoSpinner as D,useFeatureScope as D_,hasActiveBookingByType as Da,Link as Db,selectById$10 as Dc,replaceDelayInStep as Dd,getOwnedMobileDevices as Df,trunksPath as Dg,verifySmsCallerId as Dh,updateCalcomConfig as Di,useTwoFactorAuthentication as Dl,findAvatarForWebuserIdAndAllSizesInArray as Dm,getE164NumberForRegion as Dn,selectFullAccessChannels as Do,translatePaymentInterval as Dp,useGetChannelReferrersQuery as Dr,getHolidayDateBasedForwardings as Ds,validateEnum as Dt,isFetched$11 as Du,useTouchDevice as Dv,Tabs as Dy,PageTitle as E,useFeatureFlag as E_,useSipgateAppsActions as Ea,useAudioPlayer as Eb,isFetching$7 as Ec,renderActiveTimeValidationError as Ed,getOwnDevices as Ef,trunkPath as Eg,setSmsCallerIdActive as Eh,fetchCalcomConfig as Ei,isTwoFactorFetching as El,useAvatars as Em,getDialCodeForRegion as En,selectFullAccessChannel as Eo,sumCosts as Ep,useGetPlaybookStatisticsQuery as Er,getDateBasedForwardingsNotInPast as Es,validateEmpty as Et,fetchPersonalAccessTokens as Eu,Table as Ev,Label$1 as Ey,renderGbFormAddress as F,shallowEqual as F_,isTrial as Fa,useParams as Fb,setDataAutomation as Fc,fetchTimeBasedForwardings as Fd,isMobileDevice as Ff,userRoutingPath as Fg,aiFlowPath as Fh,isUserNotification as Fi,generateTrunkCredentialsPassword as Fl,ContactAddressTypes as Fm,getLanguageKeyForSubscriptionName as Fn,usePhonenumbersActions as Fo,isActiveContract as Fp,useRenameIvrMutation as Fr,fetchAppSubcriptionTypes as Fs,validateNotIn as Ft,useGroups as Fu,ExportCsv as Fv,useScrollFade as Fy,useGetCountryCode as G,useToast as G_,useBatchUserImportExecution as Ga,FocusTrap$1 as Gb,callMuted as Gc,useAllDevices as Gd,useDeviceProperties as Gf,hasRestriction as Gg,conferenceRoomPath as Gh,createFaxReportNotification as Gi,setTrunkCallRestrictions as Gl,deleteBlocklistEntry as Gm,SubViewTitleScope as Gn,createFaxLine as Go,selectClassicPbxMinuteContingent as Gp,useSetUserStatisticsStatusMutation as Gr,getAudioFilesForOwner as Gs,useManagedFormSubmit as Gt,fetchGroupStatistics as Gu,getGridNumericOperators as Gv,Tooltip$1 as Gy,useCallingCode as H,DownloadLink as H_,useBatchUserCSVImport as Ha,warning$4 as Hb,browserOnline as Hc,forceFetchEvents as Hd,selectDevices as Hf,useRestrictions as Hg,channelTeamLeadDashboardPath as Hh,useFaxReports as Hi,isReplacedTrunkContract as Hl,useActivateCallRecorder as Hm,useView as Hn,useFaxLine as Ho,selectAiFlowContingentContracts as Hp,useSetChannelLegacyStatisticsAvailabilityTargetMutation as Hr,fetchAudioFiles as Hs,renderError as Ht,setGroupMembers as Hu,ownerDocument$1 as Hv,isLineIcon as Hy,renderGermanFormAddress as I,require_moment_timezone as I_,require_moment as Ia,useRouteMatch as Ib,hasFailed$9 as Ic,updateTimeBasedForwardings as Id,isRegisterDevice as If,userSettingsPath as Ig,apiClientPath as Ih,useConfig as Ii,renameTrunk as Il,ContactEmailTypes as Im,sipgate_bildmarke_default as In,findPhonenumber as Io,isBaseContract as Ip,useSetIvrKeyMappingMutation as Ir,useAllAudioFiles as Is,validateOneOf as It,bookGroupStatisticsContract as Iu,ColumnsPanelTrigger as Iv,ResizeObserver$2 as Iy,useIsPotentialPhonenumer as J,SubTab as J_,convertDataURIToBinaryArray as Ja,_extends$4 as Jb,callUnmuted as Jc,useDeviceActions as Jd,setDeviceProperty as Jf,forceFetchRestrictionsForUser as Jg,contactCenterChannelsPath as Jh,useTTS as Ji,fetchSsoConfiguration as Jl,useAppProperties as Jm,useBookDidwwPhoneNumberMutation as Jn,faxLinesFetched as Jo,selectFrontDeskBaseContract as Jp,useDeleteCostCenterMutation as Jr,selectAudioFile as Js,esm_default as Jt,areForwardingsFetchedForExtension as Ju,GridFilterInputMultipleValue as Jv,ListItemText$1 as Jy,useGetE164Number as K,SaveBar as K_,useBatchUserImportUsers as Ka,require_jsx_runtime as Kb,callTerminated as Kc,useAllDevicesOfUsers as Kd,useSetDeviceProperty as Kf,fetchRestrictions as Kg,conferenceRoomsPath as Kh,deleteNotification as Ki,useTransferAudioFiles as Kl,fetchBlocklistEntries as Km,JoyrideTour as Kn,deleteFaxLine as Ko,selectContactCenterContingentContracts as Kp,useToggleChannelLegacyStatisticsActivationStatusMutation as Kr,getDefaultAudioFile as Ks,HighlightedText as Kt,fetchGroupStatisticsHistory as Ku,getGridStringOperators as Kv,MenuItem$1 as Ky,renderInternationalFormAddress as L,RestApiClient as L_,useBalance as La,withRouter as Lb,isFetched$9 as Lc,updateTimeBasedSets as Ld,isRoutingActive as Lf,usersPath as Lg,apiClientsPath as Lh,useConfigAction as Li,setTrunkEmergencyLocation as Ll,ContactFaxNumberTypes as Lm,sipgate_wort_bild_marke_schwarz_default as Ln,flatMapRoutablePhonenumbers as Lo,isCallPackageContract as Lp,isTimeRangeToday as Lr,useAudioFileActions as Ls,validateRegex as Lt,createGroup as Lu,FilterPanelTrigger as Lv,MenuItem as Ly,formatAddressState as M,useDispatch as M_,isSipgateAppWithSubscription as Ma,matchPath as Mb,useDataAutomationHistoryActions as Mc,TERMINAL_FORWARDING_DESTINATION_TYPES as Md,isAppDevice as Mf,userDevicesPath as Mg,adminIntegrationOauthCallbackPath as Mh,useUsersAndNotification as Mi,fetchTrunkContingents as Ml,fetchUsersAvatars as Mm,normalizeDialableCharacterSequence as Mn,selectPersonalChannels as Mo,forceFetchDeviceContracts as Mp,useDeleteIvrMutation as Mr,fetchDateBasedForwardings as Ms,validateNoDots as Mt,fetchIdentityVerification as Mu,useGridApiRef as Mv,MailLink as My,formatUsState as N,useSelector as N_,isSipgateFreeApp as Na,useHistory as Nb,deleteDataAutomation as Nc,isTerminalNeoEndpointForwardingDestination as Nd,isExternalDevice as Nf,userNotificationsPath as Ng,adminIntegrationsPath as Nh,useUsersAndNotificatonsActions as Ni,fetchTrunks as Nl,fetchContacts as Nm,getAccountMenuLinks as Nn,selectSharedChannels as No,calculateTotalContingentAmount as Np,useGetIvrQuery as Nr,saveDateBasedForwardingDestination as Ns,validateNoEmoji as Nt,fetchHolidayPresets as Nu,useGridApiContext as Nv,PhoneLink as Ny,Address as O,useSipgateDomain as O_,hasConnectedIntegrations as Oa,Redirect as Ob,fetchDataUsage as Oc,replaceDestinationInStep as Od,getRegisterDevices as Of,unlinkedDevicePath as Og,platypusApi as Oh,updateCalendarConfig as Oi,fetchTwoFactorAuthenticationSetting as Ol,findAvatarForWebuserIdAndSizeInAvatarArray as Om,isAnonymous as On,selectFullAccessPersonalChannel as Oo,createDeviceContract as Op,useAssignAudioFileToIvrMutation as Or,getNextCustomDate as Os,validateExactLength as Ot,isFetching$11 as Ou,useResponsiveBreakpoints as Ov,Tab as Oy,renderDidwwFormAddress as P,Provider_default as P_,isTerminated as Pa,useLocation as Pb,fetchDataAutomation as Pc,isTerminalNeoEndpointForwardingDestinationType as Pd,isGroupRoutingActive as Pf,userPath as Pg,aiFlowMinutePackages as Ph,isCustomNotification as Pi,forceFetchTrunks as Pl,forceFetchContacts as Pm,Pill as Pn,usePhonenumbers as Po,calculateTotalContingentUsed as Pp,useGetIvrsQuery as Pr,saveDateBasedForwardings as Ps,validateNonEmpty as Pt,useGroupActions as Pu,GRID_DETAIL_PANEL_TOGGLE_COL_DEF as Pv,ContextMenu as Py,useNormalizePhonenumber as Q,StateIcon as Q_,fetchSipgateIo as Qa,createAction$1 as Qb,selectValidVoicemailForwardingTargetsForUser as Qc,activateSim as Qd,selectDeviceIconFromEntities as Qf,snapshotAgentsStandardContext as Qg,createTrunkPath as Qh,fetchDirectDials as Qi,fetchSms as Ql,useBrokenAddresses as Qm,useGetDidwwAddressQuery as Qn,selectFaxlinesForOwners as Qo,findContactsForPhonenumber as Qp,useUpdateCostCenterMutation as Qr,fetchMobileInfo as Qs,getDaysInMonth as Qt,getTimeBasedForwardingSets as Qu,generateUtilityClass as Qv,FocusTrap as Qy,renderUsFormAddress as R,ApiError as R_,useBalanceActions as Ra,_objectWithoutPropertiesLoose$3 as Rb,selectById$12 as Rc,convertTimeBasedForwardingsSet as Rd,isUnlinkedRegisterDevice as Rf,variablesPath as Rg,baseContractPath as Rh,useBusiness as Ri,selectTotalContingentUsage as Rl,ContactNumberTypes as Rm,ensureVoicemail as Rn,isCancelablePhonenumber as Ro,isCancelledContract as Rp,useChannelLegacyLiveStatistics as Rr,useAudioFiles as Rs,validateStartsWith as Rt,fetchGroups as Ru,debounce$8 as Rv,Button$1 as Ry,usePseudo as S,hasFeatureToggle as S_,useSipgateAppNotification as Sa,useTheme$3 as Sb,selectById$9 as Sc,makeSetConditional as Sd,getMobileDevice$1 as Sf,routingPath as Sg,selectSmsCallerIdByNumber as Sh,contingentTypes as Si,setLegacyBusyOnBusy as Sl,fetchLinks as Sm,BorderedContainer as Sn,selectChannelsByType as So,formatMoney as Sp,useQueuedCallsPerChannel as Sr,getCustomDateBasedForwardings as Ss,validateGermanIBAN as St,selectPhone as Su,ManagedSelect as Sv,TextArea as Sy,useAlert as T,normalizeLocale$1 as T_,useSipgateApps as Ta,reportEvent as Tb,isFetched$7 as Tc,removeForwardingStepFromSet as Td,getNotAppDevices as Tf,tacDetailPath as Tg,fetchSmsCallerIds as Th,useFrontdesks as Ti,isTwoFactorEnabled as Tl,avatarScrSet as Tm,formatPhonenumberForScreenreader as Tn,selectContactCenterChannels as To,multiplyCosts as Tp,useGetIncomingCallDurationStatisticsQuery as Tr,getDateBasedForwardingName as Ts,init_ibantools as Tt,deletePersonalAccessToken as Tu,OptGroup as Tv,ManagedInput as Ty,useCallingCodeRegion as U,ExternalLink as U_,useBatchUserImport as Ua,require_prop_types as Ub,callAccepted as Uc,useGenericAudioFiles as Ud,sortDevices as Uf,useUserRestrictions as Ug,channelsPath as Uh,selectFaxReportEmail as Ui,fetchTrunkCallRestrictions as Ul,useDeactivateCallRecorder as Um,withFullView as Un,useFaxLines as Uo,selectAiFlowMinuteContingent as Up,useSetChannelLegacyStatisticsAverageHandlingTimeTargetMutation as Ur,setAudioFileAlias as Us,chainValidators as Ut,selectGroup$1 as Uu,useForkRef as Uv,NeoIcon as Uy,AuthenticatedLayoutContext as V,src_default$1 as V_,useApiClientsActions as Va,invariant as Vb,browserOffline as Vc,fetchEvents as Vd,selectDeviceAlias as Vf,useHasRestriction as Vg,channelRoutingPath as Vh,useChannelInboxActions as Vi,useTrunkContracts as Vl,fetchUserCallRestrictionsForUser as Vm,ViewSwitch as Vn,selectPhonenumbersForWebusers as Vo,isFutureContract as Vp,useGetChannelLegacyStatisticsActivationsQuery as Vr,fetchAudioFileContent as Vs,validateEmail as Vt,setGroupAlias as Vu,Toolbar as Vv,require_classnames as Vy,useFindNumberMatchLocation as W,InternalLink as W_,useBatchUserImportAuthRequest as Wa,require_react_dom as Wb,callCreated as Wc,useInit as Wd,useDeviceIcons as Wf,getRestriction as Wg,ciDatahubPath as Wh,changeFaxReportNotification as Wi,forceFetchTrunkCallRestrictions as Wl,createBlocklistEntry as Wm,withView as Wn,useFaxLinesActions as Wo,selectAllDataContingents as Wp,useSetChannelLegacyStatisticsCallPercentageInTimeLimitTargetMutation as Wr,getAudioFile as Ws,ManagedForm$1 as Wt,selectGroupsByUserId as Wu,getGridSingleSelectOperators as Wv,useMediaQuery as Wy,useLocalizeNumber as X,NestedTabs as X_,bookSipgateIo as Xa,autoBatchEnhancer as Xb,sipClientDisconnected as Xc,useIsDeviceUpdating as Xd,isFetched$12 as Xf,useWarningSnackbar as Xg,contactDetailPath as Xh,useDirectDialActions as Xi,useSMSforUser as Xl,useAddresses as Xm,useDeleteDidwwAddressMutation as Xn,selectFaxlinesForOwner as Xo,selectFrontdeskMinuteContingent as Xp,useImportCostCentersMutation as Xr,useMobileInfo as Xs,getDayEnd as Xt,canForwardingDelayBeChanged as Xu,resolveProps as Xv,Grow as Xy,useIsValidPhonenumber as Y,MainTab as Y_,getFileContent as Ya,skipToken as Yb,sipClientConnected as Yc,useDeviceItems as Yd,areFetched$1 as Yf,useOpenClickToDialSnackbar as Yg,contactCenterMinutePackagesPath as Yh,useTTSActions as Yi,updateSsoConfiguration as Yl,fetchAppProperties as Ym,useCreateDidwwAddressMutation as Yn,selectAll$10 as Yo,selectFrontDeskContingentContracts as Yp,useGetCostCentersQuery as Yr,shouldForceFetchOnError as Ys,getDate as Yt,areForwardingsUpdating as Yu,useId$9 as Yv,ListItemIcon as Yy,useNormalizeE164 as Z,AvatarStack as Z_,cancelSipgateIo as Za,configureStore as Zb,getVoicemailsForOwner as Zc,useUserDevices as Zd,selectDeviceIcon as Zf,openWarningSnackbar as Zg,contactsPath as Zh,useDirectDials as Zi,useSmsActions as Zl,useAddressesActions as Zm,useDeleteDidwwUploadedProofMutation as Zn,selectFaxlinesForOwnerFromState as Zo,selectPrimaryDataContingents as Zp,useSetCostCenterAssignmentsMutation as Zr,useMobileInfoActions as Zs,getDayStart as Zt,getAllActiveTimeframes as Zu,generateUtilityClasses as Zv,Divider$1 as Zy,withDialogPage as _,api$1 as __,useAiFlowUsageSessions as _a,alpha as _b,fetchFqdns as _c,getUnconditionalForwardingSetWithEmptySteps as _d,getAppDeviceAlias as _f,myChannelPath as _g,useLogo as _h,titlePriority as _i,cancelUserEmailChangeRequest as _l,UserAvatar as _m,DropdownWithOpener as _n,getDomainVerification as _o,getProductsTacFromProductId as _p,useGetFilterValuesQuery as _r,setChannelAudioFileAlias as _s,validateDigits as _t,isUpdating$3 as _u,HeadingBoundary as _v,RadioCardPrice as _y,Legal as a,toDrawerWidthShareBucket as a_,isDowngrade as aa,IconButton as ab,usePaymentMethods as ac,selectForwardingStepsForType as ad,forceFetchDevices as af,frontDesksPath as ag,fetchAddresses as ah,useLinks as ai,resetVoicemails as al,getContactAvatar as am,getMonthStart as an,fetchLabels as ao,selectLocalPrefix as ap,useGetDidwwVerificationRequirementsQuery as ar,isPhonenumberBlock as as,createEndpointIdFromExtension as at,useAllPhonelines as au,SubNavTextHeader as av,createSelector$5 as ax,require_shim as ay,useScreenreaderAnnouncementsActions as b,auth_default as b_,useAiFlows as ba,shouldForwardProp as bb,setDataUsageSettings as bc,invertActiveTimes as bd,compareDevices as bf,phonenumbersPath as bg,fetchAccount as bh,useSetChartDisplayLimit as bi,forceFetchUsers as bl,withDialogs as bm,SlideIn as bn,useChannels as bo,fetchProducts as bp,useUserPresence as br,setChannelUserDevices as bs,oneOfValidators as bt,usePhoneProvisioningActions as bu,Combobox as bv,Toggle as by,DialogErrors as c,track as c_,isXLtoLdowngrade as ca,TransitionGroup as cb,fetchConferenceRooms as cc,selectSimpleForwardingSteps as cd,setCallerId as cf,groupsPath as cg,useAffiliateInfo as ch,useEvents as ci,setVoicemailAuthorizedNumbers as cl,getTranslatedAddressType as cm,getYearStart as cn,fetchCallRecordingAudioFileContent as co,useContracts as cp,useUploadDidwwVerificationDocumentMutation as cr,isPhonenumberWithPorting as cs,CenteredSpinner as ct,createPhoneline as cu,Avatar as cv,current as cx,ManagedCheckbox as cy,selectPaymentMethodById as d,useTranslationActions as d_,useBaseContract as da,useEnhancedEffect$1 as db,setActiveAudioFileGreeting as dc,findDelayAndPositionForNewForwardingStep as dd,setDeviceSettings as df,ivrPath as dg,useReferredCustomers as dh,appToastManager as di,useCurrentUser as dl,getTranslatedEmailType as dm,DropdownButton as dn,setCallRecordingAudioFileAlias as do,useFutureDeviceContract as dp,useGetUsersPerformanceStatisticsQuery as dr,forceFetchPhonenumbers as ds,Form_module_default as dt,selectPhoneline as du,ListView as dv,FileUpload as dy,trackAgentsControl as e_,baseContractOptionsInfo as ea,Button$2 as eb,useConferenceRoomProduct as ec,isFullWeek as ed,createDevice as ef,devicePoolPath as eg,useCreateAddress as eh,useGetAnonymousForwardingQuery as ei,createVoicemail as el,selectExternalContacts as em,getDecadeStart as en,updateSipgateIoSettings as eo,useDeviceLocalPrefixActions as ep,useGetDidwwCitiesByCountryQuery as er,fetchFrontdesks as es,useGetCallingCodeForUserQuery as et,useSipgateStatus as eu,SectionPlaceholder as ev,createSlice as ex,useEnhancedEffect as ey,DialogContent as f,createTranslate as f_,useBaseContractActions as fa,createSvgIcon$1 as fb,deleteRoutingConfigurations as fc,fullWeek as fd,setIncomingCallDisplayForExternalDevice as ff,ivrsPath as fg,itemizedBillEntryTypes as fh,Overlay$1 as fi,useUserActions as fl,getTranslatedFaxNumberType as fm,Spinner as fn,igelIsScrolled as fo,useProduct as fp,useGetLiveUserStatusesStatisticsQuery as fr,setRoutings as fs,validateHttpsURL as ft,selectPhonelinesForWebuser as fu,ListHeader as fv,FileUpload_module_default as fy,withDialogFlow as g,useAction as g_,useAiFlowLogs as ga,useRtl as gb,createFqdns as gc,getFreeActiveTimes as gd,setTariffAnnouncement as gf,mobileTelephonyPath as gg,useEventLifetime as gh,a11y_module_default as gi,useUsers as gl,mapContactToUpdateApiContact as gm,DropdownMenu as gn,fetchDomainVerifications as go,useProductsTacs as gp,useGetCustomFieldStatisticsQuery as gr,fetchChannelAudioFiles as gs,validateDate as gt,isFetched$10 as gu,useTheme as gv,RadioGroup as gy,LoadingDialogFlow as h,didFetch as h_,useAiFlowActions as ha,defaultTheme as hb,syncRoutingConfigurations as hc,getForwardingSteps as hd,setSingleRowDisplay as hf,mobileTelephonyDevicePath as hg,useAccount as hh,breakPoints as hi,useUserLanguage as hl,guessImageType as hm,SmartLink as hn,deleteDomainVerification as ho,useProducts as hp,useGetCallEventsQuery as hr,fetchChannelAudioFileContent as hs,validateRange as ht,updateBlockAnonymous as hu,useLocalizedNode as hv,ManagedRadioGroup as hy,useAppDownloadUrl as i,toDrawerWidthBucket as i_,getLegacyBaseProductName as ia,Typography as ib,usePaymentActions as ic,selectAllForwardingSteps as id,fetchDevices as if,frontDeskPath as ig,usePhoneBookEntry as ih,useOutsideClick as ii,forceFetchVoicemails as il,getBase64ContentFromBase64EncodedImage as im,getMonthHuman as in,useUserNotifications as io,isFetched$13 as ip,useGetDidwwUploadedProofsQuery as ir,isInternationalPhonenumberWithUnfinishedVerification as is,ConnectedEventList_default as it,createPseudo as iu,SubNavView as iv,unwrapResult as ix,require_with_selector$1 as iy,formatAddressLine1 as j,connect as j_,isCanceledTrial as ja,generatePath as jb,useDataAutomationHistory as jc,validateActiveTimes as jd,hasMobileDeviceVoiceSims as jf,userDevicePoolPath as jg,adminIntegrationDetailPath as jh,useVoices as ji,useTrunks as jl,deleteUserAvatar as jm,findMatchLocation as jn,selectPersonalChannel as jo,forceFetchContracts as jp,useDeleteIvrKeyMappingMutation as jr,deleteDateBasedForwarding as js,validateMinLength as jt,fetchMobileDeviceTariffAnnouncement as ju,DataGridPremium as jv,Headline as jy,formatAddress as k,useUserInfo as k_,hasLoggedIn as ka,Route as kb,isFetched$8 as kc,replaceStepInConditionalSet as kd,getUnlinkedDevices as kf,unlinkedDevicesPath as kg,isInCiSettingsContext as kh,selectFrontdeskById as ki,useTrunk as kl,hasAvatarForWebuserId as km,isDirectDialNumber as kn,selectLimitedAccessChannel as ko,fetchContracts as kp,useAssignPhoneNumbersToIvrMutation as kr,getNextSelectedHolidayDate as ks,validateHttpHeaderName as kt,selectById$14 as ku,useResizeObserver as kv,Banner as ky,PandaInputLabel as l,api as l_,isXLtoSdowngrade as la,CSSTransition as lb,forceFetchConferenceRooms as lc,addStepToConditionalSet as ld,setDeviceGroupRouting as lf,hardwarePath as lg,useCommissionBalance as lh,useEventsAction as li,setVoicemailPin as ll,getTranslatedContactScope as lm,getUserLocale as ln,fetchCallRecordingAudioFiles as lo,useDeviceContingentAndCombinedFlatProducts as lp,useGetTeamPerformanceStatisticsQuery as lr,deleteRoutings as ls,CenterContainer as lt,fetchPhonelines as lu,State as lv,combineReducers as lx,VisualCheckbox as ly,useRoute as m,require_sprintf as m_,useBaseContractOptions as ma,useTheme$1 as mb,setRoutingConfigurations as mc,getForwardingStep as md,setSimAlias as mf,minuteContingentsPath as mg,useAccounting as mh,MediaQueryDecorator as mi,useUserEmailChangeRequest as ml,getTranslatedWebsiteType as mm,DropdownMenuItem as mn,createDomainVerification as mo,useProductOptions as mp,useGetAvailableVariablesQuery as mr,deleteChannelAudioFile as ms,validateNumeric as mt,fetchBlockAnonymous as mu,EmptyState as mv,Search as my,useInfoToast as n,setAgentsActiveDrawer as n_,getEasyOptionUserLimit as na,Popper$1 as nb,useAutoCreditingSettings as nc,isVoicemailStep as nd,createUnlinkedMobileDevice as nf,faxLinePath as ng,useEditAddress as nh,pusher as ni,fetchVoicemails as nl,searchContacts as nm,getISOLocalMonth as nn,useDeleteUserNotification as no,fetchLocalprefix as np,useGetDidwwPhoneNumbersQuery as nr,E164_FOR_BROKEN_BLOCK as ns,useSetCallingCodeForExtensionMutation as nt,fetchScopes as nu,Section as nv,isRejected as nx,useOnMount$1 as ny,CreatePaymentMethodDialogPage as o,isInboundValue as o_,isLtoSdowngrade as oa,ButtonBase as ob,selectConferenceRoom as oc,selectForwardingTimezone as od,resetPassword as of,googleContactCallbackPath as og,forceFetchAddresses as oh,sipgate_wort_bild_marke_weiss_default$1 as oi,setActiveAudioFile as ol,getContactDisplayName as om,getYear as on,createCallRecordingAudioFile as oo,useActiveDeviceContract as op,useResubmitDidwwVerificationMutation as or,isPhonenumberWithAddress as os,resolveEndpoint as ot,usePhonelineActions as ou,SubNavLogoHeader as ov,createSelectorCreator as ox,composeClasses as oy,route as p,MarkdownProvider as p_,useBaseContractCostSummary as pa,styled as pb,fetchRoutingConfigurations as pc,getDurationToEndTime as pd,setIntendedUse as pf,locationsPath as pg,itemizedBillingPhoneNumberFormats as ph,withTranslate as pi,useUserById as pl,getTranslatedNumberType as pm,RevealComponent as pn,useDomainVerificationActions as po,useProductActions as pp,useDeleteCallEventMutation as pr,createChannelAudioFile as ps,validateURL as pt,usePhonelineBlockAnonymous as pu,ViewHeader as pv,SearchNoResult as py,useIsEWRNumber as q,TabSwitch as q_,useBatchUserJobs as qa,require_react as qb,callTerminationFinished as qc,useAppDevices as qd,fetchDeviceProperties as qf,forceFetchRestrictions as qg,contactCenterChannelPath as qh,fetchNotifications as qi,createSsoConfiguration as ql,updateBlocklistEntry as qm,Pusher_default as qn,fetchFaxLines as qo,selectContractsForDevice as qp,useCreateCostCenterMutation as qr,isAudioFileUsed as qs,SearchInput as qt,fetchGroupStatisticsHistoryAvailableData as qu,GridLogicOperator as qv,MenuList as qy,googleContactCallbackChannel as r,clampedMaxWidth as r_,getLegacyBaseProductGeneralName as ra,createPopper as rb,useOpenPositions as rc,selectAllForwardingSets as rd,deleteDeviceRouting as rf,frontDeskMinutePackages as rg,useMoveAddress as rh,AccountNumber as ri,fetchVoicemailsForAccount as rl,searchInContacts as rm,getMonthEnd as rn,useReplaceUserNotification as ro,setLocalprefix as rp,useGetDidwwProductInfoQuery as rr,hasRoutingPhoneline as rs,useSetCallingCodeForUserMutation as rt,getPseudoItem as ru,DetailView as rv,prepareAutoBatched as rx,useLazyRef as ry,PaymentMethodIcon as s,isFrontdeskQualificationCompleted as s_,isUpgrade as sa,Paper as sb,deleteGreeting as sc,selectForwardings as sd,setAlias as sf,groupPath as sg,useAffiliateConsent as sh,useEvent as si,setVoicemailAlias as sl,getImageTypeFromBase64EncodedImage as sm,getYearEnd as sn,deleteCallRecordingAudioFile as so,useContractActions as sp,useUpdateDidwwIdentityDetailsMutation as sr,isPhonenumberWithChildren as ss,validateCommaSeparatedLabels as st,usePhonelines as su,SubNavEntityHeader as sv,lruMemoize as sx,Checkbox$1 as sy,ClipboardButton as t,trackAgentsWithContext as t_,getBaseProductOptionInfo as ta,Fade as tb,useConferenceRooms as tc,isRegularForwardingStep as td,createUnlinkedDevice as tf,eventlistPath as tg,useDeleteAddress as th,useSetAnonymousForwardingMutation as ti,deleteVoicemailPin as tl,selectPersistedContacts as tm,getISOLocalDate as tn,useCreateUserNotification as to,useIsDeviceLocalPrefixUpdating as tp,useGetDidwwCountriesQuery as tr,frontdesksRestClient$1 as ts,useGetCountryCallingCodesQuery as tt,openPoliteScreenreaderAnnouncement as tu,SectionEntry as tv,isFulfilled as tx,gridRowNodeSelector as ty,SubmitButton as u,useTranslate as u_,translateBaseContractOption as ua,useEventCallback_default as ub,renameConferenceRoom as uc,addStepToUnconditionalSet as ud,setDeviceRouting as uf,isAccountSection as ug,useCommissionPayoutAccount as uh,LogoSpinner as ui,updateTranscriptionSettingForVoicemail as ul,getTranslatedContactScopeForContactDetailView as um,DropdownScrollFadeSurface as un,setActiveCallRecordingAudioFile as uo,useDeviceProducts as up,useGetUserStatusesStatisticsQuery as ur,fetchPhonenumbers as us,ManagedForm as ut,forceFetchPhonelines as uu,SubNavStickyContext as uv,Dropdown$2 as uy,DialogCloseInterceptorContext as v,paymentApi as v_,useAiFlowUsageSummaries as va,getThemeProps$1 as vb,useDataUsageSettings as vc,getWeekDays as vd,areDevicesFetched as vf,paymentPath as vg,verifyAccount as vh,useDocumentTitle as vi,fetchUserEmailChangeRequest as vl,Dialogs as vm,handleKeyUp as vn,resetDomainVerification as vo,fetchProductTacs as vp,useGetUserPresenceQuery as vr,deleteChannel as vs,validateDirectDials as vt,selectById$13 as vu,LayoutContext as vv,RadioCard as vy,useReducedMotion as w,isNeoPBXCustomer as w_,useSipgateApp as wa,instanaLog as wb,fetchDataUsageAggregation as wc,parseTime as wd,getMobileDeviceForWebuser as wf,sharedContactsPath as wg,createSmsCallerIds as wh,useFrontdeskActions as wi,setUserName as wl,require_lodash as wm,EWRCountries as wn,selectChannelsByUserIdAndTeamLeadId as wo,formatNettoUnitCost as wp,useGetIncomingAcceptedCallsStatisticsQuery as wr,getCustomDateBasedForwardingsNotInPast as ws,ibantools_exports as wt,createPersonalAccessToken as wu,Option as wv,Input as wy,buildAuthenticateUrl as x,useIsAffiliateImpersonationAndTargetingSelf as x_,useNqNupsi as xa,clsx as xb,isFetched$6 as xc,isForwardingSetActive as xd,getDefaultDevice as xf,portingsPath as xg,selectDefaultNumber as xh,useContingents as xi,resetUserPassword as xl,PageNotFoundRedirect_default as xm,OverlayTransition as xn,selectChannelsByEditorId as xo,compareCosts as xp,useGetQueuedCallsStatisticQuery as xr,isFullAccessChannel as xs,validateCommissionPayoutAllowedIBAN as xt,fetchPhones as xu,ManagedCombobox as xv,ManagedTextArea as xy,DialogChromeContext as y,HttpClient as y_,useAiFlowVocabulary as ya,styled$1 as yb,fetchDataUsageSettings as yc,insertStepBeforeTerminalStep as yd,canCreateAdditionalVoipPhonesWithoutCharge as yf,personalAccessTokenPath as yg,deleteLogo as yh,useChartDisplayLimit as yi,fetchUsers as yl,useDialogs as ym,Tooltip as yn,useChannelActions as yo,selectContingentType as yp,useSetUserPresenceLoginStatusMutation as yr,fetchChannels as ys,validatePhonenumber as yt,usePhoneProvisioning as yu,useLayout as yv,Radio as yy,translateCountry as z,isApiError as z_,fetchBalance as za,require_react_is$4 as zb,selectFetchItemById$6 as zc,WEBPHONE_TOUR as zd,selectCurrentSim as zf,require_dist$2 as zg,blocklistPath as zh,useBusinessActions as zi,selectTrunk as zl,ContactWebsiteTypes as zm,TitleOverride as zn,isRevokablePhonenumber as zo,isContingentContract as zp,useChannelLegacyStatistics as zr,useAudioFilesFetchedForOwner as zs,validateTrimmedNonEmpty as zt,setActiveAudioFileCallQueue as zu,GridFilterPanel as zv,DisabledContext as zy};
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/main-C3206pWE.js | grep -A 200 "ImplicitAuthenticator" | head -300
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068db3df6001rNLrgbUJB6iMXO
+
+(no output)
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/main-C3206pWE.js | grep -i "implicit" | head -50
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068dbbf68001W1eruYh60z1CL6
+
+(no output)
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/main-C3206pWE.js | grep -i "authenticator" | head -30
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068dc52e2001r4HPyMdUbI2Wc7
+
+(no output)
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/main-C3206pWE.js | grep -i "history.replace" | head -20
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068dd1317001BPxuXnttCNXRYQ
+
+(no output)
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/chunk-CernVdwh.js | head -300
+var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=Object.getOwnPropertyNames,i=Object.getPrototypeOf,a=Object.prototype.hasOwnProperty,o=(e,t)=>()=>(e&&(t=e(e=0)),t),s=(e,t)=>()=>(t||(e((t={exports:{}}).exports,t),e=null),t.exports),c=(e,n)=>{let r={};for(var i in e)t(r,i,{get:e[i],enumerable:!0});return n||t(r,Symbol.toStringTag,{value:`Module`}),r},l=(e,i,o,s)=>{if(i&&typeof i==`object`||typeof i==`function`)for(var c=r(i),l=0,u=c.length,d;l<u;l++)d=c[l],!a.call(e,d)&&d!==o&&t(e,d,{get:(e=>i[e]).bind(null,d),enumerable:!(s=n(i,d))||s.enumerable});return e},u=(n,r,a)=>(a=n==null?{}:e(i(n)),l(r||!n||!n.__esModule?t(a,`default`,{value:n,enumerable:!0}):a,n)),d=e=>a.call(e,`module.exports`)?e[`module.exports`]:l(t({},`__esModule`,{value:!0}),e),f=(e=>typeof require<`u`?require:typeof Proxy<`u`?new Proxy(e,{get:(e,t)=>(typeof require<`u`?require:e)[t]}):e)(function(e){if(typeof require<`u`)return require.apply(this,arguments);throw Error('Calling `require` for "'+e+"\" in an environment that doesn't expose the `require` function. See https://rolldown.rs/in-depth/bundling-cjs#require-external-modules for more details.")});export{d as a,f as i,o as n,u as o,c as r,s as t};
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/preload-helper-rov5CBGT.js | head -200
+var e=`modulepreload`,t=function(e){return`/`+e},n={},r=function(r,i,a){let o=Promise.resolve();if(i&&i.length>0){let r=document.getElementsByTagName(`link`),s=document.querySelector(`meta[property=csp-nonce]`),c=s?.nonce||s?.getAttribute(`nonce`);function l(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}o=l(i.map(i=>{if(i=t(i,a),i in n)return;n[i]=!0;let o=i.endsWith(`.css`),s=o?`[rel="stylesheet"]`:``;if(a)for(let e=r.length-1;e>=0;e--){let t=r[e];if(t.href===i&&(!o||t.rel===`stylesheet`))return}else if(document.querySelector(`link[href="${i}"]${s}`))return;let l=document.createElement(`link`);if(l.rel=o?`stylesheet`:e,o||(l.as=`script`),l.crossOrigin=``,l.href=i,c&&l.setAttribute(`nonce`,c),document.head.appendChild(l),o)return new Promise((e,t)=>{l.addEventListener(`load`,e),l.addEventListener(`error`,()=>t(Error(`Unable to preload CSS for ${i}`)))})}))}function s(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return o.then(e=>{for(let t of e||[])t.status===`rejected`&&s(t.reason);return r().catch(s)})};export{r as t};
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/main-C3206pWE.js | grep -oE 'fragment|localStorage|sessionStorage|access_token|redirect' | sort -u
+access_token
+fragment
+localStorage
+redirect
+sessionStorage
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/main-C3206pWE.js | grep -B5 -A5 "access_token" | head -100
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068df5f66001z2gZVuGe5oY5hX
+
+(no output)
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/main-C3206pWE.js -o /tmp/main.js && grep -n "access_token" /tmp/main.js | head -20
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068dff61d001U1iIWNTx3rBzmK
+
+(no output)
+[0m
+[0m$ [0mls -lh /tmp/main.js && grep -n "access_token" /tmp/main.js
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068e07b560011a9wvynahu7wvI
+
+(no output)
+[0m
+[0m$ [0mwc -l /tmp/main.js && head -1 /tmp/main.js
+474 /tmp/main.js
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/exceljs.min-Dm9JI-nm.js","assets/chunk-CernVdwh.js","assets/widget-BGtz5xkq.js","assets/WebBlfView-CsNm6N7H.js","assets/WebBlfView-DBTJOySX.css","assets/BlocklistView-BRiDm7r2.js","assets/hooks-CNkxQLWZ.js","assets/PersonalSettingsView-Bp50zpl4.js","assets/UserSettingsView-1xOhHw3u.js","assets/datetime-Bg9M5dlC.js","assets/costCenters-DAsN2eDX.js","assets/OfflineForwardingsSettings-D1lAeOdJ.js","assets/useSuccessToast-cKPkp6vd.js","assets/hooks-D6Lna5e0.js","assets/hooks-IluaSmaf.js","assets/country-formatter-DWkhlWvf.js","assets/voicemail-B0JP6wvT.js","assets/ChannelSmReceivingSimSettingsSection-CqHem_6L.js","assets/UserSettingsView-nFlUIwBU.css","assets/PersonalAccessToken-tICZh1ab.js","assets/PersonalAccessToken-ClNTnG0w.css","assets/UserNotificationsView-CFHuKjw5.js","assets/hooks-BRVKxCtA.js","assets/utils-CVlOig5V.js","assets/selectors-Ha8aXEmA.js","assets/UserNotificationsView-BouYSbwH.css","assets/NeoUserNotificationsView-S3saQemR.js","assets/neoNotifications-D_yi_4tn.js","assets/NeoUserNotificationsView-CA2DYrBB.css","assets/UserView-B5KZtjzU.js","assets/TariffManagementWrapper-DahFK51t.js","assets/StackedBarGraph-B174QdA0.js","assets/Path-ohSCMaYy.js","assets/Path-C5ROTcpm.css","assets/dates-GUrHkLvo.js","assets/StackedBarGraph-ufrKLGTX.css","assets/CurrentBooking-DLcbl8ev.js","assets/Booking-paGRkfgn.js","assets/Booking-CSjfEcqj.css","assets/productLanguageKeys-CeaZVdwo.js","assets/dates-CVJmwDWx.js","assets/mobileInfoMessageLanguageKeys-CuwHqQ4x.js","assets/TariffManagementWrapper-nnBK2AFw.css","assets/RoutingGraphTooltip-pj-yMyfl.js","assets/dist-DANRzkU2.js","assets/string-CLjNHHx4.js","assets/RoutingGraphTooltip-DzUrLeVA.css","assets/CtaCommand-Bm9HlkJH.js","assets/CtaCommand-BlBZuUpm.css","assets/EventTour-CM7oj28q.js","assets/ChannelVoiceboxAccessWidget-2UcIFPw4.js","assets/DragAndDropProvider-Cy7KyHMW.js","assets/StatelessAudioPlayer-DjyFtsJN.js","assets/StatelessAudioPlayer-DvxYuVh6.css","assets/ExternalDeviceIcon-CHCDuh_o.js","assets/ViewTimeTracks-C9pWq71O.js","assets/helpers-BDUpwX0J.js","assets/ViewTimeTracks-HSv9s7s8.css","assets/SimIcon-COJ_Y5f7.js","assets/helpers-hYWvdr3q.js","assets/frontdeskTopics-D5DsFV-T.js","assets/selectors-6fFRl_Q4.js","assets/utils-CUe1CG1z.js","assets/hooks-D_9bg_Wl.js","assets/hooks-BAeVLeQq.js","assets/aria-id-CNzcc1wy.js","assets/merge-refs-6VZKPg6C.js","assets/util-NLap5O5D.js","assets/DragAndDropProvider-DTHz8ubM.css","assets/Widget-DdHgle1Z.js","assets/Widget-1pvT0MIE.css","assets/ChannelVoiceboxAccessWidget-Dsnddmoa.css","assets/DragAndDropWidget-B34ciybf.js","assets/DragAndDropWidget-BzRmCfbN.css","assets/UserChannelRoutingCard-DIkVb_9i.js","assets/RoutingCardTabs--gZYBRCB.js","assets/DeviceDropdownValue-FayBnQM0.js","assets/activeTimesUtils-C0PMk107.js","assets/DeviceDropdownValue-BcHKcI7Y.css","assets/DeviceDropdownSettingsGroup-Cd4WxBGN.js","assets/DeviceDropdownSettingsGroup-Dj-nKGaY.css","assets/useConfirmDeleteAdditionalSim-D5eIRKQR.js","assets/useConfirmDeleteDevice-D-8ssv7g.js","assets/ActiveTimesInfoDropdown-D_mLNWAV.js","assets/NumberColumn-aj25D6xo.js","assets/PhoneNumberIcon-DhK0xO2x.js","assets/NumberColumn-CN-J7h-O.css","assets/ActiveTimesInfoDropdown-DwYJgp6I.css","assets/call-recorder-Cc4-Ut4o.js","assets/hooks-Dl0vyCIg.js","assets/RoutingCardTabs-CpR0dk9q.css","assets/DeviceCard-Btv7OIqX.js","assets/DeviceCard-Df3whYJO.css","assets/GroupFaxRoutingCard-9fHX4y5z.js","assets/FaxRoutingGraph-cQRWIqc0.js","assets/FaxRoutingGraph-BM2XMM0j.css","assets/GroupFaxRoutingCard-J5op0imJ.css","assets/UserChannelRoutingCard-lrhn3yQZ.css","assets/DeviceTable-fZzQ2ZUD.js","assets/DeviceTable-CEDb7B3v.css","assets/AppsAndDevicesView-CPv-EiZY.js","assets/MobileDeviceTable-CDyYITqF.js","assets/MobileDeviceTable-CKBrBE-N.css","assets/neoPbxOnly-cA2sVm5G.js","assets/AppsAndDevicesView-DVQocswR.css","assets/mobile-device-BvZ2uwTw.js","assets/PandaTwoColumnLayout-CpwbimSs.js","assets/PandaTwoColumnLayout-B1veUq7y.css","assets/selectors-BtWaD5gm.js","assets/PersonalChannelReactFlowGraph-xdqK8N28.js","assets/UserView-CYmgSYuJ.css","assets/UsersOverview-cjecaeOQ.js","assets/DirectdialsMetaCell-BwQzFm5e.js","assets/DirectdialsMetaCell-C0txtVv1.css","assets/IconWithTextCell-CoUm1jCH.js","assets/IconWithTextCell-BKF-QMrn.css","assets/PhonenumbersMetaCell-CX1s9N98.js","assets/PhonenumbersMetaCell.module-BnHTjaoR.js","assets/PhonenumbersMetaCell-BJ7q4PIo.css","assets/Skeleton-DdTF8Bvu.js","assets/Skeleton-BS0n-Gtu.css","assets/UsersOverview-yYjQ76wa.css","assets/FaxLinesOverview--i_PVj-A.js","assets/UserAvatarStack-EKK0uiU_.js","assets/restrictionGuard-CXgi8ph5.js","assets/FaxLineDetailView-BuM_gVNg.js","assets/RedirectFrom-CYIZN4BS.js","assets/FaxLineDetailView-D1nTO6jd.css","assets/ApiClientsOverview-CsHUT5yw.js","assets/ApiClientView-BlxWWvDI.js","assets/CopySectionEntry-C89hN7cp.js","assets/CopySectionEntry-CP-vnifJ.css","assets/TrunksOverviewContainer-B5Rj6GYb.js","assets/contingent-uhGUR-eP.js","assets/TrunkView-DIQedCww.js","assets/TreeList-Ditohy-A.js","assets/utils-VqNGhYEh.js","assets/TreeList-Bg8dm27p.css","assets/hooks-DMR63hQV.js","assets/TrunkView-Bsl3R0Fv.css","assets/MinuteContingentsView-CLXu9Bzs.js","assets/selectors-QqgFnU1z.js","assets/types-BBwqji-7.js","assets/LocationsView-DxkN5BiR.js","assets/LocationsView-FGwK269Z.css","assets/GroupsOverview-_vDCoZQA.js","assets/GroupView-KliVBK7_.js","assets/memoize-one.esm-CoOllDk1.js","assets/GroupGreetingDropdown.module-CS423V8_.js","assets/GroupGreetingDropdown-Du3prDVN.css","assets/GroupView-DVhuX_Iy.css","assets/UnlinkedDevicesOverview-BPL3ScPZ.js","assets/ChannelsOverview-jAOJ2IuR.js","assets/ChannelView-i2rLlqdX.js","assets/useConfirmDeleteChannel-r3zSJ258.js","assets/contactCenterShortCallThreshold-QmzQhZSI.js","assets/contactCenterStatisticTargets-D4fuJ0KQ.js","assets/util-oLzElasL.js","assets/ChannelReactFlowGraph-CZpAVeAu.js","assets/useTimeSetNameSlimNode-eAhlmtIL.js","assets/useConfirmDeleteChannel-BtTTOe6b.css","assets/ChannelLiveStatisticsView-B0jV6atc.js","assets/channelStatistics-znf1OdHs.js","assets/FilterDropdown-D6nlpAHR.js","assets/FilterDropdown-DBaGgsRK.css","assets/channelStatistics-DXNMkSH3.css","assets/ChannelLiveStatisticsView-CGTLikQS.css","assets/ChannelView-EL5zjCk2.css","assets/TeamLeadDashboard-CXKvzjFp.js","assets/TeamLeadDashboard-h5YAEE3Z.css","assets/MyChannelsOverview-DQINV5nw.js","assets/MyChannelView-Dml9wXQ7.js","assets/entitySettings-CWknTC1p.js","assets/MyChannelView-UjYNpoR2.css","assets/UnlinkedDeviceView-Cl-6xZZZ.js","assets/UnlinkedDeviceView-Dk2ZFlF_.css","assets/AdminDevicePoolLayout-kd8Os8t4.js","assets/hooks-BLgYvARp.js","assets/AdminDevicePoolLayout-Cnah7mpZ.css","assets/TeamView-ZLtOWTRT.js","assets/Iframe-BeK6ffhN.js","assets/Iframe-DkBqCxUL.css","assets/TeamView-DUCLe5wv.css","assets/MicrosoftTeamsIntegrationView-BC9NtKQf.js","assets/ListItem-DGoVQCzO.js","assets/ListItem-6r0wLNg3.css","assets/ListItemText-BMzjeHrN.js","assets/ListItemText-BwbijSy_.css","assets/MicrosoftTeamsIntegrationView-DSojdMYL.css","assets/HardwareView-BWsEkQe5.js","assets/HardwareView-Czm_xt-J.css","assets/DevicePoolLayout-CXvZpKDj.js","assets/DevicePoolLayout-D3rDUJeP.css","assets/DevicePoolsOverview-Cw8I9zTs.js","assets/DevicePoolsOverview-cMmDFj1_.css","assets/AccountManagementOverview-CGQ6ezPj.js","assets/NegativeBalanceBanner-DKENQtn-.js","assets/NegativeBalanceBanner-BhAhpWFh.css","assets/AccountManagementOverview-D5Biyi_Y.css","assets/UserRoutingView-BWuahZ95.js","assets/UserRoutingView-4n7loaWK.css","assets/ConferenceRoomOverview-lTLvyBi9.js","assets/ConferenceRoomView-xpAJgrHi.js","assets/ConferenceRoomView-tnTT-Q0m.css","assets/IvrsOverview-BkR_tCt7.js","assets/SamlSsoOverview-fAZkvg0D.js","assets/SamlSsoOverview-Cq5A0toO.css","assets/TelephonySettingsView-CGf1Rt7T.js","assets/transferCallerId-RV2NX9hg.js","assets/AdministrationView-B2kn5Vlc.js","assets/PaymentCard-BOw73TqX.js","assets/PaymentCard-BdkRqz89.css","assets/selectors-Dhw4Y7fm.js","assets/AdministrationView-D5vfnaRx.css","assets/AffiliateView-CtxWmzEN.js","assets/AffiliateView-BNPqv1bx.css","assets/MandatesView-XtUpHd0Q.js","assets/MandatesView-BKFLq6YB.css","assets/AppRedirect-BKU2tWfm.js","assets/SipgateIoView-BvhQ4iVX.js","assets/option-name-Bv24WiE9.js","assets/SipgateIoView-PbEctTnI.css","assets/IvrDetailView-CwkzuUE8.js","assets/IvrKeyForwardingHelpers-OFdVqmko.js","assets/IvrDetailView-B8-kRhHq.css","assets/PhonenumbersOverview-D8MgP7zY.js","assets/PhonenumbersOverview-ir5mZZhH.css","assets/IntegrationsOverview-BRUyl7m7.js","assets/IntegrationsView-DzjUmvgx.js","assets/ContactIntegrationsSection-BNLumHBW.js","assets/sipgateIntegration-DqCWt-3V.js","assets/ContactIntegrationsSection-OR26dCq6.css","assets/AdminIntegrationsOverview-C-rnjEYu.js","assets/helpdeskCatalog-CsY7HFwd.js","assets/IntegrationDetailView-DT-CD0uU.js","assets/HelpdeskOauthCallbackView-B6-01_uw.js","assets/UserContactsOverview-iy16yvk6.js","assets/ContactsOverview-D2mUJaaC.js","assets/ContactsOverview-BhDPlrW9.css","assets/SharedContactsOverview-DDlunSOI.js","assets/ContactView-Cgoug1Sj.js","assets/ContactView-DCJz6mEG.css","assets/UserAreaAppsAndDevicesView-B8Tb9TtV.js","assets/FrontDeskOverview-NA4gJgiX.js","assets/selectors-5u-CZIhz.js","assets/FrontDeskView-Y0LTggOg.js","assets/inboundContext-BGLsHF_K.js","assets/alertManager-CR3OwFaI.js","assets/inlineSectionForms-9JwDuTW1.js","assets/inlineSectionForms-cjAdxqah.css","assets/FrontDeskView-BBPkU-PM.css","assets/FrontDeskMinutePackagesView-Dd7F_A71.js","assets/AiAgentAnalysis-Ceo5fyrZ.js","assets/Heatmap-CUvOqQ3g.js","assets/preload-helper-rov5CBGT.js","assets/utils-CugXTFmg.js","assets/utils-biK9dWlh.css","assets/CategoricalChart-CQq6WCBu.js","assets/BarChart-D9A3S1X5.js","assets/BarChart-Ckojjk8j.css","assets/Heatmap-hQihMzqM.css","assets/DonutChart-ClxQC38P.js","assets/DonutChart-B_K118Xv.css","assets/PanelTriggerButtons-B_iLuZZn.js","assets/filterQuery-B85Tbzwp.js","assets/standardVariableMapping-fFnP0odV.js","assets/PanelTriggerButtons-BVj6EdbR.css","assets/AiAgentAnalysis-CpnOr3cS.css","assets/AiFlowOverview-Cv-JgkRb.js","assets/AiFlowAccessGuard-DtVT4HID.js","assets/AiFlowOverview-m7p03nP7.css","assets/AiFlowMinutePackagesView-DgS-CJPb.js","assets/AiFlowView-BOLcSeRa.js","assets/utils-Eoj7g4Vn.js","assets/AiFlowView-CtN0V2nI.css","assets/ContactCenterChannelsOverview-oJMIfkxV.js","assets/ContactCenterChannelView-rIvosaT3.js","assets/ContactCenterChannelView-qge1dR7w.css","assets/LiveMonitoringView-ezOtj7bo.js","assets/StatisticsFilterParams-sWfK2lA_.js","assets/StatisticsFilterParams-WFCRwR-o.css","assets/InformationDropdown-CGm27j2q.js","assets/InformationDropdown-C7MRer1D.css","assets/LiveMonitoringView-CvUuIWlH.css","assets/StatisticsDashboard-BEETXJxv.js","assets/contactCenterCallEventColumns-BYiYDz2v.js","assets/contactCenterCallEventColumns-nSVrht-V.css","assets/StatisticsDashboard-BBZBmfSc.css","assets/CoachingDashboard-Dk5JBN7K.js","assets/CoachingDashboard-CeGdE7Dy.css","assets/ContactCenterMinutePackagesView-Di5Lmu57.js","assets/contactCenterManagement-B2C8q5MR.js","assets/ContactCenterMinutePackagesView-CZ0akfJ3.css","assets/CiDatahubView-D9qWSHg7.js","assets/CiAnalyticsView-_FOLSBLA.js","assets/variables-BWPVXYoP.js","assets/CiAnalyticsView-CMJOYYhL.css","assets/VariablesView-B6zKz2_A.js","assets/dataTypeMapping-CzV9ipui.js","assets/dataTypeMapping-DEbmqDd6.css","assets/VariablesView-BFaSYHy1.css","assets/settings-DfmCueL1.js","assets/ciEventRetention-BPU9h8Xb.js","assets/webhooks-YrzsgX54.js","assets/useWebhookEntities-Nn5R4bCm.js","assets/webhooks-BK8NQ-W1.css","assets/DialogWrapper-CQxCv_Ga.js","assets/Form-BPT8A2PN.js","assets/environment-D9ixW1Um.js","assets/DialogWrapper-1eX645Xq.css","assets/WebphoneWrapper-CEQat_GL.js","assets/WebphoneWrapper-B1qHzdj-.css","assets/ExternalPresenceRedirectView-9xBMbURM.js","assets/ExternalPresenceLayout-EAL1awRv.js","assets/ExternalPresenceLayout-D7ncAz4v.css","assets/ExternalPresenceCallbackView-BW7NDvAc.js"])))=>i.map(i=>d[i]);
+[0m
+[0m$ [0mfor f in /tmp/*.js; do grep -l "ImplicitAuthenticator\|implicit.*auth" "$f" 2>/dev/null; done
+/tmp/main.js
+[0m
+[0m$ [0mgrep -i "implicit" /tmp/main.js
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068e34356001Ue43Eb2UQD7zTu
+
+(no output)
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/hooks-CNkxQLWZ.js | head -200
+import{o as e}from"./chunk-CernVdwh.js";import{Gm as t,Km as n,M_ as r,N_ as i,Wm as a,g_ as o,qb as s,qm as c}from"./main-C3206pWE.js";var l=e(s(),1),u=()=>{let e=i(e=>e.blocklist),t=r();return(0,l.useEffect)(()=>{t(n())},[t]),e.fetched?{data:e.items,fetched:!0}:{data:null,fetched:!1}},d=()=>({deleteBlocklistEntry:o(t),createBlocklistEntry:o(a),updateBlocklistEntry:o(c)});export{d as n,u as t};
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/hooks-BRVKxCtA.js | head -200
+import{o as e}from"./chunk-CernVdwh.js";import{M_ as t,N_ as n,cl as r,g_ as i,nl as a,qb as o,rl as s}from"./main-C3206pWE.js";var c=e(o(),1),l=()=>({setVoicemailAuthorizedNumbers:i(r)}),u=e=>{let r=t(),i=n(e=>e.voicemails);return(0,c.useEffect)(()=>{r(a(e))},[r,e]),i.fetchedForUser.includes(e)?i.items:null},d=()=>{let e=t(),r=n(e=>e.voicemails);return(0,c.useEffect)(()=>{e(s())},[e]),{items:r.items,fetched:r.fetchedForAccount}},f=(e,r)=>{let i=t(),o=n(e=>e.voicemails);return(0,c.useEffect)(()=>{i(r===`user`?a(e):s())},[i,e,r]),{items:o.items,fetched:r===`user`?o.fetchedForUser.includes(e):o.fetchedForAccount}};export{f as i,u as n,d as r,l as t};
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/hooks-D6Lna5e0.js | head -200
+import{o as e}from"./chunk-CernVdwh.js";import{D_ as t,Dd as n,Eo as r,Fd as i,Id as a,Ju as o,Ld as s,M_ as c,N_ as l,Od as u,Rd as d,Yu as f,bo as p,dl as m,fd as h,h_ as g,hd as _,qb as v,sd as y,yd as b}from"./main-C3206pWE.js";var x=e(v(),1),S={type:`ANNOUNCEMENT`,target:`provided-wait-timeout`},C={type:`ANNOUNCEMENT`,target:`provided-wait-timeout-personal`},w={type:`ANNOUNCEMENT`,target:`provided-holiday-announcement`},T=e=>({type:`conditional`,name:``,isUserDefined:!0,activeTimes:[h(e||`Europe/Berlin`)],priority:0,online:[{delay:100,destination:{type:`HANGUP`}}],busy:[{delay:0,destination:{type:`HANGUP`}}],offline:[]}),E=(e,t)=>t===`online`?e?600:25:0,D=(e,t,n)=>({delay:E(t,n),destination:e?C:S}),O=e=>{let t=c(),n=l(e=>e.forwardings);return(0,x.useEffect)(()=>{t(i(e))},[e,t]),{forwardings:y(n,e),fetched:o(n,e)}},k=e=>{let o=m(),v=l(e=>e.forwardings),{data:y}=p(),S=c(),C=t(`NEO`);(0,x.useEffect)(()=>{e&&S(i(e))},[e,S]);let w=(0,x.useCallback)(()=>{let t=r(y||[],e),n=!!t?.owner,i=!!t?.settings.queue;return{type:`conditional`,name:``,isUserDefined:!0,activeTimes:[h(o?.timezone||`Europe/Berlin`)],priority:0,online:[D(n,i,`online`)],busy:C?[D(n,i,`busy`)]:[],offline:[]}},[y,o?.timezone,C,e]),O=(0,x.useCallback)((t,n)=>{if(!e)return;let r=v.items[e]?.find(e=>e.priority===n);return r===void 0&&n===0?t===`EXTENSION`?T(o?.timezone):w():r},[v.items,o?.timezone,e,w]),k=(0,x.useCallback)(()=>{if(!e)return[];let t=v.items[e];return t===void 0||t.length===0?[w()]:t},[v.items,w,e]),A=(0,x.useCallback)(()=>{if(!e)return w();let t=v.items[e];return t===void 0||t.length===0?w():t.find(e=>e.priority===0)||w()},[v.items,w,e]),j=(0,x.useCallback)(t=>e?v.items[e]?.find(e=>e.priority===0)??T(t):T(t),[v.items,e]),M=(0,x.useCallback)(()=>e?(v.items[e]||[])?.filter(e=>e.priority>0).sort((e,t)=>e.priority-t.priority):[],[v.items,e]),N=(0,x.useCallback)(()=>{if(!e)return[];let t=v.items[e];if(t===void 0||t.length===0)return[];let n=t.filter(e=>e.priority>0);return n?n.sort((e,t)=>e.priority-t.priority):[]},[v.items,e]),P=async(t,n)=>{if(!e)return;let r=S(s(e,t,n));if(g(r)){let e=await r.payload.promise;return e.type===`TIME_BASED_SETS_UPDATE_SUCCESS`?e.payload.items:void 0}},F=t=>{if(e)return S(a(e,t))},I=async t=>{if(!e)return;let n=v.items[e];if(!n||n.length===0){let e=await P([{type:`conditional`,online:[],offline:[],busy:[],activeTimes:[h(o?.timezone||`Europe/Berlin`)],isUserDefined:!0,name:``,priority:0}],!0);return e?d(e[0],null):void 0}return t?n.find(e=>e.id===t):n[0]},L=async e=>{let t=await I(e);t&&t.type!==`unconditional`&&F({...t,offline:[]})},R=(e,t,n)=>{let r=_(e,t);if(!r)return e;let i=r[n].delay,a=r.toSpliced(n,1);return n<a.length&&(a[n].delay=i),{...e,[t||`unconditional`]:a}};return{timeBasedForwardings:e?v.items[e]:[],timeBasedForwardingsFetched:e?v.fetched[e]:!0,timeBasedForwardingsAreUpdating:e?f(v,e):!1,getChannelTimeBasedForwardings:k,getTimeBasedForwardingSet:O,getChannelInsideServiceTimesForwardingSet:A,getChannelOutsideServiceTimesForwardingSets:N,getUnlinkedDeviceInsideServiceTimesForwardingSet:j,getUnlinkedDeviceOutsideServiceTimesForwardingSets:M,updateTimeBasedSets:P,updateTimeBasedForwardings:F,addNeoEndpointTimeBasedForwardingStep:async(e,t,n,r)=>{let i=await I(r);if(!i)return;let a,o=_(i,e);a=o.length===0?[{delay:E(n,e),destination:t}]:b(o,t),F({...i,[e||`unconditional`]:a})},updateNeoEndpointTimeBasedForwarding:async(e,t,r,i,a)=>{let o=await I(a);if(!o)return;let s=_(o,e);if(i>=s.length)return;let c=n(u(s,i,t),i,r);F({...o,[e||`unconditional`]:c})},deleteNeoEndpointTimeBasedForwardingStep:async(e,t,n)=>{let r=await I(n);if(r)return F(R(r,e,t))},updateNeoEndpointTimeBasedForwardingConditionalToUnconditional:async e=>{let t=await I(e);if(!t||t.type===`unconditional`)return;let n=[...t.online];n.with(0,{...t.online[0],delay:0}),F({id:e,activeTimes:t.activeTimes,isUserDefined:t.isUserDefined,name:t.name,priority:t.priority,type:`unconditional`,unconditional:n})},updateNeoEndpointTimeBasedForwardingUnconditionalToConditional:async(e,t)=>{let n=await I(e);if(!n||n.type===`conditional`)return;let r=[...n.unconditional].with(0,{...n.unconditional[0],delay:t});F({id:e,activeTimes:n.activeTimes,isUserDefined:n.isUserDefined,name:n.name,priority:n.priority,type:`conditional`,online:r,busy:n.unconditional,offline:[]})},deleteOfflineTimeBasedForwarding:L}};export{O as a,D as i,w as n,k as o,C as r,S as t};
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/environment-D9ixW1Um.js | head -200
+function e(e=window.location.hostname){return!e.match(/\.(dev|local)\.(sipgate\.com)/)&&!e.match(/app-web-dev.*\.(web\.app)/)}function t(t=window.location.hostname){return e(t)?`https://workspace.sipgate.com`:`https://workspace.dev.sipgate.com`}function n(){return/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)}export{n,e as r,t};
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/utils-CVlOig5V.js | head -300
+import{o as e}from"./chunk-CernVdwh.js";import{t}from"./selectors-Ha8aXEmA.js";import{Eo as n,Ht as r,Kb as i,Tn as a,qb as o,yt as s}from"./main-C3206pWE.js";var c=e(o(),1),l=i(),u=(e,t)=>e.replace(t,``);function d(e,t){return u(t,e)}var f=(e,t,r,i,a)=>{switch(e.type){case`CALL`:case`VOICEMAIL`:return n(t,e.target.id)?.name;case`SMS`:return r.find(t=>d(a,t.id,`SMS`)===e.target.id)?.alias;case`FAX`:return i.find(t=>d(a,t.id,`FAX`)===e.target.id)?.alias}},p=(e,t,n,r,i,a)=>{let o=e.type,s=e.direction,c=f(e,t,n,r,i)??e.target.id;if(o===`CALL`){if(s===`INCOMING_ACCEPTED`)return a(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_SECTION_EVENT_HEADLINE_INCOMING_CALL`,c);if(s===`INCOMING_MISSED`)return a(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_SECTION_EVENT_HEADLINE_MISSED_CALL`,c);if(s===`OUTGOING`)return a(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_SECTION_EVENT_HEADLINE_OUTGOING_CALL`,c)}if(o===`VOICEMAIL`&&s===`INCOMING`)return a(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_SECTION_EVENT_HEADLINE_INCOMING_VOICEMAIL`,c);if(o===`SMS`){if(s===`INCOMING`)return a(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_SECTION_EVENT_HEADLINE_INCOMING_SMS`,c);if(s===`OUTGOING`)return a(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_SECTION_EVENT_HEADLINE_OUTGOING_SMS`,c)}if(o===`FAX`){if(s===`INCOMING`)return a(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_SECTION_EVENT_HEADLINE_INCOMING_FAX`,c);if(s===`WITH_ERROR`)return a(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_SECTION_EVENT_HEADLINE_OUTGOING_FAX_ERROR`,c);if(s===`OUTGOING`)return a(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_SECTION_EVENT_HEADLINE_OUTGOING_FAX`,c)}return`UNKNOWN`},m=(e,n,r)=>{switch(e.type){case`EMAIL`:return e.target;case`SMS`:return n(e.target);case`USER`:{let n=t(r,e.target);return`${n?.firstname} ${n?.lastname}`}}},h=e=>e.type===`EMAIL`||e.type===`USER`?`USER_NOTIFICATIONS_VIEW_EMAIL_ACTION_PREFIX`:e.type===`SMS`?`USER_NOTIFICATIONS_VIEW_SMS_ACTION_PREFIX`:`UNKNOWN`,g=(e,t,n)=>m(e,t,n),_=(e,t,n,r,i,a)=>{if(e.startsWith(`y`)||e.startsWith(`e`))return t.find(t=>t.id===e)?.alias;if(e.startsWith(`g`))return n.find(t=>t.id===e)?.alias;if(e.startsWith(`p`))return r.find(t=>t.id===e)?.alias;if(e.startsWith(`f`))return i.find(t=>t.id===e)?.alias;if(e.startsWith(`v`))return a.find(t=>t.id===e)?.alias},v=(e,t,n,r,i,a,o,s)=>{let c=``;switch(e.dataType){case`CALL`:c=s(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_HEADLINE_DATATYPE_CALL`);break;case`FAX`:c=s(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_HEADLINE_DATATYPE_FAX`);break;case`SMS`:c=s(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_HEADLINE_DATATYPE_SMS`);break;case`VOICEMAIL`:c=s(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_HEADLINE_DATATYPE_VOICEMAIL`);break}switch(c+=` `,e.direction){case`INCOMING`:if(e.dataType===`CALL`){c+=s(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_RULE_DIRECTION_CALL_INCOMING`);break}c+=s(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_RULE_DIRECTION_INCOMING`);break;case`OUTGOING`:c+=s(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_RULE_DIRECTION_OUTGOING`);break;case`MISSED_INCOMING`:c+=s(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_RULE_DIRECTION_MISSED_INCOMING`);break;case`FAX_OUT_FAILED`:c+=s(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_RULE_DIRECTION_FAX_OUT_FAILED`);break}let l=u(e.extensionSipid,o);return c+=` `,c+=_(l,t,n,r,i,a),c},y=(e,t,n,r)=>{let i=[];if(e.permanentDelete)return(0,l.jsx)(`span`,{children:r(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_ACTION_PERMANENT_DELETE`)});if(e.emailReceivers.length>0&&i.push((0,l.jsxs)(`span`,{children:[r(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_ACTION_EMAIL`,[[...e.emailReceivers].join(`, `)]),` `]})),e.smsReceivers.length>0){let o=e.smsReceivers.flatMap((r,i)=>{let o=r.includes(`y`)?(0,l.jsx)(`span`,{children:t.find(e=>e.id===r)?.alias},r):(0,l.jsx)(`span`,{"aria-label":a(n(r)),children:n(r)},r);return i<e.smsReceivers.length-1?[o,`, `]:[o]});i.push((0,l.jsxs)(`span`,{children:[r(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_ACTION_SMS`),` `,o,`.`,` `]}))}return(e.labels.length>0||e.archive||e.markRead||e.permanentDelete)&&i.push((0,l.jsxs)(`span`,{children:[r(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_ACTION_AND`),` `]})),e.labels.length>0&&i.push((0,l.jsxs)(`span`,{children:[r(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_ACTION_LABEL`,[[...e.labels].sort((e,t)=>e.localeCompare(t)).join(`, `)]),` `]})),e.archive&&i.push((0,l.jsxs)(`span`,{children:[r(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_ACTION_ARCHIVE`),` `]})),e.markRead&&i.push((0,l.jsxs)(`span`,{children:[r(`USER_NOTIFICATIONS_VIEW_NOTIFICATION_ACTION_MARKREAD`),` `]})),(0,l.jsx)(l.Fragment,{children:i.map((e,t)=>(0,l.jsx)(c.Fragment,{children:e},t))})},b=(e,t,n)=>i=>{if(i.length===0)return{valid:!0,value:[]};let a=i.split(`,`).map(e=>e.trim()).filter(e=>e.length>0),o=a.map(e=>n(e)).filter(e=>e.valid&&`type`in e).filter(e=>e.type===`E164`);return a.map(n=>s(e,{allowDirectDial:!1,allowNonRoutable:!1,region:t})(n)).some(e=>!e.valid)||o.length!==a.length?{valid:!1,error:r(e,`FORM_VALIDATION_INVALID_PHONE_NUMBERS`)}:{valid:!0,value:o.map(e=>e.value)}};export{v as a,p as c,d as i,b as l,_ as n,h as o,u as r,g as s,y as t};
+[0m
+[0m$ [0mgrep -r "implicit-auth-redirect\|ImplicitAuthenticator" /tmp/*.js 2>/dev/null
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068e8c174001WfR4zI7jf1MsNu
+
+`)},goog.string.normalizeWhitespace=function(s){return s.replace(/\xa0|\s/g,` `)},goog.string.normalizeSpaces=function(s){return s.replace(/\xa0|[ \t]+/g,` `)},goog.string.collapseBreakingSpaces=function(s){return s.replace(/[\t\r\n ]+/g,` `).replace(/^[\t\r\n ]+|[\t\r\n ]+$/g,``)},goog.string.trim=goog.string.internal.trim,goog.string.trimLeft=function(s){return s.replace(/^[\s\xa0]+/,``)},goog.string.trimRight=function(s){return s.replace(/[\s\xa0]+$/,``)},goog.string.caseInsensitiveCompare=goog.string.internal.caseInsensitiveCompare,goog.string.numberAwareCompare_=function(s,u,p){if(s==u)return 0;if(!s)return-1;if(!u)return 1;for(var m=s.toLowerCase().match(p),h=u.toLowerCase().match(p),_=Math.min(m.length,h.length),v=0;v<_;v++){p=m[v];var y=h[v];if(p!=y)return s=parseInt(p,10),!isNaN(s)&&(u=parseInt(y,10),!isNaN(u)&&s-u)?s-u:p<y?-1:1}return m.length==h.length?s<u?-1:1:m.length-h.length},goog.string.intAwareCompare=function(s,u){return goog.string.numberAwareCompare_(s,u,/\d+|\D+/g)},goog.string.floatAwareCompare=function(s,u){return goog.string.numberAwareCompare_(s,u,/\d+|\.\d+|\D+/g)},goog.string.numerateCompare=goog.string.floatAwareCompare,goog.string.urlEncode=function(s){return encodeURIComponent(String(s))},goog.string.urlDecode=function(s){return decodeURIComponent(s.replace(/\+/g,` `))},goog.string.newLineToBr=goog.string.internal.newLineToBr,goog.string.htmlEscape=function(s,u){return s=goog.string.internal.htmlEscape(s,u),goog.string.DETECT_DOUBLE_ESCAPING&&(s=s.replace(goog.string.E_RE_,`&#101;`)),s},goog.string.E_RE_=/e/g,goog.string.unescapeEntities=function(s){return goog.string.contains(s,`&`)?!goog.string.FORCE_NON_DOM_HTML_UNESCAPING&&`document`in goog.global?goog.string.unescapeEntitiesUsingDom_(s):goog.string.unescapePureXmlEntities_(s):s},goog.string.unescapeEntitiesWithDocument=function(s,u){return goog.string.contains(s,`&`)?goog.string.unescapeEntitiesUsingDom_(s,u):s},goog.string.unescapeEntitiesUsingDom_=function(s,u){var p={"&amp;":`&`,"&lt;":`<`,"&gt;":`>`,"&quot;":`"`},m=u?u.createElement(`div`):goog.global.document.createElement(`div`);return s.replace(goog.string.HTML_ENTITY_PATTERN_,function(s,u){var h=p[s];return h||(u.charAt(0)==`#`&&(u=Number(`0`+u.substr(1)),isNaN(u)||(h=String.fromCharCode(u))),h||=(goog.dom.safe.setInnerHtml(m,goog.html.uncheckedconversions.safeHtmlFromStringKnownToSatisfyTypeContract(goog.string.Const.from(`Single HTML entity.`),s+` `)),m.firstChild.nodeValue.slice(0,-1)),p[s]=h)})},goog.string.unescapePureXmlEntities_=function(s){return s.replace(/&([^;]+);/g,function(s,u){switch(u){case`amp`:return`&`;case`lt`:return`<`;case`gt`:return`>`;case`quot`:return`"`;default:return u.charAt(0)!=`#`||(u=Number(`0`+u.substr(1)),isNaN(u))?s:String.fromCharCode(u)}})},goog.string.HTML_ENTITY_PATTERN_=/&([^;\s<&]+);?/g,goog.string.whitespaceEscape=function(s,u){return goog.string.newLineToBr(s.replace(/  /g,` &#160;`),u)},goog.string.preserveSpaces=function(s){return s.replace(/(^|[\n ]) /g,`$1`+goog.string.Unicode.NBSP)},goog.string.stripQuotes=function(s,u){for(var p=u.length,m=0;m<p;m++){var h=p==1?u:u.charAt(m);if(s.charAt(0)==h&&s.charAt(s.length-1)==h)return s.substring(1,s.length-1)}return s},goog.string.truncate=function(s,u,p){return p&&(s=goog.string.unescapeEntities(s)),s.length>u&&(s=s.substring(0,u-3)+`...`),p&&(s=goog.string.htmlEscape(s)),s},goog.string.truncateMiddle=function(s,u,p,m){if(p&&(s=goog.string.unescapeEntities(s)),m&&s.length>u){m>u&&(m=u);var h=s.length-m;s=s.substring(0,u-m)+`...`+s.substring(h)}else s.length>u&&(m=Math.floor(u/2),h=s.length-m,s=s.substring(0,m+u%2)+`...`+s.substring(h));return p&&(s=goog.string.htmlEscape(s)),s},goog.string.specialEscapeChars_={"\0":`\\0`,"\b":`\\b`,"\f":`\\f`,"\n":`\\n`,"\r":`\\r`,"	":`\\t`,"\v":`\\x0B`,'"':`\\"`,"\\":`\\\\`,"<":`\\u003C`},goog.string.jsEscapeCache_={"'":`\\'`},goog.string.quote=function(s){s=String(s);for(var u=[`"`],p=0;p<s.length;p++){var m=s.charAt(p),h=m.charCodeAt(0);u[p+1]=goog.string.specialEscapeChars_[m]||(31<h&&127>h?m:goog.string.escapeChar(m))}return u.push(`"`),u.join(``)},goog.string.escapeString=function(s){for(var u=[],p=0;p<s.length;p++)u[p]=goog.string.escapeChar(s.charAt(p));return u.join(``)},goog.string.escapeChar=function(s){if(s in goog.string.jsEscapeCache_)return goog.string.jsEscapeCache_[s];if(s in goog.string.specialEscapeChars_)return goog.string.jsEscapeCache_[s]=goog.string.specialEscapeChars_[s];var u=s.charCodeAt(0);if(31<u&&127>u)var p=s;else 256>u?(p=`\\x`,(16>u||256<u)&&(p+=`0`)):(p=`\\u`,4096>u&&(p+=`0`)),p+=u.toString(16).toUpperCase();return goog.string.jsEscapeCache_[s]=p},goog.string.contains=goog.string.internal.contains,goog.string.caseInsensitiveContains=goog.string.internal.caseInsensitiveContains,goog.string.countOf=function(s,u){return s&&u?s.split(u).length-1:0},goog.string.removeAt=function(s,u,p){var m=s;return 0<=u&&u<s.length&&0<p&&(m=s.substr(0,u)+s.substr(u+p,s.length-u-p)),m},goog.string.remove=function(s,u){return s.replace(u,``)},goog.string.removeAll=function(s,u){return u=new RegExp(goog.string.regExpEscape(u),`g`),s.replace(u,``)},goog.string.replaceAll=function(s,u,p){return u=new RegExp(goog.string.regExpEscape(u),`g`),s.replace(u,p.replace(/\$/g,`$$$$`))},goog.string.regExpEscape=function(s){return String(s).replace(/([-()\[\]{}+?*.$\^|,:#<!\\])/g,`\\$1`).replace(/\x08/g,`\\x08`)},goog.string.repeat=String.prototype.repeat?function(s,u){return s.repeat(u)}:function(s,u){return Array(u+1).join(s)},goog.string.padNumber=function(s,u,p){return s=p===void 0?String(s):s.toFixed(p),p=s.indexOf(`.`),p==-1&&(p=s.length),goog.string.repeat(`0`,Math.max(0,u-p))+s},goog.string.makeSafe=function(s){return s==null?``:String(s)},goog.string.buildString=function(s){return Array.prototype.join.call(arguments,``)},goog.string.getRandomString=function(){return Math.floor(2147483648*Math.random()).toString(36)+Math.abs(Math.floor(2147483648*Math.random())^goog.now()).toString(36)},goog.string.compareVersions=goog.string.internal.compareVersions,goog.string.hashCode=function(s){for(var u=0,p=0;p<s.length;++p)u=31*u+s.charCodeAt(p)>>>0;return u},goog.string.uniqueStringCounter_=2147483648*Math.random()|0,goog.string.createUniqueString=function(){return`goog_`+ goog.string.uniqueStringCounter_++},goog.string.toNumber=function(s){var u=Number(s);return u==0&&goog.string.isEmptyOrWhitespace(s)?NaN:u},goog.string.isLowerCamelCase=function(s){return/^[a-z]+([A-Z][a-z]*)*$/.test(s)},goog.string.isUpperCamelCase=function(s){return/^([A-Z][a-z]*)+$/.test(s)},goog.string.toCamelCase=function(s){return String(s).replace(/\-([a-z])/g,function(s,u){return u.toUpperCase()})},goog.string.toSelectorCase=function(s){return String(s).replace(/([A-Z])/g,`-$1`).toLowerCase()},goog.string.toTitleCase=function(s,u){return u=typeof u==`string`?goog.string.regExpEscape(u):`\\s`,s.replace(RegExp(`(^`+(u?`|[`+u+`]+`:``)+`)([a-z])`,`g`),function(s,u,p){return u+p.toUpperCase()})},goog.string.capitalize=function(s){return String(s.charAt(0)).toUpperCase()+String(s.substr(1)).toLowerCase()},goog.string.parseInt=function(s){return isFinite(s)&&(s=String(s)),typeof s==`string`?/^\s*-?0x/i.test(s)?parseInt(s,16):parseInt(s,10):NaN},goog.string.splitLimit=function(s,u,p){s=s.split(u);for(var m=[];0<p&&s.length;)m.push(s.shift()),p--;return s.length&&m.push(s.join(u)),m},goog.string.lastComponent=function(s,u){if(u)typeof u==`string`&&(u=[u]);else return s;for(var p=-1,m=0;m<u.length;m++)if(u[m]!=``){var h=s.lastIndexOf(u[m]);h>p&&(p=h)}return p==-1?s:s.slice(p+1)},goog.string.editDistance=function(s,u){var p=[],m=[];if(s==u)return 0;if(!s.length||!u.length)return Math.max(s.length,u.length);for(var h=0;h<u.length+1;h++)p[h]=h;for(h=0;h<s.length;h++){m[0]=h+1;for(var _=0;_<u.length;_++)m[_+1]=Math.min(m[_]+1,p[_+1]+1,p[_]+Number(s[h]!=u[_]));for(_=0;_<p.length;_++)p[_]=m[_]}return m[u.length]},goog.proto2={},goog.proto2.Descriptor=function(s,u,p){for(this.messageType_=s,this.name_=u.name||null,this.fullName_=u.fullName||null,this.containingType_=u.containingType,this.fields_={},s=0;s<p.length;s++)u=p[s],this.fields_[u.getTag()]=u},goog.proto2.Descriptor.prototype.getName=function(){return this.name_},goog.proto2.Descriptor.prototype.getFullName=function(){return this.fullName_},goog.proto2.Descriptor.prototype.getContainingType=function(){return this.containingType_?this.containingType_.getDescriptor():null},goog.proto2.Descriptor.prototype.getFields=function(){var s=goog.object.getValues(this.fields_);return module$contents$goog$array_sort(s,function(s,u){return s.getTag()-u.getTag()}),s},goog.proto2.Descriptor.prototype.getFieldsMap=function(){return this.fields_},goog.proto2.Descriptor.prototype.findFieldByName=function(s){return goog.object.findValue(this.fields_,function(u,p,m){return u.getName()==s})||null},goog.proto2.Descriptor.prototype.findFieldByTag=function(s){return goog.asserts.assert(goog.string.isNumeric(s)),this.fields_[parseInt(s,10)]||null},goog.proto2.Descriptor.prototype.createMessageInstance=function(){return new this.messageType_},goog.proto2.FieldDescriptor=function(s,u,p){switch(this.parent_=s,goog.asserts.assert(goog.string.isNumeric(u)),this.tag_=u,this.name_=p.name,this.isPacked_=!!p.packed,this.isRepeated_=!!p.repeated,this.isRequired_=!!p.required,this.fieldType_=p.fieldType,this.nativeType_=p.type,this.deserializationConversionPermitted_=!1,this.fieldType_){case goog.proto2.FieldDescriptor.FieldType.INT64:case goog.proto2.FieldDescriptor.FieldType.UINT64:case goog.proto2.FieldDescriptor.FieldType.FIXED64:case goog.proto2.FieldDescriptor.FieldType.SFIXED64:case goog.proto2.FieldDescriptor.FieldType.SINT64:case goog.proto2.FieldDescriptor.FieldType.FLOAT:case goog.proto2.FieldDescriptor.FieldType.DOUBLE:this.deserializationConversionPermitted_=!0}this.defaultValue_=p.defaultValue},goog.proto2.FieldDescriptor.FieldType={DOUBLE:1,FLOAT:2,INT64:3,UINT64:4,INT32:5,FIXED64:6,FIXED32:7,BOOL:8,STRING:9,GROUP:10,MESSAGE:11,BYTES:12,UINT32:13,ENUM:14,SFIXED32:15,SFIXED64:16,SINT32:17,SINT64:18},goog.proto2.FieldDescriptor.prototype.getTag=function(){return this.tag_},goog.proto2.FieldDescriptor.prototype.getContainingType=function(){return this.parent_.prototype.getDescriptor()},goog.proto2.FieldDescriptor.prototype.getName=function(){return this.name_},goog.proto2.FieldDescriptor.prototype.getDefaultValue=function(){if(this.defaultValue_===void 0){var s=this.nativeType_;if(s===Boolean)this.defaultValue_=!1;else if(s===Number)this.defaultValue_=0;else if(s===String)this.defaultValue_=this.deserializationConversionPermitted_?`0`:``;else return new s}return this.defaultValue_},goog.proto2.FieldDescriptor.prototype.getFieldType=function(){return this.fieldType_},goog.proto2.FieldDescriptor.prototype.getNativeType=function(){return this.nativeType_},goog.proto2.FieldDescriptor.prototype.deserializationConversionPermitted=function(){return this.deserializationConversionPermitted_},goog.proto2.FieldDescriptor.prototype.getFieldMessageType=function(){return this.nativeType_.prototype.getDescriptor()},goog.proto2.FieldDescriptor.prototype.isCompositeType=function(){return this.fieldType_==goog.proto2.FieldDescriptor.FieldType.MESSAGE||this.fieldType_==goog.proto2.FieldDescriptor.FieldType.GROUP},goog.proto2.FieldDescriptor.prototype.isPacked=function(){return this.isPacked_},goog.proto2.FieldDescriptor.prototype.isRepeated=function(){return this.isRepeated_},goog.proto2.FieldDescriptor.prototype.isRequired=function(){return this.isRequired_},goog.proto2.FieldDescriptor.prototype.isOptional=function(){return!this.isRepeated_&&!this.isRequired_},goog.proto2.Message=function(){this.values_={},this.fields_=this.getDescriptor().getFieldsMap(),this.deserializedFields_=this.lazyDeserializer_=null},goog.proto2.Message.FieldType={DOUBLE:1,FLOAT:2,INT64:3,UINT64:4,INT32:5,FIXED64:6,FIXED32:7,BOOL:8,STRING:9,GROUP:10,MESSAGE:11,BYTES:12,UINT32:13,ENUM:14,SFIXED32:15,SFIXED64:16,SINT32:17,SINT64:18},goog.proto2.Message.prototype.initializeForLazyDeserializer=function(s,u){this.lazyDeserializer_=s,this.values_=u,this.deserializedFields_={}},goog.proto2.Message.prototype.setUnknown=function(s,u){goog.asserts.assert(!this.fields_[s],`Field is not unknown in this message`),goog.asserts.assert(1<=s,`Tag `+s+` has value "`+u+`" in descriptor `+this.getDescriptor().getName()),goog.asserts.assert(u!==null,`Value cannot be null`),this.values_[s]=u,this.deserializedFields_&&delete this.deserializedFields_[s]},goog.proto2.Message.prototype.forEachUnknown=function(s,u){for(var p in u||=this,this.values_){var m=Number(p);this.fields_[m]||s.call(u,m,this.values_[p])}},goog.proto2.Message.prototype.getDescriptor=goog.abstractMethod,goog.proto2.Message.prototype.has=function(s){return goog.asserts.assert(s.getContainingType()==this.getDescriptor(),`The current message does not contain the given field`),this.has$Value(s.getTag())},goog.proto2.Message.prototype.arrayOf=function(s){return goog.asserts.assert(s.getContainingType()==this.getDescriptor(),`The current message does not contain the given field`),this.array$Values(s.getTag())},goog.proto2.Message.prototype.countOf=function(s){return goog.asserts.assert(s.getContainingType()==this.getDescriptor(),`The current message does not contain the given field`),this.count$Values(s.getTag())},goog.proto2.Message.prototype.get=function(s,u){return goog.asserts.assert(s.getContainingType()==this.getDescriptor(),`The current message does not contain the given field`),this.get$Value(s.getTag(),u)},goog.proto2.Message.prototype.getOrDefault=function(s,u){return goog.asserts.assert(s.getContainingType()==this.getDescriptor(),`The current message does not contain the given field`),this.get$ValueOrDefault(s.getTag(),u)},goog.proto2.Message.prototype.set=function(s,u){goog.asserts.assert(s.getContainingType()==this.getDescriptor(),`The current message does not contain the given field`),this.set$Value(s.getTag(),u)},goog.proto2.Message.prototype.add=function(s,u){goog.asserts.assert(s.getContainingType()==this.getDescriptor(),`The current message does not contain the given field`),this.add$Value(s.getTag(),u)},goog.proto2.Message.prototype.clear=function(s){goog.asserts.assert(s.getContainingType()==this.getDescriptor(),`The current message does not contain the given field`),this.clear$Field(s.getTag())},goog.proto2.Message.prototype.equals=function(s){if(!s||this.constructor!=s.constructor)return!1;for(var u=this.getDescriptor().getFields(),p=0;p<u.length;p++){var m=u[p],h=m.getTag();if(this.has$Value(h)!=s.has$Value(h))return!1;if(this.has$Value(h)){var _=m.isCompositeType(),v=this.getValueForTag_(h);if(h=s.getValueForTag_(h),m.isRepeated()){if(v.length!=h.length)return!1;for(m=0;m<v.length;m++){var y=v[m],x=h[m];if(_?!y.equals(x):y!=x)return!1}}else if(_?!v.equals(h):v!=h)return!1}}return!0},goog.proto2.Message.prototype.copyFrom=function(s){goog.asserts.assert(this.constructor==s.constructor,`The source message must have the same type.`),this!=s&&(this.values_={},this.deserializedFields_&&={},this.mergeFrom(s))},goog.proto2.Message.prototype.mergeFrom=function(s){goog.asserts.assert(this.constructor==s.constructor,`The source message must have the same type.`);for(var u=this.getDescriptor().getFields(),p=0;p<u.length;p++){var m=u[p],h=m.getTag();if(s.has$Value(h)){this.deserializedFields_&&delete this.deserializedFields_[m.getTag()];var _=m.isCompositeType();if(m.isRepeated()){m=s.array$Values(h);for(var v=0;v<m.length;v++)this.add$Value(h,_?m[v].clone():m[v])}else m=s.getValueForTag_(h),_?(_=this.getValueForTag_(h))?_.mergeFrom(m):this.set$Value(h,m.clone()):this.set$Value(h,m)}}},goog.proto2.Message.prototype.clone=function(){var s=new this.constructor;return s.copyFrom(this),s},goog.proto2.Message.prototype.initDefaults=function(s){for(var u=this.getDescriptor().getFields(),p=0;p<u.length;p++){var m=u[p],h=m.getTag(),_=m.isCompositeType();if(this.has$Value(h)||m.isRepeated()||(_?this.values_[h]=new(m.getNativeType()):s&&(this.values_[h]=m.getDefaultValue())),_)if(m.isRepeated())for(m=this.array$Values(h),h=0;h<m.length;h++)m[h].initDefaults(s);else this.get$Value(h).initDefaults(s)}},goog.proto2.Message.prototype.has$Value=function(s){return this.values_[s]!=null},goog.proto2.Message.prototype.getValueForTag_=function(s){var u=this.values_[s];return u==null?null:this.lazyDeserializer_?s in this.deserializedFields_?this.deserializedFields_[s]:(u=this.lazyDeserializer_.deserializeField(this,this.fields_[s],u),this.deserializedFields_[s]=u):u},goog.proto2.Message.prototype.get$Value=function(s,u){var p=this.getValueForTag_(s);return this.fields_[s].isRepeated()?(s=u||0,goog.asserts.assert(0<=s&&s<p.length,`Given index %s is out of bounds.  Repeated field length: %s`,s,p.length),p[s]):p},goog.proto2.Message.prototype.get$ValueOrDefault=function(s,u){return this.has$Value(s)?this.get$Value(s,u):this.fields_[s].getDefaultValue()},goog.proto2.Message.prototype.array$Values=function(s){return this.getValueForTag_(s)||[]},goog.proto2.Message.prototype.count$Values=function(s){return this.fields_[s].isRepeated()?this.has$Value(s)?this.values_[s].length:0:+!!this.has$Value(s)},goog.proto2.Message.prototype.set$Value=function(s,u){goog.asserts.ENABLE_ASSERTS&&this.checkFieldType_(this.fields_[s],u),this.values_[s]=u,this.deserializedFields_&&(this.deserializedFields_[s]=u)},goog.proto2.Message.prototype.add$Value=function(s,u){goog.asserts.ENABLE_ASSERTS&&this.checkFieldType_(this.fields_[s],u),this.values_[s]||(this.values_[s]=[]),this.values_[s].push(u),this.deserializedFields_&&delete this.deserializedFields_[s]},goog.proto2.Message.prototype.checkFieldType_=function(s,u){s.getFieldType()==goog.proto2.FieldDescriptor.FieldType.ENUM?goog.asserts.assertNumber(u):goog.asserts.assert(Object(u).constructor==s.getNativeType())},goog.proto2.Message.prototype.clear$Field=function(s){delete this.values_[s],this.deserializedFields_&&delete this.deserializedFields_[s]},goog.proto2.Message.createDescriptor=function(s,u){var p=[],m=u[0],h;for(h in u)h!=0&&p.push(new goog.proto2.FieldDescriptor(s,h,u[h]));return new goog.proto2.Descriptor(s,m,p)},goog.proto2.Serializer=function(){},goog.proto2.Serializer.DECODE_SYMBOLIC_ENUMS=!1,goog.proto2.Serializer.prototype.serialize=goog.abstractMethod,goog.proto2.Serializer.prototype.getSerializedValue=function(s,u){return s.isCompositeType()?this.serialize(u):typeof u!=`number`||isFinite(u)?u:u.toString()},goog.proto2.Serializer.prototype.deserialize=function(s,u){return s=s.createMessageInstance(),this.deserializeTo(s,u),goog.asserts.assert(s instanceof goog.proto2.Message),s},goog.proto2.Serializer.prototype.deserializeTo=goog.abstractMethod,goog.proto2.Serializer.prototype.getDeserializedValue=function(s,u){if(s.isCompositeType())return u instanceof goog.proto2.Message?u:this.deserialize(s.getFieldMessageType(),u);if(s.getFieldType()==goog.proto2.FieldDescriptor.FieldType.ENUM)return goog.proto2.Serializer.DECODE_SYMBOLIC_ENUMS&&typeof u==`string`&&(s=s.getNativeType(),s.hasOwnProperty(u))?s[u]:typeof u==`string`&&goog.proto2.Serializer.INTEGER_REGEX.test(u)&&(s=Number(u),0<s)?s:u;if(!s.deserializationConversionPermitted())return u;if(s=s.getNativeType(),s===String){if(typeof u==`number`)return String(u)}else if(s===Number&&typeof u==`string`&&(u===`Infinity`||u===`-Infinity`||u===`NaN`||goog.proto2.Serializer.INTEGER_REGEX.test(u)))return Number(u);return u},goog.proto2.Serializer.INTEGER_REGEX=/^-?[0-9]+$/,goog.proto2.LazyDeserializer=function(){},goog.inherits(goog.proto2.LazyDeserializer,goog.proto2.Serializer),goog.proto2.LazyDeserializer.prototype.deserialize=function(s,u){return s=s.createMessageInstance(),s.initializeForLazyDeserializer(this,u),goog.asserts.assert(s instanceof goog.proto2.Message),s},goog.proto2.LazyDeserializer.prototype.deserializeTo=function(s,u){throw Error(`Unimplemented`)},goog.proto2.LazyDeserializer.prototype.deserializeField=goog.abstractMethod,goog.proto2.PbLiteSerializer=function(){},goog.inherits(goog.proto2.PbLiteSerializer,goog.proto2.LazyDeserializer),goog.proto2.PbLiteSerializer.prototype.zeroIndexing_=!1,goog.proto2.PbLiteSerializer.prototype.setZeroIndexed=function(s){this.zeroIndexing_=s},goog.proto2.PbLiteSerializer.prototype.serialize=function(s){for(var u=s.getDescriptor().getFields(),p=[],m=this.zeroIndexing_,h=0;h<u.length;h++){var _=u[h];if(s.has(_)){var v=_.getTag();if(v=m?v-1:v,_.isRepeated()){p[v]=[];for(var y=0;y<s.countOf(_);y++)p[v][y]=this.getSerializedValue(_,s.get(_,y))}else p[v]=this.getSerializedValue(_,s.get(_))}}return s.forEachUnknown(function(s,u){p[m?s-1:s]=u}),p},goog.proto2.PbLiteSerializer.prototype.deserializeField=function(s,u,p){if(p==null)return p;if(u.isRepeated()){s=[],goog.asserts.assert(Array.isArray(p),`Value must be array: %s`,p);for(var m=0;m<p.length;m++)s[m]=this.getDeserializedValue(u,p[m]);return s}return this.getDeserializedValue(u,p)},goog.proto2.PbLiteSerializer.prototype.getSerializedValue=function(s,u){return s.getFieldType()==goog.proto2.FieldDescriptor.FieldType.BOOL?+!!u:goog.proto2.Serializer.prototype.getSerializedValue.apply(this,arguments)},goog.proto2.PbLiteSerializer.prototype.getDeserializedValue=function(s,u){return s.getFieldType()==goog.proto2.FieldDescriptor.FieldType.BOOL?(goog.asserts.assert(typeof u==`number`||typeof u==`boolean`,`Value is expected to be a number or boolean`),!!u):goog.proto2.Serializer.prototype.getDeserializedValue.apply(this,arguments)},goog.proto2.PbLiteSerializer.prototype.deserialize=function(s,u){var p=u;if(this.zeroIndexing_)for(var m in p=[],u)p[parseInt(m,10)+1]=u[m];return goog.proto2.PbLiteSerializer.superClass_.deserialize.call(this,s,p)},goog.string.StringBuffer=function(s,u){s!=null&&this.append.apply(this,arguments)},goog.string.StringBuffer.prototype.buffer_=``,goog.string.StringBuffer.prototype.set=function(s){this.buffer_=``+s},goog.string.StringBuffer.prototype.append=function(s,u,p){if(this.buffer_+=String(s),u!=null)for(var m=1;m<arguments.length;m++)this.buffer_+=arguments[m];return this},goog.string.StringBuffer.prototype.clear=function(){this.buffer_=``},goog.string.StringBuffer.prototype.getLength=function(){return this.buffer_.length},goog.string.StringBuffer.prototype.toString=function(){return this.buffer_};var i18n={phonenumbers:{}};i18n.phonenumbers.NumberFormat=function(){goog.proto2.Message.call(this)},goog.inherits(i18n.phonenumbers.NumberFormat,goog.proto2.Message),i18n.phonenumbers.NumberFormat.descriptor_=null,i18n.phonenumbers.NumberFormat.prototype.getPattern=function(){return this.get$Value(1)},i18n.phonenumbers.NumberFormat.prototype.getPatternOrDefault=function(){return this.get$ValueOrDefault(1)},i18n.phonenumbers.NumberFormat.prototype.setPattern=function(s){this.set$Value(1,s)},i18n.phonenumbers.NumberFormat.prototype.hasPattern=function(){return this.has$Value(1)},i18n.phonenumbers.NumberFormat.prototype.patternCount=function(){return this.count$Values(1)},i18n.phonenumbers.NumberFormat.prototype.clearPattern=function(){this.clear$Field(1)},i18n.phonenumbers.NumberFormat.prototype.getFormat=function(){return this.get$Value(2)},i18n.phonenumbers.NumberFormat.prototype.getFormatOrDefault=function(){return this.get$ValueOrDefault(2)},i18n.phonenumbers.NumberFormat.prototype.setFormat=function(s){this.set$Value(2,s)},i18n.phonenumbers.NumberFormat.prototype.hasFormat=function(){return this.has$Value(2)},i18n.phonenumbers.NumberFormat.prototype.formatCount=function(){return this.count$Values(2)},i18n.phonenumbers.NumberFormat.prototype.clearFormat=function(){this.clear$Field(2)},i18n.phonenumbers.NumberFormat.prototype.getLeadingDigitsPattern=function(s){return this.get$Value(3,s)},i18n.phonenumbers.NumberFormat.prototype.getLeadingDigitsPatternOrDefault=function(s){return this.get$ValueOrDefault(3,s)},i18n.phonenumbers.NumberFormat.prototype.addLeadingDigitsPattern=function(s){this.add$Value(3,s)},i18n.phonenumbers.NumberFormat.prototype.leadingDigitsPatternArray=function(){return this.array$Values(3)},i18n.phonenumbers.NumberFormat.prototype.hasLeadingDigitsPattern=function(){return this.has$Value(3)},i18n.phonenumbers.NumberFormat.prototype.leadingDigitsPatternCount=function(){return this.count$Values(3)},i18n.phonenumbers.NumberFormat.prototype.clearLeadingDigitsPattern=function(){this.clear$Field(3)},i18n.phonenumbers.NumberFormat.prototype.getNationalPrefixFormattingRule=function(){return this.get$Value(4)},i18n.phonenumbers.NumberFormat.prototype.getNationalPrefixFormattingRuleOrDefault=function(){return this.get$ValueOrDefault(4)},i18n.phonenumbers.NumberFormat.prototype.setNationalPrefixFormattingRule=function(s){this.set$Value(4,s)},i18n.phonenumbers.NumberFormat.prototype.hasNationalPrefixFormattingRule=function(){return this.has$Value(4)},i18n.phonenumbers.NumberFormat.prototype.nationalPrefixFormattingRuleCount=function(){return this.count$Values(4)},i18n.phonenumbers.NumberFormat.prototype.clearNationalPrefixFormattingRule=function(){this.clear$Field(4)},i18n.phonenumbers.NumberFormat.prototype.getNationalPrefixOptionalWhenFormatting=function(){return this.get$Value(6)},i18n.phonenumbers.NumberFormat.prototype.getNationalPrefixOptionalWhenFormattingOrDefault=function(){return this.get$ValueOrDefault(6)},i18n.phonenumbers.NumberFormat.prototype.setNationalPrefixOptionalWhenFormatting=function(s){this.set$Value(6,s)},i18n.phonenumbers.NumberFormat.prototype.hasNationalPrefixOptionalWhenFormatting=function(){return this.has$Value(6)},i18n.phonenumbers.NumberFormat.prototype.nationalPrefixOptionalWhenFormattingCount=function(){return this.count$Values(6)},i18n.phonenumbers.NumberFormat.prototype.clearNationalPrefixOptionalWhenFormatting=function(){this.clear$Field(6)},i18n.phonenumbers.NumberFormat.prototype.getDomesticCarrierCodeFormattingRule=function(){return this.get$Value(5)},i18n.phonenumbers.NumberFormat.prototype.getDomesticCarrierCodeFormattingRuleOrDefault=function(){return this.get$ValueOrDefault(5)},i18n.phonenumbers.NumberFormat.prototype.setDomesticCarrierCodeFormattingRule=function(s){this.set$Value(5,s)},i18n.phonenumbers.NumberFormat.prototype.hasDomesticCarrierCodeFormattingRule=function(){return this.has$Value(5)},i18n.phonenumbers.NumberFormat.prototype.domesticCarrierCodeFormattingRuleCount=function(){return this.count$Values(5)},i18n.phonenumbers.NumberFormat.prototype.clearDomesticCarrierCodeFormattingRule=function(){this.clear$Field(5)},i18n.phonenumbers.PhoneNumberDesc=function(){goog.proto2.Message.call(this)},goog.inherits(i18n.phonenumbers.PhoneNumberDesc,goog.proto2.Message),i18n.phonenumbers.PhoneNumberDesc.descriptor_=null,i18n.phonenumbers.PhoneNumberDesc.prototype.getNationalNumberPattern=function(){return this.get$Value(2)},i18n.phonenumbers.PhoneNumberDesc.prototype.getNationalNumberPatternOrDefault=function(){return this.get$ValueOrDefault(2)},i18n.phonenumbers.PhoneNumberDesc.prototype.setNationalNumberPattern=function(s){this.set$Value(2,s)},i18n.phonenumbers.PhoneNumberDesc.prototype.hasNationalNumberPattern=function(){return this.has$Value(2)},i18n.phonenumbers.PhoneNumberDesc.prototype.nationalNumberPatternCount=function(){return this.count$Values(2)},i18n.phonenumbers.PhoneNumberDesc.prototype.clearNationalNumberPattern=function(){this.clear$Field(2)},i18n.phonenumbers.PhoneNumberDesc.prototype.getPossibleLength=function(s){return this.get$Value(9,s)},i18n.phonenumbers.PhoneNumberDesc.prototype.getPossibleLengthOrDefault=function(s){return this.get$ValueOrDefault(9,s)},i18n.phonenumbers.PhoneNumberDesc.prototype.addPossibleLength=function(s){this.add$Value(9,s)},i18n.phonenumbers.PhoneNumberDesc.prototype.possibleLengthArray=function(){return this.array$Values(9)},i18n.phonenumbers.PhoneNumberDesc.prototype.hasPossibleLength=function(){return this.has$Value(9)},i18n.phonenumbers.PhoneNumberDesc.prototype.possibleLengthCount=function(){return this.count$Values(9)},i18n.phonenumbers.PhoneNumberDesc.prototype.clearPossibleLength=function(){this.clear$Field(9)},i18n.phonenumbers.PhoneNumberDesc.prototype.getPossibleLengthLocalOnly=function(s){return this.get$Value(10,s)},i18n.phonenumbers.PhoneNumberDesc.prototype.getPossibleLengthLocalOnlyOrDefault=function(s){return this.get$ValueOrDefault(10,s)},i18n.phonenumbers.PhoneNumberDesc.prototype.addPossibleLengthLocalOnly=function(s){this.add$Value(10,s)},i18n.phonenumbers.PhoneNumberDesc.prototype.possibleLengthLocalOnlyArray=function(){return this.array$Values(10)},i18n.phonenumbers.PhoneNumberDesc.prototype.hasPossibleLengthLocalOnly=function(){return this.has$Value(10)},i18n.phonenumbers.PhoneNumberDesc.prototype.possibleLengthLocalOnlyCount=function(){return this.count$Values(10)},i18n.phonenumbers.PhoneNumberDesc.prototype.clearPossibleLengthLocalOnly=function(){this.clear$Field(10)},i18n.phonenumbers.PhoneNumberDesc.prototype.getExampleNumber=function(){return this.get$Value(6)},i18n.phonenumbers.PhoneNumberDesc.prototype.getExampleNumberOrDefault=function(){return this.get$ValueOrDefault(6)},i18n.phonenumbers.PhoneNumberDesc.prototype.setExampleNumber=function(s){this.set$Value(6,s)},i18n.phonenumbers.PhoneNumberDesc.prototype.hasExampleNumber=function(){return this.has$Value(6)},i18n.phonenumbers.PhoneNumberDesc.prototype.exampleNumberCount=function(){return this.count$Values(6)},i18n.phonenumbers.PhoneNumberDesc.prototype.clearExampleNumber=function(){this.clear$Field(6)},i18n.phonenumbers.PhoneMetadata=function(){goog.proto2.Message.call(this)},goog.inherits(i18n.phonenumbers.PhoneMetadata,goog.proto2.Message),i18n.phonenumbers.PhoneMetadata.descriptor_=null,i18n.phonenumbers.PhoneMetadata.prototype.getGeneralDesc=function(){return this.get$Value(1)},i18n.phonenumbers.PhoneMetadata.prototype.getGeneralDescOrDefault=function(){return this.get$ValueOrDefault(1)},i18n.phonenumbers.PhoneMetadata.prototype.setGeneralDesc=function(s){this.set$Value(1,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasGeneralDesc=function(){return this.has$Value(1)},i18n.phonenumbers.PhoneMetadata.prototype.generalDescCount=function(){return this.count$Values(1)},i18n.phonenumbers.PhoneMetadata.prototype.clearGeneralDesc=function(){this.clear$Field(1)},i18n.phonenumbers.PhoneMetadata.prototype.getFixedLine=function(){return this.get$Value(2)},i18n.phonenumbers.PhoneMetadata.prototype.getFixedLineOrDefault=function(){return this.get$ValueOrDefault(2)},i18n.phonenumbers.PhoneMetadata.prototype.setFixedLine=function(s){this.set$Value(2,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasFixedLine=function(){return this.has$Value(2)},i18n.phonenumbers.PhoneMetadata.prototype.fixedLineCount=function(){return this.count$Values(2)},i18n.phonenumbers.PhoneMetadata.prototype.clearFixedLine=function(){this.clear$Field(2)},i18n.phonenumbers.PhoneMetadata.prototype.getMobile=function(){return this.get$Value(3)},i18n.phonenumbers.PhoneMetadata.prototype.getMobileOrDefault=function(){return this.get$ValueOrDefault(3)},i18n.phonenumbers.PhoneMetadata.prototype.setMobile=function(s){this.set$Value(3,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasMobile=function(){return this.has$Value(3)},i18n.phonenumbers.PhoneMetadata.prototype.mobileCount=function(){return this.count$Values(3)},i18n.phonenumbers.PhoneMetadata.prototype.clearMobile=function(){this.clear$Field(3)},i18n.phonenumbers.PhoneMetadata.prototype.getTollFree=function(){return this.get$Value(4)},i18n.phonenumbers.PhoneMetadata.prototype.getTollFreeOrDefault=function(){return this.get$ValueOrDefault(4)},i18n.phonenumbers.PhoneMetadata.prototype.setTollFree=function(s){this.set$Value(4,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasTollFree=function(){return this.has$Value(4)},i18n.phonenumbers.PhoneMetadata.prototype.tollFreeCount=function(){return this.count$Values(4)},i18n.phonenumbers.PhoneMetadata.prototype.clearTollFree=function(){this.clear$Field(4)},i18n.phonenumbers.PhoneMetadata.prototype.getPremiumRate=function(){return this.get$Value(5)},i18n.phonenumbers.PhoneMetadata.prototype.getPremiumRateOrDefault=function(){return this.get$ValueOrDefault(5)},i18n.phonenumbers.PhoneMetadata.prototype.setPremiumRate=function(s){this.set$Value(5,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasPremiumRate=function(){return this.has$Value(5)},i18n.phonenumbers.PhoneMetadata.prototype.premiumRateCount=function(){return this.count$Values(5)},i18n.phonenumbers.PhoneMetadata.prototype.clearPremiumRate=function(){this.clear$Field(5)},i18n.phonenumbers.PhoneMetadata.prototype.getSharedCost=function(){return this.get$Value(6)},i18n.phonenumbers.PhoneMetadata.prototype.getSharedCostOrDefault=function(){return this.get$ValueOrDefault(6)},i18n.phonenumbers.PhoneMetadata.prototype.setSharedCost=function(s){this.set$Value(6,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasSharedCost=function(){return this.has$Value(6)},i18n.phonenumbers.PhoneMetadata.prototype.sharedCostCount=function(){return this.count$Values(6)},i18n.phonenumbers.PhoneMetadata.prototype.clearSharedCost=function(){this.clear$Field(6)},i18n.phonenumbers.PhoneMetadata.prototype.getPersonalNumber=function(){return this.get$Value(7)},i18n.phonenumbers.PhoneMetadata.prototype.getPersonalNumberOrDefault=function(){return this.get$ValueOrDefault(7)},i18n.phonenumbers.PhoneMetadata.prototype.setPersonalNumber=function(s){this.set$Value(7,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasPersonalNumber=function(){return this.has$Value(7)},i18n.phonenumbers.PhoneMetadata.prototype.personalNumberCount=function(){return this.count$Values(7)},i18n.phonenumbers.PhoneMetadata.prototype.clearPersonalNumber=function(){this.clear$Field(7)},i18n.phonenumbers.PhoneMetadata.prototype.getVoip=function(){return this.get$Value(8)},i18n.phonenumbers.PhoneMetadata.prototype.getVoipOrDefault=function(){return this.get$ValueOrDefault(8)},i18n.phonenumbers.PhoneMetadata.prototype.setVoip=function(s){this.set$Value(8,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasVoip=function(){return this.has$Value(8)},i18n.phonenumbers.PhoneMetadata.prototype.voipCount=function(){return this.count$Values(8)},i18n.phonenumbers.PhoneMetadata.prototype.clearVoip=function(){this.clear$Field(8)},i18n.phonenumbers.PhoneMetadata.prototype.getPager=function(){return this.get$Value(21)},i18n.phonenumbers.PhoneMetadata.prototype.getPagerOrDefault=function(){return this.get$ValueOrDefault(21)},i18n.phonenumbers.PhoneMetadata.prototype.setPager=function(s){this.set$Value(21,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasPager=function(){return this.has$Value(21)},i18n.phonenumbers.PhoneMetadata.prototype.pagerCount=function(){return this.count$Values(21)},i18n.phonenumbers.PhoneMetadata.prototype.clearPager=function(){this.clear$Field(21)},i18n.phonenumbers.PhoneMetadata.prototype.getUan=function(){return this.get$Value(25)},i18n.phonenumbers.PhoneMetadata.prototype.getUanOrDefault=function(){return this.get$ValueOrDefault(25)},i18n.phonenumbers.PhoneMetadata.prototype.setUan=function(s){this.set$Value(25,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasUan=function(){return this.has$Value(25)},i18n.phonenumbers.PhoneMetadata.prototype.uanCount=function(){return this.count$Values(25)},i18n.phonenumbers.PhoneMetadata.prototype.clearUan=function(){this.clear$Field(25)},i18n.phonenumbers.PhoneMetadata.prototype.getEmergency=function(){return this.get$Value(27)},i18n.phonenumbers.PhoneMetadata.prototype.getEmergencyOrDefault=function(){return this.get$ValueOrDefault(27)},i18n.phonenumbers.PhoneMetadata.prototype.setEmergency=function(s){this.set$Value(27,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasEmergency=function(){return this.has$Value(27)},i18n.phonenumbers.PhoneMetadata.prototype.emergencyCount=function(){return this.count$Values(27)},i18n.phonenumbers.PhoneMetadata.prototype.clearEmergency=function(){this.clear$Field(27)},i18n.phonenumbers.PhoneMetadata.prototype.getVoicemail=function(){return this.get$Value(28)},i18n.phonenumbers.PhoneMetadata.prototype.getVoicemailOrDefault=function(){return this.get$ValueOrDefault(28)},i18n.phonenumbers.PhoneMetadata.prototype.setVoicemail=function(s){this.set$Value(28,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasVoicemail=function(){return this.has$Value(28)},i18n.phonenumbers.PhoneMetadata.prototype.voicemailCount=function(){return this.count$Values(28)},i18n.phonenumbers.PhoneMetadata.prototype.clearVoicemail=function(){this.clear$Field(28)},i18n.phonenumbers.PhoneMetadata.prototype.getShortCode=function(){return this.get$Value(29)},i18n.phonenumbers.PhoneMetadata.prototype.getShortCodeOrDefault=function(){return this.get$ValueOrDefault(29)},i18n.phonenumbers.PhoneMetadata.prototype.setShortCode=function(s){this.set$Value(29,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasShortCode=function(){return this.has$Value(29)},i18n.phonenumbers.PhoneMetadata.prototype.shortCodeCount=function(){return this.count$Values(29)},i18n.phonenumbers.PhoneMetadata.prototype.clearShortCode=function(){this.clear$Field(29)},i18n.phonenumbers.PhoneMetadata.prototype.getStandardRate=function(){return this.get$Value(30)},i18n.phonenumbers.PhoneMetadata.prototype.getStandardRateOrDefault=function(){return this.get$ValueOrDefault(30)},i18n.phonenumbers.PhoneMetadata.prototype.setStandardRate=function(s){this.set$Value(30,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasStandardRate=function(){return this.has$Value(30)},i18n.phonenumbers.PhoneMetadata.prototype.standardRateCount=function(){return this.count$Values(30)},i18n.phonenumbers.PhoneMetadata.prototype.clearStandardRate=function(){this.clear$Field(30)},i18n.phonenumbers.PhoneMetadata.prototype.getCarrierSpecific=function(){return this.get$Value(31)},i18n.phonenumbers.PhoneMetadata.prototype.getCarrierSpecificOrDefault=function(){return this.get$ValueOrDefault(31)},i18n.phonenumbers.PhoneMetadata.prototype.setCarrierSpecific=function(s){this.set$Value(31,s)},i18n.phonenumbers.PhoneMetadata.prototype.hasCarrierSpecific=function(){return this.has$Value(31)},i18n.phonenumbers.PhoneMetadata.prototype.carrierSpecificCount=function(){return this.count$Values(31)},i18n.phonenumbers.PhoneMetadata.prototype.clearCarrierSpecific=function(){this.clear$Field(31)},i18n.phonenumbers.PhoneMetadata.prototype.getSmsServices=function(){return this.get$Value(33)},i18n.phonenumbers.PhoneMetadata.prototype.getSmsServicesOrDefault=function(){return this.get$ValueOrDefault(33)},i18n.phonenumbers.PhoneMetadata.proto
+[0m
+[0m$ [0mgrep -n "ImplicitAuthenticator" /tmp/main.js
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_068e98c310015AHurvSbBuQ0rx
+
+(no output)
+[0m
+[0m$ [0mcurl -s https://app.sipgate.com/assets/main-C3206pWE.js -o /tmp/bundle.js && wc -l /tmp/bundle.js && ls -lh /tmp/bundle.js
+474 /tmp/bundle.js
+-rw-r--r-- 1 runner runner 5.4M Sep  3 20:16 /tmp/bundle.js
+[0m
+[0m$ [0mgrep -a -o "ImplicitAuthenticator" /tmp/bundle.js
+ImplicitAuthenticator
+ImplicitAuthenticator
+[0m

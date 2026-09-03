@@ -45,3 +45,4 @@ testability: PASSIVE
 [LEARN] REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope.
 [LEARN] ACCEPTED AUTH @ login.sipgate.com: OIDC implicit flow with fragment token delivery is in-scope high-value target.
 [RISK] sipgate: 78 — High-value VoIP/SaaS platform with OIDC implicit flow, wildcard WS origins, multi-tenant customer dashboards; primary risk is token leakage via fragment/Referer and potential redirect_uri misconfiguration.
+## 2026-09-03 20:17:03 UTC [target] (model nemotron3)

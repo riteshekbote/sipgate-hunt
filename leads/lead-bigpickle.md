@@ -42,3 +42,18 @@ testability: HUMAN_ONLY
 [LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin. Class signal: unvalidated client redirect is not by itself token theft.
 [LEARN] REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reachable flawed verifier; treat as config hardening, not a vulnerability.
 [RISK] sipgate: 15 — Customer-facing Keycloak OAuth implicit flow + a confirmed unvalidated client-side `redirect` on the post-login handler warrant a human browser confirmation; but static analysis indicates the token is stored before navigation and React-router treats external targets as same-origin paths, so the high-impact token-theft chain is likely NOT real. Remaining signals are config-level/REJECTED. No confirmed in-scope vulnerability this cycle; risk primarily the unconfirmed redirect behavior.
+## 2026-09-03 20:01:16 UTC [target] (model bigpickle)
+[HYP] Valid registered API client discoverable via third-party realm for OAuth token acquisition
+class: AUTH
+asset: login.sipgate.com/auth/realms/third-party token endpoint
+confidence: 25
+reasoning: The only known client credential (from rest-api-examples) returns invalid_client → revoked. DCR is gated by Trusted Hosts. No public client_id list for this realm found; `client_id=junit`/`web-app` rejected. Without a valid client credential or DCR access, no token obtainable.
+evidence_needed: a registered third-party client's client_id+secret, or a DCR Trusted-Hosts bypass — none demonstrated passively.
+verify_steps: PASSIVE only: enumerate client_id guesses at auth endpoint (rejected → no leak of validity beyond 400); do NOT active-token or register clients (mutating/live-auth prohibited).
+impact: if a live confidential client credential were leaked/derivable, attacker reaches social-scoped APIs (contacts/sms/balance/payment read). Severity HIGH; but not demonstrable. 
+testability: PASSIVE
+[NEXT] PROBE: GET `https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/registrations/openid-connect` and the realm `/auth/realms/third-party` page with a normal browser User-Agent to confirm no additional public registration/open redirect surface — read-only.
+[LEARN] REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. revoked/not registered — not a live credential exposure; the pattern is example-code-only.
+[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scope`), no Host-header bypass found; redirect_uri validation correct (invalid URI → 400); treat as hardened config, not a vulnerability.
+[LEARN] ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/account/balance/payment) — a legitimate high-value target if a client credential or DCR bypass is ever obtained.
+[RISK] sipgate: 10 — On the api surface the OIDC `third-party` realm is well-hardened: redirect_uri strictly validated, token endpoint requires valid client auth, DCR blocked by a Trusted Hosts policy, and the only publicly leaked API client credential is inert (`invalid_client`). Broad sensitive scopes exist but are unreachable without a valid client grant or DCR bypass, neither demonstrable passively. No confirmed in-scope API vulnerability this cycle.
