@@ -1,15 +1,4 @@
-## 2026-09-04 20:05:37 UTC [target] (model nemotron3)
-[NEW] chatbot.dev.sipgate.com — live dev chatbot (nginx/1.24.0) with socket.io endpoint accessible from internet, loads React dev builds from unpkg.com
-[NEW] chatbot.sipgate.com — live production chatbot socket.io endpoint (/chat/session/socket.io/) accepts connections from any origin
-[NEW] payment.sipgate.com — live payment API (Java Spring, JSESSIONID), proper CORS (only reflects app.sipgate.com)
-[NEW] team-de.live.sipgate.com — live team portal (Apache/PHP), 302→login.sipgate.com; frame-ancestors whitelists app.local.sipgate.com:3443 (internal dev); leaks SERVERID=team-web03
-[NEW] app.dev.sipgate.com — live dev SPA on Fastly CDN, serves identical main-C5_XLhfX.js bundle as production (no IP restriction)
-[NEW] api.dev.sipgate.com — 403 Forbidden on all paths (WAF blocked, but accessible)
-[NEW] Production JS bundle hardcodes internal dev URLs: api.local.sipgate.com:3396, app.local.sipgate.com:3443, payment.local.sipgate.com:8080, team-de.local.sipgate.com:10443, login.dev.sipgate.com
-[NEW] api.sipgate.com/health — unauthenticated endpoint (200 OK, "Healthcheck - OK") with full arbitrary-origin CORS + credentials reflected
-[CHANGED] app.dev.sipgate.com — CSP identical to production; JS references api.dev.sipgate.com in pickByEnvironment but dev API is 403-blocked
-[CHANGED] chatbot.dev.sipgate.com — /chat/session/socket.io/?EIO=4&transport=polling returns valid socket.io session from any origin (no CORS check)
-[CHANGED] api.sipgate.com/v2/* — arbitrary-origin CORS reflection with credentials confirmed across /contacts, /account, /numbers, /users, /authorization/userinfo (KB ACCEPTED MISCONFIG)
+## 2026-09-04 22:18:24 UTC [target] (model nemotron3)
 [PRIO] api.sipgate.com,8.75,attack_surface=9 business_value=10 tech_exposure=9 gate_ease=5 cloud_surface=8 freshness=10
 [PRIO] app.dev.sipgate.com,8.50,attack_surface=9 business_value=8 tech_exposure=8 gate_ease=9 cloud_surface=8 freshness=10
 [PRIO] app.sipgate.com,8.25,attack_surface=9 business_value=10 tech_exposure=8 gate_ease=10 cloud_surface=8 freshness=10
@@ -24,7 +13,9 @@
 class: MISCONFIG
 asset: app.dev.sipgate.com
 confidence: 75
-reasoning: app.dev.sipgate.com serves identical production JS bundle on Fastly CDN with no IP restriction. Bundle hardcodes internal RFC1918 hostnames and ports (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443, team-uk.local:10443, login.dev, chatbot.dev). Dev environment publicly accessible reveals service mesh topology, port assignments, and internal naming conv[0m
+reasoning: app.dev.sipgate.com serves identical production JS bundle on Fastly CDN with no IP restriction. Bundle hardcodes internal RFC1918 hostnames and ports (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443, team-uk.local:10443, login.dev, chatbot.dev). Dev environment publicly accessible reveals service mesh topology, port assignments, and internal naming conventions.
+evidence_needed: Confirm dev Keycloak realm (login.dev.sipgate.com) accessible; verify whether dev API (api.dev.sipgate.com) 403 is WAF-only or auth-gated; enumerate additional internal endpoints referenced in dev JS.
+verify_steps: GET https://app.dev.sipgate.com — verify JS bundle hash matches production; GET https://app.dev.sipgate.com/app-login — check redirect target; GET https://login.dev.sipgate.com/auth/realms/sipgate-apps/.well-known/openid-configuration — confirm dev realm exists; GET https://api.dev.sipgate.com/v2/contacts with Origin:https://evil.example — check CORS behavior.
 impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement; if dev auth weaker → potential ATO. Severity: MEDIUM (info leak) to HIGH (dev auth bypass).
 testability: PASSIVE
 [HYP] Production Chatbot Socket.io Accepts Arbitrary-Origin Connections Enabling Session Hijack
@@ -53,9 +44,9 @@ testability: PASSIVE
 [PARKED] Third-party realm valid client discovery: DCR gated by Trusted Hosts, demo creds revoked; no passive path to valid credential.
 [PARKED] dev.sipgate.de subdomain takeover: Abandoned host on owned IP; no dangling CNAME to attacker-controllable service.
 [FINAL] 1. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement (confidence 75, PASSIVE)
-[FINAL] 2. Production Chatbot Socket.io Accepts Arbitrary-Origin Connections Enabling Session Hijack (confidence 60, PASSIVE)
-[FINAL] 3. API v2 Arbitrary-Origin CORS with Credentials Enables Cross-Origin Data Exfiltration When Paired With Token Source (confidence 70, PASSIVE)
-[NEXT] PROBE: GET https://app.dev.sipgate.com/app-login — check if dev login redirects to login.dev.sipgate.com and whether a dev Keycloak realm is accessible (check /.well-known/openid-configuration on login.dev.sipgate.com). Also GET https://app.dev.sipgate.com with Origin:https://evil.example to check for any CORS headers. Also GET https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling with Origin:https://evil.example and check vary header for CORS behavior. Read-only, <=1 rps.
+[FINAL] 2. API v2 Arbitrary-Origin CORS with Credentials Enables Cross-Origin Data Exfiltration When Paired With Token Source (confidence 70, PASSIVE)
+[FINAL] 3. Production Chatbot Socket.io Accepts Arbitrary-Origin Connections Enabling Session Hijack (confidence 60, PASSIVE)
+[NEXT] PROBE: GET https://app.dev.sipgate.com/app-login — check if dev login redirects to login.dev.sipgate.com and whether a dev Keycloak realm is accessible (check /.well-known/openid-configuration on login.dev.sipgate.com). Also GET https://app.dev.sipgate.com with Origin:https://evil.example to check for any CORS headers. Also GET https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling with Origin:https://evil.example and check Vary header for CORS behavior. Read-only, <=1 rps.
 [LEARN] ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443), no IP restriction — infrastructure info disclosure.
 [LEARN] ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERID=team-web03.
 [LEARN] ACCEPTED AUTH @ chatbot.sipgate.com: production socket.io endpoint accepts connections from arbitrary origins without CORS restriction on transport handshake.

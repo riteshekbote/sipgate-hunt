@@ -234,3 +234,47 @@ testability: PASSIVE (CSP leak confirmed); exploitation HUMAN_ONLY
 [LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
 [RISK] sipgate: 55 — Confirmed defense-in-depth gaps: (1) arbitrary-origin CORS reflection with credentials on api.sipgate.com/v2/* + /health (KB ACCEPTED), (2) publicly accessible dev SPA with hardcoded internal infrastructure URLs (NEW ACCEPTED), (3) production chatbot socket.io accepting cross-origin connections (NEW ACCEPTED), (4) team portal CSP misconfiguration exposing local dev origin (NEW ACCEPTED). Chain-dependent for full exploitation: api.sipgate.com CORS + any XSS on *.sipgate.com + implicit flow token in localStorage = full customer data exfiltration (CRITICAL). Implicit flow redirect unconfirmed (HUMAN_ONLY). No confirmed exploitable standalone chain yet.
 ## 2026-09-04 19:59:36 UTC [target] (model bigpickle)
+## 2026-09-04 22:20:59 UTC [target] (model bigpickle)
+[PRIO] api.sipgate.com,9.0,attack_surface=9 business_value=10 tech_exposure=9 gate_ease=5 cloud_surface=8 freshness=10
+[PRIO] sipgate-desktop-app.s3,7.0,attack_surface=4 business_value=7 tech_exposure=5 gate_ease=10 cloud_surface=9 freshness=10
+[PRIO] chatbot.sipgate.com,7.0,attack_surface=6 business_value=8 tech_exposure=7 gate_ease=6 cloud_surface=6 freshness=10
+[PRIO] app.dev.sipgate.com,6.7,attack_surface=6 business_value=5 tech_exposure=7 gate_ease=9 cloud_surface=7 freshness=8
+[PRIO] static.sipgate.com,5.9,attack_surface=5 business_value=4 tech_exposure=5 gate_ease=10 cloud_surface=6 freshness=8
+[HYP] api.sipgate.com BOLA on multi-tenant resources with authz drift across stale-documented endpoints
+class: IDOR
+asset: api.sipgate.com/v2/{portings,history,addresses,devices,groups}
+confidence: 45
+reasoning: Public swagger (144 paths) documents dual/inconsistent parameter names (`/contacts/{contactId}` AND `/contacts/{contactid}`), renames legacy resources (`/log/webhooks`, `/app/tacs`, `/app/properties`, `/settings/sipgateio`), and 5 ops marked noauth (app/links, userinfo, gdpr) — none actually work unauthenticated → security annotations are stale, implying per-endpoint authz drift on a many-year-old API surface. Confirmed accessible unauthenticated: only /translations/{language} and /swagger.json.
+evidence_needed: two authenticated tenant sessions showing 200 for a resourceId that belongs to the other tenant on /portings/{portingId}, /history/{entryId}/note, /addresses/{addressId}/numbers, /devices/{deviceId}/credentials/password.
+verify_steps: PASSIVE triage GET /v2/portings, /v2/log/webhooks, /v2/app/tacs, /v2/settings/sipgateio without auth — flag any non-401/-404/-405; full cross-tenant test requires AUTH_HELPED sessions.
+impact: cross-tenant PII/call-history/device-SIP-credential exposure or overwrite. Severity: CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Publicly listable desktop-app S3 bucket is a supply-chain distribution surface
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: ls buckets — GET / returns ListBucketResult of all installer artifacts (1.3.0–1.17.19, per-OS, blockmaps, latest alias objects); ACL/policy reads 403 (config = intended public read). Last write 2024-06-11 → artifact stale 2+ yrs. If ANY write path exists (unverified, untested), installer poisoning → full softphone compromise.
+evidence_needed: ability to PUT/OVERWRITE an object (NOT tested — mutating supply-chain operation).
+verify_steps: PASSIVE list already done; write-check is HUMAN with reporter/legal sign-off only.
+impact: OSINT of release cadence + artifact integrity surface; CRITICAL chain if writable. Standalone severity: LOW-MED.
+testability: PASSIVE
+[HYP] chatbot.sipgate.com WebSocket transport enables cross-origin chat interception
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io
+confidence: 50
+reasoning: Socket.io polling handshake serves 200 + vary:Origin but no ACAO for arbitrary origins (browser blocks reads on polling). WebSocket transport (EIO=4&transport=websocket) bypasses CORS entirely; server-side Origin check on WS upgrade unconfirmed. If chat events are broadcast to sockets without per-event auth, cross-origin socket = live chat read.
+evidence_needed: HUMAN browser page on evil origin opening wss to chatbot.sipgate.com and observing 40/auth/chat events.
+verify_steps: PASSIVE handshake confirmed earlier (KB ACCEPTED); WS upgrade behavior needs HUMAN.
+impact: read/intercept customer chat sessions → PII. Severity: HIGH if confirmed.
+testability: HUMAN_ONLY
+[PARKED] app.dev.sipgate.com dev-auth ATO hypothesis: login.dev.sipgate.com HTTP 000 + api.dev 403 → dev env externally inert; only static info-leak (already ACCEPTED) stands. Confidence dropped <40.
+[PARKED] chatbot.sipgate.com polling cross-origin read: no ACAO → browser-blocks reads; narrowed to WS-transport-only (subsumed into H3).
+[PARKED] api.sipgate.com CORS reflection: re-confirmed again on 404s + /v2/app/links; parked chain component.
+[PARKED] app.sipgate.com implicit-flow redirect: unchanged, KB REJECTED OATH, HUMAN-only.
+[FINAL] survivors: H1 api BOLA (45, AUTH_HELPED); H2 s3 bucket (60, PASSIVE chain); H3 chatbot WS (50, HUMAN_ONLY).
+[NEXT] PROBE: 4 read-only GETs @1rps against unusual high-value swagger paths for authz-drift triage: https://api.sipgate.com/v2/portings, https://api.sipgate.com/v2/log/webhooks, https://api.sipgate.com/v2/app/tacs, https://api.sipgate.com/v2/settings/sipgateio — flag any status other than 401/404/405.
+[LEARN] ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19 + latest aliases, stale since 2024-06-11); ACL/policy reads denied; write path NOT tested (mutating, not performed).
+[LEARN] REJECTED AUTH @ app.dev.sipgate.com: login.dev.sipgate.com dead (HTTP 000) and api.dev.sipgate.com 403 → dev env externally inert; dev weaker-auth/ATO path deflated to static info-leak only.
+[LEARN] CHANGED AUTH @ chatbot.sipgate.com: polling transport serves vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbitrary origins" narrowed to WS transport (HUMAN_ONLY).
+[LEARN] ACCEPTED INFO @ api.sipgate.com: public swagger.json (144 paths) + /translations/{language} unauthenticated; spec security annotations stale vs server behavior — authz-drift triage input.
+[RISK] sipgate: 55 — Confirmed: api CORS reflection w/ credentials, public dev-SPA info leak (inert auth), team portal CSP/local-origin leak, chatbot WS (HUMAN), and NEW publicly listable desktop-app S3 bucket (supply-chain surface, write path untested). All standalone items are defense-in-depth/info; full impact still chain-dependent (api CORS + XSS + implicit-flow localStorage, or BOLA on v2 requiring creds). No confirmed standalone critical chain yet.
