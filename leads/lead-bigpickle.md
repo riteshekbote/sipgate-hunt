@@ -127,3 +127,61 @@ testability: HUMAN_ONLY
 [LEARN] ACCEPTED MISCONFIG @ api.sipgate.com: confirmed arbitrary-origin CORS reflection with credentials on 5+ /v2 endpoints — strong defense-in-depth gap, chain-dependent for full exploitation.
 [LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: token stored before navigation, React Router same-origin — needs HUMAN browser confirmation.
 [RISK] sipgate: 50 — Confirmed CORS arbitrary-origin reflection with credentials on api.sipgate.com is a real defense-in-depth gap; when paired with any XSS on *.sipgate.com or implicit flow token theft, enables full customer data exfiltration. Implicit flow unconfirmed (HUMAN_ONLY). No confirmed exploitable chain yet.
+## 2026-09-04 14:13:27 UTC [target] (model bigpickle)
+[NEW] `chatbot.dev.sipgate.com` — live dev chatbot (nginx/1.24.0) with socket.io endpoint accessible from internet, loads React dev builds from unpkg.com
+[NEW] `chatbot.sipgate.com` — live production chatbot socket.io endpoint (`/chat/session/socket.io/`) accepts connections from any origin
+[NEW] `payment.sipgate.com` — live payment API (Java Spring, JSESSIONID), proper CORS (only reflects `app.sipgate.com`)
+[NEW] `team-de.live.sipgate.com` — live team portal (Apache/PHP), 302→login.sipgate.com; `frame-ancestors` whitelists `app.local.sipgate.com:3443` (local dev); `SERVERID=team-web03` leaked
+[NEW] `app.dev.sipgate.com` — live dev SPA on Fastly CDN, serves identical main-C5_XLhfX.js bundle as production (no IP restriction)
+[NEW] `api.dev.sipgate.com` — 403 Forbidden on all paths (WAF blocked, but accessible)
+[NEW] Production JS bundle hardcodes internal dev URLs: `api.local.sipgate.com:3396`, `app.local.sipgate.com:3443`, `payment.local.sipgate.com:8080`, `team-de.local.sipgate.com:10443`, `login.dev.sipgate.com`
+[NEW] `api.sipgate.com/health` — unauthenticated endpoint (200 OK, "Healthcheck - OK") with full arbitrary-origin CORS + credentials reflected
+[CHANGED] `app.dev.sipgate.com` — CSP identical to production; JS references `api.dev.sipgate.com` in `pickByEnvironment` but dev API is 403-blocked
+[CHANGED] `chatbot.dev.sipgate.com` — `/chat/session/socket.io/?EIO=4&transport=polling` returns valid socket.io session from any origin (no CORS check)
+[PRIO] api.sipgate.com,9.0,attack_surface=9 business_value=10 tech_exposure=9 gate_ease=5 cloud_surface=8 freshness=10
+[PRIO] app.dev.sipgate.com,8.5,attack_surface=9 business_value=8 tech_exposure=8 gate_ease=9 cloud_surface=8 freshness=10
+[PRIO] chatbot.sipgate.com,8.0,attack_surface=7 business_value=9 tech_exposure=8 gate_ease=7 cloud_surface=7 freshness=10
+[PRIO] team-de.live.sipgate.com,7.5,attack_surface=6 business_value=8 tech_exposure=7 gate_ease=6 cloud_surface=6 freshness=10
+[PRIO] payment.sipgate.com,7.0,attack_surface=5 business_value=10 tech_exposure=6 gate_ease=4 cloud_surface=6 freshness=10
+[PRIO] chatbot.dev.sipgate.com,7.0,attack_surface=6 business_value=7 tech_exposure=7 gate_ease=8 cloud_surface=7 freshness=10
+[PRIO] app.sipgate.com,7.5,attack_surface=8 business_value=10 tech_exposure=8 gate_ease=5 cloud_surface=7 freshness=10
+[PRIO] login.sipgate.com,7.0,attack_surface=7 business_value=9 tech_exposure=8 gate_ease=5 cloud_surface=6 freshness=10
+[HYP] app.dev.sipgate.com serves identical production JS bundle with hardcoded dev/local URLs enabling internal infrastructure discovery
+class: MISCONFIG
+asset: app.dev.sipgate.com
+confidence: 75
+reasoning: app.dev.sipgate.com serves the same main-C5_XLhfX.js as production. `pickByEnvironment` is hardcoded with `local` URLs (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443, team-uk.local:10443, login.dev, chatbot.dev). Dev SPA is publicly accessible on Fastly CDN with no IP restriction, identical CSP, and full SPA functionality. The dev environment reveals internal hostnames, port numbers, and service architecture.
+evidence_needed: confirm dev app.sipgate.com can authenticate users (login.dev.sipgate.com Keycloak realm) or find additional internal endpoints exposed via dev JS; confirm whether dev API (api.dev.sipgate.com 403) can be bypassed.
+verify_steps: GET https://app.dev.sipgate.com and compare CSP/JS bundle hash vs production; GET https://app.dev.sipgate.com/app-login to check if dev login works; GET https://login.dev.sipgate.com/auth/realms/sipgate-apps/.well-known/openid-configuration for dev Keycloak config.
+impact: information disclosure of internal infrastructure (hostnames, ports, service mesh) enabling targeted SSRF/lateral movement; dev environment may have weaker auth controls = potential full account takeover. Severity: MEDIUM (info leak) to HIGH (if dev auth bypassable).
+testability: PASSIVE
+[HYP] chatbot.sipgate.com production socket.io accepts cross-origin connections without authentication enabling session hijack
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io
+confidence: 60
+reasoning: Production chatbot at chatbot.sipgate.com returns 200 OK with valid socket.io session ID (`sid`) on `/chat/session/socket.io/?EIO=4&transport=polling` from any Origin (evil.example confirmed). The production JS uses `getToken()` to obtain bearer token for socket auth, but the socket.io transport layer itself accepts connections from arbitrary origins. If the socket.io server validates auth only on specific namespaces/events but accepts the initial handshake from any origin, an attacker-controlled page could establish a socket.io connection and potentially intercept chat messages or inject commands.
+evidence_needed: HUMAN browser: connect to chatbot.sipgate.com socket.io from attacker origin, observe whether auth token is required for message events or only at connection time; check if socket sends user data before auth validation.
+verify_steps: PASSIVE: GET /chat/session/socket.io/?EIO=4&transport=polling with Origin:https://evil.example — confirm session established; check for auth-related socket events in response.
+impact: session hijack of customer chat sessions = PII exposure; if admin/support chat = lateral movement. Severity: HIGH.
+testability: PASSIVE (socket handshake confirmed); full chain HUMAN_ONLY
+[HYP] team-de.live.sipgate.com CSP frame-ancestors whitelist includes local dev origins enabling clickjacking/CSRF on team management portal
+class: MISCONFIG
+asset: team-de.live.sipgate.com
+confidence: 65
+reasoning: team-de.live.sipgate.com sets `frame-ancestors 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk app.local.sipgate.com:3443`. The inclusion of `app.local.sipgate.com:3443` (internal dev origin) in the production CSP frame-ancestors is a misconfiguration — any sipgate employee running the dev app locally can frame the production team portal. The portal handles authentication (302→login.sipgate.com), team management, and user administration. Also leaks `SERVERID=team-web03` cookie (internal server naming). The portal is Apache/PHP with JSESSIONID-less session management.
+evidence_needed: HUMAN: test if `app.local.sipgate.com:3443` origin can frame team-de.live.sipgate.com in a browser; check if authenticated team operations can be CSRF-triggered via the framed page.
+verify_steps: PASSIVE: GET team-de.live.sipgate.com with Origin header; inspect CSP frame-ancestors; check for CSRF tokens in forms.
+impact: clickjacking on team management portal → unauthorized team changes; info disclosure of internal server naming. Severity: MEDIUM.
+testability: PASSIVE (CSP leak confirmed); exploitation HUMAN_ONLY
+[PARKED] api.sipgate.com /health unauthenticated CORS reflection: /health returns only "Healthcheck - OK" — no customer data, not exploitable standalone. Downgraded from hypothesis to confirmed observation. Retained as chain component.
+[PARKED] api.sipgate.com CORS arbitrary-origin (conf 70): KB ACCEPTED; already confirmed. Carry forward as chain component for new hypotheses.
+[PARKED] app.sipgate.com implicit flow redirect (conf 45): KB REJECTED OATH — needs HUMAN browser confirmation, not testable passively. Retained as top HUMAN lead.
+[PARKED] chatbot.dev.sipgate.com socket.io: dev environment is publicly accessible but socket.io without auth tokens is likely non-functional demo. Lower value than production chatbot endpoint.
+[PARKED] payment.sipgate.com: proper CORS (only reflects app.sipgate.com), 401 on unauthenticated — hardened, not exploitable.
+[FINAL] survivors:
+[NEXT] PROBE: GET https://app.dev.sipgate.com/app-login — check if dev login redirects to login.dev.sipgate.com and whether a dev Keycloak realm is accessible (check `/.well-known/openid-configuration` on login.dev.sipgate.com). Also GET https://app.dev.sipgate.com with Origin:https://evil.example to check for any CORS headers. Also GET https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling with Origin:https://evil.example and check `vary` header for CORS behavior. Read-only, <=1 rps.
+[LEARN] ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443), no IP restriction — infrastructure info disclosure.
+[LEARN] ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes `app.local.sipgate.com:3443` (internal dev origin) in production portal; leaks `SERVERID=team-web03`.
+[LEARN] ACCEPTED AUTH @ chatbot.sipgate.com: production socket.io endpoint accepts connections from arbitrary origins without CORS restriction on transport handshake.
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+[RISK] sipgate: 55 — Confirmed defense-in-depth gaps: (1) arbitrary-origin CORS reflection with credentials on api.sipgate.com/v2/* + /health (KB ACCEPTED), (2) publicly accessible dev SPA with hardcoded internal infrastructure URLs (NEW ACCEPTED), (3) production chatbot socket.io accepting cross-origin connections (NEW ACCEPTED), (4) team portal CSP misconfiguration exposing local dev origin (NEW ACCEPTED). Chain-dependent for full exploitation: api.sipgate.com CORS + any XSS on *.sipgate.com + implicit flow token in localStorage = full customer data exfiltration (CRITICAL). Implicit flow redirect unconfirmed (HUMAN_ONLY). No confirmed exploitable standalone chain yet.
