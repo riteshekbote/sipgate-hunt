@@ -83,3 +83,5 @@ reasoning: Contains `client_id=2414245-0-e24e0091-8265-11e7-93e7-e5fb754b756f` a
 impact: low
 verify_steps: Test if these OAuth credentials are still valid against the sipgate API. Check if this is a demo/test client or production.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-04 23:16:41 UTC
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
