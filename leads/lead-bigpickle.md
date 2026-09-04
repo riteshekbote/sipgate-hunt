@@ -82,3 +82,4 @@ evidence_needed: Browser confirms `history.replace('https://evil.example')` caus
 verify_steps: HUMAN: private-tab login via redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example; report final URL and whether access_token reaches attacker origin (sandbox creds only)
 impact: HIGH if off-origin → token exfil → full account compromise; LOW if same-origin-only
 testability: HUMAN_ONLY
+## 2026-09-04 00:39:44 UTC [target] (model bigpickle)
