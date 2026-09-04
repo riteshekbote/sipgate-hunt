@@ -83,3 +83,13 @@ verify_steps: HUMAN: private-tab login via redirect_uri=https://app.sipgate.com/
 impact: HIGH if off-origin → token exfil → full account compromise; LOW if same-origin-only
 testability: HUMAN_ONLY
 ## 2026-09-04 00:39:44 UTC [target] (model bigpickle)
+## 2026-09-04 05:09:12 UTC [target] (model bigpickle)
+[HYP] Api-wide arbitrary-origin CORS reflection with credentials enables cross-origin customer-data disclosure when combined with a token-bearing client context
+class: MISCONFIG
+asset: api.sipgate.com/v2/* (confirmed on /contacts, /account, /numbers, /users, /authorization/userinfo)
+confidence: 70
+reasoning: every tested /v2 endpoint returns `Access-Control-Allow-Origin: <any supplied origin>` AND `Access-Control-Allow-Credentials: true` on both OPTIONS preflight and real responses, including `Origin: null` (sandboxed iframe) and arbitrary attacker origins; `authorization` is in allowed headers; `Access-Control-Expose-Headers` leaks location/x-sipgate-* on responses. Auth is Bearer-header (no Set-Cookie observed), so standalone auto-attach is NOT possible — exploitability requires a token/bearer context (e.g., XSS on app.sipgate.com where the implicit-flow token persists in localStorage, or a leaked bearer). Pairing the confirmed unvalidated client redirect + React SPA token-in-localStorage gives a plausible-but-unproven ATO chain.
+evidence_needed: locate a client-side (app.sipgate.com) XSS/token-source to complete the chain, or confirm any API path authenticates via ambient cookie (would make CORS directly exploitable).
+verify_steps: PASSIVE/active-confirmed — I observed Origin:null and arbitrary-origin reflection with credentials on GET and OPTIONS across 5+ endpoints; next: confirm whether app.sipgate.com sets/sends any cookie that the API honors, and locate a script-injection/token-leak vector on app.sipgate.com to complete ATO.
+impact: cross-origin exfiltration of contacts/account/numbers/users/sms/balance if paired with a token source; standalone = CORS protection gap (no Origin allowlist), defense-in-depth. Severity: HIGH as chain, LOW-MEDIUM standalone.
+testability: PASSIVE (CORS confirmed live); chain completion HUMAN_ONLY

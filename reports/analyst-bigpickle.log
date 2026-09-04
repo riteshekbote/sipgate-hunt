@@ -1074,3 +1074,391 @@ Let me provide a concise summary to the user.
 **Risk:** 38 — broad OAuth-scoped API is classic BOLA surface but not shown vulnerable without a token; the unvalidated redirect is real code but statically no token exfil. No confirmed live vuln this passive cycle.
 
 Output written to `analyst-out.txt`.
+===== ANALYST bigpickle 2026-09-04 05:09:31 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m• [0mExplore workspace structure[90m Explore Agent[0m
+[0m✓ [0mExplore workspace structure[90m Explore Agent[0m
+[0m→ [0mRead scope.yml
+[0m→ [0mRead knowledge/index.md
+[0m→ [0mRead reports/valid-bugs.md
+[0m→ [0mRead probe-results.md
+[0m→ [0mRead triage/run-2026-09-04-00-35.md
+[0m→ [0mRead inventory/sipgate.md
+[0m→ [0mRead leads/lead-bigpickle.md
+[0m→ [0mRead leads/lead-nemotron3.md
+[0m→ [0mRead reports/hypotheses.md
+[0m→ [0mRead leads/reposcan-sipgate.md
+[0m→ [0mRead recon-notes/DEDICATED-DEEP.md
+[0m→ [0mRead analyst-out.txt
+[0m→ [0mRead reports/hypotheses-bigpickle.txt
+[0m→ [0mRead reports/hypotheses-nemotron3.txt
+[0m→ [0mRead ctx.txt
+[0m
+[0m$ [0mcurl -sI https://api.sipgate.com/ 2>&1 | head -30
+HTTP/1.1 308 Permanent Redirect
+location: https://developer.sipgate.io
+vary: origin
+x-b3-traceid: 060d590cc6f24c3c5354b30745ae8522
+date: Fri, 04 Sep 2026 05:07:00 GMT
+[0m
+[0m$ [0mcurl -sI https://api.sipgate.com/v2 2>&1 | head -20
+HTTP/1.1 200 OK
+content-type: application/json
+vary: origin
+x-b3-traceid: eb83534340b2b8c53f5df855346e6be2
+date: Fri, 04 Sep 2026 05:07:01 GMT
+[0m
+Now let me actively probe the api.sipgate.com surface for new findings, since my target is `api` and the phase is POC. The third-party OIDC realm is the confirmed accepted surface — I need to enumerate the actual REST API.
+[0m$ [0mcurl -sI https://api.sipgate.com/v1 2>&1 | head -20
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 3eb4005a8f3ebb8398aa7be0cf2ed752
+date: Fri, 04 Sep 2026 05:07:02 GMT
+[0m
+[0m$ [0mcurl -sI https://api.sipgate.com/api 2>&1 | head -20
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 879d79e6b7fc409045c967af60bffc2c
+date: Fri, 04 Sep 2026 05:07:02 GMT
+[0m
+`/v2` returns 200. Let me probe the body and look for API surface details.
+[0m$ [0mcurl -s https://api.sipgate.com/v2 2>&1 | head -c 2000; echo; echo "---"; curl -s https://api.sipgate.com/v2/ 2>&1 | head -c 2000
+{"accountUrl":"https://api.sipgate.com/v2/account","accountVerifiedUrl":"https://api.sipgate.com/v2/account/verified","addressUrl":"https://api.sipgate.com/v2/addresses/{addressId}","addressesUrl":"https://api.sipgate.com/v2/addresses","addressNumbersUrl":"https://api.sipgate.com/v2/addresses/{addressId}/numbers","authorizationOauthClientsUrl":"https://api.sipgate.com/v2/authorization/oauth2/clients","authorizationOauthClientUrl":"https://api.sipgate.com/v2/authorization/oauth2/clients/{clientId}","authorizationTokenUrl":"https://api.sipgate.com/v2/authorization/token","balanceUrl":"https://api.sipgate.com/v2/balance","getCallRestrictionsUrl":"https://api.sipgate.com/v2/callrestrictions","callRestrictionsUrl":"https://api.sipgate.com/v2/{userId}/callrestrictions/{restriction}","contactsUrl":"https://api.sipgate.com/v2/contacts","crmBridgeUrl":"https://api.sipgate.com/v2/crm-bridge","internalContactsUrl":"https://api.sipgate.com/v2/contacts/internal","deviceCallerIdUrl":"https://api.sipgate.com/v2/devices/{deviceId}/callerid","deviceUrl":"https://api.sipgate.com/v2/devices/{deviceId}","devicesTariffAnnouncementUrl":"https://api.sipgate.com/v2/devices/{deviceId}/tariffannouncement","devicesSingleRowDisplayUrl":"https://api.sipgate.com/v2/devices/{deviceId}/singlerowdisplay","deviceSimOrdersUrl":"https://api.sipgate.com/v2/{userId}/devices/{deviceId}/sim/orders","faxlinesUrl":"https://api.sipgate.com/v2/{userId}/faxlines","faxlineUrl":"https://api.sipgate.com/v2/{userId}/faxlines/{faxlineId}","faxlineNumbersUrl":"https://api.sipgate.com/v2/{userId}/faxlines/{faxlineId}/numbers","groupsUrl":"https://api.sipgate.com/v2/groups","groupDetailUrl":"https://api.sipgate.com/v2/groups/{groupId}","groupUserUrl":"https://api.sipgate.com/v2/groups/{groupId}/users","groupDevicesUrl":"https://api.sipgate.com/v2/groups/{groupId}/devices","groupNumbersUrl":"https://api.sipgate.com/v2/groups/{groupId}/numbers","historyEntryUrl":"https://api.sipgate.com/v2/history/{entryId}","historyUrl
+---
+<html><body><h1>Resource not found</h1></body></html>
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code} %{content_type}\n" https://api.sipgate.com/openapi.json; curl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/swagger.json; curl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/swagger-ui; curl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/v2/openapi.json; curl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/docs
+404 text/html; charset=utf-8
+404
+404
+404
+301
+[0m
+Excellent — `/v2` returns a full API index map. This is a rich discovery surface. Let me get the complete index and probe unauthenticated endpoints (gate_ease — many may require no auth or return helpful behavior).
+[0m$ [0mcurl -s https://api.sipgate.com/v2 2>&1 | python3 -m json.tool 2>/dev/null | head -120
+{
+    "accountUrl": "https://api.sipgate.com/v2/account",
+    "accountVerifiedUrl": "https://api.sipgate.com/v2/account/verified",
+    "addressUrl": "https://api.sipgate.com/v2/addresses/{addressId}",
+    "addressesUrl": "https://api.sipgate.com/v2/addresses",
+    "addressNumbersUrl": "https://api.sipgate.com/v2/addresses/{addressId}/numbers",
+    "authorizationOauthClientsUrl": "https://api.sipgate.com/v2/authorization/oauth2/clients",
+    "authorizationOauthClientUrl": "https://api.sipgate.com/v2/authorization/oauth2/clients/{clientId}",
+    "authorizationTokenUrl": "https://api.sipgate.com/v2/authorization/token",
+    "balanceUrl": "https://api.sipgate.com/v2/balance",
+    "getCallRestrictionsUrl": "https://api.sipgate.com/v2/callrestrictions",
+    "callRestrictionsUrl": "https://api.sipgate.com/v2/{userId}/callrestrictions/{restriction}",
+    "contactsUrl": "https://api.sipgate.com/v2/contacts",
+    "crmBridgeUrl": "https://api.sipgate.com/v2/crm-bridge",
+    "internalContactsUrl": "https://api.sipgate.com/v2/contacts/internal",
+    "deviceCallerIdUrl": "https://api.sipgate.com/v2/devices/{deviceId}/callerid",
+    "deviceUrl": "https://api.sipgate.com/v2/devices/{deviceId}",
+    "devicesTariffAnnouncementUrl": "https://api.sipgate.com/v2/devices/{deviceId}/tariffannouncement",
+    "devicesSingleRowDisplayUrl": "https://api.sipgate.com/v2/devices/{deviceId}/singlerowdisplay",
+    "deviceSimOrdersUrl": "https://api.sipgate.com/v2/{userId}/devices/{deviceId}/sim/orders",
+    "faxlinesUrl": "https://api.sipgate.com/v2/{userId}/faxlines",
+    "faxlineUrl": "https://api.sipgate.com/v2/{userId}/faxlines/{faxlineId}",
+    "faxlineNumbersUrl": "https://api.sipgate.com/v2/{userId}/faxlines/{faxlineId}/numbers",
+    "groupsUrl": "https://api.sipgate.com/v2/groups",
+    "groupDetailUrl": "https://api.sipgate.com/v2/groups/{groupId}",
+    "groupUserUrl": "https://api.sipgate.com/v2/groups/{groupId}/users",
+    "groupDevicesUrl": "https://api.sipgate.com/v2/groups/{groupId}/devices",
+    "groupNumbersUrl": "https://api.sipgate.com/v2/groups/{groupId}/numbers",
+    "historyEntryUrl": "https://api.sipgate.com/v2/history/{entryId}",
+    "historyUrl": "https://api.sipgate.com/v2/history",
+    "notificationsUrl": "https://api.sipgate.com/v2/{userId}/notifications",
+    "numberUrl": "https://api.sipgate.com/v2/numbers/{numberId}",
+    "numbersUrl": "https://api.sipgate.com/v2/numbers",
+    "webuserNumbersUrl": "https://api.sipgate.com/v2/{userId}/numbers",
+    "addDirectDialUrl": "https://api.sipgate.com/v2/numbers/quickdial",
+    "changeDirectDialUrl": "https://api.sipgate.com/v2/numbers/quickdial/{quickdialId}",
+    "deleteDirectDialUrl": "https://api.sipgate.com/v2/numbers/quickdial/{numberId}",
+    "phonelineUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}",
+    "phonelineBlockAnonymousUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/blockanonymous",
+    "phonelineDevicesUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/devices",
+    "phonelineForwardingsUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/forwardings",
+    "phonelineNumbersUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/numbers",
+    "phonelinesParallelForwardingUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId}",
+    "phonelinesParallelForwardingsUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/parallelforwardings",
+    "phonelineSipgateIoUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/sipgateio",
+    "phonelineSipgateIoLogUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/sipgateio/log",
+    "phonelineVoicemailGreetingUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId}",
+    "phonelineVoicemailGreetingsUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings",
+    "phonelineVoicemailUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}",
+    "phonelineVoicemailsUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/voicemails",
+    "phonelinesUrl": "https://api.sipgate.com/v2/{userId}/phonelines",
+    "phonelineDetailUrl": "https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}",
+    "portingUrl": "https://api.sipgate.com/v2/portings/{portingId}",
+    "portingsUrl": "https://api.sipgate.com/v2/portings",
+    "restrictionsUrl": "https://api.sipgate.com/v2/restrictions",
+    "sessionsCallUrl": "https://api.sipgate.com/v2/sessions/calls",
+    "settingsSipgateioUrl": "https://api.sipgate.com/v2/settings/sipgateio",
+    "smsUrl": "https://api.sipgate.com/v2/{userId}/sms",
+    "smsCallerIdsUrl": "https://api.sipgate.com/v2/{userId}/sms/{smsId}/callerids",
+    "translationsUrl": "https://api.sipgate.com/v2/translations/{locale}",
+    "userInfoUrl": "https://api.sipgate.com/v2/authorization/userinfo",
+    "userUrl": "https://api.sipgate.com/v2/users/{userId}",
+    "userBusyOnBusyUrl": "https://api.sipgate.com/v2/users/{userId}/busyonbusy",
+    "userDefaultDeviceUrl": "https://api.sipgate.com/v2/users/{userId}/defaultdevice",
+    "userDevicesUrl": "https://api.sipgate.com/v2/{userId}/devices",
+    "userDeviceSimUrl": "https://api.sipgate.com/v2/{userId}/devices/{deviceId}/sim",
+    "userExternalDevicesUrl": "https://api.sipgate.com/v2/{userId}/devices/external",
+    "userMobileDevicesUrl": "https://api.sipgate.com/v2/{userId}/devices/mobile",
+    "userRegisterDevicesUrl": "https://api.sipgate.com/v2/{userId}/devices/register",
+    "userRoleUrl": "https://api.sipgate.com/v2/users/{userId}/role",
+    "usersUrl": "https://api.sipgate.com/v2/users",
+    "voicemailsUrl": "https://api.sipgate.com/v2/voicemails",
+    "voicemailDetailUrl": "https://api.sipgate.com/v2/voicemails/{voicemailId}"
+}
+[0m
+This is a rich API index. Let me probe unauthenticated behavior on these endpoints. Many may return 401, but some like `translations`, `accountVerified`, `sipgateio`, `restrictions`, `/v2` index are worth checking. My rules allow active probes. Let me check which respond without auth.
+[0m$ [0mfor p in "authorization/token" "authorization/userinfo" "translations/en" "translations/de" "restrictions" "callrestrictions" "account" "account/verified" "balance" "sessions/calls" "settings/sipgateio" "sipgateio" "crm-bridge" "numbers/quickdial" "users"; do
+  code=$(curl -s -o /tmp/r.out -w "%{http_code}" "https://api.sipgate.com/v2/$p")
+  echo "=== /v2/$p -> $code"
+  head -c 300 /tmp/r.out; echo
+done
+=== /v2/authorization/token -> 404
+<html><body><h1>Resource not found</h1></body></html>
+=== /v2/authorization/userinfo -> 401
+Unauthorized
+=== /v2/translations/en -> 200
+{"":"Block of 100","EDIT_AUDIO_FILE_VIA_TTS_DIALOG_HEADLINE":"Edit announcement via text-to-speech","ADMIN_DASHBOARD_GREETING_MORNING":"Good Morning","LEGACY_PHONENUMBER_BOOKING_DIALOG_CONFIRM_BOOKING_INTERNATIONAL_CRITICAL_ALERT_DESCRIPTION":"The international phone number could not be booked.","YE
+=== /v2/translations/de -> 200
+{"":"100г Block","EDIT_AUDIO_FILE_VIA_TTS_DIALOG_HEADLINE":"Ansage per Text-To-Speech bearbeiten","ADMIN_DASHBOARD_GREETING_MORNING":"Guten Morgen,","LEGACY_PHONENUMBER_BOOKING_DIALOG_CONFIRM_BOOKING_INTERNATIONAL_CRITICAL_ALERT_DESCRIPTION":"Die Internationale Rufnummer konnte nicht gebucht werden
+=== /v2/restrictions -> 401
+
+=== /v2/callrestrictions -> 401
+
+=== /v2/account -> 401
+
+=== /v2/account/verified -> 405
+
+=== /v2/balance -> 401
+
+=== /v2/sessions/calls -> 405
+
+=== /v2/settings/sipgateio -> 401
+
+=== /v2/sipgateio -> 404
+<html><body><h1>Resource not found</h1></body></html>
+=== /v2/crm-bridge -> 404
+<html><body><h1>Resource not found</h1></body></html>
+=== /v2/numbers/quickdial -> 405
+
+=== /v2/users -> 401
+[0m
+Most endpoints require auth (401). `translations` is unauthenticated 200 — low value. Interesting: `/v2/authorization/token` gives 404 on GET but is likely a POST endpoint. The `translations/{locale}` accepts an arbitrary locale. Let me check the authorization token POST and the OAuth client endpoint which is part of the third-party surface.
+
+Let me focus on the accepted `third-party` realm chain since that's my confirmed high-value target. The `authorizationOauthClientsUrl` (`/v2/authorization/oauth2/clients`) is interesting — that's client management. Let me probe.
+[0m$ [0m# check OPTIONS/preflight on token and CORS behavior
+curl -s -o /dev/null -w "OPTIONS token: %{http_code}\n" -X OPTIONS https://api.sipgate.com/v2/authorization/token
+curl -s -D - -o /dev/null -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization,content-type" https://api.sipgate.com/v2/authorization/token 2>&1 | grep -i "access-control\|HTTP/"
+OPTIONS token: 404
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Enforce-No-NQ,x-sipgate-version,x-sipgate-client,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+[0m
+[0m$ [0mfor p in "authorization/oauth2/clients" "contacts" "numbers" "groups" "faxlines" "phonenumbers"; do
+  code=$(curl -s -o /tmp/r.out -w "%{http_code}" "https://api.sipgate.com/v2/$p")
+  echo "=== /v2/$p -> $code | $(head -c 120 /tmp/r.out | tr -d '\n')"
+done
+=== /v2/authorization/oauth2/clients -> 401 | 
+=== /v2/contacts -> 401 | 
+=== /v2/numbers -> 401 | 
+=== /v2/groups -> 401 | 
+=== /v2/faxlines -> 404 | <html><body><h1>Resource not found</h1></body></html>
+=== /v2/phonenumbers -> 404 | <html><body><h1>Resource not found</h1></body></html>
+[0m
+Very interesting finding! The API reflects `https://evil.example` in `Access-Control-Allow-Origin` AND returns `access-control-allow-credentials: true` on a preflight. The `authorization/token` endpoint (POST, 404 on GET+OPTIONS but the reflected-allow-origin is on the OPTIONS preflight which returned 204)... wait, the OPTIONS returned 204 with reflected origin. That's a permissive CORS config reflecting arbitrary origins with credentials.
+
+This is significant. If any endpoint relies on Authorization header (which CORS allows: `authorization` is in allow-headers) and there's a way to get a token into a victim's browser context, cross-origin credentialed reads work. Let me examine the preflight more carefully — the `/v2/authorization/token` returned 404 on OPTIONS but 204 on the preflight with headers. Let me check which endpoints actually reflect AAO.
+
+Let me test the preflight on a real authed endpoint like `/v2/contacts` and check if it reflects evil origin with credentials.
+[0m$ [0m# Test CORS preflight reflection on authed endpoints
+for p in "contacts" "account" "numbers" "users" "authorization/userinfo"; do
+  echo "=== $p ==="
+  curl -s -D - -o /dev/null -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" "https://api.sipgate.com/v2/$p" 2>&1 | grep -i "HTTP/\|access-control-allow-origin\|access-control-allow-credentials"
+done
+=== contacts ===
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+=== account ===
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+=== numbers ===
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+=== users ===
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+=== authorization/userinfo ===
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+[0m
+This is a confirmed CORS misconfiguration: **any origin** is reflected in `Access-Control-Allow-Origin` with `Access-Control-Allow-Credentials: true` across the entire `/v2` API surface, including sensitive endpoints (`/v2/contacts`, `/v2/account`, `/v2/users`, `/v2/numbers`, `/v2/authorization/userinfo`).
+
+However, I must assess the actual exploitability of this CORS misconfig. This is different from the radau code finding — this is the LIVE production API echoing any origin with credentials. The precondition for a full CORS-based attack is that the victim's browser holds an auth token (Bearer token in Authorization header or cookie). Given the app uses Bearer access tokens in the Authorization header (from the OAuth implicit flow, stored in localStorage), a malicious site cannot normally read localStorage across origins. So an attacker cannot steal the token directly via CORS unless the browser auto-sends credentials (cookies).
+
+But wait — let me verify whether the API also accepts cookie-based auth or whether credentials are actually sent. If tokens are in Authorization headers (not cookies), the CORS misconfig alone has limited impact because the attacker can't obtain the victim's token to put in the header. Let me check actual GET responses — do they set any cookies (auth cookies)?
+
+Let me verify the genuine exploitability. If auth is via Authorization header (not cookie), a CORS reflection alone is insufficient without an XSS/other vector to obtain the token. Let me test more carefully — check response headers for Set-Cookie on an authed attempt and whether bearer tokens could be auto-sent.
+[0m$ [0m# Check if GET responses set cookies (would make credential-carrying CORS exploitable)
+echo "=== GET contacts (no auth) headers ==="
+curl -s -D - -o /dev/null -H "Origin: https://evil.example" "https://api.sipgate.com/v2/contacts" 2>&1 | grep -i "HTTP/\|set-cookie\|access-control-allow-origin\|access-control-allow-credentials"
+echo "=== GET contacts with bogus bearer ==="
+curl -s -D - -o /dev/null -H "Authorization: Bearer bogus" -H "Origin: https://evil.example" "https://api.sipgate.com/v2/contacts" 2>&1 | grep -i "HTTP/\|set-cookie\|access-control\|www-authenticate"
+=== GET contacts (no auth) headers ===
+HTTP/1.1 401 Unauthorized
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+=== GET contacts with bogus bearer ===
+HTTP/1.1 401 Unauthorized
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+[0m
+No `Set-Cookie` — auth is via `Authorization: Bearer` header, not cookies. This is critical for assessing exploitability:
+
+For a CORS-based attack to work, the browser must automatically attach credentials. Since auth is via a Bearer token in the `Authorization` header (which browsers do NOT automatically attach cross-origin), the CORS misconfiguration alone does **not** enable cross-origin token theft — an attacker would need to already possess the victim's token, which defeats the purpose. This is a well-known distinction: **reflected-allow-origin + allow-credentials without cookie-based auth is not directly exploitable**.
+
+However, the `access-control-expose-headers` and the fact that auth relies on a bearer token in a header that a malicious page cannot read (cross-origin, in localStorage) means I cannot claim a direct ATO. Let me be rigorous here. The CORS reflects `evil.example` on the actual GET response (not just preflight), and with credentials true. But without cookie auth, a malicious origin can't obtain the victim's token to send it in Authorization. 
+
+Actually, wait — let me reconsider the OAuth implicit flow. The app stores the token in **localStorage** on `app.sipgate.com`. If there were ANY XSS on app.sipgate.com, the token is directly readable. The CORS issue here is a defense-in-depth concern but the realistic chain requires XSS first. Let me check whether the token is ever sent as a cookie (auth cookie) to the API domain. Given the implicit flow landed on app.sipgate.com and stores in localStorage, and API auth uses Bearer header — there's no same-registration cookie.
+
+So this CORS finding, while a real misconfiguration (any-origin reflection + credentials), does not by itself yield a demonstrable ATO chain without an additional vector. This is important nuance. Let me still verify whether there's a preflight-only vs actual-response aspect and whether userinfo might leak the token-derived identity.
+
+Let me reconsider: the actual exploitability hinges on whether SOME endpoint authenticates via ambient credentials (cookies). Let me check if the API has any cookie-based session path, or if there's an alternate surface. But I should also consider this could be genuinely reportable if combined with the app-level XSS. Let me look for any XSS on the app surface as a chain partner. 
+
+Actually, given the program's focus on real logic flaws and POC, let me evaluate the CORS finding honestly. Let me verify the full picture and check the `authorization/userinfo` which might be the highest-value reflection. Let me also double check: is there any cookie auth at all? Let me test a known-auth cookie scenario and check whether `authorization/token` POST (client_credentials) could be hit — but that requires a valid client secret.
+
+Let me examine the preflight behavior more: the whole `/v2` reflects arbitrary origins. The impact of a reflected-CORS-with-credentials without cookie auth is limited. But there's a subtlety — I should determine whether the app itself (app.sipgate.com) has any XSS that could be the chain partner, since that would make this a genuine ATO chain. Given I'm the target=api agent and have confirmed the CORS misconfig, the honest assessment: this is a MEDIUM/defense-in-depth finding that pairs with an XSS. 
+
+Given the limits (PASSIVE-first, but active probes allowed when scoped), I've confirmed a real, concrete, live misconfiguration: **any-origin CORS reflection with credentials enabled on the entire customer-facing production API** including contacts/account/users. Even without cookie-auth, this is reportable as a real misconfiguration (it's a CSRF/CORS protection gap — it means no `Access-Control-Allow-Origin` allowlist exists, which is itself a sign that if any legacy cookie session exists OR combined with the app token in localStorage on a *.sipgate.com origin, it's exploitable).
+
+Let me verify the chain feasibility: the token in localStorage is on `app.sipgate.com`. For an attacker page on a *different* origin to call `api.sipgate.com` with credentials, it needs the cookie/header. Since it's a Bearer header, no cross-origin auto-attach. So the realistic chain needs XSS. This CORS misconfig is a genuine finding but not independently a full ATO.
+
+Given this is a mature finding worth reporting, let me confirm the reflection is truly arbitrary (not just evil.example — test a real attacker-looking origin and whether null origin works) and check the full header set on a GET. Then I'll write up structured output.
+[0m$ [0m# Confirm arbitrary/none origin reflection + full CORS header set on real response
+echo "=== Origin: attacker.xyz ==="
+curl -s -D - -o /dev/null "https://api.sipgate.com/v2/authorization/userinfo" -H "Origin: https://attacker.xyz" 2>&1 | grep -i "HTTP/\|access-control-allow-origin\|access-control-allow-credentials"
+echo "=== Origin: null ==="
+curl -s -D - -o /dev/null "https://api.sipgate.com/v2/account" -H "Origin: null" 2>&1 | grep -i "HTTP/\|access-control-allow-origin\|access-control-allow-credentials"
+echo "=== No origin header (same-origin) ==="
+curl -s -D - -o /dev/null "https://api.sipgate.com/v2/account" 2>&1 | grep -i "HTTP/\|access-control-allow-origin\|access-control-allow-credentials"
+=== Origin: attacker.xyz ===
+HTTP/1.1 401 Unauthorized
+access-control-allow-credentials: true
+access-control-allow-origin: https://attacker.xyz
+=== Origin: null ===
+HTTP/1.1 401 Unauthorized
+access-control-allow-credentials: true
+access-control-allow-origin: null
+=== No origin header (same-origin) ===
+HTTP/1.1 401 Unauthorized
+[0m
+Confirmed: **arbitrary/reflected CORS with `Access-Control-Allow-Credentials: true`** on the entire production `/v2` API, including `null` origin (sandboxed iframe) reflection. This is a genuine, live misconfiguration.
+
+The key nuance I must be honest about: auth is via `Authorization: Bearer` header, not cookies, so the standalone CORS misconfig doesn't auto-send credentials cross-origin. However, this is a substantive finding because:
+1. Any origin (including `null`/sandboxed iframe) is reflected with credentials — meaning if ANY XSS or client-controlled token is present, all customer data (contacts, account, numbers, users) is exfiltratable.
+2. The `authorization` header is in the allow-headers list, so a cross-origin preflighted GET can carry a bearer token that the attacker supplies (e.g., from a leaked token elsewhere).
+
+This pairs with the confirmed client-side `redirect` unvalidated parameter and React SPA on app.sipgate.com — a strong CORS + client-side vector is a legitimate chain candidate.
+
+Let me confirm the `authorization` header is accepted in preflight allow-headers (already confirmed: yes it's listed), and finalize. I've done enough active probing to characterize this finding. Let me record this as the headline finding and structure my output.
+
+This is a NEW delta (the `/v2` index and arbitrary-origin CORS reflection weren't in prior inventory). Let me write up the structured analyst output.
+
+STEP 1 — DELTA:
+- `api.sipgate.com/v2` — 200 JSON full API index (account/contacts/numbers/users/sms/balance/payment scopes) — NEW, previously only the third-party OAuth realm was characterized.
+- NEW confirmation: entire `/v2` API echoes arbitrary Origin (incl. `null`) with `Allow-Credentials: true` and `authorization` in allow-headers.
+
+STEP 2 — PRIORITIZE: api.sipgate.com scores very high on gate_ease-ish (though endpoints 401, the CORS surface is open), business_value (customer data scopes confirmed: contacts, account, balance, sms, numbers), tech_exposure (OAuth/Bearer/CORS).
+
+Let me compute priority for api.sipgate.com (target=api): attack_surface=7, business_value=10, tech_exposure=8, gate_ease=5 (401 without token but CORS open), cloud_surface=8, freshness=10.
+score = 0.25*7 + 0.25*10 + 0.15*8 + 0.15*5 + 0.10*8 + 0.10*10 = 1.75+2.5+1.2+0.75+0.8+1.0 = 8.0
+
+STEP 3 — HYPOTHESIS (1 top): CORS misconfig ATO chain.
+
+STEP 4 — SELF-CRITIQUE: Confidence in the CORS misconfig itself = high (confirmed). But confidence in standalone ATO = medium because it needs a token-bearing context. I must be rigorous. The finding is REAL and reportable (any-origin + credentials + authorization header allowed is a confirmed CORS protection gap), but the full ATO requires a token source. Given the app stores the token in localStorage and has a confirmed unvalidated client redirect, the chain is plausible but needs the XSS partner. 
+
+Let me be honest: CORS-with-any-origin-and-credentials is directly exploitable ONLY when auth uses ambient credentials (cookies). Here it's Bearer-header auth. So the standalone severity is LOW-MEDIUM (defense-in-depth / bucket header protection gap). Full ATO not proven. I should report this honestly as CORS misconfiguration and retain confidence accordingly. This is still a legitimate non-REJECTED finding (not error disclosure, not brute-force, not "descriptive headers only" — it's an access-control header misconfiguration, which is a real security control). 
+
+Actually, REJECTED list includes "Descriptive error messages or headers" — but that refers to banner/stack-trace style errors, not CORS access-control headers (which is an actual security misconfiguration tied to the OWASP ATO class). This is distinct. The reflected `Access-Control-Allow-Origin: <attacker-origin>` + credentials is a genuine access-control vulnerability, well documented, NOT on the rejected list.
+
+Let me finalize with the structured output.
+
+STEP 5 — NEXT action: probe whether the app also uses a cookie session anywhere (to establish full CORS exploitability), and check the `app.sipgate.com` surface for an XSS partner to complete the chain. Given target=api, I'll set NEXT to a probe on the token endpoint behavior.
+
+STEP 6 — LEARNING: ACCEPTED MISCONFIG @ api.sipgate.com: arbitrary-origin CORS reflection + credentials.
+
+STEP 7 — RISK.
+
+Let me write the output.
+[0m$ [0m# quick confirm: is authorization token POST path & does /v2 accept the OAuth third-party flow (client_credentials)? check discovery once more
+curl -s -o /dev/null -w "sipgateio: %{http_code}\n" https://api.sipgate.com/v2/settings/sipgateio
+curl -s -o /dev/null -w "userinfo HEAD: %{http_code}\n" -X HEAD https://api.sipgate.com/v2/authorization/userinfo
+# confirm allow-headers contains authorization (already seen) and check PATCH/PUT on a writable endpoint reflected CORS
+curl -s -D - -o /dev/null -X OPTIONS -H "Origin: https://attacker.xyz" -H "Access-Control-Request-Method: PUT" -H "Access-Control-Request-Headers: authorization" https://api.sipgate.com/v2/contacts 2>&1 | grep -i "access-control-allow-origin\|access-control-allow-credentials\|access-control-allow-methods"
+sipgateio: 401
+
+
+<shell_metadata>
+shell tool terminated command after exceeding timeout 15000 ms. If this command is expected to take longer and is not waiting for interactive input, retry with a larger timeout value in milliseconds.
+</shell_metadata>
+[0m
+I have enough confirmed evidence. The CORS reflection is verified across every tested `/v2` endpoint (GET and OPTIONS), for arbitrary origins and `null`, with `Access-Control-Allow-Credentials: true` and the `authorization` header allowed. Let me write my structured analyst output.
+
+STEP 1 — DELTA:
+- [NEW] `api.sipgate.com/v2` — 200 JSON full API index exposing customer-data scopes (account, contacts, numbers, users, sms, balance, groups, faxlines, phonelines, devices, voicemails, portings).
+- [NEW] Whole `/v2` API echoes arbitrary Origin (incl. `null`) with `Access-Control-Allow-Credentials: true` + `authorization` in allow-headers — live CORS protection gap.
+
+STEP 2 — PRIORITIZE: api.sipgate.com = 8.0 (business_value 10, tech CORS/OAuth/Bearer, but 401 gate).
+
+STEP 3+4+5 — hypothesis, critique, next.
+
+STEP 6 — LEARNING: ACCEPTED MISCONFIG @ api.sipgate.com.
+
+STEP 7 — RISK.
+
+---
+
+STEP 1 — DELTA
+- [NEW] api.sipgate.com/v2 — 200 JSON index exposing customer-data scopes (account, contacts, numbers, users, sms, balance, groups, faxlines, phonelines, devices, voicemails, portings); Bearer-header auth, 401 without token.
+- [NEW] LIVE CORS misconfig: entire /v2 reflects ANY Origin (incl. `null`) with `Access-Control-Allow-Credentials: true`, `authorization` in allow-headers, expose-headers sent on real 401s.
+- CHANGED api surface (was only third-party OAuth realm) — now confirmed a wide REST API indexed at /v2.
+
+STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com,8.0,attack_surface=7 business_value=10 tech_exposure=8 gate_ease=5 cloud_surface=8 freshness=10
+- [PRIO] app.sipgate.com,7.6,attack_surface=8 business_value=10 tech_exposure=8 gate_ease=9 cloud_surface=8 freshness=9 (chain partner)
+
+STEP 3 — HYPOTHESES (top 1)
+[HYP] Api-wide arbitrary-origin CORS reflection with credentials enables cross-origin customer-data disclosure when combined with a token-bearing client context
+class: MISCONFIG
+asset: api.sipgate.com/v2/* (confirmed on /contacts, /account, /numbers, /users, /authorization/userinfo)
+confidence: 70
+reasoning: every tested /v2 endpoint returns `Access-Control-Allow-Origin: <any supplied origin>` AND `Access-Control-Allow-Credentials: true` on both OPTIONS preflight and real responses, including `Origin: null` (sandboxed iframe) and arbitrary attacker origins; `authorization` is in allowed headers; `Access-Control-Expose-Headers` leaks location/x-sipgate-* on responses. Auth is Bearer-header (no Set-Cookie observed), so standalone auto-attach is NOT possible — exploitability requires a token/bearer context (e.g., XSS on app.sipgate.com where the implicit-flow token persists in localStorage, or a leaked bearer). Pairing the confirmed unvalidated client redirect + React SPA token-in-localStorage gives a plausible-but-unproven ATO chain.
+evidence_needed: locate a client-side (app.sipgate.com) XSS/token-source to complete the chain, or confirm any API path authenticates via ambient cookie (would make CORS directly exploitable).
+verify_steps: PASSIVE/active-confirmed — I observed Origin:null and arbitrary-origin reflection with credentials on GET and OPTIONS across 5+ endpoints; next: confirm whether app.sipgate.com sets/sends any cookie that the API honors, and locate a script-injection/token-leak vector on app.sipgate.com to complete ATO.
+impact: cross-origin exfiltration of contacts/account/numbers/users/sms/balance if paired with a token source; standalone = CORS protection gap (no Origin allowlist), defense-in-depth. Severity: HIGH as chain, LOW-MEDIUM standalone.
+testability: PASSIVE (CORS confirmed live); chain completion HUMAN_ONLY
+STEP 4 — SELF-CRITIQUE
+- [PARKED] standalone CORS ATO without cookie auth: Bearer-header-only auth means browser auto-attach fails; standalone severity LOW-MEDIUM, chain needs XSS partner. Confidence in the misconfig itself is high (confirmed live), but in full ATO < 70 without the token source.
+- [PARKED] prior OAuth implicit redirect / HS256 / ROPC / third-party realm — all already REJECTED/parked in prior cycles.
+- [FINAL] survivors: api.sipgate.com arbitrary-origin CORS+credentials (conf 70, live-confirmed misconfig, non-REJECTED, reportable as access-control flaw) — top; chain-HUMAN pending for full ATO.
+STEP 5 — NEXT ACTION
+- [NEXT] PROBE: GET `https://api.sipgate.com/v2/authorization/userinfo` and `https://api.sipgate.com/v2/account` with `Origin: https://attacker.example` (repeat confirm) — already done; next verify app.sipgate.com: GET `https://app.sipgate.com/implicit-auth-redirect?redirect=/` and inspect main.js for a DOM-XSS sink combined with the CORS-open API to define the ATO chain (read-only).
+STEP 6 — LEARNING
+- [LEARN] ACCEPTED MISCONFIG @ api.sipgate.com: entire /v2 API reflects arbitrary `Origin` (incl. `null`) with `Access-Control-Allow-Credentials: true` and `authorization` allowed — no Origin allowlist exists at runtime; live access-control protection gap across customer-data endpoints (contacts/account/users/numbers/sms/balance).
+- [LEARN] ACCEPTED AUTH @ api.sipgate.com/v2: auth is Bearer-header only (no Set-Cookie); CORS reflec+Credentials is a defense-in-depth gap that becomes full cross-origin data disclosure only when combined with a token-bearing client-side vector.
+STEP 7 — RISK
+- [RISK] sipgate: 55 — a live, reproducible, non-REJECTED access-control misconfiguration (arbitrary-origin CORS reflection + credentials + authorization header allowed) confirmed across the entire production v2 API index covering sensitive customer data. Severity is currently bounded (Bearer-header auth ⇒ no ambient auto-attach), but it correctly pairs with the app-side client redirect/localStorage token to form a plausible high-impact ATO chain pending a live XSS/script-injection partner on app.sipgate.com. No confirmed full ATO this cycle; the CORS gap itself is a legitimate reportable finding.
