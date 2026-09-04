@@ -2576,3 +2576,277 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: 55 — Confirmed defense-in-depth gaps: (1) arbitrary-origin CORS reflection with credentials on api.sipgate.com/v2/* + /health (KB ACCEPTED), (2) publicly accessible dev SPA with hardcoded internal infrastructure URLs (NEW ACCEPTED), (3) production chatbot socket.io accepting cross-origin connections (NEW ACCEPTED), (4) team portal CSP misconfiguration exposing local dev origin (NEW ACCEPTED). Chain-dependent for full exploitation: api.sipgate.com CORS + any XSS on *.sipgate.com + implicit flow token in localStorage = full customer data exfiltration (CRITICAL). Implicit flow redirect unconfirmed (HUMAN_ONLY). No confirmed exploitable standalone chain yet.
+===== ANALYST bigpickle 2026-09-04 20:05:47 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m% [0mWebFetch https://app.dev.sipgate.com/app-login
+I'll start by checking for deltas against the current inventory and knowledge base, then proceed through all 8 steps.
+[0m% [0mWebFetch https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling
+[0m✗ [0mWebFetch https://login.dev.sipgate.com/auth/realms/sipgate-apps/.well-known/openid-configuration failed
+[91m[1mError: [0mRequest timed out
+[0m% [0mWebFetch https://app.dev.sipgate.com/app-login?redirect=/
+[0m% [0mWebFetch https://chatbot.dev.sipgate.com/
+[0m✗ [0mWebFetch https://login.dev.sipgate.com/ failed
+[91m[1mError: [0mRequest timed out
+The dev login returns only a stub. Let me inspect headers directly for CORS behavior and confirm the dev Keycloak status.
+[0m
+[0m$ [0mcurl -s -o /dev/null -D - --max-time 15 -H "Origin: https://evil.example" "https://app.dev.sipgate.com/app-login?redirect=/" | head -40; echo "---SEP---"; curl -s -o /dev/null -D - --max-time 15 -H "Origin: https://evil.example" "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling" | head -20
+HTTP/2 200 
+cache-control: max-age=3600
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk wss://ws-eu.pusher.com stats.pusher.com sentry.io api-iam.intercom.io nexus-websocket-a.intercom.io nexus-websocket-b.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io *.zopim.com *.zdassets.com *.zendesk.com wss://*.zopim.com https://amp.sipgate.de *.instana.io https://status.sipgate.de/ https://integration.sipgate.cloud https://docs.google.com *.didww.com/v3/public_keys; script-src 'unsafe-eval' 'unsafe-inline' 'self' stats.pusher.com connect.facebook.com connect.facebook.net *.cloudfront.net www.google-analytics.com *.google.com www.googletagmanager.com www.googleadservices.com sjs.bizographics.com bat.bing.com snap.licdn.com *.doubleclick.net *.linkedin.com secure.adnxs.com js.intercomcdn.com widget.intercom.io data: *.zopim.com *.zdassets.com *.instana.io; style-src 'unsafe-inline' 'self' *.google.com *.googleapis.com static.sipgate.com data: blob: *.zdassets.com; font-src 'self' fonts.intercomcdn.com js.intercomcdn.com static.sipgate.com data: *.zdassets.com *.zopim.com; frame-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com https://player.vimeo.com *.zdassets.com *.zopim.com; child-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com; worker-src 'self' blob:; img-src *.googleusercontent.com *.facebook.com 'self' *.gstatic.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net www.google-analytics.com *.googleapis.com *.doubleclick.net *.google.com *.google.de bat.bing.com *.linkedin.com secure.adnxs.com js.intercomcdn.com downloads.intercomcdn.com static.intercomassets.com data: *.zopim.com *.zdassets.com *.zopim.io; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net js.intercomcdn.com blob: *.zopim.com data: *.zdassets.com; frame-ancestors 'self' *.sipgate.com *.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa;
+content-type: text/html; charset=utf-8
+cross-origin-opener-policy: same-origin-allows-popups
+etag: "c7222235995651af148f0f8e9a882b101a0339049bd4cf443aa6ade9cd3f52bc"
+last-modified: Fri, 04 Sep 2026 15:01:19 GMT
+strict-transport-security: max-age=31556926
+x-content-type-options: nosniff
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/* https://*.sipgate.com/* https://*.sipgate.de/* https://*.sipgate.co.uk/*
+x-xss-protection: 1; mode=block
+accept-ranges: bytes
+date: Fri, 04 Sep 2026 19:56:36 GMT
+x-served-by: cache-dfw-kdfw8210150-DFW
+x-cache: MISS
+x-cache-hits: 0
+x-timer: S1788551796.308117,VS0,VE72
+vary: x-fh-requested-host, accept-encoding
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
+content-length: 14409
+
+---SEP---
+HTTP/2 200 
+vary: Origin
+content-type: text/plain; charset=UTF-8
+content-length: 118
+cache-control: no-store
+date: Fri, 04 Sep 2026 19:56:36 GMT
+via: 1.1 google
+alt-svc: h3=":443"; ma=2592000
+[0m
+[0m$ [0mcurl -s -D - --max-time 12 "https://login.dev.sipgate.com/" -o /dev/null 2>&1 | head -20; echo "---RESOLVE---"; getent hosts login.dev.sipgate.com || echo "no-resolve"
+---RESOLVE---
+217.116.120.201 login.dev.sipgate.com
+[0m
+Key signals: dev Keycloak is unreachable (resolves but no HTTPS), and chatbot socket.io emits `vary: Origin` without `access-control-allow-origin` — meaning CORS is enforced, contradicting the previous "arbitrary origin" acceptance. Let me verify with a preflight and port checks.
+[0m$ [0mcurl -s -D - --max-time 15 -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: authorization" "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling" 2>&1 | head -25; echo "===GET-full==="; curl -s --max-time 15 -H "Origin: https://evil.example" "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling" 2>&1
+HTTP/2 204 
+vary: Origin, Access-Control-Request-Headers
+access-control-allow-methods: GET,HEAD,PUT,PATCH,POST,DELETE
+access-control-allow-headers: authorization
+date: Fri, 04 Sep 2026 19:57:10 GMT
+via: 1.1 google
+alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+
+===GET-full===
+0{"sid":"0i1vaBHrJNttKrWPAMIf","upgrades":["websocket"],"pingInterval":10000,"pingTimeout":10000,"maxPayload":1000000}
+[0m
+[0m$ [0mcurl -s -o /dev/null -D - --max-time 10 "http://login.dev.sipgate.com/" 2>&1 | head -15; echo "===login-https-verbose==="; timeout 10 bash -c 'exec 3<>/dev/tcp/login.dev.sipgate.com/443 && echo CONNECTED-443' 2>&1 || echo "tcp-443-closed"; timeout 8 bash -c 'exec 3<>/dev/tcp/login.dev.sipgate.com/80 && echo CONNECTED-80' 2>&1 || echo "tcp-80-closed"
+===login-https-verbose===
+tcp-443-closed
+tcp-80-closed
+[0m
+The preflight confirms: NO `access-control-allow-origin` returned for evil origin → polling transport is CORS-denied (revises prior acceptance). But WebSockets bypass CORS entirely — they only depend on server-side Origin validation. Let me test the actual WS upgrade handshake cross-origin.
+[0m$ [0mwhich python3 node 2>/dev/null; python3 -c "import socket,ssl; s=ssl.create_default_context(); c=s.wrap_socket(socket.create_connection(('chatbot.sipgate.com',443),timeout=10),server_hostname='chatbot.sipgate.com'); import base64,os; key=base64.b64encode(os.urandom(16)).decode(); c.sendall((f'GET /chat/session/socket.io/?EIO=4&transport=websocket HTTP/1.1\r\nHost: chatbot.sipgate.com\r\nOrigin: https://evil.example\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n').encode()); import time; time.sleep(1); print(c.recv(4096).decode(errors='replace')); c.close()" 2>&1 | head -20
+/usr/bin/python3
+/usr/local/bin/node
+HTTP/1.1 101 Switching Protocols
+Sec-WebSocket-Accept: NlfGS5P6NQwzNfufGrI1a1y3aT0=
+Vary: Origin
+Date: Fri, 04 Sep 2026 19:58:06 GMT
+Via: 1.1 google
+Upgrade: websocket
+Connection: Upgrade
+Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+[0m
+**Confirmado:** el transporte WebSocket del chatbot de producción acepta el upgrade cross-origin (`101 Switching Protocols` con `Origin: https://evil.example`). CORS no aplica a WebSockets. Ahora déjame ver qué envía el servidor tras el handshake sin autenticación — y el flujo de auth del cliente JS.
+[0m$ [0mcurl -s --max-time 15 "https://chatbot.sipgate.com/" -o /tmp/cb.html && head -c 3000 /tmp/cb.html
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<center><h1>403 Forbidden</h1></center>
+<hr><center>nginx/1.21.6</center>
+</body>
+</html>
+[0m
+Root is 403. Let me read WS frames after the cross-origin handshake and try the common widget JS paths.
+[0m$ [0mpython3 - <<'EOF'
+import socket,ssl,base64,os,time,struct
+ctx=ssl.create_default_context()
+c=ctx.wrap_socket(socket.create_connection(('chatbot.sipgate.com',443),timeout=10),server_hostname='chatbot.sipgate.com')
+key=base64.b64encode(os.urandom(16)).decode()
+req=(f'GET /chat/session/socket.io/?EIO=4&transport=websocket HTTP/1.1\r\nHost: chatbot.sipgate.com\r\nOrigin: https://evil.example\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n')
+c.sendall(req.encode())
+time.sleep(1)
+data=c.recv(4096)
+print("HANDSHAKE:", data[:200].decode(errors='replace'))
+def read_exact(n):
+    b=b''
+    while len(b)<n:
+        x=c.recv(n-len(b))
+        if not x: break
+        b+=x
+    return b
+EOF
+HANDSHAKE: HTTP/1.1 101 Switching Protocols
+Sec-WebSocket-Accept: r1kXPNUDAFTnYRFt1CzDnqhGIrc=
+Vary: Origin
+Date: Fri, 04 Sep 2026 19:58:22 GMT
+Via: 1.1 google
+Upgrade: websocket
+Connection: Upgrade
+Alt-S
+[0m
+[0m$ [0mfor p in "/chat/embed.js" "/chat/chatbot.js" "/chat/session/socket.io.js" "/static/js/main.js" "/chat/" "/chat/session/"; do echo "== $p =="; curl -s -o /dev/null -w "%{http_code} %{size_download}\n" --max-time 8 "https://chatbot.sipgate.com$p"; done
+== /chat/embed.js ==
+404 153
+== /chat/chatbot.js ==
+404 153
+== /chat/session/socket.io.js ==
+404 164
+== /static/js/main.js ==
+404 153
+== /chat/ ==
+404 153
+== /chat/session/ ==
+404 152
+[0m
+The frame reader didn't wait long enough. Let me parse the WS frames properly with a longer listen window.
+[0m$ [0mpython3 - <<'EOF'
+import socket,ssl,base64,os,time,struct
+ctx=ssl.create_default_context()
+c=ctx.wrap_socket(socket.create_connection(('chatbot.sipgate.com',443),timeout=12),server_hostname='chatbot.sipgate.com')
+key=base64.b64encode(os.urandom(16)).decode()
+c.sendall((f'GET /chat/session/socket.io/?EIO=4&transport=websocket HTTP/1.1\r\nHost: chatbot.sipgate.com\r\nOrigin: https://evil.example\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n').encode())
+time.sleep(1)
+c.recv(4096)  # handshake
+def read_exact(n):
+    b=b''
+    while len(b)<n:
+        x=c.recv(n-len(b))
+        if not x: return None
+        b+=x
+    return b
+c.settimeout(4)
+for i in range(4):
+    try:
+        hdr=read_exact(2)
+        if not hdr: break
+        b0,b1=hdr
+        op=b0&0x0f; ln=b1&0x7f
+        if ln==126: ln=struct.unpack('>H',read_exact(2))[0]
+        elif ln==127: ln=struct.unpack('>Q',read_exact(8))[0]
+        mask=b1&0x80
+        mk=read_exact(4) if mask else None
+        pl=read_exact(ln) if ln else b''
+        if mask and pl:
+            pl=bytes(p^mk[i%4] for i,p in enumerate(pl))
+        print(f"frame opcode={op} len={ln} payload={pl.decode(errors='replace')!r}")
+    except socket.timeout:
+        print("(timeout waiting next frame)")
+        break
+c.close()
+EOF
+frame opcode=1 len=107 payload='0{"sid":"H2Cgp9SwQjC5ATmwAMI7","upgrades":[],"pingInterval":10000,"pingTimeout":10000,"maxPayload":1000000}'
+(timeout waiting next frame)
+[0m
+Cross-origin WS accepted with a session sid. Now testing socket.io namespace connect pre-auth (`40` packet) — no data sent, just a namespace attach.
+[0m$ [0mpython3 - <<'EOF'
+import socket,ssl,base64,os,time,struct
+ctx=ssl.create_default_context()
+c=ctx.wrap_socket(socket.create_connection(('chatbot.sipgate.com',443),timeout=12),server_hostname='chatbot.sipgate.com')
+key=base64.b64encode(os.urandom(16)).decode()
+c.sendall((f'GET /chat/session/socket.io/?EIO=4&transport=websocket HTTP/1.1\r\nHost: chatbot.sipgate.com\r\nOrigin: https://evil.example\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n').encode())
+time.sleep(1); c.recv(4096)
+def read_exact(n):
+    b=b''
+    while len(b)<n:
+        x=c.recv(n-len(b))
+        if not x: return None
+        b+=x
+    return b
+def recv_frame():
+    hdr=read_exact(2); 
+    if not hdr: return None
+    b0,b1=hdr; op=b0&0x0f; ln=b1&0x7f
+    if ln==126: ln=struct.unpack('>H',read_exact(2))[0]
+    elif ln==127: ln=struct.unpack('>Q',read_exact(8))[0]
+    mk=read_exact(4) if (b1&0x80) else None
+    pl=read_exact(ln) if ln else b''
+    return (op,pl.decode(errors='replace'))
+def send_text(payload):
+    mask=os.urandom(4)
+    ln=len(payload); hdr=bytes([0x81])
+    if ln<126: hdr+=bytes([0x80|ln])
+    elif ln<65536: hdr+=bytes([0x80|126])+struct.pack('>H',ln)
+    else: hdr+=bytes([0x80|127])+struct.pack('>Q',ln)
+    masked=bytes(p^mask[i%4] for i,p in enumerate(payload.encode()))
+    c.sendall(hdr+mask+masked)
+recv_frame()  # drain open packet
+print("send '40' (socket.io CONNECT, no auth)")
+send_text('40')
+c.settimeout(5)
+for i in range(4):
+    try:
+        f=recv_frame()
+        if not f: break
+        print("resp:",f)
+    except socket.timeout:
+        print("(timeout)"); break
+c.close()
+EOF
+send '40' (socket.io CONNECT, no auth)
+resp: (1, '40{"sid":"Da6_YlYn3HPHST5kAMI9"}')
+(timeout)
+[0m
+Namespace CONNECT **succeeded without any auth token** — server returned a namespace sid. Now let me determine namespace name and whether server pushes any data, plus find the widget client code.
+[0m$ [0mcurl -s --max-time 20 "https://app.sipgate.com/main-C5_XLhfX.js" -o /tmp/appmain.js 2>/dev/null; ls -la /tmp/appmain.js 2>/dev/null; rg -o "chat[a-zA-Z0-9./:_-]*" /tmp/appmain.js 2>/dev/null | sort -u | head -30
+-rw-r--r-- 1 runner runner 14409 Sep  4 19:59 /tmp/appmain.js
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import socket,ssl,base64,os,time,struct
+ctx=ssl.create_default_context()
+c=ctx.wrap_socket(socket.create_connection(('chatbot.sipgate.com',443),timeout=12),server_hostname='chatbot.sipgate.com')
+key=base64.b64encode(os.urandom(16)).decode()
+c.sendall((f'GET /chat/session/socket.io/?EIO=4&transport=websocket HTTP/1.1\r\nHost: chatbot.sipgate.com\r\nOrigin: https://evil.example\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n').encode())
+time.sleep(1); c.recv(4096)
+def read_exact(n):
+    b=b''
+    while len(b)<n:
+        x=c.recv(n-len(b))
+        if not x: return None
+        b+=x
+    return b
+def recv_frame():
+    hdr=read_exact(2)
+    if not hdr: return None
+    b0,b1=hdr; op=b0&0x0f; ln=b1&0x7f
+    if ln==126: ln=struct.unpack('>H',read_exact(2))[0]
+    elif ln==127: ln=struct.unpack('>Q',read_exact(8))[0]
+    mk=read_exact(4) if (b1&0x80) else None
+    pl=read_exact(ln) if ln else b''
+    if mk and pl: pl=bytes(p^mk[i%4] for i,p in enumerate(pl))
+    return (op,pl.decode(errors='replace'))
+def send_text(payload):
+    mask=os.urandom(4); ln=len(payload); hdr=bytes([0x81])
+    hdr+=bytes([0x80|ln]) if ln<126 else bytes([0x80|126])+struct.pack('>H',ln)
+    c.sendall(hdr+mask+bytes(p^mask[i%4] for i,p in enumerate(payload.encode())))
+recv_frame()
+for ns in ['40','40/session','40/session,']:
+    c.settimeout(4); send_text(ns)
+    try:
+        r=recv_frame(); print(f"sent {ns!r} -> {r}")
+    except socket.timeout: print(f"sent {ns!r} -> (timeout)")
+EOF
+sent '40' -> (1, '40{"sid":"cDc4NhwJs9g2WUxbAMJC"}')
+sent '40/session' -> (1, '44/session,{"message":"Invalid namespace"}')
+sent '40/session,' -> (1, '44/session,{"message":"Invalid namespace"}')
+[0m
+Default namespace `40` accepted; `/session` namespace rejected. Now let me find the real client bundle to understand event/auth flow.
+[0m$ [0mcurl -s --max-time 15 "https://app.sipgate.com/" -o /tmp/app.html; rg -o 'src="[^"]+\.js[^"]*"' /tmp/app.html | head; echo "==="; rg -o 'main-[A-Za-z0-9_-]+\.js' /tmp/app.html | sort -u
+/bin/bash: line 1: rg: command not found
+===
+/bin/bash: line 1: rg: command not found
+[0m
+[93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting
+[0m✗ [0mGrep "main-[A-Za-z0-9_-]+\.js" failed[90m in /tmp[0m
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.

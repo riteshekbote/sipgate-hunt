@@ -1,4 +1,4 @@
-## 2026-09-04 17:48:31 UTC [target] (model nemotron3)
+## 2026-09-04 20:05:37 UTC [target] (model nemotron3)
 [NEW] chatbot.dev.sipgate.com — live dev chatbot (nginx/1.24.0) with socket.io endpoint accessible from internet, loads React dev builds from unpkg.com
 [NEW] chatbot.sipgate.com — live production chatbot socket.io endpoint (/chat/session/socket.io/) accepts connections from any origin
 [NEW] payment.sipgate.com — live payment API (Java Spring, JSESSIONID), proper CORS (only reflects app.sipgate.com)
@@ -9,6 +9,7 @@
 [NEW] api.sipgate.com/health — unauthenticated endpoint (200 OK, "Healthcheck - OK") with full arbitrary-origin CORS + credentials reflected
 [CHANGED] app.dev.sipgate.com — CSP identical to production; JS references api.dev.sipgate.com in pickByEnvironment but dev API is 403-blocked
 [CHANGED] chatbot.dev.sipgate.com — /chat/session/socket.io/?EIO=4&transport=polling returns valid socket.io session from any origin (no CORS check)
+[CHANGED] api.sipgate.com/v2/* — arbitrary-origin CORS reflection with credentials confirmed across /contacts, /account, /numbers, /users, /authorization/userinfo (KB ACCEPTED MISCONFIG)
 [PRIO] api.sipgate.com,8.75,attack_surface=9 business_value=10 tech_exposure=9 gate_ease=5 cloud_surface=8 freshness=10
 [PRIO] app.dev.sipgate.com,8.50,attack_surface=9 business_value=8 tech_exposure=8 gate_ease=9 cloud_surface=8 freshness=10
 [PRIO] app.sipgate.com,8.25,attack_surface=9 business_value=10 tech_exposure=8 gate_ease=10 cloud_surface=8 freshness=10
@@ -23,9 +24,7 @@
 class: MISCONFIG
 asset: app.dev.sipgate.com
 confidence: 75
-reasoning: app.dev.sipgate.com serves identical production JS bundle on Fastly CDN with no IP restriction. Bundle hardcodes internal RFC1918 hostnames and ports (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443, team-uk.local:10443, login.dev, chatbot.dev). Dev environment publicly accessible reveals service mesh topology, port assignments, and internal naming conventions.
-evidence_needed: Confirm dev Keycloak realm (login.dev.sipgate.com) accessible; verify whether dev API (api.dev.sipgate.com) 403 is WAF-only or auth-gated; enumerate additional internal endpoints referenced in dev JS.
-verify_steps: GET https://app.dev.sipgate.com — verify JS bundle hash matches production; GET https://app.dev.sipgate.com/app-login — check redirect target; GET https://login.dev.sipgate.com/auth/realms/sipgate-apps/.well-known/openid-configuration — confirm dev realm exists; GET https://api.dev.sipgate.com/v2/contacts with Origin:https://evil.example — check CORS behavior.
+reasoning: app.dev.sipgate.com serves identical production JS bundle on Fastly CDN with no IP restriction. Bundle hardcodes internal RFC1918 hostnames and ports (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443, team-uk.local:10443, login.dev, chatbot.dev). Dev environment publicly accessible reveals service mesh topology, port assignments, and internal naming conv[0m
 impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement; if dev auth weaker → potential ATO. Severity: MEDIUM (info leak) to HIGH (dev auth bypass).
 testability: PASSIVE
 [HYP] Production Chatbot Socket.io Accepts Arbitrary-Origin Connections Enabling Session Hijack
@@ -34,7 +33,14 @@ asset: chatbot.sipgate.com/chat/session/socket.io
 confidence: 60
 reasoning: Production chatbot at chatbot.sipgate.com returns 200 OK with valid socket.io session ID (sid) on /chat/session/socket.io/?EIO=4&transport=polling from any Origin (evil.example confirmed). Production JS uses getToken() for socket auth, but transport layer accepts handshake from arbitrary origins. If socket.io server validates auth only on namespaces/events but accepts initial handshake from any origin, attacker page could establish connection and intercept/inject chat messages.
 evidence_needed: Confirm whether auth token required for message events or only at connection time; check if socket sends user data before auth validation; verify socket.io CORS config (allowRequest/origin validation).
-verify_steps: GET https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling with Origin:https://evil.example — confirm session established; inspect response for auth-related events; check Vary he[0m← [0mWrite analyst-out.txt
+verify_steps: GET https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling with Origin:https://evil.example — confirm session established; inspect response for auth-related events; check Vary header for CORS behavior.
+impact: Session hijack of customer chat sessions = PII exposure; if admin/support chat = lateral movement. Severity: HIGH.
+testability: PASSIVE
+[HYP] API v2 Arbitrary-Origin CORS with Credentials Enables Cross-Origin Data Exfiltration When Paired With Token Source
+class: MISCONFIG
+asset: api.sipgate.com/v2/*
+confidence: 70
+reasoning: Every tested /v2 endpoint returns Access-Control-Allow-Origin: <any supplied origin> AND Access-Control-Allow-Credentials: true on OPTIONS and real responses; Authorization in allowed headers; Access-Control-Expose-Headers leaks location/x-sipgate-*. Auth is Bearer-header only (no Set-Cookie), so standalone auto-attach impossible — exploit requires token source (e.g., XSS on app.sipgate.com where implicit-flow token persists in localStorage, or leaked bearer).
 evidence_needed: Confirm no cookie-based auth on any /v2 path; locate XSS/token-leak vector on app.sipgate.com or sibling subdomain to complete chain.
 verify_steps: GET https://api.sipgate.com/v2/contacts with Origin:https://evil.example — verify ACAO reflects attacker origin + ACAC:true + exposed headers. Enumerate additional /v2 endpoints (/sms, /calls, /fax, /subscription, /payment) for consistency. Search app.sipgate.com JS bundles for third-party scripts / dangerous sinks.
 impact: Cross-origin exfiltration of contacts, account, numbers, users, SMS, balance, payments when paired with token source; standalone = defense-in-depth gap. Severity: HIGH as chain, MEDIUM standalone.
