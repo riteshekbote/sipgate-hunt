@@ -35,3 +35,7 @@
 - 2026-09-04 ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes `app.local.sipgate.com:3443` (internal dev origin) in production portal; leaks `SERVERID=team-web03`.
 - 2026-09-04 ACCEPTED AUTH @ chatbot.sipgate.com: production socket.io endpoint accepts connections from arbitrary origins without CORS restriction on transport handshake.
 - 2026-09-04 ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+- 2026-09-04 ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERID=team-web03.
+- 2026-09-04 REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin.
+- 2026-09-04 REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client, i.e. revoked/not registered — not a live credential exposure.
+- 2026-09-04 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct.

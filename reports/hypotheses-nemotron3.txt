@@ -1,56 +1,65 @@
-## 2026-09-04 14:17:00 UTC [target] (model nemotron3)
-[PRIO] api.sipgate.com,8.50,attack_surface=9 business_value=10 tech_exposure=9 gate_ease=5 cloud_surface=8 freshness=10
+## 2026-09-04 17:48:31 UTC [target] (model nemotron3)
+[NEW] chatbot.dev.sipgate.com — live dev chatbot (nginx/1.24.0) with socket.io endpoint accessible from internet, loads React dev builds from unpkg.com
+[NEW] chatbot.sipgate.com — live production chatbot socket.io endpoint (/chat/session/socket.io/) accepts connections from any origin
+[NEW] payment.sipgate.com — live payment API (Java Spring, JSESSIONID), proper CORS (only reflects app.sipgate.com)
+[NEW] team-de.live.sipgate.com — live team portal (Apache/PHP), 302→login.sipgate.com; frame-ancestors whitelists app.local.sipgate.com:3443 (internal dev); leaks SERVERID=team-web03
+[NEW] app.dev.sipgate.com — live dev SPA on Fastly CDN, serves identical main-C5_XLhfX.js bundle as production (no IP restriction)
+[NEW] api.dev.sipgate.com — 403 Forbidden on all paths (WAF blocked, but accessible)
+[NEW] Production JS bundle hardcodes internal dev URLs: api.local.sipgate.com:3396, app.local.sipgate.com:3443, payment.local.sipgate.com:8080, team-de.local.sipgate.com:10443, login.dev.sipgate.com
+[NEW] api.sipgate.com/health — unauthenticated endpoint (200 OK, "Healthcheck - OK") with full arbitrary-origin CORS + credentials reflected
+[CHANGED] app.dev.sipgate.com — CSP identical to production; JS references api.dev.sipgate.com in pickByEnvironment but dev API is 403-blocked
+[CHANGED] chatbot.dev.sipgate.com — /chat/session/socket.io/?EIO=4&transport=polling returns valid socket.io session from any origin (no CORS check)
+[PRIO] api.sipgate.com,8.75,attack_surface=9 business_value=10 tech_exposure=9 gate_ease=5 cloud_surface=8 freshness=10
+[PRIO] app.dev.sipgate.com,8.50,attack_surface=9 business_value=8 tech_exposure=8 gate_ease=9 cloud_surface=8 freshness=10
 [PRIO] app.sipgate.com,8.25,attack_surface=9 business_value=10 tech_exposure=8 gate_ease=10 cloud_surface=8 freshness=10
+[PRIO] chatbot.sipgate.com,8.00,attack_surface=7 business_value=9 tech_exposure=8 gate_ease=7 cloud_surface=7 freshness=10
 [PRIO] login.sipgate.com,7.90,attack_surface=8 business_value=9 tech_exposure=8 gate_ease=10 cloud_surface=7 freshness=10
 [PRIO] clinq-bridge-sipgate (GitHub),7.90,attack_surface=6 business_value=7 tech_exposure=9 gate_ease=10 cloud_surface=9 freshness=9
 [PRIO] radau (GitHub),7.80,attack_surface=6 business_value=8 tech_exposure=9 gate_ease=10 cloud_surface=8 freshness=9
-[HYP] Api-wide Arbitrary-Origin CORS Reflection with Credentials
+[PRIO] team-de.live.sipgate.com,7.50,attack_surface=6 business_value=8 tech_exposure=7 gate_ease=6 cloud_surface=6 freshness=10
+[PRIO] payment.sipgate.com,7.00,attack_surface=5 business_value=10 tech_exposure=6 gate_ease=4 cloud_surface=6 freshness=10
+[PRIO] chatbot.dev.sipgate.com,7.00,attack_surface=6 business_value=7 tech_exposure=7 gate_ease=8 cloud_surface=7 freshness=10
+[HYP] Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement
 class: MISCONFIG
-asset: api.sipgate.com/v2/*
-confidence: 70
-reasoning: Every tested /v2 endpoint (/contacts, /account, /numbers, /users, /authorization/userinfo) returns Access-Control-Allow-Origin: <any supplied origin> AND Access-Control-Allow-Credentials: true on OPTIONS and real responses; Authorization in allowed headers; Access-Control-Expose-Headers leaks location/x-sipgate-*. Auth is Bearer-header only (no Set-Cookie), so standalone auto-attach impossible — exploit requires token source (XSS on app.sipgate.com where implicit-flow token persists in localStorage, or leaked bearer).
+asset: app.dev.sipgate.com
+confidence: 75
+reasoning: app.dev.sipgate.com serves identical production JS bundle on Fastly CDN with no IP restriction. Bundle hardcodes internal RFC1918 hostnames and ports (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443, team-uk.local:10443, login.dev, chatbot.dev). Dev environment publicly accessible reveals service mesh topology, port assignments, and internal naming conventions.
+evidence_needed: Confirm dev Keycloak realm (login.dev.sipgate.com) accessible; verify whether dev API (api.dev.sipgate.com) 403 is WAF-only or auth-gated; enumerate additional internal endpoints referenced in dev JS.
+verify_steps: GET https://app.dev.sipgate.com — verify JS bundle hash matches production; GET https://app.dev.sipgate.com/app-login — check redirect target; GET https://login.dev.sipgate.com/auth/realms/sipgate-apps/.well-known/openid-configuration — confirm dev realm exists; GET https://api.dev.sipgate.com/v2/contacts with Origin:https://evil.example — check CORS behavior.
+impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement; if dev auth weaker → potential ATO. Severity: MEDIUM (info leak) to HIGH (dev auth bypass).
+testability: PASSIVE
+[HYP] Production Chatbot Socket.io Accepts Arbitrary-Origin Connections Enabling Session Hijack
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io
+confidence: 60
+reasoning: Production chatbot at chatbot.sipgate.com returns 200 OK with valid socket.io session ID (sid) on /chat/session/socket.io/?EIO=4&transport=polling from any Origin (evil.example confirmed). Production JS uses getToken() for socket auth, but transport layer accepts handshake from arbitrary origins. If socket.io server validates auth only on namespaces/events but accepts initial handshake from any origin, attacker page could establish connection and intercept/inject chat messages.
+evidence_needed: Confirm whether auth token required for message events or only at connection time; check if socket sends user data before auth validation; verify socket.io CORS config (allowRequest/origin validation).
+verify_steps: GET https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling with Origin:https://evil.example — confirm session established; inspect response for auth-related events; check Vary he[0m← [0mWrite analyst-out.txt
 evidence_needed: Confirm no cookie-based auth on any /v2 path; locate XSS/token-leak vector on app.sipgate.com or sibling subdomain to complete chain.
-verify_steps: PASSIVE: GET https://api.sipgate.com/v2/contacts with Origin:https://evil.example — verify ACAO reflects attacker origin + ACAC:true + exposed headers. Enumerate additional /v2 endpoints for consistency. Search app.sipgate.com JS bundles for third-party scripts / dangerous sinks.
+verify_steps: GET https://api.sipgate.com/v2/contacts with Origin:https://evil.example — verify ACAO reflects attacker origin + ACAC:true + exposed headers. Enumerate additional /v2 endpoints (/sms, /calls, /fax, /subscription, /payment) for consistency. Search app.sipgate.com JS bundles for third-party scripts / dangerous sinks.
 impact: Cross-origin exfiltration of contacts, account, numbers, users, SMS, balance, payments when paired with token source; standalone = defense-in-depth gap. Severity: HIGH as chain, MEDIUM standalone.
 testability: PASSIVE
-[HYP] Internal Redis Exposure Enables SSRF Lateral Movement Chain
-class: MISCONFIG
-asset: clinq-bridge-sipgate/k8s/template/deployment.yml (public GitHub)
-confidence: 95
-reasoning: Public repo hardcodes REDIS_URL: rediss://10.37.248.211:6378 (internal RFC-1918 IP, TLS Redis). cloudbuild.yaml reveals GCP project clinq-services zone europe-west3. If any sipgate service has SSRF (params: url, uri, callback, webhook, next, redirect), attacker can reach internal Redis for data access/lateral movement.
-evidence_needed: Confirm 10.37.248.211 live in sipgate GCP network; identify SSRF vector in sipgate API surface reaching internal IPs.
-verify_steps: PASSIVE: Search sipgate API endpoints for SSRF candidates (url, uri, callback, webhook, next, redirect params); correlate GCP project clinq-services with sipgate infrastructure via DNS/cert transparency.
-impact: Internal infrastructure access → data theft / lateral movement via SSRF chain; severity HIGH if SSRF exists.
-testability: PASSIVE
-[HYP] OIDC Implicit Flow Fragment Leakage via Third-Party Subresources
-class: AUTH
-asset: app.sipgate.com/implicit-auth-redirect
-confidence: 70
-reasoning: login.sipgate.com uses OIDC implicit flow (response_type=token) redirecting to https://app.sipgate.com/implicit-auth-redirect?redirect=/ with access_token in URL fragment. JS (ImplicitAuthenticator) persists token to localStorage then history.replace(redirect). Fragment leaks if page loads third-party resources (analytics, fonts, iframes) BEFORE token extraction — Referer header carries fragment to third parties.
-evidence_needed: Observe network requests from implicit-auth-redirect page; check Referrer-Policy header; verify token extraction timing vs third-party loads; confirm no Referrer-Policy: no-referrer or strict-origin-when-cross-origin.
-verify_steps: GET https://app.sipgate.com/implicit-auth-redirect?redirect=/ — inspect HTML/JS for fragment handling order, third-party script/tags, Referrer-Policy header, and any subresource loads that could carry fragment via Referer.
-impact: Full account takeover via stolen access token sent to third-party domains; severity HIGH.
-testability: PASSIVE
-[PARKED] OAuth implicit token theft via client-side unvalidated redirect: KB REJECTED as OATH class — `history.replace(external)` in React Router resolves same-origin, token persists to localStorage before navigation, fragment never forwarded off-origin. Confidence 45 but rejected-class per KB.
+[PARKED] OAuth implicit token theft via client-side unvalidated redirect: KB REJECTED as OATH class — history.replace(external) in React Router resolves same-origin, token persists to localStorage before navigation, fragment never forwarded off-origin. Confidence 45 but rejected-class per KB.
 [PARKED] Keycloak id_token alg confusion (HS256): Standard Keycloak metadata, not proof of vulnerable verifier; REJECTED-adjacent per KB.
 [PARKED] ROPC/password grant + client_secret_jwt: Config-only, brute-force territory REJECTED per KB.
 [PARKED] Keycloak Redirect_URI Validation Bypass: Requires testing redirect_uri variants (active auth testing); passive-only verification limited; confidence 60.
 [PARKED] WebSocket Origin Validation Bypass: No concrete WS endpoint discovered; CSP allows wildcard but actual endpoints unknown; needs endpoint enumeration first.
 [PARKED] Third-party realm valid client discovery: DCR gated by Trusted Hosts, demo creds revoked; no passive path to valid credential.
 [PARKED] dev.sipgate.de subdomain takeover: Abandoned host on owned IP; no dangling CNAME to attacker-controllable service.
-[FINAL] 1. Internal Redis endpoint exposure aids SSRF/lateral movement (confidence 95, PASSIVE)
-[FINAL] 2. Api-wide arbitrary-origin CORS reflection with credentials (confidence 70, PASSIVE)
-[FINAL] 3. OIDC Implicit Flow Fragment Leakage via Third-Party Subresources (confidence 70, PASSIVE)
-[NEXT] PROBE: GET https://app.sipgate.com/implicit-auth-redirect?redirect=/ — inspect HTML/JS for fragment handling order (token extraction vs third-party loads), Referrer-Policy header, subresource requests, and localStorage key usage.
+[FINAL] 1. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement (confidence 75, PASSIVE)
+[FINAL] 2. Production Chatbot Socket.io Accepts Arbitrary-Origin Connections Enabling Session Hijack (confidence 60, PASSIVE)
+[FINAL] 3. API v2 Arbitrary-Origin CORS with Credentials Enables Cross-Origin Data Exfiltration When Paired With Token Source (confidence 70, PASSIVE)
+[NEXT] PROBE: GET https://app.dev.sipgate.com/app-login — check if dev login redirects to login.dev.sipgate.com and whether a dev Keycloak realm is accessible (check /.well-known/openid-configuration on login.dev.sipgate.com). Also GET https://app.dev.sipgate.com with Origin:https://evil.example to check for any CORS headers. Also GET https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling with Origin:https://evil.example and check vary header for CORS behavior. Read-only, <=1 rps.
+[LEARN] ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443), no IP restriction — infrastructure info disclosure.
+[LEARN] ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERID=team-web03.
+[LEARN] ACCEPTED AUTH @ chatbot.sipgate.com: production socket.io endpoint accepts connections from arbitrary origins without CORS restriction on transport handshake.
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, exposes sensitive headers.
 [LEARN] REJECTED network DoS @ app.sipgate.com: Out of scope per program policy.
 [LEARN] REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope.
 [LEARN] ACCEPTED AUTH @ login.sipgate.com: OIDC implicit flow with fragment token delivery is in-scope high-value target.
-[LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin.
+[LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin.
 [LEARN] REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reachable flawed verifier.
-[LEARN] REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. revoked/not registered — not a live credential exposure.
-[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scope`), no Host-header bypass found; redirect_uri validation correct.
-[LEARN] ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/account/balance/payment).
-[LEARN] ACCEPTED MISCONFIG @ clinq-bridge-sipgate (GitHub): K8s deployment exposes internal Redis IP `10.37.248.211:6378` + GCP project `clinq-services` in public repo.
-[LEARN] ACCEPTED MISCONFIG/SECRET @ radau (GitHub): Default CORS `AllowAllOrigins+AllowCredentials` + hardcoded API keys/DB passwords in public repo.
-[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, exposes sensitive headers.
-[RISK] sipgate: 75 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS on API v2, permissive CSP wildcard WS origins, multi-tenant dashboards. Primary risks: (1) Fragment leakage via third-party subresources on implicit-auth-redirect (PASSIVE verifiable, unconfirmed), (2) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfil if paired with token source (XSS on app.sipgate.com or leaked bearer), (3) Public repo internal infrastructure exposure (Redis IP, GCP project) enabling SSRF chains if any sipgate service has SSRF, (4) Radau CORS misconfig if deployed without override. Third-party realm well-hardened (DCR blocked, redirect_uri strict, demo creds revoked). No confirmed live vulnerability this cycle; risk concentrated on unconfirmed fragment leakage, CORS gap, and public-code infoleaks.
+[LEARN] REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client, i.e. revoked/not registered — not a live credential exposure.
+[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct.
+[RISK] sipgate: 75 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS on API v2, permissive CSP wildcard WS origins, multi-tenant dashboards. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure, (2) Production chatbot socket.io accepting arbitrary-origin connections enabling session hijack, (3) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfil if paired with token source (XSS on app.sipgate.com or leaked bearer), (4) Public repo internal infrastructure exposure (Redis IP, GCP project) enabling SSRF chains if any sipgate service has SSRF, (5) Team portal CSP misconfiguration exposing local dev origin. Third-party realm well-hardened (DCR blocked, redirect_uri strict, demo creds revoked). No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, socket.io origin validation, and public-code infoleaks.
