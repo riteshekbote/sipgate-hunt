@@ -1462,3 +1462,65 @@ STEP 6 — LEARNING
 - [LEARN] ACCEPTED AUTH @ api.sipgate.com/v2: auth is Bearer-header only (no Set-Cookie); CORS reflec+Credentials is a defense-in-depth gap that becomes full cross-origin data disclosure only when combined with a token-bearing client-side vector.
 STEP 7 — RISK
 - [RISK] sipgate: 55 — a live, reproducible, non-REJECTED access-control misconfiguration (arbitrary-origin CORS reflection + credentials + authorization header allowed) confirmed across the entire production v2 API index covering sensitive customer data. Severity is currently bounded (Bearer-header auth ⇒ no ambient auto-attach), but it correctly pairs with the app-side client redirect/localStorage token to form a plausible high-impact ATO chain pending a live XSS/script-injection partner on app.sipgate.com. No confirmed full ATO this cycle; the CORS gap itself is a legitimate reportable finding.
+===== ANALYST bigpickle 2026-09-04 09:52:41 UTC =====
+[0m
+> build · big-pickle
+[0m
+## 2026-09-04 12:00:00 UTC [target] (model bigpickle)
+
+**STEP 1 — DELTA:**
+- NEW: api.sipgate.com v2 CORS arbitrary-origin reflection with credentials (confirmed on 5+ endpoints, conf 70)
+- NO_DELTA: all other inventory and findings unchanged
+
+**STEP 2 — PRIORITIZE:**
+- [PRIO] api.sipgate.com/v2/*, 8.0, attack_surface=8 business_value=9 tech_exposure=8 gate_ease=7 cloud_surface=6 freshness=9
+- [PRIO] app.sipgate.com/implicit-auth-redirect, 7.2, attack_surface=6 business_value=9 tech_exposure=9 gate_ease=5 cloud_surface=5 freshness=8
+- [PRIO] login.sipgate.com/auth/realms/third-party, 5.9, attack_surface=4 business_value=9 tech_exposure=8 gate_ease=3 cloud_surface=5 freshness=5
+
+**STEP 3 — HYPOTHESES:**
+[HYP] api.sipgate.com v2 CORS arbitrary-origin reflection enables cross-origin data exfiltration when paired with any token-bearing client context
+class: MISCONFIG
+asset: api.sipgate.com/v2/*
+confidence: 70
+reasoning: Confirmed: every tested /v2 endpoint returns Access-Control-Allow-Origin: <arbitrary> + Allow-Credentials: true on OPTIONS and GET. Origin:null reflected. Bearer auth only (no cookies). Chain: XSS on *.sipgate.com → read localStorage token → CORS exfiltrate contacts/SMS/account/balance/payments.
+evidence_needed: XSS on any sipgate subdomain, or cookie-based auth on any API path
+verify_steps: PASSIVE: enumerate swagger/graphql/additional endpoints, check CORS consistency, probe for unauthenticated endpoints
+impact: full customer data exfiltration = CRITICAL; CORS gap alone = MEDIUM defense-in-depth
+testability: PASSIVE (CORS confirmed); chain completion HUMAN_ONLY
+
+[HYP] api.sipgate.com unauthenticated endpoint data leak via CORS
+class: MISCONFIG
+asset: api.sipgate.com (unauthenticated endpoints)
+confidence: 45
+reasoning: If any path accepts requests without Bearer auth and returns customer data, CORS reflection allows immediate exfiltration. Candidates: /health, /status, /config, /graphql, /.well-known/*.
+evidence_needed: identify unauthenticated endpoint returning non-public data
+verify_steps: PASSIVE: GET common paths, check CORS headers + response body
+impact: immediate cross-origin data exfiltration = CRITICAL
+testability: PASSIVE
+
+[HYP] app.sipgate.com implicit flow token in localStorage enables ATO via XSS + CORS chain
+class: OATH
+asset: app.sipgate.com/implicit-auth-redirect
+confidence: 45
+reasoning: Token stored to localStorage before history.replace. If XSS on *.sipgate.com, attacker reads token + uses CORS to exfiltrate via api.sipgate.com.
+evidence_needed: HUMAN browser confirmation of token storage; XSS on sipgate subdomain
+verify_steps: HUMAN_ONLY: login via redirect, inspect localStorage/network
+impact: full account compromise = CRITICAL
+testability: HUMAN_ONLY
+
+**STEP 4 — SELF-CRITIQUE:**
+[PARKED] Implicit flow redirect (conf 45): needs HUMAN browser confirmation, not testable passively. Retained as top HUMAN lead.
+[FINAL] survivors:
+1. api.sipgate.com CORS reflection (conf 70, confirmed, chain-dependent)
+2. api.sipgate.com unauth endpoint (conf 45, speculative, testable)
+3. implicit flow token theft (conf 45, HUMAN_ONLY)
+
+**STEP 5 — NEXT ACTION:**
+[NEXT] PROBE: GET https://api.sipgate.com/openapi.json + /swagger.json + /graphql + /health + /status + /.well-known/ + /v2/sms + /v2/calls + /v2/fax + /v2/subscription + /v2/payment each with Origin:https://evil.example — for each, check CORS headers + response body for sensitive data or auth errors. Also GET https://app.sipgate.com and scan JS bundles for 'pusher'+'channel'+'auth' configuration. Read-only, <=1 rps.
+
+**STEP 6 — LEARN:**
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com: confirmed arbitrary-origin CORS reflection with credentials on 5+ /v2 endpoints — strong defense-in-depth gap, chain-dependent for full exploitation.
+[LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: token stored before navigation, React Router same-origin — needs HUMAN browser confirmation.
+
+**STEP 7 — RISK:**
+[RISK] sipgate: 50 — Confirmed CORS arbitrary-origin reflection with credentials on api.sipgate.com is a real defense-in-depth gap; when paired with any XSS on *.sipgate.com or implicit flow token theft, enables full customer data exfiltration. Implicit flow unconfirmed (HUMAN_ONLY). No confirmed exploitable chain yet.
