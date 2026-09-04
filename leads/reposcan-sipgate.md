@@ -46,3 +46,40 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-04 19:07:24 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-04 21:42:34 UTC
+[HYP] Hardcoded API Keys in docker-compose.yml
+class: SECRET
+asset: sipgate/radau/docker-compose.yml:20-21
+confidence: 95
+reasoning: Two API keys committed in plaintext: `API_KEY_MANAGEMENT: pYWVcrR4DmgCfkfmEte5nGNW` and `API_KEY_RADIUS: u39fNShDX6fAeXtWY6bZWY9x`. These are used for basic auth on `/radius` routes. The repo is public and these keys are in git history permanently.
+impact: high
+verify_steps: Check if keys are still active by sending a request to the radau API with these credentials. If the service is deployed from this compose file, these are live production keys.
+[HYP] Hardcoded Internal Redis IP in K8s Deployment
+class: MISCONFIG
+asset: sipgate/clinq-bridge-sipgate/k8s/template/deployment.yml:47
+confidence: 90
+reasoning: K8s deployment manifest hardcodes internal Redis endpoint `rediss://10.37.248.211:6378` (RFC1918 address). This exposes internal infrastructure details: GCP project `clinq-services`, zone `europe-west3`, and Redis on non-standard port 6378. The `rediss://` scheme indicates TLS but `rejectUnauthorized: false` is set in the Redis client code (clinq-bridge/src/cache/storage/redis-storage-adapter.ts:22).
+impact: medium
+verify_steps: Confirm `10.37.248.211:6378` is reachable from the internet or other cloud projects. Check if TLS verification is disabled in production.
+[HYP] TLS Certificate Verification Disabled for Redis
+class: MISCONFIG
+asset: sipgate/clinq-bridge/src/cache/storage/redis-storage-adapter.ts:20-23
+confidence: 85
+reasoning: Redis client connects with `tls: { rejectUnauthorized: false }`, disabling TLS certificate verification. This allows MITM attacks on the Redis connection even when using `rediss://` (TLS) scheme.
+impact: medium
+verify_steps: Verify if the production deployment uses TLS and whether this setting is overridden via environment variables.
+[HYP] Default Cookie Secret in PHP Framework
+class: MISCONFIG
+asset: sipgate/ansible-logger/ansible-logger-web/includes/Slim/Slim.php:307
+confidence: 70
+reasoning: Default cookie secret key set to `'CHANGE_ME'`. If deployed without changing this, session cookies can be forged by anyone who knows this default value.
+impact: low
+verify_steps: Check if ansible-logger is deployed in production and if the secret was changed from default.
+[HYP] Example OAuth Client Secret in Distribution Config
+class: SECRET
+asset: sipgate/rest-api-examples/webapp-nodejs/.npmrc.dist:2-3
+confidence: 60
+reasoning: Contains `client_id=2414245-0-e24e0091-8265-11e7-93e7-e5fb754b756f` and `client_secret=187812ce-b546-4fa9-96e8-771e9775c3cb`. While this is a `.dist` file (template), it contains what appear to be real OAuth credentials, not placeholder values. The file is committed to a public repo.
+impact: low
+verify_steps: Test if these OAuth credentials are still valid against the sipgate API. Check if this is a demo/test client or production.
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
