@@ -175,3 +175,30 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/* — arbitrary-origin CORS reflection with credentials across multiple endpoints (persistent)
 
 ## 2026-09-05 19:37:52 UTC
+
+## 2026-09-05 21:50:48 UTC
+- NEW team-uk.live.sipgate.com — live Apache/PHP UK team portal, second host in team-*.live family (302→login.sipgate.com /authenticate/?redirect= chain); CSP frame-ancestors app.local.sipgate.com:3443 + co
+- CHANGED Prod CSP connect-src `*.sipgate.com:3396` (internal api.local port) family-wide (team-de AND team-uk); live probes api.sipgate.com:3396 + team-de.live:3396 → TCP timeout → no external listener.
+- CHANGED login.sipgate.com/?redirect= — evil vs benign redirect → byte-identical 302 to Keycloak sipgate-apps authorize w/ hardcoded redirect_uri (app.sipgate.com/implicit-auth-redirect?redirect=/) → redirect 
+- CHANGED sipgate-desktop-app.s3 ?versions — 439 distinct keys all VersionId=null (versioning disabled), IsTruncated=false; no deleted/hidden versions.
+- CHANGED chatbot.sipgate.com/chat/session/socket.io/ — WS transport arbitrary-origin acceptance confirmed (polling transport blocks cross-origin reads via Vary:Origin no ACAO); KB 2026-09-05 REJECTED direct WS
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com — KB 2026-09-05 re-confirmed ACCEPTED MISCONFIG listable bucket; write path untested (HUMAN sign-off required per KB).
+- CHANGED api.sipgate.com/v2 — KB 2026-09-05: 6 newly-tested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, numbers/quickdial/validation) and /v1/* → uniform 401/404; userId-prefixe
+- CHANGED app.dev.sipgate.com — KB 2026-09-05: dev bundle rotated to main-D04St2Sb.js (5.65MB); hardcodes new dev hosts admin.dev.sipgate.net (.net TLD), integration.dev.sipgate.com, payment.dev.sipgate.com, te
+- CHANGED login.sipgate.com third-party realm — KB 2026-09-05: openid-configuration re-read shows standard Keycloak defaults (DCR, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512, PKCE plain); config-
+- CHANGED payment.sipgate.com — KB 2026-09-05: every path incl /actuator/health, /gateway/health → 307 to https://sipgate.io (Spring Gateway catch-all); actuator/MSLB not exposed.
+- NEW api.sipgate.com/v2/swagger.json — KB 2026-09-05: spec relocated/live (144 paths, global security=[] => spec-claims-public vs edge-401) — re-confirms stale spec annotations, no server authz drift.
+- CHANGED chatbot.sipgate.com/chat/session/socket.io/ — WS transport arbitrary-origin acceptance confirmed (polling transport blocks cross-origin reads via Vary:Origin no ACAO); KB 2026-09-05 REJECTED direct WS
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com — KB 2026-09-05 re-confirmed ACCEPTED MISCONFIG listable bucket; write path untested (HUMAN sign-off required per KB).
+- CHANGED api.sipgate.com/v2 — KB 2026-09-05: 6 newly-tested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, numbers/quickdial/validation) and /v1/* → uniform 401/404; userId-prefixe
+- CHANGED app.dev.sipgate.com — KB 2026-09-05: dev bundle rotated to main-D04St2Sb.js (5.65MB); hardcodes new dev hosts admin.dev.sipgate.net (.net TLD), integration.dev.sipgate.com, payment.dev.sipgate.com, te
+- CHANGED login.sipgate.com third-party realm — KB 2026-09-05: openid-configuration re-read shows standard Keycloak defaults (DCR, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512, PKCE plain); config-
+- CHANGED payment.sipgate.com — KB 2026-09-05: every path incl /actuator/health, /gateway/health → 307 to https://sipgate.io (Spring Gateway catch-all); actuator/MSLB not exposed.
+- NEW api.sipgate.com/v2/swagger.json — KB 2026-09-05: spec relocated/live (144 paths, global security=[] => spec-claims-public vs edge-401) — re-confirms stale spec annotations, no server authz drift.
+- CHANGED chatbot.sipgate.com/chat/session/socket.io/ — WS transport arbitrary-origin acceptance confirmed (polling transport blocks cross-origin reads via Vary:Origin no ACAO); KB 2026-09-05 REJECTED direct WS
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com — KB 2026-09-05 re-confirmed ACCEPTED MISCONFIG listable bucket; write path untested (HUMAN sign-off required per KB).
+- CHANGED api.sipgate.com/v2 — KB 2026-09-05: 6 newly-tested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, numbers/quickdial/validation) and /v1/* → uniform 401/404; userId-prefixe
+- CHANGED app.dev.sipgate.com — KB 2026-09-05: dev bundle rotated to main-D04St2Sb.js (5.65MB); hardcodes new dev hosts admin.dev.sipgate.net (.net TLD), integration.dev.sipgate.com, payment.dev.sipgate.com, te
+- CHANGED login.sipgate.com third-party realm — KB 2026-09-05: openid-configuration re-read shows standard Keycloak defaults (DCR, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512, PKCE plain); config-
+- CHANGED payment.sipgate.com — KB 2026-09-05: every path incl /actuator/health, /gateway/health → 307 to https://sipgate.io (Spring Gateway catch-all); actuator/MSLB not exposed.
+- NEW api.sipgate.com/v2/swagger.json — KB 2026-09-05: spec relocated/live (144 paths, global security=[] => spec-claims-public vs edge-401) — re-confirms stale spec annotations, no server authz drift.

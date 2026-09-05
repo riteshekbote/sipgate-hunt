@@ -347,3 +347,82 @@
 - LEARN: ACCEPTED AUTH @ chatbot.sipgate.com: production socket.io endpoint accepts connections from arbitrary origins without CORS restriction on transport handshake.
 - LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
 - LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, expos
+
+## RANKED HYPOTHESES 2026-09-05 21:50:48 UTC
+- [55] chatbot.sipgate.com/chat/session/socket.io/: Production Chatbot Socket.io WebSocket Transport Origin Validation Bypass (from art/lead_nemotron3.txt)
+- [55] api.sipgate.com/v2/: API v2 Multi-Tenant BOLA via Predictable Object IDs with Authenticated Tenant Pair (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: GET https://app.dev.sipgate.com with Origin: https://evil.example — check for CORS headers (ACAO, ACAC) on dev SPA; DNS resolve login.dev.sipgate.com, ch
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://app.dev.sipgate.com with Origin: https://evil.example — check for CORS headers (ACAO, ACAC) on dev SPA; DNS resolve login.dev.sipgate.com, ch
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19 + lat
+- LEARN: REJECTED AUTH @ app.dev.sipgate.com: login.dev.sipgate.com dead (HTTP 000) and api.dev.sipgate.com 403 → dev env externally inert; dev weaker-auth/ATO path defl
+- LEARN: CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbit
+- LEARN: ACCEPTED INFO @ api.sipgate.com: public swagger.json (144 paths) + /translations/{language} unauthenticated; spec security annotations stale vs server behavior 
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: every docd high-value path returns 401 empty-body unauth; 404 only for truly-unknown paths. Stale swagger annotations confir
+- LEARN: REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-f
+- LEARN: ACCEPTED INFO @ api.sipgate.com: 401 responses leak x-b3-traceid (Zipkin trace id) + vary:origin; descriptive header only, OOS as standalone; confirms per-reque
+- LEARN: ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs,
+- LEARN: ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERI
+- LEARN: ACCEPTED AUTH @ chatbot.sipgate.com: production socket.io endpoint accepts connections from arbitrary origins without CORS restriction on transport handshake.
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, expos
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19 + lat
+- LEARN: REJECTED AUTH @ app.dev.sipgate.com: login.dev.sipgate.com dead (HTTP 000) and api.dev.sipgate.com 403 → dev env externally inert; dev weaker-auth/ATO path defl
+- LEARN: CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbit
+- LEARN: ACCEPTED INFO @ api.sipgate.com: public swagger.json (144 paths) + /translations/{language} unauthenticated; spec security annotations stale vs server behavior 
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: every docd high-value path returns 401 empty-body unauth; 404 only for truly-unknown paths. Stale swagger annotations confir
+- LEARN: REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-f
+- LEARN: ACCEPTED INFO @ api.sipgate.com: 401 responses leak x-b3-traceid (Zipkin trace id) + vary:origin; descriptive header only, OOS as standalone; confirms per-reque
+- LEARN: ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs,
+- LEARN: ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERI
+- LEARN: ACCEPTED AUTH @ chatbot.sipgate.com: production socket.io endpoint accepts connections from arbitrary origins without CORS restriction on transport handshake.
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, expos
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live prod team portal, identical CSP dev-origin leaks (frame-ancestors app.local.sipgate.com:3443, connect
+- LEARN: REJECTED OTHER @ api.sipgate.com:3396 + team-de.live.sipgate.com:3396: CSP connect-src internal port unreachable externally (TCP timeout) — topology leak only.
+- LEARN: REJECTED OATH @ login.sipgate.com/?redirect=: evil vs benign → identical 302 to Keycloak sipgate-apps, hardcoded redirect_uri — redirect param inert at SSO boot
+- LEARN: ACCEPTED INFO @ sipgate-desktop-app.s3: ?versions → 439 keys, all VersionId=null (versioning disabled), IsTruncated=false — full artifact inventory, no hidden v
+- LEARN: REJECTED OTHER @ api.sipgate.com:3396 + team-de.live.sipgate.com:3396: CSP connect-src internal port unreachable externally (TCP timeout) — topology leak only.
+- LEARN: REJECTED OATH @ login.sipgate.com/?redirect=: evil vs benign → identical 302 to Keycloak sipgate-apps, hardcoded redirect_uri — redirect param inert at SSO boot
+- LEARN: ACCEPTED INFO @ sipgate-desktop-app.s3: ?versions → 439 keys, all VersionId=null (versioning disabled), IsTruncated=false — full artifact inventory, no hidden v
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS-transport responses origin-aware (evil → 400 no-ACAO; same-origin → 400 with ACAO); browser-readable arbitrary
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec relocated/live (144 paths, global security=[] => spec-claims-public vs edge-401) — re-confirms stale spec 
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: 6 newly-tested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, numbers/quickdial/validation) and
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3: re-confirmed listable bucket, stale 2024-06-11, write path untested (HUMAN sign-off required).
+- LEARN: REJECTED AUTH @ app.dev.sipgate.com: login.dev.sipgate.com dead (HTTP 000) and api.dev.sipgate.com 403 → dev env externally inert; dev weaker-auth/ATO path defl
+- LEARN: CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbit
+- LEARN: ACCEPTED INFO @ api.sipgate.com: public swagger.json (144 paths) + /translations/{language} unauthenticated; spec security annotations stale vs server behavior 
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: every docd high-value path returns 401 empty-body unauth; 404 only for truly-unknown paths. Stale swagger annotations confir
+- LEARN: REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-f
+- LEARN: ACCEPTED INFO @ api.sipgate.com: 401 responses leak x-b3-traceid (Zipkin trace id) + vary:origin; descriptive header only, OOS as standalone; confirms per-reque
+- LEARN: ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs,
+- LEARN: ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERI
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, expos
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS-transport responses origin-aware (evil → 400 no-ACAO; same-origin → 400 with ACAO); browser-readable arbitrary
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec relocated/live (144 paths, global security=[] => spec-claims-public vs edge-401) — re-confirms stale spec 
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: 6 newly-tested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, numbers/quickdial/validation) and
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3: re-confirmed listable bucket, stale 2024-06-11, write path untested (HUMAN sign-off required).
+- LEARN: REJECTED AUTH @ app.dev.sipgate.com: login.dev.sipgate.com dead (HTTP 000) and api.dev.sipgate.com 403 → dev env externally inert; dev weaker-auth/ATO path defl
+- LEARN: CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbit
+- LEARN: ACCEPTED INFO @ api.sipgate.com: public swagger.json (144 paths) + /translations/{language} unauthenticated; spec security annotations stale vs server behavior 
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: every docd high-value path returns 401 empty-body unauth; 404 only for truly-unknown paths. Stale swagger annotations confir
+- LEARN: REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-f
+- LEARN: ACCEPTED INFO @ api.sipgate.com: 401 responses leak x-b3-traceid (Zipkin trace id) + vary:origin; descriptive header only, OOS as standalone; confirms per-reque
+- LEARN: ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs,
+- LEARN: ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERI
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, expos
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS-transport responses origin-aware (evil → 400 no-ACAO; same-origin → 400 with ACAO); browser-readable arbitrary
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec relocated/live (144 paths, global security=[] => spec-claims-public vs edge-401) — re-confirms stale spec 
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: 6 newly-tested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, numbers/quickdial/validation) and
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3: re-confirmed listable bucket, stale 2024-06-11, write path untested (HUMAN sign-off required).
+- LEARN: REJECTED AUTH @ app.dev.sipgate.com: login.dev.sipgate.com dead (HTTP 000) and api.dev.sipgate.com 403 → dev env externally inert; dev weaker-auth/ATO path defl
+- LEARN: CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbit
+- LEARN: ACCEPTED INFO @ api.sipgate.com: public swagger.json (144 paths) + /translations/{language} unauthenticated; spec security annotations stale vs server behavior 
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: every docd high-value path returns 401 empty-body unauth; 404 only for truly-unknown paths. Stale swagger annotations confir
+- LEARN: REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-f
+- LEARN: ACCEPTED INFO @ api.sipgate.com: 401 responses leak x-b3-traceid (Zipkin trace id) + vary:origin; descriptive header only, OOS as standalone; confirms per-reque
+- LEARN: ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs,
+- LEARN: ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERI
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, expos
