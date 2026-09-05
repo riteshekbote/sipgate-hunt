@@ -1,42 +1,41 @@
-## 2026-09-05 04:43:49 UTC [target] (model bigpickle)
-[PRIO] api.sipgate.com/v2/authorization/oauth2/clients,5.55,a3b9t8g3c3f6
+## 2026-09-05 08:41:54 UTC [target] (model bigpickle)
+[PRIO] api.sipgate.com/v2/*,6.50,a3b9t8g3c3f6
 [PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,5.30,a1b7t3g9c9f6
-[PRIO] login.sipgate.com/auth/realms/third-party,5.15,a2b8t7g3c3f5
-[HYP] api.sipgate.com BOLA on multi-tenant resources (tenant A token reads tenant B resources)
+[PRIO] chatbot.sipgate.com,5.00,a2b8t7g2c2f5
+[HYP] api.sipgate.com BOLA via predictable object IDs with authenticated tenant pair
 class: IDOR
-asset: api.sipgate.com/v2/{portings/{portingId}, addresses/{addressId}/numbers, devices/{deviceId}/credentials/password, oauth2/clients/{clientId}/gdpr}
+asset: api.sipgate.com/v2/{portings/{id},addresses/{id},devices/{id},oauth2/clients/{id}}
 confidence: 45
-reasoning: 4 remaining docd paths + prior 14 all return 401 empty-body unauth, 404 only for unknown paths — uniform edge auth; the cross-tenant boundary (authed session vs foreign resourceId) is unexercised and swagger documents credential-bearing responses per-resource.
-evidence_needed: two authenticated tenants; A's token hits B's resourceId → 200/204 not 403/404.
-verify_steps: AUTH_HELPED only — passive exhausted (all unauth probes 401). Next: credentialed tenant-pair differential on test accounts.
-impact: cross-tenant PII, call history, device SIP creds, sipgate.io creds. CRITICAL if confirmed.
+reasoning: All docd paths return 401 empty-body unauth; 404 only for truly-unknown paths — uniform edge auth (KB REJECTED unauth). Swagger documents credential-bearing responses per-resource (SIP passwords, device creds, OAuth secrets, call history). Cross-tenant boundary (authed session vs foreign resourceId) unexercised. Prior REJECT confirmed unauth BOLA impossible; two-tenant differential needed.
+evidence_needed: two authenticated tenant sessions; A's token hits B's resourceId → 200/204 not 403/404
+verify_steps: AUTH_HELPED only — passive exhausted. Next: create two test accounts, obtain tokens, test differential on portings/{id}, addresses/{id}/numbers, devices/{id}/credentials/password, oauth2/clients/{id}
+impact: cross-tenant PII, call history, SIP device creds, sipgate.io creds, OAuth client secrets. CRITICAL if confirmed.
 testability: AUTH_HELPED
-[HYP] Documented OAuth-client management API enables attacker redirect_uri / device-flow abuse once any token obtained
-class: OATH
-asset: api.sipgate.com/v2/authorization/oauth2/clients (POST) + login.sipgate.com third-party realm (DCR /auth/realms/third-party/clients-registrations/openid-connect, device_authorization_endpoint, grant `password`)
-confidence: 40
-reasoning: swagger docs in-scope POST oauth2/clients and per-client GET/{gdpr}; third-party realm confirms DCR + ROPC + device_code + client_secret_jwt in live config. Keycloak-side DCR is Trusted Hosts-gated (prior REJECT), but customer-API client registration is a separate code path — if it accepts external/unchecked redirect_uri (response_types incl `id_token token`), it chains with implicit-flow token theft for other users of that app; if ROPC reachable with any leaked client secret, ATO amplifier.
-evidence_needed: authed token → POST oauth2/clients with attacker `redirectUri`; verify whether accepted and whether GET /clients/{id} returns secret/credentials.
-verify_steps: AUTH_HELPED (POST is mutating-adjacent — token creation, needs tenant account); passive done: config read confirms surfaces present.
-impact: OAuth token theft for apps sharing the realm → ATO; device-flow phishing. HIGH if POST accepts external redirect_uri.
-testability: AUTH_HELPED
-[HYP] Publicly listable desktop-app S3 bucket writable → installer supply-chain poisoning
+[HYP] Desktop-app S3 bucket writable → installer supply-chain poisoning
 class: MISCONFIG
 asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
 confidence: 60
-reasoning: GET / → ListBucketResult (1.3.0–1.17.19, per-OS installers, blockmaps, latest aliases); last write 2024-06-11; ACL/policy reads 403 (intended public read). Write path never tested — mutating, requires sign-off.
-evidence_needed: PUT/OVERRIDE ability on an object (tested by reporter+legal only, not performed).
-verify_steps: HUMAN-only write probe with sign-off; PASSIVE list already done.
+reasoning: GET / returns ListBucketResult (1.3.0–1.17.19, per-OS, blockmaps, latest aliases); last write 2024-06-11; ACL/policy reads 403 (intended public read). Write path never tested — mutating, requires sign-off.
+evidence_needed: PUT/OVERRIDE ability on unique object name (reporter+legal sign-off only, not performed)
+verify_steps: HUMAN-only PUT probe with sign-off; passive list already done
 impact: signed-installer swap → full softphone compromise of all downloaders. CRITICAL if writable; standalone LOW-MED as public-read config.
 testability: PASSIVE (chain) / HUMAN for write
-[PARKED] app.dev.sipgate.com dev-SPA SSRF [75]: all hardcoded sibling dev hosts (§admin.dev.sipgate.net, integration/payment/team-de/team-uk.dev) HTTP-dead (000), api.dev 403 WAF → no externally reachable dev proxy to pivot; SSRF-to-internal unverifiable passively; deflates to already-ACCEPTED static info-leak.
-[PARKED] login.sipgate.com third-party realm config-advertising (ROPC/device/CIBA/DCR/HS256 id_token): standard Keycloak defaults; matches prior REJECT precedent; only counts as chain-component, not standalone.
-[FINAL] H1 api BOLA (IDOR,45,AUTH_HELPED); H2 s3 write-chain (MISCONFIG,60,HUMAN); H3 chatbot WS cross-origin (AUTH,50,HUMAN_ONLY); H4 OAuth-client-registration chain (OATH,40,AUTH_HELPED).
-[NEXT] HUMAN: obtain reporter/legal sign-off, then single PUT probe to sipgate-desktop-app.s3.eu-central-1.amazonaws.com (unique object name) to test write path — sole remaining read-only-exhausted, highest-confidence open chain (all GET/HEAD/OPTIONS this turn: /v2/portings|log/webhooks|app/tacs|settings/sipgateio → 401, /v2/graphql + chatbot /graphql → 404, payment /actuator/* → 307; no new unauth surface).
-[LEARN] REJECTED AUTH @ api.sipgate.com: `/v2/portings`, `/v2/log/webhooks`, `/v2/app/tacs`, `/v2/settings/sipgateio` all 401 empty-body unauth — remaining swagger posterior shows uniform edge auth, no authz drift unauthenticated.
-[LEARN] REJECTED OTHER @ api.sipgate.com/v2/graphql: 404 — no GraphQL introspection surface on API domain.
-[LEARN] REJECTED OTHER @ chatbot.sipgate.com/graphql: 404 (nginx/1.21.6 via `via: 1.1 google`) — no GraphQL; prod chatbot behind GFE/LB, infra note only.
-[LEARN] ACCEPTED INFO @ payment.sipgate.com: every path incl `/actuator/health`, `/gateway/health` → 307 → `https://sipgate.io` (Spring Gateway catch-all) — actuator/MSLB-positive paths not exposed; hardened, info only.
-[LEARN] ACCEPTED INFO @ app.dev.sipgate.com: dev bundle rotated to `main-D04St2Sb.js` (5.65MB, no source maps); hardcodes new dev hosts `admin.dev.sipgate.net` (.net TLD), `integration.dev.sipgate.com`, `payment.dev.sipgate.com`, `team-de/team-uk.dev.sipgate.com` — all resolve sipgate-owned 217.116.x.x but HTTP 000; dev env externally inert (extends prior ACCEPTED MISCONFIG).
-[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: re-read openid-configuration — DCR endpoint, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512 id_token, PKCE plain — standard Keycloak defaults; config-advertising not a vulnerability (matches prior REJECT).
-[RISK] sipgate: 52 — One notch down (55→52). All unauthenticated read surface now exhausted (uniform 401/404/307), no GraphQL, dev env externally inert, third-party realm config is standard Keycloak. Surviving high-impact chains all gate on creds/HUMAN: BOLA (45, needs two tenants), OAuth client-registration + ROPC/device-flow (40, needs token), s3 write (60, needs sign-off), chatbot WS (50, needs browser). Standing defense-in-depth/info items (CORS reflection w/ creds, public dev SPA, CSP local-origin, listable S3, chatbot socket handshake) remain; no standalone critical chain confirmed.
+[HYP] chatbot.sipgate.com WebSocket transport enables cross-origin chat interception
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io (transport=websocket)
+confidence: 50
+reasoning: Polling handshake = 200 + vary:Origin, no ACAO → browser-blocks polling reads (KB CHANGED). WS transport bypasses CORS; server-side Origin check on WS upgrade unverified. If chat events broadcast without per-event auth, cross-origin socket reads live chat.
+evidence_needed: HUMAN browser on evil origin opening wss and observing chat events
+verify_steps: PASSIVE handshake done (KB ACCEPTED); WS upgrade requires HUMAN
+impact: live customer chat read/intercept → PII. Severity: HIGH if confirmed.
+testability: HUMAN_ONLY
+[PARKED] OAuth-client-registration chain (OATH,40,AUTH_HELPED): Keycloak DCR gated by Trusted Hosts (REJECTED); api-side POST oauth2/clients untested but requires token — low standalone confidence without evidence POST accepts external redirect_uri; merges into BOLA hypothesis as chain-component.
+[PARKED] api.sipgate.com BOLA (IDOR,45,AUTH_HELPED): confidence below 50; uniform 401 edge auth confirmed; needs two-tenant differential — cannot advance without AUTH_HELPED.
+[FINAL] H1 S3 write-chain (MISCONFIG,60,HUMAN); H2 chatbot WS cross-origin (AUTH,50,HUMAN_ONLY); H3 BOLA multi-tenant (IDOR,45,AUTH_HELPED).
+[NEXT] PROBE: Fetch https://api.sipgate.com/swagger.json and extract all paths containing URL-accepting parameters (webhook callbacks, import-from-URL, proxy, PDF/screenshot, avatar upload) — look for SSRF-viable endpoints that might return 200/202 without auth or with different auth behavior than the 401 blanket. Also: HEAD/GET https://api.sipgate.com/v2/sms, https://api.sipgate.com/v2/faxes, https://api.sipgate.com/v2/phonebooks — test endpoints NOT in the tested set for auth drift.
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2: all tested paths (portings, log/webhooks, app/tacs, settings/sipgateio, contacts, account, numbers, users, authorization/userinfo) → 401 empty-body; 404 only for truly-unknown paths. Uniform edge auth; no authz drift unauthenticated.
+[LEARN] REJECTED OTHER @ api.sipgate.com/v2/graphql + chatbot.sipgate.com/graphql: 404 — no GraphQL introspection surface.
+[LEARN] ACCEPTED INFO @ payment.sipgate.com: all paths → 307 → sipgate.io (Spring Gateway catch-all) — hardened, actuator not exposed.
+[LEARN] ACCEPTED INFO @ app.dev.sipgate.com: dev bundle rotated to main-D04St2Sb.js; new dev hosts (admin.dev.sipgate.net, integration/payment/team-de/team-uk.dev.sipgate.com) all HTTP-dead; externally inert.
+[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: DCR/ROPC/device/CIBA/HS256/512/PKCE-plain — standard Keycloak defaults; config-advertising not a vulnerability.
+[RISK] sipgate: 52 — One notch down (55→52). All unauthenticated read surface exhausted (uniform 401/404/307). No GraphQL. Dev env externally inert. Third-party realm config standard Keycloak. Surviving high-impact chains all gate on creds/HUMAN: BOLA (45, needs two tenants), S3 write (60, needs sign-off), chatbot WS (50, needs browser), OAuth registration (40, needs token). Standing defense-in-depth items (CORS reflection w/ creds, public dev SPA, CSP local-origin, listable S3, chatbot WS socket handshake) remain; no standalone critical chain confirmed.

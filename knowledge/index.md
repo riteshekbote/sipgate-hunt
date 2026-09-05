@@ -79,3 +79,9 @@
 - 2026-09-05 REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reachable flawed verifier.
 - 2026-09-05 REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live credential exposure.
 - 2026-09-05 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct.
+- 2026-09-05 REJECTED AUTH @ api.sipgate.com/v2: all tested paths (portings, log/webhooks, app/tacs, settings/sipgateio, contacts, account, numbers, users, authorization/userinfo) → 401 empty-body; 404 only for truly-unknown paths. Uniform edge auth; no authz drift unauthenticated.
+- 2026-09-05 REJECTED OTHER @ api.sipgate.com/v2/graphql + chatbot.sipgate.com/graphql: 404 — no GraphQL introspection surface.
+- 2026-09-05 ACCEPTED INFO @ payment.sipgate.com: all paths → 307 → sipgate.io (Spring Gateway catch-all) — hardened, actuator not exposed.
+- 2026-09-05 ACCEPTED INFO @ app.dev.sipgate.com: dev bundle rotated to main-D04St2Sb.js; new dev hosts (admin.dev.sipgate.net, integration/payment/team-de/team-uk.dev.sipgate.com) all HTTP-dead; externally inert.
+- 2026-09-05 REJECTED AUTH @ login.sipgate.com third-party realm: DCR/ROPC/device/CIBA/HS256/512/PKCE-plain — standard Keycloak defaults; config-advertising not a vulnerability.
+- 2026-09-05 CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbitrary origins" narrowed to WS transport (HUMAN_ONLY).

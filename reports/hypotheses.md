@@ -232,3 +232,33 @@
 - LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reacha
 - LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live cr
 - LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
+
+## RANKED HYPOTHESES 2026-09-05 08:45:49 UTC
+- [55] api.[0m: API v2 Multi-Tenant BOLA via Predictable Object IDs with Authenticated Tenant Pair (from art/lead_nemotron3.txt)
+- [45] api.sipgate.com/v2/{portings/{id},addresses/{id},devices/{id},oauth2/clients/{id}}: api.sipgate.com BOLA via predictable object IDs with authenticated tenant pair (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: Fetch https://api.sipgate.com/swagger.json and extract all paths containing URL-accepting parameters (webhook callbacks, import-from-URL, proxy, PDF/scre
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://app.dev.sipgate.com with Origin: https://evil.example — check for CORS headers (ACAO, ACAC) on dev SPA; DNS resolve login.dev.sipgate.com, ch
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: all tested paths (portings, log/webhooks, app/tacs, settings/sipgateio, contacts, account, numbers, users, authorization/use
+- LEARN: REJECTED OTHER @ api.sipgate.com/v2/graphql + chatbot.sipgate.com/graphql: 404 — no GraphQL introspection surface.
+- LEARN: ACCEPTED INFO @ payment.sipgate.com: all paths → 307 → sipgate.io (Spring Gateway catch-all) — hardened, actuator not exposed.
+- LEARN: ACCEPTED INFO @ app.dev.sipgate.com: dev bundle rotated to main-D04St2Sb.js; new dev hosts (admin.dev.sipgate.net, integration/payment/team-de/team-uk.dev.sipga
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: DCR/ROPC/device/CIBA/HS256/512/PKCE-plain — standard Keycloak defaults; config-advertising not a vulnerabil
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19 + lat
+- LEARN: REJECTED AUTH @ app.dev.sipgate.com: login.dev.sipgate.com dead (HTTP 000) and api.dev.sipgate.com 403 → dev env externally inert; dev weaker-auth/ATO path defl
+- LEARN: CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbit
+- LEARN: ACCEPTED INFO @ api.sipgate.com: public swagger.json (144 paths) + /translations/{language} unauthenticated; spec security annotations stale vs server behavior 
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: every docd high-value path returns 401 empty-body unauth; 404 only for truly-unknown paths. Stale swagger annotations confir
+- LEARN: REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-f
+- LEARN: ACCEPTED INFO @ api.sipgate.com: 401 responses leak x-b3-traceid (Zipkin trace id) + vary:origin; descriptive header only, OOS as standalone; confirms per-reque
+- LEARN: ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs,
+- LEARN: ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERI
+- LEARN: ACCEPTED AUTH @ chatbot.sipgate.com: production socket.io endpoint accepts connections from arbitrary origins without CORS restriction on transport handshake.
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, expos
+- LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy.
+- LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope.
+- LEARN: ACCEPTED AUTH @ login.sipgate.com: OIDC implicit flow with fragment token delivery is in-scope high-value target.
+- LEARN: REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, so implicit token-in-fragment leak not d
+- LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reacha
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live cr
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
