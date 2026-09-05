@@ -1,4 +1,16 @@
-## 2026-09-05 12:11:57 UTC [target] (model bigpickle)
+## 2026-09-05 15:25:08 UTC [target] (model bigpickle)
+[PRIO] chatbot.sipgate.com,7.45,a=8,b=7,t=6,g=9,c=8,f=8
+[PRIO] api.sipgate.com,7.05,a=8,b=8,t=7,g=5,c=6,f=7
+[PRIO] sipgate-desktop-app.s3,6.55,a=7,b=6,t=3,g=9,c=7,f=9
+[HYP] Production Chatbot Socket.io WebSocket Transport Arbitrary-Origin Hijack
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io (transport=websocket)
+confidence: 55
+reasoning: Polling handshake = 200 + vary:Origin, no ACAO → browser-blocks polling reads (KB CHANGED 2026-09-05). WS transport bypasses CORS entirely; server-side Origin check on WS upgrade unverified. If chat events broadcast without per-session auth, cross-origin socket reads live chat. Production customer service system handling PII.
+evidence_needed: HUMAN browser on evil origin opening wss://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket and observing chat events
+verify_steps: HUMAN_ONLY — open browser console on arbitrary origin, establish WebSocket connection, observe if chat events arrive without authentication
+impact: live customer chat read/intercept → PII. Severity: HIGH if confirmed.
+testability: HUMAN_ONLY
 [HYP] Cross-tenant BOLA on credential-bearing resources via predictable IDs
 class: IDOR
 asset: api.sipgate.com/v2/{numbers/{id},contacts/{id},devices/{id},portings}
@@ -12,19 +24,19 @@ testability: AUTH_HELPED
 class: MISCONFIG
 asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
 confidence: 60
-reasoning: live ListBucketResult, stale 2024-06-11, ACL/policy reads denied, write path never tested.
-evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off only)
+reasoning: live ListBucketResult (1.3.0–1.17.19), stale 2024-06-11, ACL/policy reads denied, write path never tested. Public read confirmed; write permissions unknown.
+evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off only, not performed)
 verify_steps: HUMAN-only single PUT probe with sign-off; passive list complete
 impact: full softphone RCE for all downloaders. CRITICAL if writable.
 testability: HUMAN
-[HYP] chatbot.sipgate.com WS transport cross-origin chat interception
-class: AUTH
-asset: chatbot.sipgate.com/chat/session/socket.io (transport=websocket)
-confidence: 50
-reasoning: polling blocked cross-origin (KB CHANGED); WS upgrade CORS/Origin check unverified; chat-event auth per-event unverified.
-evidence_needed: evil-origin wss observes chat events in browser
-verify_steps: HUMAN browser test on evil origin
-impact: live customer chat/PII read. HIGH if confirmed.
-testability: HUMAN_ONLY
-[NEXT] HUMAN: obtain reporter/legal sign-off then single PUT probe (unique object name, +json CT) to sipgate-desktop-app.s3.eu-central-1.amazonaws.com — sole remaining open chain at confidence 60; all api read/order probes this turn exhausted (uniformed 401/405/415/404, swagger relocated, no Set-Cookie → cookie-credential CORS un-demonstrable).
-[RISK] sipgate: 50 — Down one (52→50): read/write-surface differential (405/415/404-vs-401) confirms uniform edge auth with benign framework ordering; swagger relocation removes free spec diffing; all remaining high-impact chains (s3 write 60, BOLA 50, chatbot WS 50) gate on HUMAN/AUTH_HELPED. Standing defense-in-depth items (CORS+creds no leak path, public dev SPA, CSP local-origin, listable S3) unchanged; no standalone critical chain.
+[PARKED] chatbot.sipgate.com WS transport: confidence 55, testability HUMAN_ONLY — viable but requires manual browser interaction; cannot advance programmatically.
+[PARKED] api.sipgate.com BOLA: confidence 50, testability AUTH_HELPED — blocked without two-tenant credentials; all unauthenticated paths return 401 uniformly.
+[PARKED] S3 bucket write: confidence 60, testability HUMAN — requires legal sign-off; mutating action not permitted in automated testing.
+[FINAL] H1 S3 write-chain (MISCONFIG,60,HUMAN); H2 chatbot WS cross-origin (AUTH,55,HUMAN_ONLY); H3 BOLA multi-tenant (IDOR,50,AUTH_HELPED). All survivors gated on external access (HUMAN/AUTH_HELPED).
+[NEXT] HUMAN: obtain reporter/legal sign-off then single PUT probe (unique object name, `application/json` CT) to `sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-$(date +%s).json` with body `{"test":true}` — sole remaining open chain at confidence 60; all API read/order probes exhausted (uniformed 401/405/415/404, swagger relocated, no Set-Cookie → cookie-credential CORS un-demonstrable).
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2: every tested path returns 401 empty-body unauth; 404 only for truly-unknown paths. Stale swagger annotations confirmed, but server authz uniformly enforced at edge → authz-drift/BOLA not reachable unauthenticated; requires AUTH_HELPED tenant pairs.
+[LEARN] REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-fallback) → no LFI/traversal; inert endpoint.
+[LEARN] ACCEPTED INFO @ api.sipgate.com: 401 responses leak x-b3-traceid (Zipkin trace id) + vary:origin; descriptive header only, OOS as standalone; confirms per-request tracing middleware.
+[LEARN] ACCEPTED MISCONFIG @ sipgate-desktop-app.s3: publicly listable S3 bucket with softphone installers 1.3.0–1.17.19 (stale since 2024-06-11); ACL/policy reads denied; write path NOT tested.
+[LEARN] CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbitrary origins" narrowed to WS transport (HUMAN_ONLY).
+[RISK] sipgate: 50 — Stable from last assessment. All unauthenticated read surface exhausted (uniform 401/404/307). No GraphQL. Dev env externally inert. Third-party realm config standard Keycloak. Surviving high-impact chains all gate on creds/HUMAN: S3 write (60, needs sign-off), chatbot WS (55, needs browser), BOLA (50, needs two tenants). Standing defense-in-depth items (CORS reflection w/ creds, public dev SPA, CSP local-origin, listable S3, chatbot WS socket handshake) remain; no standalone critical chain confirmed.

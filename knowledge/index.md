@@ -85,3 +85,6 @@
 - 2026-09-05 ACCEPTED INFO @ app.dev.sipgate.com: dev bundle rotated to main-D04St2Sb.js; new dev hosts (admin.dev.sipgate.net, integration/payment/team-de/team-uk.dev.sipgate.com) all HTTP-dead; externally inert.
 - 2026-09-05 REJECTED AUTH @ login.sipgate.com third-party realm: DCR/ROPC/device/CIBA/HS256/512/PKCE-plain — standard Keycloak defaults; config-advertising not a vulnerability.
 - 2026-09-05 CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbitrary origins" narrowed to WS transport (HUMAN_ONLY).
+- 2026-09-05 REJECTED AUTH @ api.sipgate.com/v2: every tested path returns 401 empty-body unauth; 404 only for truly-unknown paths. Stale swagger annotations confirmed, but server authz uniformly enforced at edge → authz-drift/BOLA not reachable unauthenticated; requires AUTH_HELPED tenant pairs.
+- 2026-09-05 REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-fallback) → no LFI/traversal; inert endpoint.
+- 2026-09-05 ACCEPTED MISCONFIG @ sipgate-desktop-app.s3: publicly listable S3 bucket with softphone installers 1.3.0–1.17.19 (stale since 2024-06-11); ACL/policy reads denied; write path NOT tested.

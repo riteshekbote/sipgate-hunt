@@ -155,3 +155,5 @@ www.sipgate.de
 - NEW payment.sipgate.com: KB 2026-09-05 ACCEPTED INFO — every path incl /actuator/health, /gateway/health → 307 to https://sipgate.io (Spring Gateway catch-all); actuator/MSLB-positive paths not exposed
 - CHANGED sipgate-desktop-app.s3: KB 2026-09-05 re-confirmed ACCEPTED MISCONFIG — publicly listable S3 bucket with softphone installers 1.3.0–1.17.19 (stale since 2024-06-11); ACL/policy reads denied; write pat
 - CHANGED login.sipgate.com third-party realm: KB 2026-09-05 REJECTED — re-read openid-configuration shows standard Keycloak defaults (DCR, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512, PKCE plain)
+
+## 2026-09-05 15:25:31 UTC
