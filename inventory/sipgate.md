@@ -157,3 +157,19 @@ www.sipgate.de
 - CHANGED login.sipgate.com third-party realm: KB 2026-09-05 REJECTED — re-read openid-configuration shows standard Keycloak defaults (DCR, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512, PKCE plain)
 
 ## 2026-09-05 15:25:31 UTC
+
+## 2026-09-05 17:42:02 UTC
+- NEW chatbot.sipgate.com/chat/session/socket.io/ — WS transport arbitrary-origin acceptance confirmed (polling transport blocks cross-origin reads via Vary:Origin no ACAO)
+- NEW app.dev.sipgate.com — dev bundle rotated to main-D04St2Sb.js (5.65MB); hardcodes new dev hosts admin.dev.sipgate.net (.net TLD), integration.dev.sipgate.com, payment.dev.sipgate.com, team-de/team-uk.d
+- NEW api.sipgate.com/v2 — uniform edge authz confirmed: all documented high-value paths return 401 empty-body; 404 only for truly-unknown paths; no authz-drift/BOLA unauthenticated
+- NEW api.sipgate.com/v2/translations/{language} — whitelist-with-fallback confirmed; arbitrary language values incl URL-encoded traversal return same 200 English dict; no LFI/traversal
+- NEW api.sipgate.com — 401 responses leak x-b3-traceid (Zipkin) + vary:origin; descriptive header only
+- NEW payment.sipgate.com — all paths incl /actuator/health, /gateway/health → 307 to https://sipgate.io (Spring Gateway catch-all); actuator/MSLB not exposed
+- NEW sipgate-desktop-app.s3.eu-central-1.amazonaws.com — publicly listable S3 bucket re-confirmed; softphone installers 1.3.0–1.17.19 (stale since 2024-06-11); ACL/policy reads denied; write path NOT teste
+- CHANGED login.sipgate.com third-party realm — openid-configuration re-read: standard Keycloak defaults (DCR, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512, PKCE plain); config-advertising not a vu
+- CHANGED chatbot.sipgate.com — arbitrary-origin acceptance narrowed to WebSocket transport only (HUMAN_ONLY verification needed)
+- CHANGED api.sipgate.com/v2 — BOLA unauthenticated REJECTED; cross-tenant BOLA requires AUTH_HELPED tenant pairs
+- CHANGED app.dev.sipgate.com — dev env externally inert (login.dev dead, api.dev 403); weaker-auth/ATO path deflated to static info-leak only
+- CHANGED team-de.live.sipgate.com — CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERID=team-web03 (persistent)
+- CHANGED api.sipgate.com/health — unauthenticated arbitrary-origin CORS with credentials (persistent defense-in-depth gap)
+- CHANGED api.sipgate.com/v2/* — arbitrary-origin CORS reflection with credentials across multiple endpoints (persistent)

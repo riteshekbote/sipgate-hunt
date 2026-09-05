@@ -1,7 +1,26 @@
-## 2026-09-05 15:23:29 UTC [target] (model nemotron3)
+## 2026-09-05 17:41:52 UTC [target] (model nemotron3)
+[NEW] chatbot.sipgate.com/chat/session/socket.io/ — WS transport arbitrary-origin acceptance confirmed (polling transport blocks cross-origin reads via Vary:Origin no ACAO)
+[NEW] app.dev.sipgate.com — dev bundle rotated to main-D04St2Sb.js (5.65MB); hardcodes new dev hosts admin.dev.sipgate.net (.net TLD), integration.dev.sipgate.com, payment.dev.sipgate.com, team-de/team-uk.dev.sipgate.com — all HTTP 000 (dead)
+[NEW] api.sipgate.com/v2 — uniform edge authz confirmed: all documented high-value paths return 401 empty-body; 404 only for truly-unknown paths; no authz-drift/BOLA unauthenticated
+[NEW] api.sipgate.com/v2/translations/{language} — whitelist-with-fallback confirmed; arbitrary language values incl URL-encoded traversal return same 200 English dict; no LFI/traversal
+[NEW] api.sipgate.com — 401 responses leak x-b3-traceid (Zipkin) + vary:origin; descriptive header only
+[NEW] payment.sipgate.com — all paths incl /actuator/health, /gateway/health → 307 to https://sipgate.io (Spring Gateway catch-all); actuator/MSLB not exposed
+[NEW] sipgate-desktop-app.s3.eu-central-1.amazonaws.com — publicly listable S3 bucket re-confirmed; softphone installers 1.3.0–1.17.19 (stale since 2024-06-11); ACL/policy reads denied; write path NOT tested
+[CHANGED] login.sipgate.com third-party realm — openid-configuration re-read: standard Keycloak defaults (DCR, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512, PKCE plain); config-advertising not a vulnerability
+[CHANGED] chatbot.sipgate.com — arbitrary-origin acceptance narrowed to WebSocket transport only (HUMAN_ONLY verification needed)
+[CHANGED] api.sipgate.com/v2 — BOLA unauthenticated REJECTED; cross-tenant BOLA requires AUTH_HELPED tenant pairs
+[CHANGED] app.dev.sipgate.com — dev env externally inert (login.dev dead, api.dev 403); weaker-auth/ATO path deflated to static info-leak only
+[CHANGED] team-de.live.sipgate.com — CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERID=team-web03 (persistent)
+[CHANGED] api.sipgate.com/health — unauthenticated arbitrary-origin CORS with credentials (persistent defense-in-depth gap)
+[CHANGED] api.sipgate.com/v2/* — arbitrary-origin CORS reflection with credentials across multiple endpoints (persistent)
 [PRIO] chatbot.sipgate.com/chat/session/socket.io/,8.3,attack_surface=8,business_value=9,tech_exposure=7,gate_ease=10,cloud_surface=6,freshness=9
 [PRIO] app.dev.sipgate.com,7.3,attack_surface=6,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
 [PRIO] api.sipgate.com/v2/,6.85,attack_surface=7,business_value=9,tech_exposure=6,gate_ease=3,cloud_surface=7,freshness=8
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,5.8,attack_surface=5,business_value=4,tech_exposure=6,gate_ease=10,cloud_surface=8,freshness=6
+[PRIO] team-de.live.sipgate.com,5.5,attack_surface=5,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=5,freshness=7
+[PRIO] api.sipgate.com/health,4.2,attack_surface=4,business_value=3,tech_exposure=5,gate_ease=10,cloud_surface=4,freshness=6
+[PRIO] login.sipgate.com,6.1,attack_surface=6,business_value=8,tech_exposure=5,gate_ease=8,cloud_surface=5,freshness=7
+[PRIO] payment.sipgate.com,3.8,attack_surface=3,business_value=7,tech_exposure=4,gate_ease=5,cloud_surface=5,freshness=6
 [HYP] Production Chatbot Socket.io WebSocket Transport Arbitrary-Origin Hijack
 class: AUTH
 asset: chatbot.sipgate.com/chat/session/socket.io/
@@ -38,6 +57,7 @@ testability: AUTH_HELPED
 [PARKED] api.sipgate.com/v2/translations/{language} LFI/traversal: KB 2026-09-05 REJECTED OTHER — whitelist-with-fallback, returns same English dict.
 [PARKED] x-b3-traceid leak: KB 2026-09-05 ACCEPTED INFO only — descriptive header, OOS as standalone.
 [PARKED] payment.sipgate.com actuator/MSLB: KB 2026-09-05 ACCEPTED INFO only — Spring Gateway catch-all, hardened.
+[PARKED] sipgate-desktop-app.s3 write path: Mutating test (PUT) not performed per rules; read-only list confirmed.
 [FINAL] 1. Production Chatbot Socket.io WebSocket Transport Arbitrary-Origin Hijack (confidence 65, HUMAN_ONLY)
 [FINAL] 2. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration (confidence 70, PASSIVE)
 [FINAL] 3. API v2 Multi-Tenant BOLA via Predictable Object IDs with Authenticated Tenant Pair (confidence 55, AUTH_HELPED)

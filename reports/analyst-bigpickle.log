@@ -4457,3 +4457,21 @@ testability: HUMAN
 ## STEP 7 — RISK
 
 [RISK] sipgate: 50 — Stable from last assessment. All unauthenticated read surface exhausted (uniform 401/404/307). No GraphQL. Dev env externally inert. Third-party realm config standard Keycloak. Surviving high-impact chains all gate on creds/HUMAN: S3 write (60, needs sign-off), chatbot WS (55, needs browser), BOLA (50, needs two tenants). Standing defense-in-depth items (CORS reflection w/ creds, public dev SPA, CSP local-origin, listable S3, chatbot WS socket handshake) remain; no standalone critical chain confirmed.
+===== ANALYST bigpickle 2026-09-05 17:42:02 UTC =====
+[0m
+> build · big-pickle
+[0m
+Looking at the current state, all programmatic testing paths are exhausted. The three remaining high-impact hypotheses are gated on external access that requires human intervention:
+
+1. **S3 bucket write probe** (confidence 60) - needs legal sign-off for mutating action
+2. **Chatbot WebSocket cross-origin** (confidence 55) - needs manual browser interaction  
+3. **BOLA multi-tenant** (confidence 50) - needs two tenant credentials (AUTH_HELPED)
+
+All unauthenticated API paths return 401 uniformly, dev environments are externally inert, and no new attack surface can be explored programmatically.
+
+**Recommendation:** The next action requires human intervention to either:
+- Obtain legal sign-off and perform the single S3 PUT probe on `sipgate-desktop-app.s3.eu-central-1.amazonaws.com`
+- Conduct manual browser testing on the chatbot WebSocket transport
+- Create two test tenant accounts for BOLA differential testing
+
+No further automated testing will yield new findings given the current knowledge base and inventory state.
