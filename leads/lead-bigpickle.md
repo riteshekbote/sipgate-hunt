@@ -462,3 +462,33 @@ testability: HUMAN_ONLY
 [LEARN] ACCEPTED INFO @ app.dev.sipgate.com: dev bundle rotated to main-D04St2Sb.js; new dev hosts (admin.dev.sipgate.net, integration/payment/team-de/team-uk.dev.sipgate.com) all HTTP-dead; externally inert.
 [LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: DCR/ROPC/device/CIBA/HS256/512/PKCE-plain — standard Keycloak defaults; config-advertising not a vulnerability.
 [RISK] sipgate: 52 — One notch down (55→52). All unauthenticated read surface exhausted (uniform 401/404/307). No GraphQL. Dev env externally inert. Third-party realm config standard Keycloak. Surviving high-impact chains all gate on creds/HUMAN: BOLA (45, needs two tenants), S3 write (60, needs sign-off), chatbot WS (50, needs browser), OAuth registration (40, needs token). Standing defense-in-depth items (CORS reflection w/ creds, public dev SPA, CSP local-origin, listable S3, chatbot WS socket handshake) remain; no standalone critical chain confirmed.
+## 2026-09-05 12:11:57 UTC [target] (model bigpickle)
+[HYP] Cross-tenant BOLA on credential-bearing resources via predictable IDs
+class: IDOR
+asset: api.sipgate.com/v2/{numbers/{id},contacts/{id},devices/{id},portings}
+confidence: 50
+reasoning: uniform 401 empty-body unauth (KB REJECT ×3); PUT/GET method+content-neg ordering precedes auth but auth always enforces (401 with valid CT). Swagger documents per-resource credential responses (SIP pw, device creds, OAuth secrets). No multi-tenant differential ever exercised.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 not 403/404
+verify_steps: AUTH_HELPED — create two accounts, authenticate, differential GET/PUT on portings/{id}, numbers/{id}, devices/{id}/credentials/password, oauth2/clients/{id}
+impact: cross-tenant PII, SIP/device creds, OAuth secrets. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: live ListBucketResult, stale 2024-06-11, ACL/policy reads denied, write path never tested.
+evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off only)
+verify_steps: HUMAN-only single PUT probe with sign-off; passive list complete
+impact: full softphone RCE for all downloaders. CRITICAL if writable.
+testability: HUMAN
+[HYP] chatbot.sipgate.com WS transport cross-origin chat interception
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io (transport=websocket)
+confidence: 50
+reasoning: polling blocked cross-origin (KB CHANGED); WS upgrade CORS/Origin check unverified; chat-event auth per-event unverified.
+evidence_needed: evil-origin wss observes chat events in browser
+verify_steps: HUMAN browser test on evil origin
+impact: live customer chat/PII read. HIGH if confirmed.
+testability: HUMAN_ONLY
+[NEXT] HUMAN: obtain reporter/legal sign-off then single PUT probe (unique object name, +json CT) to sipgate-desktop-app.s3.eu-central-1.amazonaws.com — sole remaining open chain at confidence 60; all api read/order probes this turn exhausted (uniformed 401/405/415/404, swagger relocated, no Set-Cookie → cookie-credential CORS un-demonstrable).
+[RISK] sipgate: 50 — Down one (52→50): read/write-surface differential (405/415/404-vs-401) confirms uniform edge auth with benign framework ordering; swagger relocation removes free spec diffing; all remaining high-impact chains (s3 write 60, BOLA 50, chatbot WS 50) gate on HUMAN/AUTH_HELPED. Standing defense-in-depth items (CORS+creds no leak path, public dev SPA, CSP local-origin, listable S3) unchanged; no standalone critical chain.

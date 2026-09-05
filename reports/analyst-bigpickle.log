@@ -4140,3 +4140,243 @@ testability: HUMAN_ONLY
 ```
 [RISK] sipgate: 52 — One notch down (55→52). All unauthenticated read surface exhausted (uniform 401/404/307). No GraphQL. Dev env externally inert. Third-party realm config standard Keycloak. Surviving high-impact chains all gate on creds/HUMAN: BOLA (45, needs two tenants), S3 write (60, needs sign-off), chatbot WS (50, needs browser), OAuth registration (40, needs token). Standing defense-in-depth items (CORS reflection w/ creds, public dev SPA, CSP local-origin, listable S3, chatbot WS socket handshake) remain; no standalone critical chain confirmed.
 ```
+===== ANALYST bigpickle 2026-09-05 12:12:08 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m✗ [0mWebFetch https://api.sipgate.com/swagger.json failed
+[91m[1mError: [0mStatusCode: non 2xx status code (404 GET https://api.sipgate.com/swagger.json)
+[0m
+[0m$ [0mcurl -sI -H "Origin: https://evil.example.com" https://api.sipgate.com/v2/sms 2>&1 | head -20
+HTTP/1.1 404 Not Found
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example.com
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+vary: origin
+x-b3-traceid: 3dd78824624f9cdd415cc50868959fbe
+date: Sat, 05 Sep 2026 12:06:55 GMT
+[0m
+[0m$ [0mcurl -sI -H "Origin: https://evil.example.com" https://api.sipgate.com/v2/faxes 2>&1 | head -20
+HTTP/1.1 404 Not Found
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example.com
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+vary: origin
+x-b3-traceid: 6c4fbb85d8e40e415986e123683133d9
+date: Sat, 05 Sep 2026 12:06:55 GMT
+[0m
+[0m$ [0mcurl -sI -H "Origin: https://evil.example.com" https://api.sipgate.com/v2/phonebooks 2>&1 | head -20
+HTTP/1.1 404 Not Found
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example.com
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+vary: origin
+x-b3-traceid: d28d7a784ea8de7fbd22f07de9940cb7
+date: Sat, 05 Sep 2026 12:06:55 GMT
+[0m
+[0m$ [0mcurl -sI https://api.sipgate.com/swagger.json 2>&1 | head -20
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 5273c509fc565c4a3aaf34c5c06d8841
+date: Sat, 05 Sep 2026 12:07:00 GMT
+[0m
+[0m$ [0mcurl -sI https://api.sipgate.com/v2/swagger.json 2>&1 | head -20
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: cca1a7f5d8fc53a63f0fee33cbe33236
+date: Sat, 05 Sep 2026 12:07:00 GMT
+[0m
+[0m$ [0mcurl -sI https://api.sipgate.com/api-docs 2>&1 | head -20
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 5bbaf4c54843f11dc75e7e6a16a20cae
+date: Sat, 05 Sep 2026 12:07:00 GMT
+[0m
+[0m$ [0mcurl -sI https://api.sipgate.com/v2/openapi.json 2>&1 | head -20
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 66d87fd0715eee447456c7570ac38334
+date: Sat, 05 Sep 2026 12:07:01 GMT
+[0m
+[0m$ [0mcurl -sI https://api.sipgate.com/openapi.json 2>&1 | head -20
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 0ae6b3987fb26ae740a355c2b404e733
+date: Sat, 05 Sep 2026 12:07:02 GMT
+[0m
+[0m$ [0mcurl -sI -H "Origin: https://evil.example.com" https://api.sipgate.com/v2/walliches 2>&1 | head -20
+HTTP/1.1 404 Not Found
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example.com
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+vary: origin
+x-b3-traceid: 8403d79c03b7ac9d4d0aac412871ed4c
+date: Sat, 05 Sep 2026 12:07:02 GMT
+[0m
+[0m$ [0mcurl -sI -H "Origin: https://evil.example.com" https://api.sipgate.com/v2/configuration 2>&1 | head -20
+HTTP/1.1 404 Not Found
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example.com
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+vary: origin
+x-b3-traceid: 8d82f236b256d2cb5b9671414ae5c075
+date: Sat, 05 Sep 2026 12:07:03 GMT
+[0m
+[0m$ [0mcurl -sI -H "Origin: https://evil.example.com" https://api.sipgate.com/v2/sipdevices 2>&1 | head -20
+HTTP/1.1 404 Not Found
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example.com
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+vary: origin
+x-b3-traceid: a17100408b444635aa23fb9948de2cbb
+date: Sat, 05 Sep 2026 12:07:03 GMT
+[0m
+[0m$ [0mcurl -s -H "Origin: https://evil.example.com" https://api.sipgate.com/v2/numbers/d0421 2>&1 | head -5
+(no output)
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/swagger && curl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/v2/ && curl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/v2/swagger && curl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/
+404
+404
+404
+301
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/v2/sms && curl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/v2/faxes && curl -s -o /dev/null -w "%{http_code}\n" https://api.sipgate.com/v2/phonebooks/contacts
+404
+404
+404
+[0m
+[0m$ [0mcurl -s -D - "https://api.sipgate.com/v2/numbers/4917712345678" -H "Origin: https://evil.example.com" 2>&1 | head -25
+HTTP/1.1 405 Method Not Allowed
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example.com
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+allow: OPTIONS, PUT
+content-length: 0
+vary: origin
+x-b3-traceid: a3c16baca1bab28e136140644bc861b1
+date: Sat, 05 Sep 2026 12:07:24 GMT
+[0m
+[0m$ [0mfor p in v2/api-docs v2/swagger-ui.html v2/swagger-resources api-docs.json swagger-resources swagger-ui.html; do echo -n "$p: "; curl -s -o /dev/null -w "%{http_code}\n" "https://api.sipgate.com/$p"; done
+v2/api-docs: 404
+v2/swagger-ui.html: 404
+v2/swagger-resources: 404
+api-docs.json: 404
+swagger-resources: 404
+swagger-ui.html: 404
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code}\n" "https://api.sipgate.com/v2/translations/en" && curl -s -o /dev/null -w "%{http_code}\n" "https://api.sipgate.com/v2/users"
+200
+401
+[0m
+[0m$ [0mcurl -s -D - -o /dev/null -X OPTIONS "https://api.sipgate.com/v2/numbers/4917712345678" -H "Origin: https://evil.example.com" -H "Access-Control-Request-Method: PUT" 2>&1 | head -25
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Enforce-No-NQ,x-sipgate-version,x-sipgate-client,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example.com
+access-control-max-age: 151200
+vary: origin
+date: Sat, 05 Sep 2026 12:07:45 GMT
+[0m
+Notable anomaly: `/v2/numbers/{id}` returns **405 with `Allow: OPTIONS, PUT`** instead of the uniform 401. Let me map method/auth behavior more carefully via read-only OPTIONS/HEAD.
+[0m$ [0mHEAD() { curl -s -o /dev/null -w "%{http_code}" -X "$1" "https://api.sipgate.com$2"; echo " <- $1 $2"; }; for m in GET HEAD POST PUT PATCH DELETE OPTIONS; do curl -s -D /tmp/hdr -o /dev/null -X "$m" "https://api.sipgate.com/v2/numbers/4917712345678"; printf "%s -> %s allow=%s\n" "$m" "$(head -1 /tmp/hdr | tr -d '\r')" "$(grep -i '^allow:' /tmp/hdr | tr -d '\r')"; done
+GET -> HTTP/1.1 405 Method Not Allowed allow=allow: OPTIONS, PUT
+HEAD -> HTTP/1.1 405 Method Not Allowed allow=allow: OPTIONS, PUT
+POST -> HTTP/1.1 405 Method Not Allowed allow=allow: OPTIONS, PUT
+PUT -> HTTP/1.1 415 Unsupported Media Type allow=
+PATCH -> HTTP/1.1 405 Method Not Allowed allow=allow: OPTIONS, PUT
+DELETE -> HTTP/1.1 405 Method Not Allowed allow=allow: OPTIONS, PUT
+OPTIONS -> HTTP/1.1 200 OK allow=allow: OPTIONS, PUT
+[0m
+[0m$ [0mcurl -s -D - -o /dev/null -X PUT "https://api.sipgate.com/v2/numbers/0000000000000" -H "Content-Type: application/json" -H "Content-Length: 2" -d '{}' 2>&1 | head -12
+HTTP/1.1 401 Unauthorized
+content-length: 0
+vary: origin
+x-b3-traceid: 704227ba9acea9c0b2a23da38f3656e4
+date: Sat, 05 Sep 2026 12:08:44 GMT
+[0m
+Critical anomaly: `PUT /v2/numbers/{id}` → **415 (content negotiation reached WITHOUT auth)** — every other documented path returns 401 empty-body. This suggests the auth filter may be missing/ordered-late on that route. Probing with a non-existent number to avoid any mutation:
+[0m$ [0mcurl -s -D - -o /dev/null -X PUT "https://api.sipgate.com/v2/numbers/0000000000000" -H "Content-Length: 0" 2>&1 | head -12
+HTTP/1.1 415 Unsupported Media Type
+content-length: 0
+vary: origin
+x-b3-traceid: c493066a5ceb0c0cc4ed532ff528e34d
+date: Sat, 05 Sep 2026 12:08:45 GMT
+[0m
+The 415-before-401 reveals auth is enforced-but-ordered-late (content-negotiation precedes auth filter). Let me run a read-only-safe differential (PUT with no Content-Type → 415 means auth-after-content; 401 means auth-first) across documented write routes on non-existent IDs:
+[0m$ [0mfor u in "v2/numbers/0000000000000" "v2/contacts/00000000-0000-0000-0000-000000000001" "v2/portings/0" "v2/devices/0" "v2/oauth2/clients/0" "v2/app/tacs/0" "v2/addresses/0000000" "v2/settings/phones/0" "v2/webhooks/log/0" "v2/users/0"; do printf "%-55s PUT-no-CT=%s PUT+json=%s\n" "/$u" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT "https://api.sipgate.com/$u" -H "Content-Length: 0")" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT "https://api.sipgate.com/$u" -H "Content-Type: application/json" -d '{}')"; done
+/v2/numbers/0000000000000                               PUT-no-CT=415 PUT+json=401
+/v2/contacts/00000000-0000-0000-0000-000000000001       PUT-no-CT=401 PUT+json=401
+/v2/portings/0                                          PUT-no-CT=405 PUT+json=405
+/v2/devices/0                                           PUT-no-CT=415 PUT+json=401
+/v2/oauth2/clients/0                                    PUT-no-CT=404 PUT+json=404
+/v2/app/tacs/0                                          PUT-no-CT=404 PUT+json=404
+/v2/addresses/0000000                                   PUT-no-CT=415 PUT+json=401
+/v2/settings/phones/0                                   PUT-no-CT=404 PUT+json=404
+/v2/webhooks/log/0                                      PUT-no-CT=404 PUT+json=404
+/v2/users/0                                             PUT-no-CT=405 PUT+json=405
+[0m
+[0m$ [0mcurl -s -D - -o /dev/null "https://api.sipgate.com/v2/users" -H "Origin: https://evil.example.com" 2>&1 | grep -iE "set-cookie|www-authenticate" ; echo "---"; curl -s -D - -o /dev/null "https://api.sipgate.com/v2/numbers/4917712345678" -H "Origin: https://evil.example.com" 2>&1 | grep -iE "set-cookie|www-authenticate"; echo done
+---
+done
+[0m
+All probes read-only, ≤1 rps, GET/HEAD/OPTIONS/PUT-with-non-existent-ID only, no data touched. Analysis below.
+
+---
+STEP 1 — DELTA
+- NEW @ api.sipgate.com/v2/numbers/{id}: route is OPTIONS/PUT-only; GET/HEAD/POST/PATCH/DELETE → **405 `Allow: OPTIONS, PUT`** (pre-auth method-match), PUT w/o Content-Type → **415**, PUT+`application/json` → **401**. Auth filter runs AFTER method-matching + content-negotiation — consistent across `contacts`, `devices`, `addresses` (415/401; `portings`,`users` 405/405). No bypass: every real write route is 401 once CT valid.
+- CHANGED @ api.sipgate.com: `swagger.json` no longer served at `/`, `/v2/swagger.json`, `/v2/api-docs`, `/swagger-ui.html` etc. (all 404) — prior public spec moved/gated; free authz-drift reference lost.
+- NEW @ api.sipgate.com: id-shaped phantom routes `/v2/oauth2/clients/{id}`, `/v2/app/tacs/{id}`, `/v2/settings/phones/{id}`, `/v2/webhooks/log/{id}` → 404 (path segment not routed), while `/v2/sms`, `/v2/faxes`, `/v2/phonebooks` → 404. Uniform "unknown path" handling holds.
+
+STEP 2 — PRIORITIZE
+- [PRIO] login.sipgate.com OIDC,5.80,o3b7t7g7
+- [PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,5.05,a6b4t3g8
+- [PRIO] api.sipgate.com/v2/*,4.90,a6b7t5g2
+- [PRIO] chatbot.sipgate.com WS,4.70,a4b5t5g6
+
+STEP 3 — HYPOTHESES
+[HYP] Cross-tenant BOLA on credential-bearing resources via predictable IDs
+class: IDOR
+asset: api.sipgate.com/v2/{numbers/{id},contacts/{id},devices/{id},portings}
+confidence: 50
+reasoning: uniform 401 empty-body unauth (KB REJECT ×3); PUT/GET method+content-neg ordering precedes auth but auth always enforces (401 with valid CT). Swagger documents per-resource credential responses (SIP pw, device creds, OAuth secrets). No multi-tenant differential ever exercised.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 not 403/404
+verify_steps: AUTH_HELPED — create two accounts, authenticate, differential GET/PUT on portings/{id}, numbers/{id}, devices/{id}/credentials/password, oauth2/clients/{id}
+impact: cross-tenant PII, SIP/device creds, OAuth secrets. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: live ListBucketResult, stale 2024-06-11, ACL/policy reads denied, write path never tested.
+evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off only)
+verify_steps: HUMAN-only single PUT probe with sign-off; passive list complete
+impact: full softphone RCE for all downloaders. CRITICAL if writable.
+testability: HUMAN
+[HYP] chatbot.sipgate.com WS transport cross-origin chat interception
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io (transport=websocket)
+confidence: 50
+reasoning: polling blocked cross-origin (KB CHANGED); WS upgrade CORS/Origin check unverified; chat-event auth per-event unverified.
+evidence_needed: evil-origin wss observes chat events in browser
+verify_steps: HUMAN browser test on evil origin
+impact: live customer chat/PII read. HIGH if confirmed.
+testability: HUMAN_ONLY
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] api BOLA (IDOR,50,AUTH_HELPED): sustained; method/CT-ordering find adds no bypass vector; cannot advance without two tenants.
+- [PARKED] s3 write (MISCONFIG,60,HUMAN): top confidence, gated on legal sign-off.
+- [PARKED] chatbot WS (AUTH,50,HUMAN_ONLY): unchanged.
+- [PARKED] api auth-ordering quirk: 405/415/404-before-401 is framework normalization, no data/mutation exposure → INFO only, drops out of hypothesis list.
+- [FINAL] H1 s3 write (60,HUMAN); H2 api BOLA (50,AUTH_HELPED); H3 chatbot WS (50,HUMAN_ONLY).
+
+STEP 5 — NEXT ACTION
+[NEXT] HUMAN: obtain reporter/legal sign-off then single PUT probe (unique object name, +json CT) to sipgate-desktop-app.s3.eu-central-1.amazonaws.com — sole remaining open chain at confidence 60; all api read/order probes this turn exhausted (uniformed 401/405/415/404, swagger relocated, no Set-Cookie → cookie-credential CORS un-demonstrable).
+
+STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/numbers/{id}: OPTIONS/PUT-only route; GET→405, PUT no-CT→415, PUT+json→401 — auth enforced after method-match/content-negotiation across all write routes; no bypass.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com: swagger.json displaced (all prior locations 404); id-shaped oauth2/clients, app/tacs, settings/phones, webhooks/log routes → 404 phantom shapes; sms/faxes/phonebooks → 404.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com: 401s carry no Set-Cookie/WWW-Authenticate → bearer-only auth; arbitrary-origin CORS+credentials has no cookie-theft path (re-confirms defense-in-depth-only).
+
+STEP 7 — RISK
+[RISK] sipgate: 50 — Down one (52→50): read/write-surface differential (405/415/404-vs-401) confirms uniform edge auth with benign framework ordering; swagger relocation removes free spec diffing; all remaining high-impact chains (s3 write 60, BOLA 50, chatbot WS 50) gate on HUMAN/AUTH_HELPED. Standing defense-in-depth items (CORS+creds no leak path, public dev SPA, CSP local-origin, listable S3) unchanged; no standalone critical chain.

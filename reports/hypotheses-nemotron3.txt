@@ -1,34 +1,36 @@
-## 2026-09-05 08:45:39 UTC [target] (model nemotron3)
-[NEW] chatbot.sipgate.com WS transport: KB 2026-09-05 confirms polling transport blocks cross-origin reads (Vary:Origin, no ACAO); arbitrary-origin acceptance narrowed to WebSocket transport only (HUMAN_ONLY verification needed)
-[NEW] api.sipgate.com/v2 BOLA unauthenticated: KB 2026-09-05 REJECTED — all documented high-value paths return 401 empty-body; authz uniformly enforced at edge; cross-tenant BOLA requires AUTH_HELPED tenant pairs only
+## 2026-09-05 12:10:23 UTC [target] (model nemotron3)
+[NEW] chatbot.sipgate.com WS transport: KB 2026-09-05 confirms polling transport blocks cross-origin reads (Vary:Origin, no ACAO); arbitrary-origin acceptance narrowed to WebSocket transport only (HUMAN_ONLY)
+[NEW] api.sipgate.com/v2 BOLA unauthenticated: KB 2026-09-05 REJECTED — all documented high-value paths return 401 empty-body; authz uniformly enforced at edge; cross-tenant BOLA requires AUTH_HELPED tenant pairs
 [NEW] api.sipgate.com/v2/translations/{language}: KB 2026-09-05 REJECTED OTHER — arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-fallback); no LFI/traversal
 [NEW] api.sipgate.com 401 headers: KB 2026-09-05 ACCEPTED INFO — 401 responses leak x-b3-traceid (Zipkin) + vary:origin; descriptive only, OOS standalone
-[NEW] app.dev.sipgate.com bundle rotation: KB 2026-09-05 — dev bundle rotated to main-D04St2Sb.js (5.65MB); hardcodes new dev hosts admin.dev.sipgate.net (.net TLD), integration.dev.sipgate.com, payment.dev.sipgate.com, team-de/team-uk.dev.sipgate.com — all resolve to sipgate-owned 217.116.x.x but HTTP 000; extends prior ACCEPTED MISCONFIG
+[NEW] app.dev.sipgate.com bundle rotation: KB 2026-09-05 — dev bundle rotated to main-D04St2Sb.js (5.65MB); hardcodes new dev hosts admin.dev.sipgate.net (.net TLD), integration.dev.sipgate.com, payment.dev.sipgate.com, team-de.dev.sipgate.com, team-uk.dev.sipgate.com — all resolve to sipgate-owned 217.116.x.x but HTTP 000
 [NEW] payment.sipgate.com: KB 2026-09-05 ACCEPTED INFO — every path incl /actuator/health, /gateway/health → 307 to https://sipgate.io (Spring Gateway catch-all); actuator/MSLB-positive paths not exposed
 [CHANGED] sipgate-desktop-app.s3: KB 2026-09-05 re-confirmed ACCEPTED MISCONFIG — publicly listable S3 bucket with softphone installers 1.3.0–1.17.19 (stale since 2024-06-11); ACL/policy reads denied; write path NOT tested
-[CHANGED] login.sipgate.com third-party realm: KB 2026-09-05 REJECTED — re-read openid-configuration shows standard Keycloak defaults (DCR, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512, PKCE plain); config-advertising not a vulnerability
-[PRIO] api.sipgate.com,8.50,attack_surface=9 business_value=10 tech_exposure=9 gate_ease=10 cloud_surface=8 freshness=10
-[PRIO] app.dev.sipgate.com,8.50,attack_surface=9 business_value=8 tech_exposure=8 gate_ease=9 cloud_surface=8 freshness=10
-[PRIO] chatbot.sipgate.com,8.00,attack_surface=7 business_value=9 tech_exposure=8 gate_ease=7 cloud_surface=7 freshness=10
-[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.50,attack_surface=5 business_value=6 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=9
-[PRIO] team-de.live.sipgate.com,7.50,attack_surface=6 business_value=8 tech_exposure=7 gate_ease=6 cloud_surface=6 freshness=10
-[PRIO] login.sipgate.com,7.90,attack_surface=8 business_value=9 tech_exposure=8 gate_ease=10 cloud_surface=7 freshness=10
-[PRIO] app.sipgate.com,8.25,attack_surface=9 business_value=9 tech_exposure=8 gate_ease=10 cloud_surface=8 freshness=10
-[HYP] API v2 Multi-Tenant BOLA via Predictable Object IDs with Authenticated Tenant Pair
-class: IDOR
-asset: api.[0m
-verify_steps: GET https://api.sipgate.com/v2/portings with valid Bearer token A — enumerate IDs; GET https://api.sipgate.com/v2/portings/{id_from_tenant_B} with Bearer token A — observe 403/404 vs 200; repeat for /v2/contacts/{id}, /v2/devices/{id}, /v2/history/{id}. Check CORS: Origin:https://evil.example on successful responses.
-impact: Cross-tenant access to porting requests (PII, phone numbers), call history, contacts, device configs = HIGH (PII + operational data). Chain with CORS → full exfiltration from attacker-controlled page.
-testability: AUTH_HELPED
+[CHANGED] login.sipgate.com third-party realm: KB 2026-09-05 REJECTED — re-read openid-configuration shows standard Keycloak defaults (DCR, ROPC, device_code, CIBA, client_secret_jwt, HS256/384/512, PKCE plain)
+[PRIO] chatbot.sipgate.com/chat/session/socket.io/,8.50,attack_surface=9 business_value=9 tech_exposure=9 gate_ease=10 cloud_surface=7 freshness=10
+[PRIO] api.sipgate.com/v2/,8.00,attack_surface=9 business_value=9 tech_exposure=8 gate_ease=6 cloud_surface=8 freshness=10
+[PRIO] app.dev.sipgate.com,7.50,attack_surface=7 business_value=6 tech_exposure=8 gate_ease=10 cloud_surface=7 freshness=10
+[PRIO] team-de.live.sipgate.com,7.25,attack_surface=6 business_value=7 tech_exposure=7 gate_ease=10 cloud_surface=6 freshness=10
+[PRIO] login.sipgate.com,7.00,attack_surface=8 business_value=9 tech_exposure=7 gate_ease=10 cloud_surface=7 freshness=10
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.50,attack_surface=5 business_value=5 tech_exposure=6 gate_ease=10 cloud_surface=9 freshness=6
 [HYP] Production Chatbot Socket.io WebSocket Transport Arbitrary-Origin Hijack
 class: AUTH
 asset: chatbot.sipgate.com/chat/session/socket.io/
-confidence: 55
-reasoning: KB 2026-09-05: Polling transport (/chat/session/socket.io/?EIO=4&transport=polling) serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked. However, WebSocket transport (transport=websocket) not tested. Production JS uses getToken() for socket auth, but if WS handshake accepts arbitrary Origin header and validates auth only post-connection (on namespaces/events), attacker page could establish WS connection and intercept/inject chat messages. CSP on app.sipgate.com allows wss://*.sipgate.*.
+confidence: 60
+reasoning: KB 2026-09-05: Polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked. WebSocket transport (transport=websocket) not tested. Production JS uses getToken() for socket auth, but if WS handshake accepts arbitrary Origin header and validates auth only post-connection (on namespaces/events), attacker page could establish WS connection and intercept/inject chat messages. CSP on app.sipgate.com allows wss://*.sipgate.*.
 evidence_needed: Confirm WebSocket handshake from arbitrary Origin returns 101 Switching Protocols; check if auth token required at connection time or only for subsequent events; verify socket.io server allowRequest/origin config.
 verify_steps: WS handshake: wss://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket with Origin: https://evil.example — confirm 101; inspect frames for auth challenge vs immediate session data; send unauthenticated event — observe if server rejects or processes.
 impact: Session hijack of customer chat sessions = PII exposure (chat transcripts, account info); if admin/support chat → lateral movement. Severity: HIGH.
 testability: HUMAN_ONLY
+[HYP] API v2 Multi-Tenant BOLA via Predictable Object IDs with Authenticated Tenant Pair
+class: IDOR
+asset: api.sipgate.com/v2/
+confidence: 55
+reasoning: KB 2026-09-05: All documented high-value paths (/portings, /contacts, /history, /devices, /addresses, /users, /numbers, /account, /authorization/userinfo, /settings/sipgateio, /log/webhooks, /app/tacs) return 401 empty-body unauthenticated — authz uniformly enforced at edge. However, object-level tenant isolation untested with valid bearer tokens from two different tenants. Predictable integer/UUID IDs on /portings/{id}, /contacts/{id}, /devices/{id}, /history/{id} enable cross-tenant enumeration if authz checks only at edge not per-object.
+evidence_needed: Two valid bearer tokens from different sipgate tenants (AUTH_HELPED); enumerate object IDs from tenant A; request tenant B's objects with token A — observe 403/404 vs 200; check CORS on successful responses (Origin: evil.example).
+verify_steps: GET https://api.sipgate.com/v2/portings with Bearer token A — enumerate IDs; GET https://api.sipgate.com/v2/portings/{id_from_tenant_B} with Bearer token A — observe 403/404 vs 200; repeat for /v2/contacts/{id}, /v2/devices/{id}, /v2/history/{id}. Check CORS: Origin:https://evil.example on successful responses.
+impact: Cross-tenant access to porting requests (PII, phone numbers), call history, contacts, device configs = HIGH (PII + operational data). Chain with CORS → full exfiltration from attacker-controlled page.
+testability: AUTH_HELPED
 [HYP] Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration
 class: MISCONFIG
 asset: app.dev.sipgate.com
@@ -38,7 +40,7 @@ evidence_needed: Confirm no other dev subdomains resolve (login.dev, chatbot.dev
 verify_steps: GET https://app.dev.sipgate.com — verify JS bundle hash matches production; GET https://app.dev.sipgate.com with Origin:https://evil.example — check CORS headers; DNS resolve login.dev.sipgate.com, chatbot.dev.sipgate.com, team-de.dev.sipgate.com, payment.dev.sipgate.com — confirm dead/alive; GET https://api.sipgate.com/v2/webhooks (or similar) — check if user-supplied URL parameter exists.
 impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement if any SSRF vector exists. Severity: MEDIUM (info leak) → HIGH (if SSRF chain found).
 testability: PASSIVE
-[PARKED] OAuth implicit token theft via client-side unvalidated redirect: KB REJECTED as OATH class — history.replace(external) in React Router resolves same-origin, token persists to localStorage before navigation, fragment never forwarded off-origin. Confidence 45 but rejected-class per KB.
+[PARKED] OAuth implicit token theft via client-side unvalidated redirect: KB REJECTED as OATH class — history.replace(external) in React Router resolves same-origin, token persists to localStorage before navigation, fragment never forwarded off-origin. Class signal: unvalidated client redirect is not by itself token theft.
 [PARKED] Keycloak id_token alg confusion (HS256): Standard Keycloak metadata, not proof of vulnerable verifier; REJECTED-adjacent per KB.
 [PARKED] ROPC/password grant + client_secret_jwt: Config-only, brute-force territory REJECTED per KB.
 [PARKED] Keycloak Redirect_URI Validation Bypass: Requires active auth testing; passive-only verification limited; confidence 60.
@@ -48,8 +50,8 @@ testability: PASSIVE
 [PARKED] x-b3-traceid leak: KB 2026-09-05 ACCEPTED INFO only — descriptive header, OOS as standalone.
 [PARKED] payment.sipgate.com actuator/MSLB: KB 2026-09-05 ACCEPTED INFO only — Spring Gateway catch-all, hardened.
 [FINAL] 1. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration (confidence 70, PASSIVE)
-[FINAL] 2. API v2 Multi-Tenant BOLA via Predictable Object IDs with Authenticated Tenant Pair (confidence 60, AUTH_HELPED)
-[FINAL] 3. Production Chatbot Socket.io WebSocket Transport Arbitrary-Origin Hijack (confidence 55, HUMAN_ONLY)
+[FINAL] 2. Production Chatbot Socket.io WebSocket Transport Arbitrary-Origin Hijack (confidence 60, HUMAN_ONLY)
+[FINAL] 3. API v2 Multi-Tenant BOLA via Predictable Object IDs with Authenticated Tenant Pair (confidence 55, AUTH_HELPED)
 [NEXT] PROBE: GET https://app.dev.sipgate.com with Origin: https://evil.example — check for CORS headers (ACAO, ACAC) on dev SPA; DNS resolve login.dev.sipgate.com, chatbot.dev.sipgate.com, team-de.dev.sipgate.com, payment.dev.sipgate.com — confirm which dev subdomains resolve/alive. Read-only, ≤1 rps.
 [LEARN] ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19 + latest aliases, stale since 2024-06-11); ACL/policy reads denied; write path NOT tested.
 [LEARN] REJECTED AUTH @ app.dev.sipgate.com: login.dev.sipgate.com dead (HTTP 000) and api.dev.sipgate.com 403 → dev env externally inert; dev weaker-auth/ATO path deflated to static info-leak only.
