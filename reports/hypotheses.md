@@ -426,3 +426,21 @@
 - LEARN: ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERI
 - LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
 - LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, expos
+
+## RANKED HYPOTHESES 2026-09-05 23:45:04 UTC
+- [75] chatbot.dev.sipgate.com/chat/session/socket.io/: Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance (from art/lead_nemotron3.txt)
+- [50] api.sipgate.com/v2/{numbers/{id},contacts/{id},devices/{id},portings}: Cross-tenant BOLA on credential-bearing resources (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): HUMAN: obtain reporter/legal sign-off then single PUT probe (unique object name, `application/json` CT) to `sipgate-desktop-app.s3.eu-central-1.amazonaws.com/te
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket with Origin: https://evil.example — confirm WS handshake response c
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live prod team portal, identical CSP dev-origin leaks (frame-ancestors app.local.sipgate.com:3443, connect
+- LEARN: REJECTED OTHER @ api.sipgate.com:3396 + team-de.live.sipgate.com:3396: CSP connect-src internal port unreachable externally (TCP timeout) — topology leak only.
+- LEARN: REJECTED OATH @ login.sipgate.com/?redirect=: evil vs benign → identical 302 to Keycloak sipgate-apps, hardcoded redirect_uri — redirect param inert at SSO boot
+- LEARN: ACCEPTED INFO @ sipgate-desktop-app.s3: ?versions → 439 keys, all VersionId=null (versioning disabled), IsTruncated=false — full artifact inventory, no hidden v
+- LEARN: REJECTED OTHER @ api.sipgate.com:3396 + team-de.live.sipgate.com:3396: CSP connect-src internal port unreachable externally (TCP timeout) — topology leak only.
+- LEARN: REJECTED OATH @ login.sipgate.com/?redirect=: evil vs benign → identical 302 to Keycloak sipgate-apps, hardcoded redirect_uri — redirect param inert at SSO boot
+- LEARN: ACCEPTED INFO @ sipgate-desktop-app.s3: ?versions → 439 keys, all VersionId=null (versioning disabled), IsTruncated=false — full artifact inventory, no hidden v
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally iner
+- LEARN: REJECTED OTHER @ login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com: DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — ex
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-s
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demons
