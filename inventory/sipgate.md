@@ -118,3 +118,20 @@ www.sipgate.de
 - NEW app.sipgate.com SPA: `/implicit-auth-redirect` reads client-controlled `redirect` from search, stores token, then `history.replace(redirect)` unvalidated (main.js `ImplicitAuthenticator`, main-C3206pW
 - NEW OIDC discovery signals: grant `password`(ROPC), `client_secret_jwt`, id_token algs incl HS256/512, PKCE `plain`+`S256`.
 - CHANGED dev.sipgate.de resolves to sipgate IP 217.10.68.23 but dead (no HTTP 80/443, timeout) — abandoned host, owned IP, no takeover.
+
+## 2026-09-05 04:44:20 UTC
+- NEW `login.sipgate.com` — Keycloak OIDC realm `sipgate-apps`, implicit flow, redirect to `app.sipgate.com/implicit-auth-redirect` (not in inventory)
+- NEW `app.sipgate.com` — Main SPA on Fastly/CDN, permissive CSP, WebSocket to `wss://*.sipgate.*` (not in inventory)
+- NEW `api.sipgate.com` — API v2 with arbitrary-origin CORS + credentials on `/contacts`, `/account`, `/numbers`, `/users`, `/authorization/userinfo`, `/health` (not in inventory)
+- NEW `chatbot.sipgate.com` — Production socket.io at `/chat/session/socket.io/` accepts arbitrary-origin handshake (not in inventory)
+- NEW `chatbot.dev.sipgate.com` — Dev chatbot (nginx/1.24.0) with socket.io accessible from internet (not in inventory)
+- NEW `payment.sipgate.com` — Payment API (Java Spring, JSESSIONID), proper CORS (only `app.sipgate.com`) (not in inventory)
+- NEW `team-de.live.sipgate.com` — Team portal (Apache/PHP), CSP `frame-ancestors` includes `app.local.sipgate.com:3443`, leaks `SERVERID=team-web03` (not in inventory)
+- NEW `app.dev.sipgate.com` — Dev SPA on Fastly CDN, identical production JS bundle, hardcoded internal URLs (`api.local:3396`, `app.local:3443`, `payment.local:8080`, `team-de.local:10443`), no IP restrict
+- NEW `api.dev.sipgate.com` — 403 Forbidden on all paths (WAF blocked but accessible) (not in inventory)
+- NEW `sipgate-desktop-app.s3.eu-central-1.amazonaws.com` — Publicly listable S3 bucket with softphone installers 1.3.0–1.17.19 (not in inventory)
+- CHANGED `app.sipgate.de` — Now 301 → `login.sipgate.com` (was nginx redirect target)
+- CHANGED `login.sipgate.de` — Now 301 → `www.sipgate.de` (was nginx redirect target)
+- CHANGED `dev.sipgate.de` — Resolves to 217.10.68.23 but dead (TCP timeout), no takeover
+- CHANGED `api.sipgate.com/v2/*` — KB 2026-09-05: All documented high-value paths return 401 empty-body; authz uniformly enforced at edge; BOLA not reachable unauthenticated (requires AUTH_HELPED)
+- CHANGED `chatbot.sipgate.com` — KB 2026-09-05: Polling transport serves `Vary: Origin` with no ACAO for arbitrary origin → cross-origin reads blocked; arbitrary-origin acceptance narrowed to WS transport only
