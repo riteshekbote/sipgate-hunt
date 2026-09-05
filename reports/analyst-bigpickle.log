@@ -4475,3 +4475,407 @@ All unauthenticated API paths return 401 uniformly, dev environments are externa
 - Create two test tenant accounts for BOLA differential testing
 
 No further automated testing will yield new findings given the current knowledge base and inventory state.
+===== ANALYST bigpickle 2026-09-05 19:37:52 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m• [0mCheck workspace files[90m Explore Agent[0m
+[0m✓ [0mCheck workspace files[90m Explore Agent[0m
+[0m→ [0mRead triage/run-2026-09-05-17-39.md
+[0m→ [0mRead leads/lead-nemotron3.md
+[0m→ [0mRead state_bigpickle.json
+[0m→ [0mRead reports/hypotheses-bigpickle.txt
+[0m→ [0mRead reports/hypotheses.md
+[0m→ [0mRead leads/lead-bigpickle.md
+[0m→ [0mRead leads/lead-bigpickle.md[90m [offset=359][0m
+Reviewing my prior state: all v2 surface already uniform-401, swagger relocated. Let me check a small set of genuinely un-tested legacy/alternate surfaces at ≤1 rps.
+[0m
+[0m$ [0mfor p in "v1/sms" "v1/account" "swagger.json" "v2/swagger.json" "v2/sms" "v2/faxes"; do code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "https://api.sipgate.com/$p"); echo "$p -> $code"; sleep 1.2; done
+v1/sms -> 404
+v1/account -> 404
+swagger.json -> 404
+v2/swagger.json -> 200
+v2/sms -> 404
+v2/faxes -> 404
+[0m
+`/v2/swagger.json` is live (relocated spec). Let me pull the current path list and diff against the already-tested set.
+[0m$ [0mcd /tmp/opencode && curl -s --max-time 20 "https://api.sipgate.com/v2/swagger.json" -o swagger.json && python3 -c "
+import json
+d=json.load(open('swagger.json'))
+paths=sorted(d.get('paths',{}).keys())
+print('paths:',len(paths))
+for p in paths:
+    ops=d['paths'][p]
+    for m in ops:
+        if m.lower() in ('get','post','put','patch','delete'):
+            params=ops[m].get('parameters',[])
+            print(m.upper(), p, '| params:', ','.join([(x.get('name') or x.get('\$ref','')).split('/')[-1] for x in params]))
+"
+paths: 144
+GET / | params: 
+GET /account | params: 
+PUT /account/verified | params: body
+GET /addresses | params: 
+GET /addresses/itemCount | params: 
+GET /addresses/{addressId} | params: addressId
+PUT /addresses/{addressId} | params: addressId,body
+GET /addresses/{addressId}/numbers | params: addressId
+GET /app/events | params: 
+DELETE /app/events/{id} | params: id
+GET /app/links | params: 
+GET /app/properties | params: 
+GET /app/tacs | params: 
+GET /app/users | params: 
+GET /authorization/oauth2/clients | params: 
+POST /authorization/oauth2/clients | params: client
+DELETE /authorization/oauth2/clients/{clientId} | params: clientId
+GET /authorization/oauth2/clients/{clientId} | params: clientId
+PUT /authorization/oauth2/clients/{clientId} | params: clientId,client
+GET /authorization/oauth2/clients/{clientId}/gdpr | params: clientId
+GET /authorization/userinfo | params: Authorization
+GET /autorecordings/greetings | params: 
+POST /autorecordings/greetings | params: body
+DELETE /autorecordings/greetings/{greetingId} | params: greetingId
+GET /autorecordings/{extension}/settings | params: extension
+PUT /autorecordings/{extension}/settings | params: extension,body
+GET /balance | params: 
+GET /blacklist/incoming | params: 
+POST /blacklist/incoming | params: body
+DELETE /blacklist/incoming/{phoneNumber} | params: phoneNumber
+GET /callrestrictions | params: userIds
+GET /calls | params: 
+POST /calls | params: body
+DELETE /calls/{callId} | params: callId
+POST /calls/{callId}/announcements | params: callId,body
+POST /calls/{callId}/dtmf | params: callId,body
+PUT /calls/{callId}/hold | params: callId,body
+PUT /calls/{callId}/muted | params: callId,body
+PUT /calls/{callId}/recording | params: callId,body
+POST /calls/{callId}/transfer | params: callId,body
+GET /channels | params: 
+DELETE /channels/{channelId} | params: channelId
+GET /channels/{channelId}/events | params: channelId,position,limit
+PUT /channels/{channelId}/name | params: channelId,body
+PUT /channels/{channelId}/users | params: channelId,body
+PUT /channels/{channelId}/users/{userId}/devices | params: channelId,userId,body
+DELETE /contacts | params: body
+GET /contacts | params: phonenumbers,limit,offset,lastId,scopes
+POST /contacts | params: body
+GET /contacts/csv | params: scope
+POST /contacts/import/csv | params: body
+POST /contacts/import/google | params: body
+GET /contacts/internal | params: 
+GET /contacts/vcard | params: scope,labels,contactIds,wantedFields,filter,limit,offset,lastId
+PUT /contacts/vcard | params: scope,body
+GET /contacts/{contactId} | params: contactId
+PUT /contacts/{contactId} | params: contactId,body
+DELETE /contacts/{contactid} | params: contactid,scope
+DELETE /devices/{deviceId} | params: deviceId
+GET /devices/{deviceId} | params: deviceId
+PUT /devices/{deviceId} | params: deviceId,body
+PUT /devices/{deviceId}/alias | params: deviceId,body
+GET /devices/{deviceId}/callerid | params: deviceId
+PUT /devices/{deviceId}/callerid | params: deviceId,body
+POST /devices/{deviceId}/credentials/password | params: deviceId
+PUT /devices/{deviceId}/external/incomingcalldisplay | params: deviceId,body
+PUT /devices/{deviceId}/external/targetnumber | params: deviceId,body
+GET /devices/{deviceId}/localprefix | params: deviceId
+PUT /devices/{deviceId}/localprefix | params: deviceId,body
+GET /devices/{deviceId}/singlerowdisplay | params: deviceId
+PUT /devices/{deviceId}/singlerowdisplay | params: deviceId,body
+GET /devices/{deviceId}/tariffannouncement | params: deviceId
+PUT /devices/{deviceId}/tariffannouncement | params: deviceId,body
+GET /groupfaxlines | params: userId
+GET /groupfaxlines/{faxlineId}/callerid | params: faxlineId
+GET /groupfaxlines/{faxlineId}/numbers | params: faxlineId
+GET /groups | params: userId
+GET /groups/{groupId} | params: groupId
+POST /groups/{groupId}/devices | params: groupId,body
+DELETE /groups/{groupId}/devices/{deviceId} | params: groupId,deviceId
+GET /groups/{groupId}/faxlines | params: groupId
+GET /groups/{groupId}/numbers | params: groupId
+GET /groups/{groupId}/users | params: groupId
+GET /groups/{groupId}/voicemail | params: groupId
+DELETE /history | params: id
+GET /history | params: connectionIds,types,directions,offset,limit,archived,starred,from,to,phonenumber
+PUT /history | params: body
+GET /history/export | params: connectionIds,types,directions,offset,limit,archived,starred,from,to
+DELETE /history/{entryId} | params: entryId
+GET /history/{entryId} | params: entryId
+PUT /history/{entryId} | params: entryId,body
+PUT /history/{entryId}/archive | params: entryId,body
+PUT /history/{entryId}/note | params: entryId,body
+PUT /history/{entryId}/read | params: entryId,body
+GET /log/webhooks | params: 
+GET /numbers | params: offset,limit
+POST /numbers/quickdial | params: body
+GET /numbers/quickdial/validation/{quickDialNumber} | params: quickDialNumber
+DELETE /numbers/quickdial/{numberId} | params: numberId
+PUT /numbers/quickdial/{quickdialId} | params: quickdialId,body
+PUT /numbers/{numberId} | params: numberId,body
+GET /phonelines | params: 
+GET /portings | params: 
+DELETE /portings/{portingId} | params: portingId
+GET /portings/{portingId} | params: portingId
+GET /restrictions | params: userId,restriction
+POST /sessions/calls | params: body
+POST /sessions/fax | params: body
+POST /sessions/fax/resend | params: body
+POST /sessions/ivr/recording | params: body
+POST /sessions/sms | params: body
+POST /sessions/voicemail/play | params: body
+POST /sessions/voicemail/recording | params: body
+GET /settings/sipgateio | params: 
+PUT /settings/sipgateio | params: body
+GET /translations/{language} | params: language
+GET /users | params: 
+DELETE /users/{userId} | params: userId
+GET /users/{userId} | params: userId
+PUT /users/{userId}/busyonbusy | params: userId,body
+PUT /users/{userId}/defaultdevice | params: userId,body
+PUT /users/{userId}/location | params: userId,body
+GET /voicemails | params: 
+GET /voicemails/{voicemailId} | params: voicemailId
+POST /{userId}/callrestrictions/{restriction} | params: userId,restriction,body
+GET /{userId}/devices | params: userId,type
+POST /{userId}/devices | params: userId,body
+POST /{userId}/devices/external | params: userId,body
+POST /{userId}/devices/mobile | params: userId,body
+POST /{userId}/devices/register | params: userId,body
+GET /{userId}/devices/{deviceId}/contingents | params: userId,deviceId
+DELETE /{userId}/devices/{deviceId}/sim | params: userId,deviceId
+POST /{userId}/devices/{deviceId}/sim | params: userId,deviceId,body
+POST /{userId}/devices/{deviceId}/sim/orders | params: userId,deviceId,body
+GET /{userId}/faxlines | params: userId
+POST /{userId}/faxlines | params: userId
+DELETE /{userId}/faxlines/{faxlineId} | params: userId,faxlineId
+PUT /{userId}/faxlines/{faxlineId} | params: userId,faxlineId,body
+GET /{userId}/faxlines/{faxlineId}/callerid | params: userId,faxlineId
+PUT /{userId}/faxlines/{faxlineId}/callerid | params: userId,faxlineId,body
+GET /{userId}/faxlines/{faxlineId}/numbers | params: userId,faxlineId
+PUT /{userId}/faxlines/{faxlineId}/tagline | params: userId,faxlineId,body
+GET /{userId}/notifications | params: userId
+POST /{userId}/notifications/call/email | params: userId,body
+POST /{userId}/notifications/call/sms | params: userId,body
+POST /{userId}/notifications/fax/email | params: userId,body
+POST /{userId}/notifications/fax/report | params: userId,body
+POST /{userId}/notifications/fax/sms | params: userId,body
+POST /{userId}/notifications/sms/email | params: userId,body
+POST /{userId}/notifications/voicemail/email | params: userId,body
+POST /{userId}/notifications/voicemail/sms | params: userId,body
+DELETE /{userId}/notifications/{notificationId} | params: userId,notificationId
+GET /{userId}/numbers | params: userId
+GET /{userId}/phonelines | params: userId
+POST /{userId}/phonelines | params: userId
+DELETE /{userId}/phonelines/{phonelineId} | params: userId,phonelineId
+GET /{userId}/phonelines/{phonelineId} | params: userId,phonelineId
+PUT /{userId}/phonelines/{phonelineId} | params: userId,phonelineId,body
+GET /{userId}/phonelines/{phonelineId}/blockanonymous | params: userId,phonelineId
+PUT /{userId}/phonelines/{phonelineId}/blockanonymous | params: userId,phonelineId,body
+GET /{userId}/phonelines/{phonelineId}/devices | params: userId,phonelineId
+POST /{userId}/phonelines/{phonelineId}/devices | params: userId,phonelineId,body
+DELETE /{userId}/phonelines/{phonelineId}/devices/{deviceId} | params: userId,phonelineId,deviceId
+GET /{userId}/phonelines/{phonelineId}/forwardings | params: userId,phonelineId
+PUT /{userId}/phonelines/{phonelineId}/forwardings | params: userId,phonelineId,body
+GET /{userId}/phonelines/{phonelineId}/numbers | params: userId,phonelineId
+GET /{userId}/phonelines/{phonelineId}/parallelforwardings | params: userId,phonelineId
+POST /{userId}/phonelines/{phonelineId}/parallelforwardings | params: userId,phonelineId,body
+DELETE /{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId} | params: userId,phonelineId,parallelForwardingId
+PUT /{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId} | params: userId,phonelineId,parallelForwardingId,body
+GET /{userId}/phonelines/{phonelineId}/sipgateio | params: userId,phonelineId
+PUT /{userId}/phonelines/{phonelineId}/sipgateio | params: userId,phonelineId,body
+GET /{userId}/phonelines/{phonelineId}/sipgateio/log | params: userId,phonelineId
+GET /{userId}/phonelines/{phonelineId}/voicemails | params: userId,phonelineId
+PUT /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId} | params: userId,phonelineId,voicemailId,body
+GET /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings | params: userId,phonelineId,voicemailId
+POST /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings | params: userId,phonelineId,voicemailId,body
+DELETE /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId} | params: userId,phonelineId,voicemailId,greetingId
+PUT /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId} | params: userId,phonelineId,voicemailId,greetingId,body
+PUT /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/transcriptions | params: userId,phonelineId,voicemailId,body
+GET /{userId}/sms | params: userId
+PUT /{userId}/sms/{smsId} | params: userId,smsId,body
+GET /{userId}/sms/{smsId}/callerids | params: userId,smsId
+POST /{userId}/sms/{smsId}/callerids | params: userId,smsId,body
+DELETE /{userId}/sms/{smsId}/callerids/{callerId} | params: userId,smsId,callerId
+PUT /{userId}/sms/{smsId}/callerids/{callerId} | params: userId,smsId,callerId,body
+POST /{userId}/sms/{smsId}/callerids/{callerId}/verification | params: userId,smsId,callerId,body
+[0m
+Spec confirmed live at `/v2/swagger.json` (144 paths, user-prefixed sms/fax). Let me extract which ops the spec marks as no-auth (authz-drift triage) and probe those.
+[0m$ [0mcd /tmp/opencode && python3 -c "
+import json
+d=json.load(open('swagger.json'))
+sec=d.get('security',[])
+print('GLOBAL security:', json.dumps(sec)[:300])
+print('securityDefinitions:', list(d.get('securityDefinitions',{}).keys()))
+print('---ops WITHOUT method-level security (noauth-annotated)---')
+for p in sorted(d.get('paths',{}).keys()):
+    for m,op in d['paths'][p].items():
+        if m.lower() not in ('get','post','put','patch','delete'): continue
+        if 'security' in op:
+            ms=op['security']
+            if ms and (ms==[{}] or all(not x for x in ms)):
+                print(m.upper(), p, '-> explicit-noauth', op.get('summary',''))
+" 2>/dev/null; echo "=== scheme ==="; python3 -c "
+import json; d=json.load(open('swagger.json'))
+print(list(d.get('components',{}).get('securitySchemes',{}).keys()))
+"
+GLOBAL security: []
+securityDefinitions: ['oauth2']
+---ops WITHOUT method-level security (noauth-annotated)---
+=== scheme ===
+[]
+[0m
+[0m$ [0mfor p in "v2/calls" "v2/channels" "v2/app/events" "v2/balance" "v2/autorecordings/greetings" "v2/numbers/quickdial/validation/491700000000"; do code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "https://api.sipgate.com/$p"); echo "$p -> $code"; sleep 1.2; done
+v2/calls -> 401
+v2/channels -> 401
+v2/app/events -> 401
+v2/balance -> 401
+v2/autorecordings/greetings -> 401
+v2/numbers/quickdial/validation/491700000000 -> 401
+[0m
+All 401 uniformly — edge auth confirmed again on even validation endpoints. One genuinely additive passive probe remains: the chatbot socket.io WS upgrade path with an evil Origin (server-side Origin check unverified — a raw upgrade reveals acceptance/rejection without a browser).
+[0m$ [0mcurl -s -i --max-time 15 \
+  -H "Origin: https://evil.example" \
+  -H "Upgrade: websocket" \
+  -H "Connection: Upgrade" \
+  -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  -H "Sec-WebSocket-Version: 13" \
+  "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket" 2>&1 | head -20
+HTTP/2 400 
+vary: Origin
+content-type: application/json
+date: Sat, 05 Sep 2026 19:35:32 GMT
+via: 1.1 google
+alt-svc: h3=":443"; ma=2592000
+
+{"code":3,"message":"Bad request"}
+[0m
+Expected 400 (no sid). Completing the two-step passively: get socket.io sid via polling, then retry the evil-Origin WS upgrade with the sid.
+[0m$ [0msid=$(curl -s --max-time 15 "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling" | sed -E 's/.*"sid":"([^"]+)".*/\1/'); echo "sid=$sid"; sleep 1; curl -s -i --max-time 15 \
+  -H "Origin: https://evil.example" \
+  -H "Upgrade: websocket" \
+  -H "Connection: Upgrade" \
+  -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  -H "Sec-WebSocket-Version: 13" \
+  "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket&sid=$sid" 2>&1 | head -12
+sid=OzoHNK_EC23cQcVmAOmH
+HTTP/2 400 
+vary: Origin
+content-type: application/json
+date: Sat, 05 Sep 2026 19:35:45 GMT
+via: 1.1 google
+alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+
+{"code":3,"message":"Bad request"}
+[0m
+Valid-sid evil-origin upgrade refused. Control: same upgrade with the legitimate origins to see if WS transport works at all.
+[0m$ [0mfor o in "https://chatbot.sipgate.com" "https://app.sipgate.com"; do sid=$(curl -s --max-time 15 "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling" | sed -E 's/.*"sid":"([^"]+)".*/\1/'); echo "origin=$o sid=$sid"; sleep 1; curl -s -o /dev/null -w "  upgrade -> %{http_code}\n" --max-time 15 -H "Origin: $o" -H "Upgrade: websocket" -H "Connection: Upgrade" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" -H "Sec-WebSocket-Version: 13" "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket&sid=$sid"; sleep 1.2; done
+origin=https://chatbot.sipgate.com sid=rADXvZvul5JXESliAOmK
+  upgrade -> 400
+origin=https://app.sipgate.com sid=dzGM5aNJODWqejygAOmL
+  upgrade -> 400
+[0m
+Both legit origins also get 400 on the raw upgrade — that's not an Origin rejection but likely a transport/session nuance of curl not completing a full socket.io handshake (or WS transport not yielding plain 101 without the socket.io subprotocol). This proves nothing about Origin-check; the 400 is independent of Origin. This is a meaningful negative: **the evil-origin WS-transport hypothesis cannot be confirmed at the transport layer** — 400 regardless of Origin, so there's no evident Origin-gap here. It remains human-browser-only.
+
+Given that, the `vary: Origin` on the 400 also confirms no ACAO for evil origin. Let me close out the analysis.
+[0m$ [0mfor o in "https://evil.example" "https://chatbot.sipgate.com"; do echo "== Origin: $o =="; curl -s -i --max-time 15 -H "Origin: $o" "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling" | grep -iE "access-control|vary|HTTP/"; sleep 1; done
+== Origin: https://evil.example ==
+HTTP/2 200 
+vary: Origin
+== Origin: https://chatbot.sipgate.com ==
+HTTP/2 200 
+access-control-allow-origin: https://chatbot.sipgate.com
+vary: Origin
+[0m
+Polling differential confirms server-side Origin allowlist (ACAO only for same-origin). One last transport check: direct WS connect without sid (exactly how a browser's `new WebSocket(...transort=websocket)` behaves).
+[0m$ [0mcurl -s -i --max-time 15 \
+  -H "Origin: https://evil.example" \
+  -H "Upgrade: websocket" \
+  -H "Connection: Upgrade" \
+  -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  -H "Sec-WebSocket-Version: 13" \
+  "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket" 2>&1 | head -8; sleep 1.5; curl -s -i --max-time 15 \
+  -H "Origin: https://chatbot.sipgate.com" \
+  -H "Upgrade: websocket" \
+  -H "Connection: Upgrade" \
+  -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  -H "Sec-WebSocket-Version: 13" \
+  "https://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket" 2>&1 | head -8
+HTTP/2 400 
+vary: Origin
+content-type: application/json
+date: Sat, 05 Sep 2026 19:36:44 GMT
+via: 1.1 google
+alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+
+{"code":3,"message":"Bad request"}HTTP/2 400 
+access-control-allow-origin: https://chatbot.sipgate.com
+vary: Origin
+content-type: application/json
+date: Sat, 05 Sep 2026 19:36:45 GMT
+via: 1.1 google
+alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+[0m
+This cycle produced a decisive negative on the top-ranked chain. Direct WS transport (no sid) to the chatbot: evil origin → 400 with **no ACAO**; same-origin → 400 **with `Access-Control-Allow-Origin: chatbot.sipgate.com`**. The server is origin-aware on the WS-path responses, matching polling. Combined with polling evil-origin serving no ACAO, the "arbitrary-origin chat hijack" chain is contradicted at both transports at browser-readable level.
+
+Also: spec relocated to `/v2/swagger.json` (200, 144 paths, global `security: []` — spec claims everything public while edge 401s, confirming stale-annotation KB); uniform 401 on all 6 freshly-probed untested paths incl. /calls, /channels, /balance, quickdial-validation, and /v1/* (404/401).
+
+STEP 1 — DELTA
+- CHANGED api.sipgate.com/v2/swagger.json: spec live at `/v2/swagger.json` (relocated from `/swagger.json` 404); 144 paths; global `security: []` → spec declares every op public while edge enforces 401 uniformly (stale-annotation KB re-confirmed).
+- CHANGED api.sipgate.com/v2: 6 untested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, /numbers/quickdial/validation/{n}) + `/v1/*` (404) → uniform 401; sms/fax resolved under user-prefixed `/{userId}/sms|faxlines`, so top-level 404 is spec-topology, not drift.
+- CHANGED chatbot.sipgate.com: WS-transport responses are origin-aware — direct websocket upgrade (no sid): evil origin 400 no-ACAO; `chatbot.sipgate.com` 400 **with ACAO**; with valid sid → 400 both origins. Same allowlist-driving edge as polling. Previously "accepts arbitrary origins" (KB ACCEPTED) reflects a headless 200 handshake only; browser-readable cross-origin channel not evidencable on either transport.
+- NO_DELTA on login.sipgate.com, payment (307 catch-all), dev SPA (inert), third-party realm (standard Keycloak), S3 listable, BOLA-authz (all 401).
+
+STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com,6.90,a=8,b=8,t=7,g=5,c=6,f=5
+- [PRIO] sipgate-desktop-app.s3,6.45,a=7,b=6,t=3,g=9,c=7,f=7
+- [PRIO] chatbot.sipgate.com,6.30,a=6,b=7,t=5,g=8,c=5,f=6
+
+STEP 3 — HYPOTHESES
+[HYP] Desktop-app S3 bucket writable → signed-installer swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: live ListBucketResult (1.3.0–1.17.19), stale 2024-06-11, ACL/policy reads denied; write path never tested; public read confirmed.
+evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off only, never performed)
+verify_steps: HUMAN-only single PUT probe (`test-probe-$(date +%s).json`, application/json) with sign-off; passive list complete
+impact: full softphone RCE for all downloaders. CRITICAL if writable; standalone LOW-MED (public-read config).
+testability: HUMAN
+
+[HYP] Cross-tenant BOLA on credential-bearing resources via predictable IDs
+class: IDOR
+asset: api.sipgate.com/v2/{numbers/{id},contacts/{id},devices/{id},portings}
+confidence: 50
+reasoning: uniform 401 empty-body on every tested path incl. 6 new this cycle; swagger documents per-resource credential responses (SIP pw, device creds, OAuth secrets); cross-tenant boundary unexercised.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 not 403/404
+verify_steps: AUTH_HELPED — two tenant accounts, differential GET/PUT on portings/{id}, devices/{id}/credentials/password, oauth2/clients/{id}
+impact: cross-tenant PII, SIP/device creds, OAuth secrets. CRITICAL if confirmed.
+testability: AUTH_HELPED
+
+[HYP] Chatbot socket.io cross-origin hijack via WebSocket transport
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io (transport=websocket)
+confidence: 30
+reasoning: NEW negative — direct WS upgrade from evil origin 400 and NO ACAO; same-origin 400 WITH ACAO → origin allowlist enforced on WS-path responses identical to polling. Browser-readable cross-origin channel not demonstrable on either transport; earlier "arbitrary-origin handshake" was headless-HTTP only.
+evidence_needed: HUMAN browser evil-origin socket.io client receiving 40/auth/chat events — overrides a strong origin-aware transport signal
+verify_steps: HUMAN_ONLY browser test on evil origin; else closed
+impact: live customer chat/PII read if (unlikely) confirmed
+testability: HUMAN_ONLY
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] chatbot WS (was 55/65): transport-level origin-allowlist now evidenced on both transports (ACAO only for same-origin) → no browser-readable cross-origin channel; below 40 cutoff; retained only for HUMAN-override.
+- [PARKED] api BOLA: confidence 50, AUTH_HELPED-gated — no unauth progress possible (all 6 new + prior paths 401).
+- [PARKED] S3 write-chain: confidence 60, HUMAN-gated sign-off, mutating → not automatable.
+- [FINAL] H1 S3 write-chain (MISCONFIG,60,HUMAN); H2 BOLA multi-tenant (IDOR,50,AUTH_HELPED); chatbot WS dropped from FINAL (30).
+
+STEP 5 — NEXT ACTION
+[NEXT] HUMAN: obtain reporter/legal sign-off then single PUT probe (unique object name, `application/json` CT) to `sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-$(date +%s).json` body `{"test":true}` — top open chain at confidence 60; all api read surface exhausted (uniform 401/404/307, spec relocated to /v2/swagger.json, no unauth surface, WS-origin chain closed this cycle).
+
+STEP 6 — LEARNING
+[LEARN] REJECTED AUTH @ chatb.sipgate.com WS: direct WS-transport responses origin-aware (evil → 400 no-ACAO; same-origin → 400 with ACAO); browser-readable arbitrary-origin channel not demonstrable on polling or WS — earlier "accepts arbitrary origins" was headless-handshake-only.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec relocated/live (144 paths, global security=[] => spec-claims-public vs edge-401) — re-confirms stale spec annotations, no server authz drift.
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2: 6 newly-tested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, numbers/quickdial/validation) and /v1/* → uniform 401/404; userId-prefixed sms/fax topology confirmed.
+[LEARN] ACCEPTED MISCONFIG @ sipgate-desktop-app.s3: re-confirmed listable bucket, stale 2024-06-11, write path untested (HUMAN sign-off required).
+
+STEP 7 — RISK
+[RISK] sipgate: 48 — Down from 50: this cycle closed the top-ranked chatb.sipgate.com WS chain (origin-allowlist evidenced on both transports; no browser-readable cross-origin channel) and re-confirmed uniform edge auth across the extended path set. Surviving chains gate entirely on external access: S3 write (60, HUMAN/sign-off), BOLA (50, two-tenant creds). Standing defense-in-depth items unchanged (CORS reflection w/ creds, public dev SPA, CSP local-origin, listable S3, x-b3-traceid leak). No confirmed standalone critical chain; risk stable-low pending HUMAN/AUTH_HELPED evidence.

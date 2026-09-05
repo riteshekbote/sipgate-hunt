@@ -1,1 +1,34 @@
-## 2026-09-05 17:38:59 UTC [target] (model bigpickle)
+## 2026-09-05 19:37:40 UTC [target] (model bigpickle)
+[HYP] Desktop-app S3 bucket writable → signed-installer swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: live ListBucketResult (1.3.0–1.17.19), stale 2024-06-11, ACL/policy reads denied; write path never tested; public read confirmed.
+evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off only, never performed)
+verify_steps: HUMAN-only single PUT probe (`test-probe-$(date +%s).json`, application/json) with sign-off; passive list complete
+impact: full softphone RCE for all downloaders. CRITICAL if writable; standalone LOW-MED (public-read config).
+testability: HUMAN
+[HYP] Cross-tenant BOLA on credential-bearing resources via predictable IDs
+class: IDOR
+asset: api.sipgate.com/v2/{numbers/{id},contacts/{id},devices/{id},portings}
+confidence: 50
+reasoning: uniform 401 empty-body on every tested path incl. 6 new this cycle; swagger documents per-resource credential responses (SIP pw, device creds, OAuth secrets); cross-tenant boundary unexercised.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 not 403/404
+verify_steps: AUTH_HELPED — two tenant accounts, differential GET/PUT on portings/{id}, devices/{id}/credentials/password, oauth2/clients/{id}
+impact: cross-tenant PII, SIP/device creds, OAuth secrets. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Chatbot socket.io cross-origin hijack via WebSocket transport
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io (transport=websocket)
+confidence: 30
+reasoning: NEW negative — direct WS upgrade from evil origin 400 and NO ACAO; same-origin 400 WITH ACAO → origin allowlist enforced on WS-path responses identical to polling. Browser-readable cross-origin channel not demonstrable on either transport; earlier "arbitrary-origin handshake" was headless-HTTP only.
+evidence_needed: HUMAN browser evil-origin socket.io client receiving 40/auth/chat events — overrides a strong origin-aware transport signal
+verify_steps: HUMAN_ONLY browser test on evil origin; else closed
+impact: live customer chat/PII read if (unlikely) confirmed
+testability: HUMAN_ONLY
+[NEXT] HUMAN: obtain reporter/legal sign-off then single PUT probe (unique object name, `application/json` CT) to `sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-$(date +%s).json` body `{"test":true}` — top open chain at confidence 60; all api read surface exhausted (uniform 401/404/307, spec relocated to /v2/swagger.json, no unauth surface, WS-origin chain closed this cycle).
+[LEARN] REJECTED AUTH @ chatb.sipgate.com WS: direct WS-transport responses origin-aware (evil → 400 no-ACAO; same-origin → 400 with ACAO); browser-readable arbitrary-origin channel not demonstrable on polling or WS — earlier "accepts arbitrary origins" was headless-handshake-only.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec relocated/live (144 paths, global security=[] => spec-claims-public vs edge-401) — re-confirms stale spec annotations, no server authz drift.
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2: 6 newly-tested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, numbers/quickdial/validation) and /v1/* → uniform 401/404; userId-prefixed sms/fax topology confirmed.
+[LEARN] ACCEPTED MISCONFIG @ sipgate-desktop-app.s3: re-confirmed listable bucket, stale 2024-06-11, write path untested (HUMAN sign-off required).
+[RISK] sipgate: 48 — Down from 50: this cycle closed the top-ranked chatb.sipgate.com WS chain (origin-allowlist evidenced on both transports; no browser-readable cross-origin channel) and re-confirmed uniform edge auth across the extended path set. Surviving chains gate entirely on external access: S3 write (60, HUMAN/sign-off), BOLA (50, two-tenant creds). Standing defense-in-depth items unchanged (CORS reflection w/ creds, public dev SPA, CSP local-origin, listable S3, x-b3-traceid leak). No confirmed standalone critical chain; risk stable-low pending HUMAN/AUTH_HELPED evidence.

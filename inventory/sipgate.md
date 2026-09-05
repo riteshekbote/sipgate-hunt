@@ -173,3 +173,5 @@ www.sipgate.de
 - CHANGED team-de.live.sipgate.com — CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERID=team-web03 (persistent)
 - CHANGED api.sipgate.com/health — unauthenticated arbitrary-origin CORS with credentials (persistent defense-in-depth gap)
 - CHANGED api.sipgate.com/v2/* — arbitrary-origin CORS reflection with credentials across multiple endpoints (persistent)
+
+## 2026-09-05 19:37:52 UTC
