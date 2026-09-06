@@ -217,3 +217,5 @@ www.sipgate.de
 - CHANGED `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout), confirming KB "externally inert"
 - CHANGED `api.sipgate.com/v2/swagger.json` — Live spec (144 paths, global `security: []`), re-confirms stale annotations vs edge-401 enforcement
 - CHANGED `chatbot.sipgate.com/chat/session/socket.io/` — WS transport REJECTED for arbitrary Origin (evil → 400 no-ACAO); polling transport also blocks cross-origin reads (Vary:Origin, no ACAO)
+
+## 2026-09-06 08:40:48 UTC

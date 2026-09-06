@@ -459,3 +459,15 @@
 - LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-s
 - LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
 - LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demons
+
+## RANKED HYPOTHESES 2026-09-06 08:40:48 UTC
+- [75] chatbot.dev.sipgate.com/chat/session/socket.io/: Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance (from art/lead_nemotron3.txt)
+- [50] api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}: Cross-tenant BOLA on credential-bearing /v2 resources (unchanged, still the strongest surviving lead) (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): HUMAN: obtain reporter+legal sign-off for the standing single-PUT S3 write probe (unique `test-probe-<ts>.json`, CT application/json, then delete) and in the sa
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm WS handshake response
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally iner
+- LEARN: REJECTED OTHER @ login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com: DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — ex
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-s
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demons
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swag

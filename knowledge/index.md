@@ -119,3 +119,4 @@
 - 2026-09-06 ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-src *.sipgate.com:3396) — family-wide info disclosure.
 - 2026-09-06 ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated.
 - 2026-09-06 REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable.
+- 2026-09-06 REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swaggerUIRedirectOauth2` throws `SecurityError`; token fragment stays same-origin; unconditional opener callback is inert cross-origin.

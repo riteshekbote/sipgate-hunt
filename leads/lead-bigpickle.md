@@ -870,3 +870,57 @@ testability: PASSIVE
 [LEARN] ACCEPTED INFO @ sipgate.io / developer.sipgate.io: developer platform = Cloudflare-fronted static marketing/docs (301 → www.sipgate.io/for-developer), links back to login.sipgate.com — no new console/auth surface; org `sipgate-io` already scanned.
 [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/keycloak-logout.js: logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, no open redirect.
 [RISK] sipgate: 45 — Down from 52: the presumptive swagger implicit-token "landmine" is defused on empirical browser-enforcement evidence (cross-origin `window.opener` named-property reads block token exfil; same class as prior implicit-auth-redirect REJECT), returning risk to the pre-swagger baseline. All remaining high-impact chains stay externally gated: S3 write (60/HUMAN sign-off), /v2 BOLA differential (50/AUTH_HELPED), dev-chatbot WS (45/PASSIVE), portal post-auth (40/AUTH_HELPED). Standing defense-in-depth (arbitrary-origin CORS+credentials on /v2, dev-origin CSP leaks in both team portals, listable S3, stale dev bundles) unchanged; no confirmed standalone critical chain.
+## 2026-09-06 08:37:40 UTC [target] (model bigpickle)
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources (unchanged, still the strongest surviving lead)
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: uniform 401 empty-body edge auth on all tested paths; swagger documents credential-bearing responses + oauth2:clients:write scope; cross-tenant boundary never exercised.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204, not 403/404.
+verify_steps: AUTH_HELPED — differential GET on two registered tenants for portings/{id}, devices/{id}/credentials/password, oauth2/clients/{clientId}.
+impact: cross-tenant PII, SIP/device creds, OAuth client secrets. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer swap (unchanged, HUMAN-gated)
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: live list + ?versions=439 (versioning disabled), stale 2024-06-11; write path never tested; now the only open high-impact chain after swagger + dev-chatbot defuses.
+evidence_needed: PUT/OVERWRITE on unique object name (reporter+legal sign-off).
+verify_steps: HUMAN single PUT probe (test-probe-$(date +%s).json, application/json) then delete.
+impact: supply-chain RCE for all softphone downloaders. CRITICAL if writable.
+testability: HUMAN
+[HYP] Dev chatbot socket.io accepts arbitrary-origin (superseded — new finding below)
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 20
+reasoning: fresh direct probes: polling evil origin → 200 but `Vary: Origin` with NO ACAO (browser blocks reads); same-origin → ACAO reflected; WS upgrade evil origin → 400 Bad request. Identical to prod chatbot (already REJECTED). Arbitrary-origin readable channel not demonstrable.
+evidence_needed: browser-readable cross-origin channel (none found on polling or WS).
+impact: none demonstrable passively.
+testability: PASSIVE
+[NEXT] HUMAN: obtain reporter+legal sign-off for the standing single-PUT S3 write probe (unique `test-probe-<ts>.json`, CT application/json, then delete) and in the same session register the two test tenants for the /v2 BOLA differential (portings/{id}, devices/{id}/credentials/password, oauth2/clients/{clientId}); both are the only remaining un-contradicted high-impact chains.
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: uniform 401 empty-body edge auth on all tested paths; swagger documents credential-bearing responses and an `oauth2:clients:write` scope; cross-tenant boundary never exercised.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204, not 403/404.
+verify_steps: AUTH_HELPED — differential GET on two registered tenants for portings/{id}, devices/{id}/credentials/password, oauth2/clients/{clientId}.
+impact: cross-tenant PII, SIP/device creds, OAuth client secrets. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: live list + ?versions=439 (versioning disabled), stale 2024-06-11; write path never tested; last remaining high-impact chain after swagger and dev-chatbot defuses.
+evidence_needed: PUT/OVERWRITE on unique object name (reporter+legal sign-off).
+verify_steps: HUMAN single PUT probe (test-probe-$(date +%s).json, application/json) then delete.
+impact: supply-chain RCE for all softphone downloaders. CRITICAL if writable.
+testability: HUMAN
+[HYP] Dev chatbot socket.io acceptable arbitrary-origin (superseded)
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 20
+reasoning: fresh probes: polling evil origin → 200 but Vary:Origin no ACAO (browser reads blocked; same-origin gets ACAO); WS upgrade evil origin → 400 Bad request. Identical to prod (REJECTED). No browser-readable channel demonstrable.
+evidence_needed: browser-readable cross-origin channel (none found).
+impact: not demonstrable passively.
+testability: PASSIVE

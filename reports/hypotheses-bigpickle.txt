@@ -1,39 +1,54 @@
-## 2026-09-06 04:14:03 UTC [target] (model bigpickle)
+## 2026-09-06 08:37:40 UTC [target] (model bigpickle)
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources (unchanged, still the strongest surviving lead)
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: uniform 401 empty-body edge auth on all tested paths; swagger documents credential-bearing responses + oauth2:clients:write scope; cross-tenant boundary never exercised.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204, not 403/404.
+verify_steps: AUTH_HELPED — differential GET on two registered tenants for portings/{id}, devices/{id}/credentials/password, oauth2/clients/{clientId}.
+impact: cross-tenant PII, SIP/device creds, OAuth client secrets. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer swap (unchanged, HUMAN-gated)
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: live list + ?versions=439 (versioning disabled), stale 2024-06-11; write path never tested; now the only open high-impact chain after swagger + dev-chatbot defuses.
+evidence_needed: PUT/OVERWRITE on unique object name (reporter+legal sign-off).
+verify_steps: HUMAN single PUT probe (test-probe-$(date +%s).json, application/json) then delete.
+impact: supply-chain RCE for all softphone downloaders. CRITICAL if writable.
+testability: HUMAN
+[HYP] Dev chatbot socket.io accepts arbitrary-origin (superseded — new finding below)
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 20
+reasoning: fresh direct probes: polling evil origin → 200 but `Vary: Origin` with NO ACAO (browser blocks reads); same-origin → ACAO reflected; WS upgrade evil origin → 400 Bad request. Identical to prod chatbot (already REJECTED). Arbitrary-origin readable channel not demonstrable.
+evidence_needed: browser-readable cross-origin channel (none found on polling or WS).
+impact: none demonstrable passively.
+testability: PASSIVE
+[NEXT] HUMAN: obtain reporter+legal sign-off for the standing single-PUT S3 write probe (unique `test-probe-<ts>.json`, CT application/json, then delete) and in the same session register the two test tenants for the /v2 BOLA differential (portings/{id}, devices/{id}/credentials/password, oauth2/clients/{clientId}); both are the only remaining un-contradicted high-impact chains.
 [HYP] Cross-tenant BOLA on credential-bearing /v2 resources
 class: IDOR
-asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials*,authorization/oauth2/clients/{clientId}}
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
 confidence: 50
-reasoning: uniform 401 empty-body edge auth on all tested paths; swagger now live-confirmed to document credential-bearing responses AND a full `authorization:oauth2:clients:write` scope for real tokens; cross-tenant boundary never exercised.
+reasoning: uniform 401 empty-body edge auth on all tested paths; swagger documents credential-bearing responses and an `oauth2:clients:write` scope; cross-tenant boundary never exercised.
 evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204, not 403/404.
-verify_steps: AUTH_HELPED — two registered tenants, differential GET on portings/{id}, devices/{id}/credentials/password, oauth2/clients/{clientId}.
+verify_steps: AUTH_HELPED — differential GET on two registered tenants for portings/{id}, devices/{id}/credentials/password, oauth2/clients/{clientId}.
 impact: cross-tenant PII, SIP/device creds, OAuth client secrets. CRITICAL if confirmed.
 testability: AUTH_HELPED
 [HYP] Desktop-app S3 bucket writable → signed-installer swap
 class: MISCONFIG
 asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
 confidence: 60
-reasoning: live list + ?versions=439 (versioning disabled), stale 2024-06-11; write path never tested; no other open high-impact chain remains un-gated after swagger defusement.
-evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off).
-verify_steps: HUMAN only — single PUT `test-probe-$(date +%s).json` CT application/json, then delete.
+reasoning: live list + ?versions=439 (versioning disabled), stale 2024-06-11; write path never tested; last remaining high-impact chain after swagger and dev-chatbot defuses.
+evidence_needed: PUT/OVERWRITE on unique object name (reporter+legal sign-off).
+verify_steps: HUMAN single PUT probe (test-probe-$(date +%s).json, application/json) then delete.
 impact: supply-chain RCE for all softphone downloaders. CRITICAL if writable.
 testability: HUMAN
-[HYP] Dev chatbot socket.io WS/data transport accepts arbitrary-origin
+[HYP] Dev chatbot socket.io acceptable arbitrary-origin (superseded)
 class: AUTH
 asset: chatbot.dev.sipgate.com/chat/session/socket.io/
-confidence: 45
-reasoning: KB 2026-09-04 recorded dev polling accepting arbitrary Origin with no CORS check; prod WS rejected (400) but dev historically relaxed; dev stack = nginx/1.24.0 Google Cloud, LIVE.
-evidence_needed: WS handshake evil Origin → 101 (not 400) and/or unauthenticated socket.io session events readable.
-verify_steps: single GET-with-Upgrade handshake `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example`, then optional unauthenticated `0{...}` connect packet.
-impact: dev chat session/PII exposure + lateral context; HIGH if dev mirrors prod-less hardening.
+confidence: 20
+reasoning: fresh probes: polling evil origin → 200 but Vary:Origin no ACAO (browser reads blocked; same-origin gets ACAO); WS upgrade evil origin → 400 Bad request. Identical to prod (REJECTED). No browser-readable channel demonstrable.
+evidence_needed: browser-readable cross-origin channel (none found).
+impact: not demonstrable passively.
 testability: PASSIVE
-[PARKED] OAuth implicit token theft via swagger-opener popup: cross-origin delivery empirically BLOCKED (see LEARN) — survives only with a separate same-origin api.sipgate.com XSS (none known); confidence after test ~5.
-[PARKED] nonce/state manipulation on sipgate-swagger-ui: nonce not validated by the redirect page and attacker-chosen state passes `isValid`, but same cross-origin boundary makes it moot standalone.
-[PARKED] keycloak-logout.js / oauth2-logout.html redirect param: fixed same-origin target, no attacker input — inert.
-[PARKED] Team portal post-auth IDOR: 302-everything pre-auth, no new post-auth evidence, confidence 40 → parked pending AUTH_HELPED.
-[FINAL] 1. BOLA differential (50, AUTH_HELPED); 2. S3 write (60, HUMAN); 3. dev-chatbot WS (45, PASSIVE).
-[NEXT] PROBE: one handshake GET `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` (→ 101 vs 400 decides dev origin-validation), concurrently obtain reporter/legal sign-off for the standing HUMAN S3 write probe and register the two test tenants for the BOLA differential.
-[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swaggerUIRedirectOauth2` throws `SecurityError: ... Blocked a frame with origin ... from accessing a cross-origin frame`; token fragment stays same-origin; unconditional opener callback is inert cross-origin (same class as KB REJECTED implicit-auth-redirect). Supersedes prior conf-50 landmine; token theft requires a separate api.sipgate.com same-origin XSS (none found).
-[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: live swagger-ui 5.x; implicit-only third-party client `sipgate-swagger-ui` exposes extreme scope set (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); nonce random, redirect_uri fixed, doc page carries no opener check — high-value only as a same-origin-XSS amplifier.
-[LEARN] ACCEPTED INFO @ sipgate.io / developer.sipgate.io: developer platform = Cloudflare-fronted static marketing/docs (301 → www.sipgate.io/for-developer), links back to login.sipgate.com — no new console/auth surface; org `sipgate-io` already scanned.
-[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/keycloak-logout.js: logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, no open redirect.
-[RISK] sipgate: 45 — Down from 52: the presumptive swagger implicit-token "landmine" is defused on empirical browser-enforcement evidence (cross-origin `window.opener` named-property reads block token exfil; same class as prior implicit-auth-redirect REJECT), returning risk to the pre-swagger baseline. All remaining high-impact chains stay externally gated: S3 write (60/HUMAN sign-off), /v2 BOLA differential (50/AUTH_HELPED), dev-chatbot WS (45/PASSIVE), portal post-auth (40/AUTH_HELPED). Standing defense-in-depth (arbitrary-origin CORS+credentials on /v2, dev-origin CSP leaks in both team portals, listable S3, stale dev bundles) unchanged; no confirmed standalone critical chain.
