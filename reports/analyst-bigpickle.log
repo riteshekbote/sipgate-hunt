@@ -8600,3 +8600,836 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: 45 — Down from 52: swagger implicit-token landmine defused on empirical browser enforcement evidence; all remaining high-impact chains externally gated (S3 write 60/HUMAN, BOLA 50/AUTH_HELPED); no confirmed standalone critical chain.
+===== ANALYST bigpickle 2026-09-06 15:53:17 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/ 2>/dev/null && echo "---" && ls -la /home/runner/work/sipgate-hunt/sipgate-hunt/art/ 2>/dev/null; echo "---scope---"; cat /home/runner/work/sipgate-hunt/sipgate-hunt/scope.yml 2>/dev/null | head -50
+total 228
+drwxr-xr-x 12 runner runner  4096 Sep  6 15:36 .
+drwxr-xr-x  3 runner runner  4096 Sep  6 15:35 ..
+drwxr-xr-x  7 runner runner  4096 Sep  6 15:36 .git
+drwxr-xr-x  3 runner runner  4096 Sep  6 15:35 .github
+-rw-r--r--  1 runner runner  1755 Sep  6 15:35 README.md
+-rw-r--r--  1 runner runner    32 Sep  6 15:36 analyst-out.txt
+-rw-r--r--  1 runner runner 69659 Sep  6 15:36 analyst-prompt.txt
+-rw-r--r--  1 runner runner 65842 Sep  6 15:36 ctx.txt
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 inventory
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 knowledge
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 leads
+-rw-r--r--  1 runner runner   783 Sep  6 15:35 probe-results.md
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 recon-notes
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 reports
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 reposcan-raw
+-rw-r--r--  1 runner runner  3230 Sep  6 15:35 scope.yml
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 scripts
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_bigpickle.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_laguna.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_ling3.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_longcat.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_mimo.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_nemotron3.json
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 triage
+---
+---scope---
+programs:
+  sipgate:
+    name: sipgate GmbH Bug Bounty
+    disclosure_policy: via bugs.olivermaicher.eu (Oliver Maicher private program) - report + PoC + contact + payment
+    assets:
+      - name: "All company-owned infrastructure, VoIP systems, SIP trunking platforms, APIs, mobile and web applications, customer dashboards, and domains operated by sipgate GmbH"
+        priority: In
+    out_of_scope:
+- "Network level Denial of Service attacks"
+      - "Application Denial of Service by locking user accounts"
+      - "Descriptive error messages or headers (e.g. Stack Traces, banner grabbing)"
+      - "Disclosure of known public files or directories (e.g. robots.txt)"
+      - "Outdated software / library versions"
+      - "OPTIONS / TRACE HTTP method enabled"
+      - "CSRF on logout"
+      - "CSRF on forms that are available to anonymous users"
+      - "Cookies that lack HTTP Only or Secure settings for non-sensitive data"
+      - "Self-XSS and issues exploitable only through Self-XSS"
+      - "Reports resulting from automated scanning utilities without additional details or a POC demonstrating a specific exploit"
+      - "Attacks requiring physical access to a user's device"
+      - "Attacks dependent upon social engineering of employees or vendors"
+      - "Username enumeration based on login or forgot password pages"
+      - "Enforcement policies for brute force, rate limiting, or account lockout"
+      - "SSL/TLS best practices"
+      - "SSL attacks such as BEAST, BREACH, Renegotiation attack"
+      - "Clickjacking, without additional details demonstrating a specific exploit"
+      - "Mail configuration issues including SPF, DKIM, DMARC settings"
+      - "Use of a known-vulnerable library without a description of an exploit specific to our implementation"
+      - "Password and account recovery policies"
+      - "Presence of autocomplete functionality in form fields"
+      - "Publicly accessible login panels"
+      - "Lack of email address verification during account registration or account invitation"
+      - "Lack of email address verification password restore"
+      - "Session control during email/password changes"
+      - "Social engineering, physical attacks, and DoS/DDoS testing (per program notes)"
+      - "Exposure of customer/employee/financial/authentication data during testing (per program notes)"
+    github_orgs:
+      - none-configured
+
+rules:
+  passive_first: false          # deep-hunt agent: active probes allowed when scoped
+  max_requests_per_second: 1    # never hammer live infra
+  no_doom: true                 # no DoS/DDoS, no account-lockout attacks
+  account_creation: restricted  # only on test/sandbox assets, never live customer data
+  no_data_modification: true    # no writes/deletes on live customer data
+  no_pre_disclosure: true       # never disclose before program response
+  poc_required: true            # scanner output alone is REJECTED
+  redact_secrets_in_commits: true
+
+models:
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/inventory/ 2>/dev/null; echo "---notes---"; find /home/runner/work/sipgate-hunt/sipgate-hunt -maxdepth 2 -name "*.txt" -o -maxdepth 2 -name "*.md" 2>/dev/null | head -20
+total 36
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 .
+drwxr-xr-x 12 runner runner  4096 Sep  6 15:36 ..
+-rw-r--r--  1 runner runner 25349 Sep  6 15:35 sipgate.md
+---notes---
+/home/runner/work/sipgate-hunt/sipgate-hunt/analyst-out.txt
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-03-19-56.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-17-40.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-03-04-11.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-00-35.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-09-44.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-03-13-31.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-06-12-47.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-15-22.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-22-17.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-06-04-06.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-19-33.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-08-40.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-00-13.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-23-46.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-05-08.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-02-21-54.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-17-39.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-03-17-15.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-06-08-44.md
+[0m
+[0m$ [0mcat /home/runner/work/sipgate-hunt/sipgate-hunt/probe-results.md; echo "===recent triage==="; cat /home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-06-12-47.md 2>/dev/null | head -80
+## 2026-09-02 21:56:19 UTC
+
+
+## 2026-09-02 23:58:18 UTC
+
+
+## 2026-09-03 04:11:02 UTC
+
+
+## 2026-09-03 09:00:28 UTC
+
+
+## 2026-09-03 13:32:10 UTC
+
+
+## 2026-09-03 17:20:36 UTC
+
+
+## 2026-09-03 20:17:13 UTC
+
+
+## 2026-09-03 22:33:27 UTC
+
+
+## 2026-09-04 00:50:23 UTC
+
+
+## 2026-09-04 05:09:31 UTC
+
+
+## 2026-09-04 09:52:41 UTC
+
+
+## 2026-09-04 14:17:10 UTC
+
+
+## 2026-09-04 17:48:42 UTC
+
+
+## 2026-09-04 20:05:47 UTC
+
+
+## 2026-09-04 22:21:10 UTC
+
+
+## 2026-09-05 00:18:49 UTC
+
+
+## 2026-09-05 04:44:20 UTC
+
+
+## 2026-09-05 08:45:49 UTC
+
+
+## 2026-09-05 12:12:08 UTC
+
+
+## 2026-09-05 15:25:31 UTC
+
+
+## 2026-09-05 17:42:02 UTC
+
+
+## 2026-09-05 19:37:52 UTC
+
+
+## 2026-09-05 21:50:48 UTC
+
+
+## 2026-09-05 23:45:04 UTC
+
+
+## 2026-09-06 04:14:13 UTC
+
+
+## 2026-09-06 08:40:48 UTC
+
+
+## 2026-09-06 12:30:51 UTC
+
+===recent triage===
+
+===== TRIAGE 2026-09-06 12:47:41 UTC =====
+[0m
+> build · mimo-v2.5-free
+[0m
+The LEADS section is empty. Please provide the actual leads you want me to evaluate against the 7-Question Gate.
+[0m
+[0m$ [0mcat /home/runner/work/sipgate-hunt/sipgate-hunt/analyst-out.txt; echo "---state---"; cat /home/runner/work/sipgate-hunt/sipgate-hunt/state_bigpickle.json; echo; cat /home/runner/work/sipgate-hunt/sipgate-hunt/state_nemotron3.json; echo; echo "---leads---"; ls /home/runner/work/sipgate-hunt/sipgate-hunt/leads/
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/ 2>/dev/null && echo "---" && ls -la /home/runner/work/sipgate-hunt/sipgate-hunt/art/ 2>/dev/null; echo "---scope---"; cat /home/runner/work/sipgate-hunt/sipgate-hunt/scope.yml 2>/dev/null | head -50
+total 228
+drwxr-xr-x 12 runner runner  4096 Sep  6 15:36 .
+drwxr-xr-x  3 runner runner  4096 Sep  6 15:35 ..
+drwxr-xr-x  7 runner runner  4096 Sep  6 15:36 .git
+drwxr-xr-x  3 runner runner  4096 Sep  6 15:35 .github
+-rw-r--r--  1 runner runner  1755 Sep  6 15:35 README.md
+-rw-r--r--  1 runner runner    32 Sep  6 15:36 analyst-out.txt
+-rw-r--r--  1 runner runner 69659 Sep  6 15:36 analyst-prompt.txt
+-rw-r--r--  1 runner runner 65842 Sep  6 15:36 ctx.txt
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 inventory
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 knowledge
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 leads
+-rw-r--r--  1 runner runner   783 Sep  6 15:35 probe-results.md
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 recon-notes
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 reports
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 reposcan-raw
+-rw-r--r--  1 runner runner  3230 Sep  6 15:35 scope.yml
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 scripts
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_bigpickle.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_laguna.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_ling3.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_longcat.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_mimo.json
+-rw-r--r--  1 runner runner    33 Sep  6 15:35 state_nemotron3.json
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 triage
+---
+---scope---
+programs:
+  sipgate:
+    name: sipgate GmbH Bug Bounty
+    disclosure_policy: via bugs.olivermaicher.eu (Oliver Maicher private program) - report + PoC + contact + payment
+    assets:
+      - name: "All company-owned infrastructure, VoIP systems, SIP trunking platforms, APIs, mobile and web applications, customer dashboards, and domains operated by sipgate GmbH"
+        priority: In
+    out_of_scope:
+- "Network level Denial of Service attacks"
+      - "Application Denial of Service by locking user accounts"
+      - "Descriptive error messages or headers (e.g. Stack Traces, banner grabbing)"
+      - "Disclosure of known public files or directories (e.g. robots.txt)"
+      - "Outdated software / library versions"
+      - "OPTIONS / TRACE HTTP method enabled"
+      - "CSRF on logout"
+      - "CSRF on forms that are available to anonymous users"
+      - "Cookies that lack HTTP Only or Secure settings for non-sensitive data"
+      - "Self-XSS and issues exploitable only through Self-XSS"
+      - "Reports resulting from automated scanning utilities without additional details or a POC demonstrating a specific exploit"
+      - "Attacks requiring physical access to a user's device"
+      - "Attacks dependent upon social engineering of employees or vendors"
+      - "Username enumeration based on login or forgot password pages"
+      - "Enforcement policies for brute force, rate limiting, or account lockout"
+      - "SSL/TLS best practices"
+      - "SSL attacks such as BEAST, BREACH, Renegotiation attack"
+      - "Clickjacking, without additional details demonstrating a specific exploit"
+      - "Mail configuration issues including SPF, DKIM, DMARC settings"
+      - "Use of a known-vulnerable library without a description of an exploit specific to our implementation"
+      - "Password and account recovery policies"
+      - "Presence of autocomplete functionality in form fields"
+      - "Publicly accessible login panels"
+      - "Lack of email address verification during account registration or account invitation"
+      - "Lack of email address verification password restore"
+      - "Session control during email/password changes"
+      - "Social engineering, physical attacks, and DoS/DDoS testing (per program notes)"
+      - "Exposure of customer/employee/financial/authentication data during testing (per program notes)"
+    github_orgs:
+      - none-configured
+
+rules:
+  passive_first: false          # deep-hunt agent: active probes allowed when scoped
+  max_requests_per_second: 1    # never hammer live infra
+  no_doom: true                 # no DoS/DDoS, no account-lockout attacks
+  account_creation: restricted  # only on test/sandbox assets, never live customer data
+  no_data_modification: true    # no writes/deletes on live customer data
+  no_pre_disclosure: true       # never disclose before program response
+  poc_required: true            # scanner output alone is REJECTED
+  redact_secrets_in_commits: true
+
+models:
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/inventory/ 2>/dev/null; echo "---notes---"; find /home/runner/work/sipgate-hunt/sipgate-hunt -maxdepth 2 -name "*.txt" -o -maxdepth 2 -name "*.md" 2>/dev/null | head -20
+total 36
+drwxr-xr-x  2 runner runner  4096 Sep  6 15:35 .
+drwxr-xr-x 12 runner runner  4096 Sep  6 15:36 ..
+-rw-r--r--  1 runner runner 25349 Sep  6 15:35 sipgate.md
+---notes---
+/home/runner/work/sipgate-hunt/sipgate-hunt/analyst-out.txt
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-03-19-56.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-17-40.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-03-04-11.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-00-35.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-09-44.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-03-13-31.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-06-12-47.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-15-22.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-22-17.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-06-04-06.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-19-33.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-08-40.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-00-13.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-23-46.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-04-05-08.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-02-21-54.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-05-17-39.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-03-17-15.md
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-06-08-44.md
+[0m
+[0m$ [0mcat /home/runner/work/sipgate-hunt/sipgate-hunt/probe-results.md; echo "===recent triage==="; cat /home/runner/work/sipgate-hunt/sipgate-hunt/triage/run-2026-09-06-12-47.md 2>/dev/null | head -80
+## 2026-09-02 21:56:19 UTC
+
+
+## 2026-09-02 23:58:18 UTC
+
+
+## 2026-09-03 04:11:02 UTC
+
+
+## 2026-09-03 09:00:28 UTC
+
+
+## 2026-09-03 13:32:10 UTC
+
+
+## 2026-09-03 17:20:36 UTC
+
+
+## 2026-09-03 20:17:13 UTC
+
+
+## 2026-09-03 22:33:27 UTC
+
+
+## 2026-09-04 00:50:23 UTC
+
+
+## 2026-09-04 05:09:31 UTC
+
+
+## 2026-09-04 09:52:41 UTC
+
+
+## 2026-09-04 14:17:10 UTC
+
+
+## 2026-09-04 17:48:42 UTC
+
+
+## 2026-09-04 20:05:47 UTC
+
+
+## 2026-09-04 22:21:10 UTC
+
+
+## 2026-09-05 00:18:49 UTC
+
+
+## 2026-09-05 04:44:20 UTC
+
+
+## 2026-09-05 08:45:49 UTC
+
+
+## 2026-09-05 12:12:08 UTC
+
+
+## 2026-09-05 15:25:31 UTC
+
+
+## 2026-09-05 17:42:02 UTC
+
+
+## 2026-09-05 19:37:52 UTC
+
+
+## 2026-09-05 21:50:48 UTC
+
+
+## 2026-09-05 23:45:04 UTC
+
+
+## 2026-09-06 04:14:13 UTC
+
+
+## 2026-09-06 08:40:48 UTC
+
+
+## 2026-09-06 12:30:51 UTC
+
+===recent triage===
+
+===== TRIAGE 2026-09-06 12:47:41 UTC =====
+[0m
+> build · mimo-v2.5-free
+[0m
+The LEADS section is empty. Please provide the actual leads you want me to evaluate against the 7-Question Gate.
+[0m
+---state---
+{"phase": "POC", "target": "api"}
+{"phase": "POC", "target": "api"}
+---leads---
+lead-bigpickle.md
+lead-laguna.md
+lead-ling3.md
+lead-longcat.md
+lead-mimo.md
+lead-nemotron3.md
+reposcan-sipgate.md
+[0m
+[0m$ [0msed -n '1,60p' /home/runner/work/sipgate-hunt/sipgate-hunt/leads/lead-nemotron3.md; echo "===bigpickle==="; sed -n '1,60p' /home/runner/work/sipgate-hunt/sipgate-hunt/leads/lead-bigpickle.md
+## 2026-09-03 17:20:27 UTC [target] (model nemotron3)
+[NEW] `www.sipgate.de` — 200 OK, Cloudflare fronted marketing site (not in prior inventory as live)
+[NEW] `login.sipgate.com` — 302 to Keycloak OIDC auth realm `sipgate-apps`, client `sipgate-app-web`, implicit flow redirect to `app.sipgate.com`
+[NEW] `app.sipgate.com` — 200 OK, main SPA (Fastly/CDN), permissive CSP allowing `*.sipgate.com/*.de/*.co.uk/*.net`, WebSocket to `wss://*.sipgate.*`, Pusher, Intercom, Sentry
+[NEW] `sipgate.de` — 301 → `www.sipgate.de` (lighttpd)
+[CHANGED] `app.sipgate.de` — 301 → `login.sipgate.com` (was nginx redirect target, now confirmed live chain)
+[CHANGED] `login.sipgate.de` — 301 → `www.sipgate.de` (was nginx redirect target, now confirmed live chain)
+[NEW] `dev.sipgate.de` — no HTTP response (TCP timeout)
+[NEW] `mail.sipgate.de` — no HTTP response (CNAME → `ghs.google.com`, Google Workspace)
+[PRIO] app.sipgate.com,9.25,attack_surface=9 business_value=10 tech_exposure=9 gate_ease=10 cloud_surface=8 freshness=10
+[PRIO] login.sipgate.com,8.55,attack_surface=8 business_value=9 tech_exposure=8 gate_ease=10 cloud_surface=7 freshness=10
+[PRIO] www.sipgate.de,5.15,attack_surface=4 business_value=5 tech_exposure=3 gate_ease=10 cloud_surface=6 freshness=8
+[HYP] OIDC Implicit Flow Token Leakage via Referer/History
+class: AUTH
+asset: login.sipgate.com → app.sipgate.com
+confidence: 75
+reasoning: login.sipgate.com uses OIDC implicit flow (response_type=token) with redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=/. Access token delivered in URL fragment. Fragment can leak via Referer header on subresource requests, browser history, or if redirect page loads third-party resources.
+evidence_needed: Observe fragment handling in implicit-auth-redirect page; check for third-party requests carrying Referer; verify token storage mechanism.
+verify_steps: GET https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth?response_type=token&client_id=sipgate-app-web&redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=/&state=xyz → follow 302 → inspect https://app.sipgate.com/implicit-auth-redirect?redirect=/ for fragment handling, Referer leakage, third-party loads.
+impact: Full account takeover via stolen access token; severity HIGH.
+testability: PASSIVE
+[HYP] WebSocket Origin Validation Bypass on app.sipgate.com
+class: AUTH
+asset: app.sipgate.com (wss://*.sipgate.com)
+confidence: 65
+reasoning: CSP allows `connect-src wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk`. Wildcard subdomain WS endpoints may exist. If Origin header not validated server-side, cross-subdomain WS hijack possible (e.g., from compromised dev.sipgate.de or subdomain takeover).
+evidence_needed: Enumerate WS endpoints; test Origin header validation; check for subdomain takeover candidates.
+verify_steps: OPTIONS/GET wss://app.sipgate.com/ (or discovered WS path) with Origin: https://evil.sipgate.com → check handshake acceptance. Passive: inspect JS for WS connection logic and Origin handling.
+impact: Real-time message interception/injection, session hijack; severity HIGH.
+testability: PASSIVE
+[HYP] Keycloak Redirect_URI Validation Bypass on login.sipgate.com
+class: OAUTH
+asset: login.sipgate.com
+confidence: 60
+reasoning: Keycloak realm `sipgate-apps` with client `sipgate-app-web` uses implicit flow. If redirect_uri validation uses prefix/suffix match instead of exact match, open redirect on app.sipgate.com or sibling subdomain could steal token.
+evidence_needed: Test redirect_uri variants (path traversal, subdomain, encoding); check Keycloak config for exact match enforcement.
+verify_steps: GET https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth?response_type=token&client_id=sipgate-app-web&redirect_uri=https://app.sipgate.com/@evil.com/&state=xyz → observe if accepted. Test redirect_uri=https://evil.sipgate.com/implicit-auth-redirect.
+impact: Token theft via open redirect → ATO; severity CRITICAL.
+testability: PASSIVE
+[PARKED] WebSocket Origin Validation Bypass on app.sipgate.com: No concrete WS endpoint discovered yet; CSP allows wildcard but actual endpoints unknown. Need endpoint enumeration first.
+[PARKED] Keycloak Redirect_URI Validation Bypass on login.sipgate.com: Requires testing redirect_uri variants which may be considered active auth testing; passive-only verification limited.
+[FINAL] 1. OIDC Implicit Flow Token Leakage via Referer/History (confidence 75, PASSIVE verifiable)
+[NEXT] PROBE: GET https://app.sipgate.com/implicit-auth-redirect?redirect=/ — inspect HTML/JS for fragment handling, token storage, third-party requests, Referer policy.
+[LEARN] REJECTED network DoS @ app.sipgate.com: Out of scope per program policy.
+[LEARN] REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope.
+[LEARN] ACCEPTED AUTH @ login.sipgate.com: OIDC implicit flow with fragment token delivery is in-scope high-value target.
+[RISK] sipgate: 78 — High-value VoIP/SaaS platform with OIDC implicit flow, wildcard WS origins, multi-tenant customer dashboards; primary risk is token leakage via fragment/Referer and potential redirect_uri misconfiguration.
+## 2026-09-03 20:17:03 UTC [target] (model nemotron3)
+## 2026-09-03 22:33:18 UTC [target] (model nemotron3)
+[HYP] OIDC Implicit Flow Token Leakage via Referer/History on redirect page
+class: AUTH
+asset: login.sipgate.com → app.sipgate.com/implicit-auth-redirect
+confidence: 75
+reasoning: login.sipgate.com uses OIDC implicit flow (response_type=token) with redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=/. Access token delivered in URL fragment. Fragment can leak via Referer header on subresource requests, browser history, or if redirect page loads third-party resources before token extraction.
+evidence_needed: Observe fragment handling in implicit-auth-redirect page; check for third-party requests carrying Referer with fragment; verify token storage mechanism (localStorage vs sessionStorage) and Referrer-Policy headers.
+verify_steps: GET https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth?response_type=token&client_id=sipgate-app-web&redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=/&state=xyz → follow 302 → inspect https://app.sipgate.com/implicit-auth-redirect?redirect=/ for fragment handling, Referer leakage, third-party loads, Referrer-Policy.
+impact: Full account takeover via stolen access token; severity HIGH.
+testability: PASSIVE
+[HYP] Internal Redis endpoint exposure aids SSRF/lateral movement
+class: MISCONFIG
+===bigpickle===
+## 2026-09-03 17:19:01 UTC [target] (model bigpickle)
+[NEW] login.sipgate.com exposed as Apache+Keycloak realm `sipgate-apps`, OAuth2 IMPLICIT flow (response_type=token) with redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=/ — the real customer app login (in-scope, sipgate-owned).
+[NEW] app.sipgate.com SPA: `/implicit-auth-redirect` reads client-controlled `redirect` from search, stores token, then `history.replace(redirect)` unvalidated (main.js `ImplicitAuthenticator`, main-C3206pWE.js).
+[NEW] OIDC discovery signals: grant `password`(ROPC), `client_secret_jwt`, id_token algs incl HS256/512, PKCE `plain`+`S256`.
+[CHANGED] dev.sipgate.de resolves to sipgate IP 217.10.68.23 but dead (no HTTP 80/443, timeout) — abandoned host, owned IP, no takeover.
+[PRIO] login.sipgate.com,7.05,tech_exposure(OAuth/Keycloak/JWT)+business_value(auth gate)
+[PRIO] app.sipgate.com,6.85,tech_exposure(OAuth2 implicit+client redirect)+business_value(customer dashboard)
+[PRIO] dev.sipgate.de,2.50,attack_surface(dead host only)
+[HYP] OAuth implicit token leakage via client-side unvalidated redirect on post-login handler
+class: OATH
+asset: app.sipgate.com/implicit-auth-redirect?redirect=<attacker>
+confidence: 45
+reasoning: JS confirms `ImplicitAuthenticator` reads `redirect` from location.search and after `initializeFromToken({access})` (token persisted to localStorage) does `history.replace(redirect)` with NO origin/allowlist validation; `redirect_uri` embeds attacker-influenced value into the same flow.
+evidence_needed: browser confirms `history.replace('https://evil.example')` causes off-origin navigation (leaks/denies) OR only same-origin path push (no leak); verify token present in url fragment/history/referrer to attacker.
+verify_steps: HUMAN browser: craft auth URL redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example, complete login, observe final destination and whether access_token reaches attacker-controlled origin (NC, no live customer data).
+impact: if off-origin nav: access token + from_idp exfil -> full customer account compromise (ATO). If same-origin only: low open redirect. Severity: HIGH if confirmed, LOW otherwise.
+testability: HUMAN_ONLY
+[HYP] Keycloak id_token alg confusion (HS256 enabled alongside RS256) for auth bypass
+class: AUTH
+asset: login.sipgate.com/auth/realms/sipgate-apps
+confidence: 35
+reasoning: OIDC discovery lists id_token_signing_alg_values_supported incl HS256/512 alongside RS256/PS/ES; JWT alg-confusion applies only if any sipgate verifier validates token with RS256 public key as HMAC secret. Realm `sipgate-apps`, token_endpoint also allows client_secret_jwt.
+evidence_needed: identify an app-endpoint token verifier that accepts attacker HS256-signed token (public key as secret) — requires a scoped verifier and live testing on test/sandbox, never live auth data.
+verify_steps: passive config review only; active verify requires sandbox/test token endpoint and is AUTH_HELPED/HUMAN (no live customer-data bypass per scope).
+impact: forged tokens -> authentication bypass across app -> full account takeover. Severity: CRITICAL if verifier flawed.
+testability: HUMAN_ONLY
+[HYP] ROPC/password grant + client_secret_jwt enabled enables credential/secret abuse
+class: AUTH
+asset: login.sipgate.com token endpoint
+confidence: 25
+reasoning: grant_types_supported includes `password`(ROPC) and token_endpoint_auth_methods_supported includes client_secret_jwt/private_key_jwt; ROPC enables credential-stuffing/offline guesses; client_secret_jwt risks alg confusion on client auth.
+evidence_needed: demonstrate an affected confidential client uses client_secret_jwt and its secret/JWK is derivable, or ROPC leaks PII — mostly brute/rate-limit territory which is REJECTED.
+verify_steps: not actionable without rate-limit bypass or secret leak; low confidence, config-only.
+impact: account-session abuse / ATO; Severity: HIGH if a real client reachable, otherwise config hardening issue.
+testability: HUMAN_ONLY
+[PARKED] OAuth implicit token theft via open redirect (conf 45): code path confirmed unvalidated, but `history.replace(external)` in React Router typically pushes same-origin path (404), not off-origin — token stored in localStorage first, so fragment-based leak likely absent. Confidence below 50; needs live browser to resolve. Retained as top.
+[PARKED] Keycloak alg-confusion (conf 35): config signal only (HS256 listed is standard Keycloak realm metadata, not proof of vulnerable verifier); REJECTED-adjacent (known-vulnerable library without program-specific exploit). Dropped from FINAL.
+[PARKED] ROPC/password grant (conf 25): config-only, brute-force/rate-limit class is REJECTED. Dropped.
+[PARKED] dev.sipgate.de (conf 20): abandoned host on owned IP; no dangling CNAME to attacker-controllable service -> not a takeover. Dropped.
+[FINAL] survivors: OAuth implicit client-side redirect confirm (conf 45, HUMAN_ONLY) — only defensible non-REJECTED candidate; rest parked.
+[NEXT] HUMAN: open a private-tab full login flow on `https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example` via the standard login, and report final URL + whether access_token/from_idp appear in history/referrer/network to the attacker origin; do NOT use live customer accounts (sandbox/test creds only).
+[LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin. Class signal: unvalidated client redirect is not by itself token theft.
+[LEARN] REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reachable flawed verifier; treat as config hardening, not a vulnerability.
+[RISK] sipgate: 15 — Customer-facing Keycloak OAuth implicit flow + a confirmed unvalidated client-side `redirect` on the post-login handler warrant a human browser confirmation; but static analysis indicates the token is stored before navigation and React-router treats external targets as same-origin paths, so the high-impact token-theft chain is likely NOT real. Remaining signals are config-level/REJECTED. No confirmed in-scope vulnerability this cycle; risk primarily the unconfirmed redirect behavior.
+## 2026-09-03 20:01:16 UTC [target] (model bigpickle)
+[HYP] Valid registered API client discoverable via third-party realm for OAuth token acquisition
+class: AUTH
+asset: login.sipgate.com/auth/realms/third-party token endpoint
+confidence: 25
+reasoning: The only known client credential (from rest-api-examples) returns invalid_client → revoked. DCR is gated by Trusted Hosts. No public client_id list for this realm found; `client_id=junit`/`web-app` rejected. Without a valid client credential or DCR access, no token obtainable.
+evidence_needed: a registered third-party client's client_id+secret, or a DCR Trusted-Hosts bypass — none demonstrated passively.
+verify_steps: PASSIVE only: enumerate client_id guesses at auth endpoint (rejected → no leak of validity beyond 400); do NOT active-token or register clients (mutating/live-auth prohibited).
+impact: if a live confidential client credential were leaked/derivable, attacker reaches social-scoped APIs (contacts/sms/balance/payment read). Severity HIGH; but not demonstrable. 
+testability: PASSIVE
+[NEXT] PROBE: GET `https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/registrations/openid-connect` and the realm `/auth/realms/third-party` page with a normal browser User-Agent to confirm no additional public registration/open redirect surface — read-only.
+[LEARN] REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. revoked/not registered — not a live credential exposure; the pattern is example-code-only.
+[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scope`), no Host-header bypass found; redirect_uri validation correct (invalid URI → 400); treat as hardened config, not a vulnerability.
+[LEARN] ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/account/balance/payment) — a legitimate high-value target if a client credential or DCR bypass is ever obtained.
+[RISK] sipgate: 10 — On the api surface the OIDC `third-party` realm is well-hardened: redirect_uri strictly validated, token endpoint requires valid client auth, DCR blocked by a Trusted Hosts policy, and the only publicly leaked API client credential is inert (`invalid_client`). Broad sensitive scopes exist but are unreachable without a valid client grant or DCR bypass, neither demonstrable passively. No confirmed in-scope API vulnerability this cycle.
+## 2026-09-03 22:31:36 UTC [target] (model bigpickle)
+[0m
+[0m$ [0mcd /tmp/opencode && curl -s -m 20 -o sw.json -w "%{http_code} %{size_download}\n" "https://api.sipgate.com/v2/swagger.json" && python3 -c "
+import json
+d=json.load(open('sw.json'))
+paths=d.get('paths',{})
+print('paths:',len(paths))
+for p in sorted(paths):
+    for m in sorted(paths[p]):
+        if m in ('get','post','put','delete','patch'):
+            sec=paths[p][m].get('security', [])
+            tags=paths[p][m].get('tags',[])
+            op=paths[p][m].get('operationId','')
+            print(m.upper(), p, '| op:', op)
+" 2>/dev/null | head -200
+200 191699
+paths: 144
+GET / | op: getUrls
+GET /account | op: getAccount
+PUT /account/verified | op: verify
+GET /addresses | op: getAddresses
+GET /addresses/itemCount | op: getItemCount
+GET /addresses/{addressId} | op: getAddress
+PUT /addresses/{addressId} | op: modifyAddress
+GET /addresses/{addressId}/numbers | op: getAddressNumbers
+GET /app/events | op: getEvents
+DELETE /app/events/{id} | op: deleteEvent
+GET /app/links | op: getLinks
+GET /app/properties | op: getProperties
+GET /app/tacs | op: getTac
+GET /app/users | op: getUsers
+GET /authorization/oauth2/clients | op: getClients
+POST /authorization/oauth2/clients | op: createClient
+DELETE /authorization/oauth2/clients/{clientId} | op: deleteClient
+GET /authorization/oauth2/clients/{clientId} | op: getClient
+PUT /authorization/oauth2/clients/{clientId} | op: updateClient
+GET /authorization/oauth2/clients/{clientId}/gdpr | op: getGdprUrls
+GET /authorization/userinfo | op: userinfo
+GET /autorecordings/greetings | op: getGreeting
+POST /autorecordings/greetings | op: addGreeting
+DELETE /autorecordings/greetings/{greetingId} | op: deleteGreeting
+GET /autorecordings/{extension}/settings | op: getRecordingSettingForEndpoint
+PUT /autorecordings/{extension}/settings | op: updateRecordingSettingForEndpoint
+GET /balance | op: getBalance
+GET /blacklist/incoming | op: getIncomingEntries
+POST /blacklist/incoming | op: addIncomingEntry
+DELETE /blacklist/incoming/{phoneNumber} | op: removeIncomingEntry
+GET /callrestrictions | op: getCallRestrictions
+GET /calls | op: getCalls
+POST /calls | op: createCall
+DELETE /calls/{callId} | op: hangupCall
+POST /calls/{callId}/announcements | op: startCallAnnouncement
+POST /calls/{callId}/dtmf | op: sendCallDtmf
+PUT /calls/{callId}/hold | op: setCallHold
+PUT /calls/{callId}/muted | op: setCallMuted
+PUT /calls/{callId}/recording | op: setCallRecording
+POST /calls/{callId}/transfer | op: transferCall
+GET /channels | op: listChannels
+DELETE /channels/{channelId} | op: deleteChannel
+GET /channels/{channelId}/events | op: getChannelEvents
+PUT /channels/{channelId}/name | op: setChannelName
+PUT /channels/{channelId}/users | op: setUsers
+PUT /channels/{channelId}/users/{userId}/devices | op: setUserDevices
+DELETE /contacts | op: deleteContacts
+GET /contacts | op: getContacts_1
+POST /contacts | op: createContact
+GET /contacts/csv | op: getContactsAsCsv
+POST /contacts/import/csv | op: importFromCSV
+POST /contacts/import/google | op: importFromGoogle
+GET /contacts/internal | op: getAllContacts
+GET /contacts/vcard | op: getContacts
+PUT /contacts/vcard | op: addOrUpdateContacts
+GET /contacts/{contactId} | op: getContactById
+PUT /contacts/{contactId} | op: updateContact
+DELETE /contacts/{contactid} | op: deleteContact
+DELETE /devices/{deviceId} | op: deleteDevice
+GET /devices/{deviceId} | op: getDevice
+PUT /devices/{deviceId} | op: changeDeviceSettings
+PUT /devices/{deviceId}/alias | op: changeDeviceAlias
+GET /devices/{deviceId}/callerid | op: getCallerId
+PUT /devices/{deviceId}/callerid | op: changeCallerIdSettings
+POST /devices/{deviceId}/credentials/password | op: changeDevicePassword
+PUT /devices/{deviceId}/external/incomingcalldisplay | op: changeCallerDisplayOfDevice
+PUT /devices/{deviceId}/external/targetnumber | op: changeTargetNumberOfDevice
+GET /devices/{deviceId}/localprefix | op: getLocalprefix
+PUT /devices/{deviceId}/localprefix | op: changeLocalprefixSettings
+GET /devices/{deviceId}/singlerowdisplay | op: getSingleRowDisplay
+PUT /devices/{deviceId}/singlerowdisplay | op: changeSingleRowDisplay
+GET /devices/{deviceId}/tariffannouncement | op: getTariffAnnouncement
+PUT /devices/{deviceId}/tariffannouncement | op: changeTariffAnnouncement
+GET /groupfaxlines | op: getGroupFaxlinesForUser
+GET /groupfaxlines/{faxlineId}/callerid | op: getGroupFaxlineCallerId
+GET /groupfaxlines/{faxlineId}/numbers | op: getGroupFaxlineNumbers
+GET /groups | op: getGroups
+GET /groups/{groupId} | op: getGroup
+POST /groups/{groupId}/devices | op: addDeviceToGroup
+DELETE /groups/{groupId}/devices/{deviceId} | op: removeDeviceFromGroup
+GET /groups/{groupId}/faxlines | op: getGroupFaxlines
+GET /groups/{groupId}/numbers | op: getGroupNumbers
+GET /groups/{groupId}/users | op: getGroupUsers
+GET /groups/{groupId}/voicemail | op: getGroupVoicemail
+DELETE /history | op: deleteHistoryEntries
+GET /history | op: getHistory
+PUT /history | op: updateHistoryEntries
+GET /history/export | op: getHistoryCSV
+DELETE /history/{entryId} | op: deleteHistoryEntry
+GET /history/{entryId} | op: getHistoryById
+PUT /history/{entryId} | op: updateHistoryEntry
+PUT /history/{entryId}/archive | op: setArchive
+PUT /history/{entryId}/note | op: setHistoryEntryNote
+PUT /history/{entryId}/read | op: setReadProperty
+GET /log/webhooks | op: getWebhooksLog
+GET /numbers | op: getNumbers
+POST /numbers/quickdial | op: addQuickDialNumber
+GET /numbers/quickdial/validation/{quickDialNumber} | op: validateQuickDialNumber
+DELETE /numbers/quickdial/{numberId} | op: deleteQuickDialNumber
+PUT /numbers/quickdial/{quickdialId} | op: changeQuickDialNumber
+PUT /numbers/{numberId} | op: changeNumberSettings
+GET /phonelines | op: getAllPhonelines
+GET /portings | op: getPortings
+DELETE /portings/{portingId} | op: revokePorting
+GET /portings/{portingId} | op: getPorting
+GET /restrictions | op: getRestrictions
+POST /sessions/calls | op: newCall
+POST /sessions/fax | op: sendFax
+POST /sessions/fax/resend | op: resendFax
+POST /sessions/ivr/recording | op: newIvrRecording
+POST /sessions/sms | op: sendWebSms
+POST /sessions/voicemail/play | op: playRecording
+POST /sessions/voicemail/recording | op: newRecording
+GET /settings/sipgateio | op: getSipgateIoUrls
+PUT /settings/sipgateio | op: setSipgateIoUrls
+GET /translations/{language} | op: getLanguage
+GET /users | op: getAllUsers
+DELETE /users/{userId} | op: deleteUser
+GET /users/{userId} | op: getUser
+PUT /users/{userId}/busyonbusy | op: setBusyOnBusySetting
+PUT /users/{userId}/defaultdevice | op: setDefaultDevice
+PUT /users/{userId}/location | op: setLocation
+GET /voicemails | op: getVoicemails
+GET /voicemails/{voicemailId} | op: getVoicemail
+POST /{userId}/callrestrictions/{restriction} | op: setCallRestriction
+GET /{userId}/devices | op: getDevices
+POST /{userId}/devices | op: createDevice
+POST /{userId}/devices/external | op: createExternalDevice
+POST /{userId}/devices/mobile | op: createMobileDevice
+POST /{userId}/devices/register | op: createRegisterDevice
+GET /{userId}/devices/{deviceId}/contingents | op: getDeviceContingents
+DELETE /{userId}/devices/{deviceId}/sim | op: deactivateSim
+POST /{userId}/devices/{deviceId}/sim | op: activateSim
+POST /{userId}/devices/{deviceId}/sim/orders | op: orderSim
+GET /{userId}/faxlines | op: getUserFaxlines
+POST /{userId}/faxlines | op: createFaxline
+DELETE /{userId}/faxlines/{faxlineId} | op: deleteFaxline
+PUT /{userId}/faxlines/{faxlineId} | op: changeFaxlineAlias
+GET /{userId}/faxlines/{faxlineId}/callerid | op: getFaxlineCallerId
+PUT /{userId}/faxlines/{faxlineId}/callerid | op: changeFaxlineCallerIdSettings
+GET /{userId}/faxlines/{faxlineId}/numbers | op: getFaxlineNumbers
+PUT /{userId}/faxlines/{faxlineId}/tagline | op: changeTagline
+GET /{userId}/notifications | op: getNotifications
+POST /{userId}/notifications/call/email | op: createEmailNotificationForCall
+POST /{userId}/notifications/call/sms | op: createSmsNotificationForCall
+POST /{userId}/notifications/fax/email | op: addFaxEmailNotification
+POST /{userId}/notifications/fax/report | op: addFaxReportEmailNotification
+POST /{userId}/notifications/fax/sms | op: addFaxSmsNotification
+POST /{userId}/notifications/sms/email | op: addSmsEmailNotification
+POST /{userId}/notifications/voicemail/email | op: addVoicemailEmailNotification
+POST /{userId}/notifications/voicemail/sms | op: addVoicemailSmsNotification
+DELETE /{userId}/notifications/{notificationId} | op: deleteNotification
+GET /{userId}/numbers | op: getUserNumbers
+GET /{userId}/phonelines | op: getPhonelines
+POST /{userId}/phonelines | op: createPhoneline
+DELETE /{userId}/phonelines/{phonelineId} | op: deletePhoneline
+GET /{userId}/phonelines/{phonelineId} | op: getPhoneline
+PUT /{userId}/phonelines/{phonelineId} | op: setPhonelineAlias
+GET /{userId}/phonelines/{phonelineId}/blockanonymous | op: getBlockAnonymousSetting
+PUT /{userId}/phonelines/{phonelineId}/blockanonymous | op: setBlockAnonymousSetting
+GET /{userId}/phonelines/{phonelineId}/devices | op: getDevicesForPhoneline
+POST /{userId}/phonelines/{phonelineId}/devices | op: addDeviceToPhoneline
+DELETE /{userId}/phonelines/{phonelineId}/devices/{deviceId} | op: removeDeviceFromPhoneline
+GET /{userId}/phonelines/{phonelineId}/forwardings | op: getPhonelineForwardings_1
+PUT /{userId}/phonelines/{phonelineId}/forwardings | op: setPhonelineForwardingSettings
+GET /{userId}/phonelines/{phonelineId}/numbers | op: getPhonelineNumbers
+GET /{userId}/phonelines/{phonelineId}/parallelforwardings | op: getPhonelineParallelForwardings
+POST /{userId}/phonelines/{phonelineId}/parallelforwardings | op: addParallelForwarding
+DELETE /{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId} | op: deleteParallelForwardingSettings
+PUT /{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId} | op: changeParallelForwardingSettings
+GET /{userId}/phonelines/{phonelineId}/sipgateio | op: getSipgateIoSettings
+PUT /{userId}/phonelines/{phonelineId}/sipgateio | op: setSipgateIoSettings
+GET /{userId}/phonelines/{phonelineId}/sipgateio/log | op: getSipgateIoLogs
+GET /{userId}/phonelines/{phonelineId}/voicemails | op: getVoicemails
+PUT /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId} | op: changeVoicemailSettings
+GET /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings | op: getPhonelineVoicemailGreetings
+POST /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings | op: addGreeting
+DELETE /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId} | op: deletePhonlineVoicemailGreeting
+PUT /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId} | op: changePhonelineVoicemailGreeting
+PUT /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/transcriptions | op: changePhonelineVoicemailTranscriptionSetting
+GET /{userId}/sms | op: getSmsExtensions
+PUT /{userId}/sms/{smsId} | op: setSmsAlias
+GET /{userId}/sms/{smsId}/callerids | op: getSmsCallerIds
+POST /{userId}/sms/{smsId}/callerids | op: addCallerId
+DELETE /{userId}/sms/{smsId}/callerids/{callerId} | op: deleteSmsCallerId
+PUT /{userId}/sms/{smsId}/callerids/{callerId} | op: editCallerId
+POST /{userId}/sms/{smsId}/callerids/{callerId}/verification | op: verifyCallerId
+[0m
+[0m$ [0mcd /tmp/opencode && curl -s -m 30 "https://crt.sh/?q=%25.sipgate.com&output=json" -o crtcom.json && python3 -c "
+import json
+try:
+    d=json.load(open('crtcom.json'))
+except Exception as e:
+    print('parse fail', e); raise SystemExit
+names=set()
+for e in d:
+    for n in str(e.get('name_value','')).split('\n'):
+        n=n.strip().lstrip('*.').lower()
+        if n: names.add(n)
+print('crt.sh sipgate.com names:', len(names))
+for n in sorted(names): print(n)
+" 2>&1 | head -120
+parse fail Expecting value: line 1 column 1 (char 0)
+[0m
+[0m$ [0mcd /tmp/opencode && sleep 3 && curl -s -m 40 -A "Mozilla/5.0" "https://crt.sh/?q=%25.sipgate.com&output=json" -o crtcom.json -w "%{http_code}\n"; head -c 200 crtcom.json
+502
+<html>
+<head><title>502 Bad Gateway</title></head>
+<body>
+<center><h1>502 Bad Gateway</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+[0m
+[0m$ [0mcd /tmp/opencode && curl -s -m 25 "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?list-type=2&max-keys=5" -o s3list.xml -w "%{http_code}\n" && python3 -c "
+import re
+x=open('s3list.xml').read()
+print('IsTruncated:', re.search(r'<IsTruncated>(.*?)</IsTruncated>',x).group(1) if re.search(r'<IsTruncated>',x) else 'n/a')
+keys=re.findall(r'<Key>(.*?)</Key>',x)
+print('sample keys:', keys)
+own=re.findall(r'<DisplayName>(.*?)</DisplayName>|<ID>(.*?)</ID>',x)
+print(own[:3])
+print('Status: listable' if keys else 'NOT listable / changed')"
+200
+IsTruncated: true
+sample keys: ['app-web-1.0.0.dmg', 'app-web-1.0.0.dmg.blockmap', 'app-web-1.0.0.zip', 'app-web-1.0.1.dmg', 'app-web-1.0.1.dmg.blockmap']
+[]
+Status: listable
+[0m
+STEP 1 — DELTA
+- CHANGED `api.sipgate.com/v2/swagger.json`: re-fetched live → still 144 paths, byte-identical op set, global `security: []` persists; no new endpoint surface (spec vs edge-401 drift unchanged).
+- CHANGED `sipgate-desktop-app.s3`: re-`LIST` → 200, IsTruncated=true, first-5 keys = `app-web-1.0.x.dmg/.zip/.blockmap` family (electron-updater artifacts) alongside known softphone index; owner fields redacted; write path still untested.
+- NEW passive subdomain enum via crt.sh for `%25.sipgate.com` → 502 (service down); no new subdomain surface confirmed this cycle.
+- NO_DELTA elsewhere (chatbot prod/dev WS both empirically REJECTED; oauth2-redirect.html defused; all /v2 paths 401/404-mapped).
+
+STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/{portings,devices,oauth2/clients,voicemails,history},6.05, a=7 b=9 t=6 g=3 c=2 f=5
+- [PRIO] sipgate-desktop-app.s3,5.60, a=4 b=8 t=3 g=7 c=6 f=5
+- [PRIO] chatbot.dev.sipgate.com,2.50, a=5 b=3 t=4 g=6 c=4 f=1 (empirically REJECTED class, low priority)
+
+STEP 3 — HYPOTHESES
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{portingId},devices/{deviceId},authorization/oauth2/clients/{clientId},voicemails/{voicemailId}}
+confidence: 50
+reasoning: fresh swagger still documents top-level per-id namespaces without user prefix (devices/{deviceId}, voicemails/{voicemailId}, history/{entryId}, portings/{portingId}); swagger lists `POST /devices/{deviceId}/credentials/password` (full device-credential reset, mutating) and `oauth2:clients:write`; unauth probes return uniform 401 empty-body BEFORE lookup → no unauth existence oracle; the cross-tenant boundary has never been exercised (prior attempts blocked by missing second tenant token).
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 (data/creds) instead of 403/404 only.
+verify_steps: AUTH_HELPED — after registering 2 test tenants, GET /v2/portings/{B-id}, GET /v2/devices/{B-id}, GET /v2/voicemails/{B-id}, GET /v2/authorization/oauth2/clients/{B-clientId} with A-bearer; expect 403/404 if safe, 200 = BOLA.
+impact: cross-tenant PII, SIP/device creds (password change = device takeover), OAuth client secrets → tenant compromise. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer / electron-updater swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 55
+reasoning: re-confirmed listable 200 with IsTruncated=true; artifact family includes `app-web-1.0.x.dmg/.zip/.blockmap` (electron-updater differential-update manifests = supply-chain surface); bucket stale since 2024-06-11; ACL/policy read denied; write path never probed — every other high-impact chain this cycle defused, this is the last un-contradicted one.
+evidence_needed: PUT/OVERWRITE success on unique object (reporter+legal sign-off; mutating test required).
+verify_steps: HUMAN single PUT `test-probe-$(date +%s).json` CT application/json → confirm 200 → immediately DELETE; do NOT touch existing installers/manifests.
+impact: supply-chain RCE for all softphone + desktop-app downloaders/auto-updaters. CRITICAL if writable.
+testability: HUMAN_ONLY
+[HYP] (dropped at self-critique) Dev chatbot socket.io WS arbitrary origin
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 15
+reasoning: superseded — prior direct WS-transport probe: evil Origin → 400 no-ACAO; polling Vary:Origin no-ACAO; byte-identical to prod REJECT; no browser-readable cross-origin channel.
+evidence_needed: none (contradicted empirically).
+verify_steps: none.
+impact: none demonstrable.
+testability: PASSIVE
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] cross-tenant BOLA: confidence 50 retained (only un-contradicted high-value chain on api target, but AUTH_HELPED-gated; no unauth oracle strengthens edge-auth, not the hyp).
+- [PARKED] S3 writable: 55 — genuine unknown but HUMAN_ONLY; a single PUT settles it; cannot converge passively.
+- [PARKED] dev chatbot WS: 15 — REJECTED by empirical test (evil→400), supersedes parked [75] nemotron3 lead; not resurrected.
+- [FINAL] 1. Cross-tenant BOLA (50, AUTH_HELPED) — api target, highest business value.
+- [FINAL] 2. S3 bucket writable→supply-chain (55, HUMAN_ONLY) — needs reporter sign-off.
+
+STEP 5 — NEXT ACTION
+[NEXT] HUMAN: one session — (1) obtain reporter+legal sign-off then execute the standing single-PUT S3 write probe `PUT https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-<ts>.json` (CT application/json, verify 200, then DELETE the object); (2) register two independent sipgate test tenants, capture two bearer tokens, and differential-test cross-tenant BOLA: GET /v2/portings/{B-id}, /v2/devices/{B-id}, /v2/voicemails/{B-id}, /v2/authorization/oauth2/clients/{B-clientId} with tenant-A bearer → confirm 403/404 (safe) vs 200 (BOLA). These are the only two un-contradicted high-impact chains; all passive angles are exhausted this cycle (swagger unchanged, chatbot WS empirically rejected, OAuth implicit landmine defused, crt.sh unavailable).
+
+STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ sipgate-desktop-app.s3: re-LIST (2026-09-06) → 200, IsTruncated=true, `app-web-1.0.x` .dmg/.zip/.blockmap electron-updater family live beside softphone 1.3.0–1.17.19; owner redacted; write still untested.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: re-fetch (2026-09-06) → still 144 paths identical op set, global security=[] — no endpoint drift since 2026-09-05; unauthorized surface stable.
+
+STEP 7 — RISK
+[RISK] sipgate: 45 — surface stable (swagger 144 unchanged, bucket still listable, chatbot WS rejected both envs); no new standalone critical chain surfaced this cycle; both surviving high-impact paths (S3 write ~55/HUMAN, cross-tenant BOLA 50/AUTH_HELPED) remain externally gated and unconfirmed. Program risk to holder unchanged pending those two gates.
