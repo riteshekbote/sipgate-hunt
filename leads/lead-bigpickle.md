@@ -1098,3 +1098,44 @@ impact: none demonstrable.
 testability: PASSIVE
 [NEXT] HUMAN: one session — (1) obtain reporter+legal sign-off then execute the standing single-PUT S3 write probe `PUT https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-<ts>.json` (CT application/json, verify 200, then DELETE the object); (2) register two independent sipgate test tenants, capture two bearer tokens, and differential-test cross-tenant BOLA: GET /v2/portings/{B-id}, /v2/devices/{B-id}, /v2/voicemails/{B-id}, /v2/authorization/oauth2/clients/{B-clientId} with tenant-A bearer → confirm 403/404 (safe) vs 200 (BOLA). These are the only two un-contradicted high-impact chains; all passive angles are exhausted this cycle (swagger unchanged, chatbot WS empirically rejected, OAuth implicit landmine defused, crt.sh unavailable).
 [RISK] sipgate: 45 — surface stable (swagger 144 unchanged, bucket still listable, chatbot WS rejected both envs); no new standalone critical chain surfaced this cycle; both surviving high-impact paths (S3 write ~55/HUMAN, cross-tenant BOLA 50/AUTH_HELPED) remain externally gated and unconfirmed. Program risk to holder unchanged pending those two gates.
+## 2026-09-06 17:42:26 UTC [target] (model bigpickle)
+[PRIO] api.sipgate.com,8.5,attack_surface:9,business_value:9,tech_exposure:8,gate_ease:3,cloud_surface:4,freshness:8
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,7.0,attack_surface:6,business_value:8,tech_exposure:7,gate_ease:9,cloud_surface:9,freshness:7
+[PRIO] login.sipgate.com,6.5,attack_surface:7,business_value:8,tech_exposure:7,gate_ease:3,cloud_surface:3,freshness:6
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: fresh swagger documents top-level per-id namespaces without user prefix; 401 empty-body unauth before lookup; cross-tenant boundary never exercised; uniform edge authz confirmed
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 (data/creds) instead of 403/404
+verify_steps: AUTH_HELPED — after registering 2 test tenants, GET /v2/portings/{B-id}, /v2/devices/{B-id}, /v2/voicemails/{B-id}, /v2/authorization/oauth2/clients/{B-clientId} with A-bearer
+impact: cross-tenant PII, SIP/device creds (password change = device takeover), OAuth client secrets → tenant compromise. CRITICAL if confirmed
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer / electron-updater swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 55
+reasoning: re-confirmed listable 200; artifact family includes electron-updater manifests; bucket stale since 2024-06-11; ACL/policy read denied; write path never probed
+evidence_needed: PUT/OVERWRITE success on unique object
+verify_steps: HUMAN single PUT `test-probe-$(date +%s).json` CT application/json → confirm 200 → immediately DELETE
+impact: supply-chain RCE for all softphone + desktop-app downloaders/auto-updaters. CRITICAL if writable
+testability: HUMAN_ONLY
+[HYP] OAuth implicit token theft via open redirect
+class: OATH
+asset: app.sipgate.com/implicit-auth-redirect
+confidence: 45
+reasoning: unvalidated redirect parameter in JS ImplicitAuthenticator; React Router history.replace(external) resolves same-origin; token stored in localStorage first
+evidence_needed: live browser confirmation of token-in-fragment leak to attacker origin
+verify_steps: HUMAN private-tab full login flow on `https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example`
+impact: account-session abuse / ATO. HIGH if confirmed
+testability: HUMAN_ONLY
+[PARKED] OAuth implicit token theft: confidence 45, HUMAN_ONLY; React Router same-origin resolution likely prevents fragment leak; retained as last resort
+[FINAL] survivors ranked:
+[NEXT] HUMAN: one session — (1) obtain reporter+legal sign-off then execute single-PUT S3 write probe `PUT https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-$(date +%s).json` (CT application/json, verify 200, then DELETE); (2) register two independent sipgate test tenants, capture two bearer tokens, and differential-test cross-tenant BOLA on /v2/portings/{B-id}, /v2/devices/{B-id}, /v2/voicemails/{B-id}, /v2/authorization/oauth2/clients/{B-clientId} with tenant-A bearer
+[LEARN] REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads; identical to prod chatbot REJECT class
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as same-origin-XSS amplifier
+[LEARN] ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot with socket.io endpoint — contradicts prior "dev env externally inert"
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401
+[RISK] sipgate: 45 — surface stable; no new standalone critical chain surfaced; both surviving high-impact paths (S3 write ~55/HUMAN, cross-tenant BOLA 50/AUTH_HELPED) remain externally gated; program risk unchanged pending those two gates

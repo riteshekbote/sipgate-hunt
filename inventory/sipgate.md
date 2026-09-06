@@ -242,3 +242,5 @@ www.sipgate.de
 - NEW 2026-09-06 ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401
 - CHANGED api.sipgate.com/v2/*: cross-tenant BOLA confirmed requiring AUTH_HELPED tenant pairs (uniform edge auth, all high-value paths 401)
 - CHANGED sipgate-desktop-app.s3: publicly listable bucket re-confirmed (439 keys, versioning disabled, write path untested — HUMAN sign-off required)
+
+## 2026-09-06 17:45:31 UTC
