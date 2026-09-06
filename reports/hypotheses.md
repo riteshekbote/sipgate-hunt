@@ -471,3 +471,21 @@
 - LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
 - LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demons
 - LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swag
+
+## RANKED HYPOTHESES 2026-09-06 12:30:51 UTC
+- [75] chatbot.dev.sipgate.com/chat/session/socket.io/: Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance (from art/lead_nemotron3.txt)
+- [50] api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}: Cross-tenant BOLA on credential-bearing /v2 resources (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): HUMAN: in one session — (1) register two independent sipgate test tenants, obtain bearer tokens for both, then differential-test /v2/portings/{id}, /v2/devices/
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm WS handshake response
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling also blocks cross-origin reads (Vary:Origin, no ACAO); identical 
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as 
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swag
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: live swagger-ui 5.x; implicit-only third-party client `sipgate-swagger-ui` exposes extreme scope set (oauth2-clients:w
+- LEARN: ACCEPTED INFO @ sipgate.io / developer.sipgate.io: developer platform = Cloudflare-fronted static marketing/docs (301 → www.sipgate.io/for-developer), links bac
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/keycloak-logout.js: logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, n
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally iner
+- LEARN: REJECTED OTHER @ login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com: DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — ex
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-s
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demons

@@ -219,3 +219,5 @@ www.sipgate.de
 - CHANGED `chatbot.sipgate.com/chat/session/socket.io/` — WS transport REJECTED for arbitrary Origin (evil → 400 no-ACAO); polling transport also blocks cross-origin reads (Vary:Origin, no ACAO)
 
 ## 2026-09-06 08:40:48 UTC
+
+## 2026-09-06 12:30:51 UTC
