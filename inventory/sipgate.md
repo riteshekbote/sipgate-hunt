@@ -246,3 +246,11 @@ www.sipgate.de
 ## 2026-09-06 17:45:31 UTC
 
 ## 2026-09-06 20:28:47 UTC
+
+## 2026-09-06 22:14:00 UTC
+- NEW integration.dev.sipgate.com — NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle from app.dev.sipgate.com
+- NEW app.dev.sipgate.com — JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.1
+- CHANGED chatbot.dev.sipgate.com WS — direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html — Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert c
+- CHANGED team-uk.live.sipgate.com — confirmed second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)
+- CHANGED api.sipgate.com/v2/swagger.json — live spec (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated
