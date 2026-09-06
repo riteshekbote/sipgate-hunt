@@ -1,102 +1,39 @@
-## 2026-09-05 23:44:55 UTC [target] (model bigpickle)
-[PARKED] connect-src :3396 reachability: both timeout → topology-leak only, no exposed internal API.
-[PARKED] chatbot WS: unchanged, origin-allowlist evidenced on both transports, HUMAN_ONLY.
-[PARKED] S3 ?versions: versioning disabled, no hidden versions — enumeration complete, write path unchanged.
-[FINAL] H1 BOLA (50, AUTH_HELPED); H2 S3 write (60, HUMAN); H3 team portal post-auth IDOR (40, AUTH_HELPED).
-[NEXT] HUMAN: obtain reporter/legal sign-off then single PUT probe (unique object name, `application/json` CT) to `sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-$(date +%s).json` body `{"test":true}`; concurrently register two tenant accounts for the AUTH_HELPED BOLA differential (api.sipgate.com/v2 portings/{id}, devices/{id}/credentials/password, oauth2/clients/{id}) and team portal post-auth IDOR. Sole open chain at confidence 60; all unauthenticated surfaces re-exhausted (uniform 401/404/307, redirect param inert, :3396 unreachable, versioning enumerable=empty).
-[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live prod team portal, identical CSP dev-origin leaks (frame-ancestors app.local.sipgate.com:3443, connect-src *.sipgate.com:3396) + SERVERID rotation — family-wide info disclosure.
-[LEARN] REJECTED OTHER @ api.sipgate.com:3396 + team-de.live.sipgate.com:3396: CSP connect-src internal port unreachable externally (TCP timeout) — topology leak only.
-[LEARN] REJECTED OATH @ login.sipgate.com/?redirect=: evil vs benign → identical 302 to Keycloak sipgate-apps, hardcoded redirect_uri — redirect param inert at SSO bootstrap.
-[LEARN] ACCEPTED INFO @ sipgate-desktop-app.s3: ?versions → 439 keys, all VersionId=null (versioning disabled), IsTruncated=false — full artifact inventory, no hidden versions.
-[RISK] sipgate: 47 — Down from 48: portal-family dev-origin CSP leak now confirmed across 2 hosts (de+uk) but :3396 internal port is externally unreachable and SSO redirect param inert, so the new surface adds no exploitable step; S3 versioning adds nothing. Surviving high-impact chains fully gate on external access: S3 write (60, HUMAN/sign-off), BOLA (50, two-tenant creds), team portal post-auth (40, creds). Standing defense-in-depth unchanged. No confirmed standalone critical chain.
-[LEARN] REJECTED OTHER @ api.sipgate.com:3396 + team-de.live.sipgate.com:3396: CSP connect-src internal port unreachable externally (TCP timeout) — topology leak only.
-[LEARN] REJECTED OATH @ login.sipgate.com/?redirect=: evil vs benign → identical 302 to Keycloak sipgate-apps, hardcoded redirect_uri — redirect param inert at SSO bootstrap.
-[LEARN] ACCEPTED INFO @ sipgate-desktop-app.s3: ?versions → 439 keys, all VersionId=null (versioning disabled), IsTruncated=false — full artifact inventory, no hidden versions.
-[RISK] sipgate: 47 — Down from 48: portal-family dev-origin CSP leak now confirmed across 2 hosts (de+uk) but :3396 internal port is externally unreachable and SSO redirect param inert, so the new surface adds no exploitable step; S3 versioning adds nothing. Surviving high-impact chains fully gate on external access: S3 write (60, HUMAN/sign-off), BOLA (50, two-tenant creds), team portal post-auth (40, creds). Standing defense-in-depth unchanged. No confirmed standalone critical chain.
-[HYP] Cross-tenant BOLA on credential-bearing resources
+## 2026-09-06 04:14:03 UTC [target] (model bigpickle)
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
 class: IDOR
-asset: api.sipgate.com/v2/{numbers/{id},contacts/{id},devices/{id},portings}
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials*,authorization/oauth2/clients/{clientId}}
 confidence: 50
-reasoning: uniform 401 empty-body on every tested path; swagger documents per-resource credential responses; cross-tenant boundary unexercised.
-evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 not 403/404
-verify_steps: AUTH_HELPED — two tenants, differential GET/PUT on portings/{id}, devices/{id}/credentials/password, oauth2/clients/{id}
-impact: cross-tenant PII, SIP/device creds, OAuth secrets. CRITICAL if confirmed.
-testability: AUTH_HELPED
-[HYP] Desktop-app S3 bucket writable → signed-installer swap
-class: MISCONFIG
-asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
-confidence: 60
-reasoning: live list + ?versions (439 keys), versioning disabled, stale 2024-06-11; write path never tested.
-evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off only)
-verify_steps: HUMAN-only single PUT probe (test-probe-$(date +%s).json) with sign-off
-impact: full softphone RCE for all downloaders. CRITICAL if writable.
-testability: HUMAN
-[HYP] Team portal post-auth tenant/admin IDOR (de+uk family)
-class: IDOR
-asset: team-de.live.sipgate.com + team-uk.live.sipgate.com (post-auth)
-confidence: 40
-reasoning: portal family confined to de+uk (5 others NXDOMAIN); pre-auth pure 302→login; dev-origin CSP leaks family-wide; post-auth surface untouched beyond 302.
-evidence_needed: authenticated differential on org/user endpoints → 200 vs 403/404 cross-org
-verify_steps: AUTH_HELPED — logged-in enumeration of /admin/*,/user/*, org endpoints across two orgs
-impact: cross-tenant team/user management, PII. HIGH if confirmed.
-testability: AUTH_HELPED
-[NEXT] HUMAN: obtain reporter/legal sign-off then single PUT probe (`application/json`, unique key `test-probe-$(date +%s).json`) to `sipgate-desktop-app.s3.eu-central-1.amazonaws.com`; concurrently register two tenant accounts for the AUTH_HELPED BOLA + portal differential. All unauthenticated surface re-exhausted this cycle (uniform 401/404/307, redirect param inert, :3396 unreachable, versioning enumerable).
-[RISK] sipgate: 47 — Down from 48: portal CSP dev-origin leak now spans both de+uk hosts, but the `:3396` port is externally unreachable and the SSO redirect param is inert, so no new exploitable step; S3 versioning adds nothing. High-impact chains remain fully externally gated (S3 write 60/HUMAN, BOLA 50/AUTH_HELPED, portal 40/AUTH_HELPED). No confirmed standalone critical chain; risk stable-low pending HUMAN/AUTH_HELPED evidence.
-[HYP] Cross-tenant BOLA on credential-bearing resources
-class: IDOR
-asset: api.sipgate.com/v2/{numbers/{id},contacts/{id},devices/{id},portings}
-confidence: 50
-reasoning: uniform 401 empty-body on every tested path; swagger documents per-resource credential responses; cross-tenant boundary unexercised.
-evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 not 403/404
-verify_steps: AUTH_HELPED — two tenants, differential GET/PUT on portings/{id}, devices/{id}/credentials/password, oauth2/clients/{id}
-impact: cross-tenant PII, SIP/device creds, OAuth secrets. CRITICAL if confirmed.
-testability: AUTH_HELPED
-[HYP] Desktop-app S3 bucket writable → signed-installer swap
-class: MISCONFIG
-asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
-confidence: 60
-reasoning: live list + ?versions (439 keys), versioning disabled, stale 2024-06-11; write path never tested.
-evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off only)
-verify_steps: HUMAN-only single PUT probe (test-probe-$(date +%s).json) with sign-off
-impact: full softphone RCE for all downloaders. CRITICAL if writable.
-testability: HUMAN
-[HYP] Team portal post-auth tenant/admin IDOR (de+uk family)
-class: IDOR
-asset: team-de.live.sipgate.com + team-uk.live.sipgate.com (post-auth)
-confidence: 40
-reasoning: portal family confined to de+uk (5 others NXDOMAIN); pre-auth pure 302→login; dev-origin CSP leaks family-wide; post-auth surface untouched beyond 302.
-evidence_needed: authenticated differential on org/user endpoints → 200 vs 403/404 cross-org
-verify_steps: AUTH_HELPED — logged-in enumeration of /admin/*,/user/*, org endpoints across two orgs
-impact: cross-tenant team/user management, PII. HIGH if confirmed.
-testability: AUTH_HELPED
-[NEXT] HUMAN: obtain reporter/legal sign-off then single PUT probe (`application/json`, unique key `test-probe-$(date +%s).json`) to `sipgate-desktop-app.s3.eu-central-1.amazonaws.com`; concurrently register two tenant accounts for the AUTH_HELPED BOLA + portal differential. All unauthenticated surface re-exhausted this cycle (uniform 401/404/307, redirect param inert, :3396 unreachable, versioning enumerable).
-[RISK] sipgate: 47 — Down from 48: portal CSP dev-origin leak now spans both de+uk hosts, but the `:3396` port is externally unreachable and the SSO redirect param is inert, so no new exploitable step; S3 versioning adds nothing. High-impact chains remain fully externally gated (S3 write 60/HUMAN, BOLA 50/AUTH_HELPED, portal 40/AUTH_HELPED). No confirmed standalone critical chain; risk stable-low pending HUMAN/AUTH_HELPED evidence.
-[HYP] OAuth implicit token theft via trusting-opener swagger-ui redirect page
-class: OATH
-asset: api.sipgate.com/v2/doc/oauth2-redirect.html + login.sipgate.com/auth/realms/third-party client sipgate-swagger-ui
-confidence: 50
-reasoning: client is registered and implicit-only (code flow → unauthorized_client); redirect_uri fixed to https://api.sipgate.com/v2/doc/oauth2-redirect.html (exact-match enforced); that page parses the token fragment then invokes `window.opener.swaggerUIRedirectOauth2.callback({auth,token,isValid})` with zero opener-origin validation; `isValid` = fragment state === opener-provided state (both attacker-controlled); Keycloak echoes attacker-chosen state. Any website defining `window.swaggerUIRedirectOauth2` and opening a popup to the authorize URL can receive a victim's API access_token for the high-value third-party realm (KB ACCEPTED scope set: contacts/sms/account/balance/payment).
-evidence_needed: live browser PoC on own test session: token delivered into attacker-defined opener callback; issued scopes confirmed non-trivial.
-verify_steps: HUMAN-only — attacker page sets `window.swaggerUIRedirectOauth2={state:'S',auth:{name:'oauth2',schema:{get:(k)=>k==='flow'?'implicit':k==='authorizationUrl'?'https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/auth':null}},callback:(r)=>console.log(r.token),errCb:console.error}` then `window.open('https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/auth?response_type=token&client_id=sipgate-swagger-ui&redirect_uri=https%3A%2F%2Fapi.sipgate.com%2Fv2%2Fdoc%2Foauth2-redirect.html&scope=openid&state=S')` while logged into sipgate; observe token echoed to opener.
-impact: ATO-equivalent — silent theft of third-party API bearer token covering contacts/sms/balance/payment/account; full API account takeover. CRITICAL if confirmed.
-testability: HUMAN_ONLY
-[HYP] Cross-tenant BOLA on credential-bearing resources
-class: IDOR
-asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
-confidence: 50
-reasoning: uniform 401 empty-body edge auth on all docd paths; swagger documents per-resource credential responses; cross-tenant boundary unexercised; new swagger-oAuth client confirms third-party realm issues scoped tokens to real API.
-evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 not 403/404.
-verify_steps: AUTH_HELPED — two tenants differential GET on portings/{id}, devices/{id}/credentials/password, oauth2/clients/{id}.
+reasoning: uniform 401 empty-body edge auth on all tested paths; swagger now live-confirmed to document credential-bearing responses AND a full `authorization:oauth2:clients:write` scope for real tokens; cross-tenant boundary never exercised.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204, not 403/404.
+verify_steps: AUTH_HELPED — two registered tenants, differential GET on portings/{id}, devices/{id}/credentials/password, oauth2/clients/{clientId}.
 impact: cross-tenant PII, SIP/device creds, OAuth client secrets. CRITICAL if confirmed.
 testability: AUTH_HELPED
 [HYP] Desktop-app S3 bucket writable → signed-installer swap
 class: MISCONFIG
 asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
 confidence: 60
-reasoning: live list + ?versions (439 keys), versioning disabled, stale 2024-06-11; write path never tested; ACL/policy reads denied.
-evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off only).
-verify_steps: HUMAN-only single PUT probe (test-probe-$(date +%s).json, application/json).
-impact: full softphone RCE for all downloaders. CRITICAL if writable.
+reasoning: live list + ?versions=439 (versioning disabled), stale 2024-06-11; write path never tested; no other open high-impact chain remains un-gated after swagger defusement.
+evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off).
+verify_steps: HUMAN only — single PUT `test-probe-$(date +%s).json` CT application/json, then delete.
+impact: supply-chain RCE for all softphone downloaders. CRITICAL if writable.
 testability: HUMAN
-[NEXT] HUMAN: with reporter+legal sign-off on a self-registered test sipgate account, run the H1 popup PoC (attacker page defining `window.swaggerUIRedirectOauth2` + `window.open` of the implicit-flow authorize URL for `client_id=sipgate-swagger-ui`, redirect_uri `https://api.sipgate.com/v2/doc/oauth2-redirect.html`, scope `openid`, attacker state) and record the access_token handed to the opener callback plus issued scopes; same session also file S3 PUT probe sign-off and register the second tenant for the BOLA differential.
-[RISK] sipgate: 52 — Up from 47: prior cycles proved only defense-in-depth (uniform edge authz, inert redirects, unreachable :3396). This cycle surfaces a live, previously-unseen OAuth landmine: an implicit-only, public, high-scope client (`sipgate-swagger-ui`) whose callback redirect page hands the token fragment to an unvalidated attacker `window.opener` — the first genuinely exploitable step reasoned on live-confirmed primitives since the S3/BOLA/portal chain was gated. Still no confirmed standalone critical chain (H1 requires a logged-in victim session + human browser PoC; H2/H3/H4 remain external-credential-gated). Upside capped until the HUMAN PoC confirms delivered scopes.
+[HYP] Dev chatbot socket.io WS/data transport accepts arbitrary-origin
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 45
+reasoning: KB 2026-09-04 recorded dev polling accepting arbitrary Origin with no CORS check; prod WS rejected (400) but dev historically relaxed; dev stack = nginx/1.24.0 Google Cloud, LIVE.
+evidence_needed: WS handshake evil Origin → 101 (not 400) and/or unauthenticated socket.io session events readable.
+verify_steps: single GET-with-Upgrade handshake `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example`, then optional unauthenticated `0{...}` connect packet.
+impact: dev chat session/PII exposure + lateral context; HIGH if dev mirrors prod-less hardening.
+testability: PASSIVE
+[PARKED] OAuth implicit token theft via swagger-opener popup: cross-origin delivery empirically BLOCKED (see LEARN) — survives only with a separate same-origin api.sipgate.com XSS (none known); confidence after test ~5.
+[PARKED] nonce/state manipulation on sipgate-swagger-ui: nonce not validated by the redirect page and attacker-chosen state passes `isValid`, but same cross-origin boundary makes it moot standalone.
+[PARKED] keycloak-logout.js / oauth2-logout.html redirect param: fixed same-origin target, no attacker input — inert.
+[PARKED] Team portal post-auth IDOR: 302-everything pre-auth, no new post-auth evidence, confidence 40 → parked pending AUTH_HELPED.
+[FINAL] 1. BOLA differential (50, AUTH_HELPED); 2. S3 write (60, HUMAN); 3. dev-chatbot WS (45, PASSIVE).
+[NEXT] PROBE: one handshake GET `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` (→ 101 vs 400 decides dev origin-validation), concurrently obtain reporter/legal sign-off for the standing HUMAN S3 write probe and register the two test tenants for the BOLA differential.
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swaggerUIRedirectOauth2` throws `SecurityError: ... Blocked a frame with origin ... from accessing a cross-origin frame`; token fragment stays same-origin; unconditional opener callback is inert cross-origin (same class as KB REJECTED implicit-auth-redirect). Supersedes prior conf-50 landmine; token theft requires a separate api.sipgate.com same-origin XSS (none found).
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: live swagger-ui 5.x; implicit-only third-party client `sipgate-swagger-ui` exposes extreme scope set (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); nonce random, redirect_uri fixed, doc page carries no opener check — high-value only as a same-origin-XSS amplifier.
+[LEARN] ACCEPTED INFO @ sipgate.io / developer.sipgate.io: developer platform = Cloudflare-fronted static marketing/docs (301 → www.sipgate.io/for-developer), links back to login.sipgate.com — no new console/auth surface; org `sipgate-io` already scanned.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/keycloak-logout.js: logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, no open redirect.
+[RISK] sipgate: 45 — Down from 52: the presumptive swagger implicit-token "landmine" is defused on empirical browser-enforcement evidence (cross-origin `window.opener` named-property reads block token exfil; same class as prior implicit-auth-redirect REJECT), returning risk to the pre-swagger baseline. All remaining high-impact chains stay externally gated: S3 write (60/HUMAN sign-off), /v2 BOLA differential (50/AUTH_HELPED), dev-chatbot WS (45/PASSIVE), portal post-auth (40/AUTH_HELPED). Standing defense-in-depth (arbitrary-origin CORS+credentials on /v2, dev-origin CSP leaks in both team portals, listable S3, stale dev bundles) unchanged; no confirmed standalone critical chain.

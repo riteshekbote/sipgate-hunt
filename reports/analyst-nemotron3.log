@@ -3309,3 +3309,145 @@ testability: PASSIVE
 
 ### STEP 7 — RISK
 [RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io. Primary risks: (1) Dev chatbot WS origin validation bypass (chatbot.dev.sipgate.com) — if dev mirrors prod config, session hijack = PII exposure; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Potential BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (6) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, dev chatbot WS validation, and potential object-level authz-drift on high-value API endpoints.
+===== ANALYST nemotron3 2026-09-06 04:14:13 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt
+total 228
+drwxr-xr-x 12 runner runner  4096 Sep  6 03:58 .
+drwxr-xr-x  3 runner runner  4096 Sep  6 03:58 ..
+drwxr-xr-x  7 runner runner  4096 Sep  6 03:58 .git
+drwxr-xr-x  3 runner runner  4096 Sep  6 03:58 .github
+-rw-r--r--  1 runner runner  1755 Sep  6 03:58 README.md
+-rw-r--r--  1 runner runner    43 Sep  6 03:58 analyst-out.txt
+-rw-r--r--  1 runner runner 71767 Sep  6 03:58 analyst-prompt.txt
+-rw-r--r--  1 runner runner 67950 Sep  6 03:58 ctx.txt
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 inventory
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 knowledge
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 leads
+-rw-r--r--  1 runner runner   696 Sep  6 03:58 probe-results.md
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 recon-notes
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 reports
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 reposcan-raw
+-rw-r--r--  1 runner runner  3230 Sep  6 03:58 scope.yml
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 scripts
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_bigpickle.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_laguna.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_ling3.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_longcat.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_mimo.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_nemotron3.json
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 triage
+[0m
+[0m→ [0mRead scope.yml
+[0m→ [0mRead inventory/sipgate.md
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/knowledge/ && ls -la /home/runner/work/sipgate-hunt/sipgate-hunt/leads/
+total 32
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 .
+drwxr-xr-x 12 runner runner  4096 Sep  6 03:58 ..
+-rw-r--r--  1 runner runner 24291 Sep  6 03:58 index.md
+total 380
+drwxr-xr-x  2 runner runner   4096 Sep  6 03:58 .
+drwxr-xr-x 12 runner runner   4096 Sep  6 03:58 ..
+-rw-r--r--  1 runner runner 117199 Sep  6 03:58 lead-bigpickle.md
+-rw-r--r--  1 runner runner    969 Sep  6 03:58 lead-laguna.md
+-rw-r--r--  1 runner runner    950 Sep  6 03:58 lead-ling3.md
+-rw-r--r--  1 runner runner    988 Sep  6 03:58 lead-longcat.md
+-rw-r--r--  1 runner runner     18 Sep  6 03:58 lead-mimo.md
+-rw-r--r--  1 runner runner 231300 Sep  6 03:58 lead-nemotron3.md
+-rw-r--r--  1 runner runner  10142 Sep  6 03:58 reposcan-sipgate.md
+[0m
+[0m→ [0mRead knowledge/index.md
+Now I have comprehensive context. Let me execute the 8-step analysis.
+
+---
+
+### STEP 1 — DELTA
+
+[NEW] `chatbot.dev.sipgate.com` — LIVE (HTTP/2 200, nginx/1.24.0, Google Cloud), serves HTML with `x-robots-tag: noindex`, socket.io endpoint accessible — contradicts prior "dev env externally inert" assessment
+[NEW] `team-uk.live.sipgate.com` — LIVE second team portal with identical CSP dev-origin leak (`frame-ancestors app.local.sipgate.com:3443` + `connect-src *.sipgate.com:3396`) — family-wide info disclosure confirmed
+[CHANGED] `app.dev.sipgate.com` — CSP probe with evil Origin: no ACAO/ACAC headers returned; CSP unchanged (wildcard `*.sipgate.com:3396` connect-src, `wss://*.sipgate.*` WS)
+[CHANGED] `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout), confirming KB "externally inert"
+[CHANGED] `api.sipgate.com/v2/swagger.json` — Live spec (144 paths, global `security: []`), re-confirms stale annotations vs edge-401 enforcement
+[CHANGED] `chatbot.sipgate.com/chat/session/socket.io/` — WS transport REJECTED for arbitrary Origin (evil → 400 no-ACAO); polling transport also blocks cross-origin reads (Vary:Origin, no ACAO)
+
+---
+
+### STEP 2 — PRIORITIZE
+
+[PRIO] chatbot.dev.sipgate.com/chat/session/socket.io/,7.8,attack_surface=8,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.65,attack_surface=5,business_value=7,tech_exposure=5,gate_ease=10,cloud_surface=8,freshness=6
+[PRIO] app.dev.sipgate.com,6.7,attack_surface=6,business_value=5,tech_exposure=7,gate_ease=10,cloud_surface=6,freshness=8
+[PRIO] api.sipgate.com/v2/,6.3,attack_surface=7,business_value=8,tech_exposure=6,gate_ease=3,cloud_surface=5,freshness=7
+[PRIO] team-uk.live.sipgate.com,5.85,attack_surface=4,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=4,freshness=8
+[PRIO] chatbot.sipgate.com/chat/session/socket.io/,5.85,attack_surface=6,business_value=7,tech_exposure=5,gate_ease=5,cloud_surface=5,freshness=6
+[PRIO] team-de.live.sipgate.com,5.5,attack_surface=4,business_value=5,tech_exposure=5,gate_ease=10,cloud_surface=4,freshness=6
+[PRIO] login.sipgate.com/realms/third-party/,4.75,attack_surface=4,business_value=6,tech_exposure=4,gate_ease=5,cloud_surface=4,freshness=5
+[PRIO] api.sipgate.com/health,3.9,attack_surface=3,business_value=2,tech_exposure=4,gate_ease=10,cloud_surface=3,freshness=5
+[PRIO] payment.sipgate.com,3.6,attack_surface=3,business_value=7,tech_exposure=4,gate_ease=5,cloud_surface=5,freshness=5
+
+---
+
+### STEP 3 — HYPOTHESES
+
+[HYP] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 75
+reasoning: KB 2026-09-04 confirms chatbot.dev.sipgate.com polling transport accepts arbitrary Origin (no CORS check). Live probe 2026-09-05 confirms host is LIVE (HTTP/2 200, nginx/1.24.0, behind Google Cloud). Production chatbot WS transport was tested and REJECTED (evil Origin → 400), but dev environment may have relaxed origin validation. Dev CSP on app.dev.sipgate.com allows `wss://*.sipgate.*` — includes chatbot.dev.sipgate.com.
+evidence_needed: WebSocket handshake from arbitrary Origin returns 101 Switching Protocols (not 400); socket.io handshake completes without auth token; namespace events process unauthenticated messages.
+verify_steps: WS handshake: `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm 101; send unauthenticated socket.io packet `0{"sid":"...","upgrades":[],"pingInterval":25000,"pingTimeout":20000}` — observe server response; check for ACAO on WS response headers.
+impact: Full chat session hijack in dev environment — PII exposure (dev chat transcripts, test account credentials), potential lateral movement to dev API/internal services via chatbot integrations. Severity: HIGH (dev) → CRITICAL if same config mirrors prod.
+testability: PASSIVE (handshake only) → HUMAN_ONLY for full exploit
+
+[HYP] S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: KB 2026-09-05 re-confirmed publicly listable bucket (439 keys, versions disabled, stale since 2024-06-11). ACL/policy reads denied; write path NOT tested (HUMAN sign-off required per KB). Softphone installers (Windows/macOS/Linux) run with user privileges — supply-chain RCE if malicious artifact uploaded to `latest` aliases.
+evidence_needed: Bucket policy allowing `s3:PutObject` from broad principal; or ACL granting WRITE/WRITE_ACP to AuthenticatedUsers/AllUsers.
+verify_steps: HEAD `https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/` — confirm bucket exists; GET `?list-type=2` — confirm listing; (HUMAN_ONLY) Single PUT probe with unique object `test-<uuid>.json` CT `application/json` — verify write permission — DELETE immediately.
+impact: Supply-chain compromise of desktop softphone → RCE on customer endpoints, credential theft, VoIP toll fraud. Severity: CRITICAL.
+testability: HUMAN_ONLY
+
+[HYP] Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration
+class: MISCONFIG
+asset: app.dev.sipgate.com
+confidence: 70
+reasoning: KB 2026-09-05: Live dev SPA on Fastly CDN serves production JS bundle (main-D04St2Sb.js, 5.65MB) with no IP restriction. Bundle hardcodes internal RFC1918 hosts/ports: `api.local.sipgate.com:3396`, `app.local.sipgate.com:3443`, `payment.local.sipgate.com:8080`, `team-de.local.sipgate.com:10443`, `team-uk.local.sipgate.com:10443`, plus new `.net` TLD hosts (`admin.dev.sipgate.net`, `integration.dev.sipgate.com`). Dev Keycloak (login.dev) and dev API (api.dev) are dead/403, but `chatbot.dev.sipgate.com` is LIVE (confirmed 2026-09-05). If any sipgate service has SSRF (webhook handler, PDF generator, image fetcher), attacker can target disclosed internal endpoints.
+evidence_needed: Confirm no other dev subdomains resolve (admin.dev.sipgate.net, integration.dev.sipgate.com); check if any public sipgate endpoint accepts user-supplied URLs (webhooks, callbacks, imports); enumerate additional internal hosts in dev JS bundle source maps/chunks.
+verify_steps: GET `https://app.dev.sipgate.com` — verify JS bundle hash; GET with `Origin: https://evil.example` — check CORS (done: no ACAO); DNS resolve `admin.dev.sipgate.net`, `integration.dev.sipgate.com` — confirm alive/dead; GET `https://api.sipgate.com/v2/webhooks` (or similar) — check for user-supplied URL parameter.
+impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement if any SSRF vector exists. Severity: MEDIUM (info leak) → HIGH (if SSRF chain found).
+testability: PASSIVE
+
+---
+
+### STEP 4 — SELF-CRITIQUE
+
+[PARKED] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance: Production WS transport already REJECTED (KB 2026-09-05: evil Origin → 400 no-ACAO). Dev environment may differ but same codebase likely; confidence 75 but evidence suggests WS handshake rejects arbitrary Origin at upgrade layer. No verify path yielding 101 from arbitrary Origin per KB pattern.
+[FINAL] 1. S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise (confidence 60, HUMAN_ONLY)
+[FINAL] 2. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration (confidence 70, PASSIVE)
+
+---
+
+### STEP 5 — NEXT ACTION
+
+[NEXT] PROBE: GET https://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket with Origin: https://evil.example — confirm WS handshake response code (101 vs 400) and ACAO header presence. Read-only, ≤1 rps.
+
+---
+
+### STEP 6 — LEARNING
+
+[LEARN] ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally inert" assessment; polling transport historically accepted arbitrary Origin (KB 2026-09-04).
+[LEARN] REJECTED OTHER @ login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com: DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — externally inert confirmed.
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-src *.sipgate.com:3396) — family-wide info disclosure.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated.
+[LEARN] REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable.
+
+---
+
+### STEP 7 — RISK
+
+[RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io. Primary risks: (1) Dev chatbot WS origin validation bypass (chatbot.dev.sipgate.com) — if dev mirrors prod config, session hijack = PII exposure; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Potential BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (6) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, dev chatbot WS validation, and potential object-level authz-drift on high-value API endpoints.

@@ -1,19 +1,20 @@
-## 2026-09-05 23:43:37 UTC [target] (model nemotron3)
-[NEW] `chatbot.dev.sipgate.com` — LIVE (HTTP/2 200, nginx/1.24.0, via Google Cloud), serves HTML with `x-robots-tag: noindex`, socket.io endpoint likely accessible — contrary to KB implication of dev env inert.
-[NEW] `team-uk.live.sipgate.com` — LIVE (from KB 2026-09-05), second team portal with identical CSP dev-origin leak (`frame-ancestors app.local.sipgate.com:3443`) + `connect-src *.sipgate.com:3396` — family-wide info disclosure confirmed.
-[CHANGED] `app.dev.sipgate.com` — CSP reflects arbitrary Origin? No ACAO/ACAC headers returned on evil Origin probe; CSP unchanged (wildcard `*.sipgate.com:3396` connect-src, `wss://*.sipgate.*` WS).
-[CHANGED] `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout), confirming KB "externally inert".
-[CHANGED] `api.sipgate.com/v2/swagger.json` — Live spec (144 paths, global `security: []`), re-confirms stale annotations vs edge-401 enforcement.
-[PRIO] chatbot.dev.sipgate.com,7.2,attack_surface=7,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
-[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.2,attack_surface=5,business_value=6,tech_exposure=5,gate_ease=10,cloud_surface=8,freshness=6
-[PRIO] app.dev.sipgate.com,5.8,attack_surface=5,business_value=4,tech_exposure=6,gate_ease=10,cloud_surface=6,freshness=8
-[PRIO] api.sipgate.com/v2/,5.5,attack_surface=7,business_value=8,tech_exposure=6,gate_ease=3,cloud_surface=5,freshness=7
-[PRIO] team-uk.live.sipgate.com,5.1,attack_surface=4,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=4,freshness=8
-[PRIO] chatbot.sipgate.com/chat/session/socket.io/,4.8,attack_surface=6,business_value=7,tech_exposure=5,gate_ease=5,cloud_surface=5,freshness=6
-[PRIO] team-de.live.sipgate.com,4.3,attack_surface=4,business_value=5,tech_exposure=5,gate_ease=10,cloud_surface=4,freshness=6
-[PRIO] payment.sipgate.com,3.8,attack_surface=3,business_value=7,tech_exposure=4,gate_ease=5,cloud_surface=5,freshness=6
-[PRIO] login.sipgate.com/realms/third-party/,3.5,attack_surface=4,business_value=6,tech_exposure=4,gate_ease=5,cloud_surface=4,freshness=5
-[PRIO] api.sipgate.com/health,3.2,attack_surface=3,business_value=2,tech_exposure=4,gate_ease=10,cloud_surface=3,freshness=5
+## 2026-09-06 04:01:27 UTC [target] (model nemotron3)
+[NEW] `chatbot.dev.sipgate.com` — LIVE (HTTP/2 200, nginx/1.24.0, Google Cloud), serves HTML with `x-robots-tag: noindex`, socket.io endpoint accessible — contradicts prior "dev env externally inert" assessment
+[NEW] `team-uk.live.sipgate.com` — LIVE second team portal with identical CSP dev-origin leak (`frame-ancestors app.local.sipgate.com:3443` + `connect-src *.sipgate.com:3396`) — family-wide info disclosure confirmed
+[CHANGED] `app.dev.sipgate.com` — CSP probe with evil Origin: no ACAO/ACAC headers returned; CSP unchanged (wildcard `*.sipgate.com:3396` connect-src, `wss://*.sipgate.*` WS)
+[CHANGED] `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout), confirming KB "externally inert"
+[CHANGED] `api.sipgate.com/v2/swagger.json` — Live spec (144 paths, global `security: []`), re-confirms stale annotations vs edge-401 enforcement
+[CHANGED] `chatbot.sipgate.com/chat/session/socket.io/` — WS transport REJECTED for arbitrary Origin (evil → 400 no-ACAO); polling transport also blocks cross-origin reads (Vary:Origin, no ACAO)
+[PRIO] chatbot.dev.sipgate.com/chat/session/socket.io/,7.8,attack_surface=8,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.65,attack_surface=5,business_value=7,tech_exposure=5,gate_ease=10,cloud_surface=8,freshness=6
+[PRIO] app.dev.sipgate.com,6.7,attack_surface=6,business_value=5,tech_exposure=7,gate_ease=10,cloud_surface=6,freshness=8
+[PRIO] api.sipgate.com/v2/,6.3,attack_surface=7,business_value=8,tech_exposure=6,gate_ease=3,cloud_surface=5,freshness=7
+[PRIO] team-uk.live.sipgate.com,5.85,attack_surface=4,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=4,freshness=8
+[PRIO] chatbot.sipgate.com/chat/session/socket.io/,5.85,attack_surface=6,business_value=7,tech_exposure=5,gate_ease=5,cloud_surface=5,freshness=6
+[PRIO] team-de.live.sipgate.com,5.5,attack_surface=4,business_value=5,tech_exposure=5,gate_ease=10,cloud_surface=4,freshness=6
+[PRIO] login.sipgate.com/realms/third-party/,4.75,attack_surface=4,business_value=6,tech_exposure=4,gate_ease=5,cloud_surface=4,freshness=5
+[PRIO] api.sipgate.com/health,3.9,attack_surface=3,business_value=2,tech_exposure=4,gate_ease=10,cloud_surface=3,freshness=5
+[PRIO] payment.sipgate.com,3.6,attack_surface=3,business_value=7,tech_exposure=4,gate_ease=5,cloud_surface=5,freshness=5
 [HYP] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance
 class: AUTH
 asset: chatbot.dev.sipgate.com/chat/session/socket.io/

