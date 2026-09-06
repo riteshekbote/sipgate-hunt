@@ -136,3 +136,6 @@
 - 2026-09-06 REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable
 - 2026-09-06 REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads; identical to prod chatbot REJECT class
 - 2026-09-06 ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot with socket.io endpoint — contradicts prior "dev env externally inert"
+- 2026-09-06 ACCEPTED MISCONFIG @ integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *` — hardcoded in production JS bundle, expands dev attack surface
+- 2026-09-06 ACCEPTED INFO @ app.dev.sipgate.com: JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.116.x.x / 217.10.x.x
+- 2026-09-06 REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class

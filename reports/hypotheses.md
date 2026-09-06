@@ -526,3 +526,25 @@
 - LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-
 - LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
 - LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstr
+
+## RANKED HYPOTHESES 2026-09-06 20:28:47 UTC
+- [65] integration.dev.sipgate.com: Integration Dev Endpoint Exposure with Permissive CORS (from art/lead_nemotron3.txt)
+- [50] api.sipgate.com/v2/{portings/{portingId},devices/{deviceId},authorization/oauth2/clients/{clientId},voicemails/{voicemailId}}: Cross-tenant BOLA on credential-bearing /v2 resources (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: GET `https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/registrations/openid-connect` and the realm `/auth/realms/third-party` pag
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://integration.dev.sipgate.com/health, /swagger.json, /actuator/health, /webhooks, /callbacks, /api, /v2/health — with `-k` flag for self-signed
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. rev
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scop
+- LEARN: ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/accou
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads; identical to prod chatbot REJECT class
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as 
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot with socket.io endpoint — contradicts prior "dev env externally inert"
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401
+- LEARN: ACCEPTED MISCONFIG @ integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *` — hardcode
+- LEARN: ACCEPTED INFO @ app.dev.sipgate.com: JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integratio
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to pr
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstr

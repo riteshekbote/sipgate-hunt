@@ -1,4 +1,43 @@
-## 2026-09-06 17:42:26 UTC [target] (model bigpickle)
+## 2026-09-06 20:16:03 UTC [target] (model bigpickle)
+reasoning: The only known client credential (from rest-api-examples) returns invalid_client → revoked. DCR is gated by Trusted Hosts. No public client_id list for this realm found; `client_id=junit`/`web-app` rejected. Without a valid client credential or DCR access, no token obtainable.
+evidence_needed: a registered third-party client's client_id+secret, or a DCR Trusted-Hosts bypass — none demonstrated passively.
+verify_steps: PASSIVE only: enumerate client_id guesses at auth endpoint (rejected → no leak of validity beyond 400); do NOT active-token or register clients (mutating/live-auth prohibited).
+impact: if a live confidential client credential were leaked/derivable, attacker reaches social-scoped APIs (contacts/sms/balance/payment read). Severity HIGH; but not demonstrable. 
+testability: PASSIVE
+[NEXT] PROBE: GET `https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/registrations/openid-connect` and the realm `/auth/realms/third-party` page with a normal browser User-Agent to confirm no additional public registration/open redirect surface — read-only.
+[LEARN] REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. revoked/not registered — not a live credential exposure; the pattern is example-code-only.
+[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scope`), no Host-header bypass found; redirect_uri validation correct (invalid URI → 400); treat as hardened config, not a vulnerability.
+[LEARN] ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/account/balance/payment) — a legitimate high-value target if a client credential or DCR bypass is ever obtained.
+[RISK] sipgate: 10 — On the api surface the OIDC `third-party` realm is well-hardened: redirect_uri strictly validated, token endpoint requires valid client auth, DCR blocked by a Trusted Hosts policy, and the only publicly leaked API client credential is inert (`invalid_client`). Broad sensitive scopes exist but are unreachable without a valid client grant or DCR bypass, neither demonstrable passively. No confirmed in-scope API vulnerability this cycle.
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{portingId},devices/{deviceId},authorization/oauth2/clients/{clientId},voicemails/{voicemailId}}
+confidence: 50
+reasoning: fresh swagger still documents top-level per-id namespaces without user prefix (devices/{deviceId}, voicemails/{voicemailId}, history/{entryId}, portings/{portingId}); swagger lists `POST /devices/{deviceId}/credentials/password` (full device-credential reset, mutating) and `oauth2:clients:write`; unauth probes return uniform 401 empty-body BEFORE lookup → no unauth existence oracle; the cross-tenant boundary has never been exercised (prior attempts blocked by missing second tenant token).
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 (data/creds) instead of 403/404 only.
+verify_steps: AUTH_HELPED — after registering 2 test tenants, GET /v2/portings/{B-id}, GET /v2/devices/{B-id}, GET /v2/voicemails/{B-id}, GET /v2/authorization/oauth2/clients/{B-clientId} with A-bearer; expect 403/404 if safe, 200 = BOLA.
+impact: cross-tenant PII, SIP/device creds (password change = device takeover), OAuth client secrets → tenant compromise. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer / electron-updater swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 55
+reasoning: re-confirmed listable 200 with IsTruncated=true; artifact family includes `app-web-1.0.x.dmg/.zip/.blockmap` (electron-updater differential-update manifests = supply-chain surface); bucket stale since 2024-06-11; ACL/policy read denied; write path never probed — every other high-impact chain this cycle defused, this is the last un-contradicted one.
+evidence_needed: PUT/OVERWRITE success on unique object (reporter+legal sign-off; mutating test required).
+verify_steps: HUMAN single PUT `test-probe-$(date +%s).json` CT application/json → confirm 200 → immediately DELETE; do NOT touch existing installers/manifests.
+impact: supply-chain RCE for all softphone + desktop-app downloaders/auto-updaters. CRITICAL if writable.
+testability: HUMAN_ONLY
+[HYP] (dropped at self-critique) Dev chatbot socket.io WS arbitrary origin
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 15
+reasoning: superseded — prior direct WS-transport probe: evil Origin → 400 no-ACAO; polling Vary:Origin no-ACAO; byte-identical to prod REJECT; no browser-readable cross-origin channel.
+evidence_needed: none (contradicted empirically).
+verify_steps: none.
+impact: none demonstrable.
+testability: PASSIVE
+[NEXT] HUMAN: one session — (1) obtain reporter+legal sign-off then execute the standing single-PUT S3 write probe `PUT https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-<ts>.json` (CT application/json, verify 200, then DELETE the object); (2) register two independent sipgate test tenants, capture two bearer tokens, and differential-test cross-tenant BOLA: GET /v2/portings/{B-id}, /v2/devices/{B-id}, /v2/voicemails/{B-id}, /v2/authorization/oauth2/clients/{B-clientId} with tenant-A bearer → confirm 403/404 (safe) vs 200 (BOLA). These are the only two un-contradicted high-impact chains; all passive angles are exhausted this cycle (swagger unchanged, chatbot WS empirically rejected, OAuth implicit landmine defused, crt.sh unavailable).
+[RISK] sipgate: 45 — surface stable (swagger 144 unchanged, bucket still listable, chatbot WS rejected both envs); no new standalone critical chain surfaced this cycle; both surviving high-impact paths (S3 write ~55/HUMAN, cross-tenant BOLA 50/AUTH_HELPED) remain externally gated and unconfirmed. Program risk to holder unchanged pending those two gates.
 [PRIO] api.sipgate.com,8.5,attack_surface:9,business_value:9,tech_exposure:8,gate_ease:3,cloud_surface:4,freshness:8
 [PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,7.0,attack_surface:6,business_value:8,tech_exposure:7,gate_ease:9,cloud_surface:9,freshness:7
 [PRIO] login.sipgate.com,6.5,attack_surface:7,business_value:8,tech_exposure:7,gate_ease:3,cloud_surface:3,freshness:6
@@ -39,3 +78,23 @@ testability: HUMAN_ONLY
 [LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak
 [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401
 [RISK] sipgate: 45 — surface stable; no new standalone critical chain surfaced; both surviving high-impact paths (S3 write ~55/HUMAN, cross-tenant BOLA 50/AUTH_HELPED) remain externally gated; program risk unchanged pending those two gates
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: swagger documents top-level per-id namespaces without user prefix; documented paths return 401 empty-body BEFORE object lookup (verified this cycle: /v2/devices/nonexistent-xyz → 401), /v2/oauth2/clients & /v2/userinfo raw → 404 (truly-unknown); cross-tenant boundary never exercised because no second-tenant bearer exists; uniform edge authz confirmed
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 (data/creds) instead of 403/404
+verify_steps: AUTH_HELPED — after registering 2 test tenants, GET /v2/portings/{B-id}, GET /v2/devices/{B-id}, GET /v2/voicemails/{B-id}, GET /v2/authorization/oauth2/clients/{B-clientId}, GET /v2/history/{B-entryId} with A-bearer
+impact: cross-tenant PII, SIP/device creds (password reset = device takeover), OAuth client secrets → tenant compromise. CRITICAL if confirmed
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer / electron-updater swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 55
+reasoning: listable 200 re-confirmed; artifact family includes electron-updater .blockmap/.zip manifests (supply-chain surface); bucket stale since 2024-06-11; ACL/policy read denied; write path never probed; last un-contradicted high-impact chain
+evidence_needed: PUT/OVERWRITE success on unique object
+verify_steps: HUMAN single PUT `test-probe-$(date +%s).json` CT application/json → confirm 200 → immediately DELETE; do NOT touch existing installers/manifests; requires reporter+legal sign-off (mutating test)
+impact: supply-chain RCE for all softphone + desktop-app downloaders/auto-updaters. CRITICAL if writable
+testability: HUMAN_ONLY
+[NEXT] HUMAN: single session — (1) obtain reporter+legal sign-off then execute standing single-PUT S3 write probe `PUT https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-<ts>.json` (CT application/json, verify 200, then DELETE); (2) register two independent sipgate test tenants, capture two bearer tokens, and differential-test cross-tenant BOLA with tenant-A bearer on /v2/portings/{B-id}, /v2/devices/{B-id}, /v2/devices/{B-id}/credentials/password, /v2/voicemails/{B-id}, /v2/history/{B-entryId}, /v2/authorization/oauth2/clients/{B-clientId} → confirm 403/404 (safe) vs 200/204 (BOLA). These are the only two un-contradicted high-impact chains; all passive angles are exhausted (swagger identical, raw-path 404 confirmed, edge authz uniform).
+[RISK] sipgate: 45 — surface fully stable across cycles (swagger 144 unchanged, edge authz uniform, raw-path 404 semantics confirmed); both surviving high-impact chains remain externally gated (S3-write HUMAN_ONLY, cross-tenant BOLA AUTH_HELPED) and unconfirmed; no new standalone critical chain surfaced this cycle; program risk to holder unchanged pending those two HUMAN/AUTH gates.

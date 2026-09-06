@@ -244,3 +244,5 @@ www.sipgate.de
 - CHANGED sipgate-desktop-app.s3: publicly listable bucket re-confirmed (439 keys, versioning disabled, write path untested — HUMAN sign-off required)
 
 ## 2026-09-06 17:45:31 UTC
+
+## 2026-09-06 20:28:47 UTC

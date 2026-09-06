@@ -1572,3 +1572,46 @@ testability: HUMAN_ONLY
 [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated
 [LEARN] REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable
 [RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Cross-tenant BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, and potential object-level authz-drift on high-value API endpoints.
+## 2026-09-06 20:28:39 UTC [target] (model nemotron3)
+[HYP] Integration Dev Endpoint Exposure with Permissive CORS
+class: MISCONFIG
+asset: integration.dev.sipgate.com
+confidence: 65
+reasoning: Newly alive dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *` and no authentication requirement visible; hardcoded in production JS bundle served from app.dev.sipgate.com; internal integration service potentially exposing webhook/callback handlers
+evidence_needed: Enumerate paths on integration.dev.sipgate.com (swagger, health, webhooks, callbacks); verify if any endpoint accepts user-supplied URLs or reflects sensitive data
+verify_steps: GET https://integration.dev.sipgate.com/health, /swagger.json, /actuator/health, /webhooks, /callbacks, /api — all with -k flag for self-signed cert; check for CORS reflection with credentials
+impact: Internal integration service exposure enabling SSRF pivot, webhook hijacking, or callback manipulation; severity MEDIUM (info leak + attack surface) → HIGH if SSRF/webhook handler found
+testability: PASSIVE
+[HYP] Cross-Tenant BOLA on Credential-Bearing /v2 Resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: Public swagger (144 paths) documents dual parameter names and legacy resources; 5 ops marked noauth but all return 401 unauthenticated → security annotations stale, implying per-endpoint authz drift; KB 2026-09-05/06 confirms uniform edge auth but object-level tenant isolation untested
+evidence_needed: Two authenticated tenant sessions showing 200 for a resourceId belonging to the other tenant on /v2/portings/{id}, /v2/devices/{id}/credentials/password, /v2/authorization/oauth2/clients/{clientId}
+verify_steps: PASSIVE triage: GET /v2/portings, /v2/log/webhooks, /v2/app/tacs, /v2/settings/sipgateio without auth — flag any non-401/404/405; full cross-tenant test requires AUTH_HELPED sessions
+impact: Cross-tenant PII/call-history/device-SIP-credential exposure or overwrite; severity CRITICAL if confirmed
+testability: AUTH_HELPED
+[HYP] S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: Publicly listable S3 bucket exposes full softphone installer index (1.3.0–1.17.19 + latest aliases, stale since 2024-06-11); ACL/policy reads denied (403); write path NOT tested — if writable, installer poisoning → full softphone compromise on customer endpoints
+evidence_needed: Ability to PUT/OVERWRITE an object (mutating operation requiring reporter/legal sign-off)
+verify_steps: PASSIVE list already done (439 keys, VersionId=null, IsTruncated=false); write-check is HUMAN with explicit sign-off only
+impact: Supply-chain compromise of desktop softphone → RCE on customer machines; severity CRITICAL if write permitted
+testability: HUMAN_ONLY
+[PARKED] Integration Dev Endpoint Exposure with Permissive CORS: confidence 65 but only 403 observed so far; no sensitive data leak or SSRF vector confirmed — keep as active probe target  
+[PARKED] Cross-Tenant BOLA: confidence 50, requires AUTH_HELPED — cannot verify passively; parked until tenant pairs available  
+[PARKED] S3 Bucket Write Access: confidence 60 but HUMAN_ONLY — cannot test without sign-off; parked per rules  
+[FINAL] 1. Integration Dev Endpoint Exposure with Permissive CORS (confidence 65, PASSIVE)  
+[FINAL] 2. Cross-Tenant BOLA on Credential-Bearing /v2 Resources (confidence 50, AUTH_HELPED)  
+[FINAL] 3. S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise (confidence 60, HUMAN_ONLY)
+[NEXT] PROBE: GET https://integration.dev.sipgate.com/health, /swagger.json, /actuator/health, /webhooks, /callbacks, /api, /v2/health — with `-k` flag for self-signed cert, enumerate paths and check for CORS reflection with credentials, user-supplied URL parameters, or sensitive data exposure. Read-only, ≤1 rps.
+[LEARN] ACCEPTED MISCONFIG @ integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *` — hardcoded in production JS bundle, expands dev attack surface  
+[LEARN] ACCEPTED INFO @ app.dev.sipgate.com: JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.116.x.x / 217.10.x.x  
+[LEARN] REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class  
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin  
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)  
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated  
+[LEARN] REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable
+[RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io, NEWLY ALIVE integration.dev endpoint with permissive CORS. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev + integration.dev targets; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Cross-tenant BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, and potential object-level authz-drift on high-value API endpoints.
