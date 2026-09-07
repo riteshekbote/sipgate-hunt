@@ -123,3 +123,61 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-07 08:24:16 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-07 14:29:55 UTC
+[HYP] Hardcoded Internal Redis Endpoint Across 15 CLINQ Bridge Repos
+class: MISCONFIG
+asset: sipgate/clinq-bridge-{sipgate,hubspot,salesforce,google,pipedrive,podio,zammad,zoho,freshsales,copper,agilecrm,1sales,outlook,pipeliner,moco}/k8s/template/deployment.yml
+confidence: 95
+reasoning: All 15 CLINQ bridge K8s deployment manifests hardcode the same internal Redis
+impact: HIGH — Exposes internal Redis endpoint on private network. If any sipgate-adjacent service
+verify_steps: 1) DNS/ICMP 10.37.248.211 from any internal network. 2) Verify GCP project
+[HYP] TLS Certificate Verification Disabled for Redis in CLINQ Bridge
+class: MISCONFIG
+asset: sipgate/clinq-bridge/src/cache/storage/redis-storage-adapter.ts:13-15
+confidence: 85
+reasoning: The Redis client connects with `tls: { rejectUnauthorized: false }`, disabling TLS
+impact: MEDIUM — Enables MITM on Redis connections despite TLS being configured. Cached contact
+verify_steps: 1) Confirm the production deployment uses the rediss:// URL (it does). 2) Verify
+[HYP] Hardcoded OAuth Client IDs Across Multiple CLINQ Bridge Deployments
+class: SECRET
+asset: sipgate/clinq-bridge-{hubspot,pipedrive,podio,zoho,salesforce}/k8s/template/deployment.yml
+confidence: 90
+reasoning: Multiple deployment manifests hardcode OAuth client IDs in plaintext:
+impact: LOW-MEDIUM — Client IDs alone don't grant access (secrets are needed), but they reveal
+verify_steps: 1) Check if these client IDs are registered in the respective OAuth provider
+[HYP] Hardcoded API Keys and DB Credentials in Radau docker-compose.yml
+class: SECRET
+asset: sipgate/radau/docker-compose.yml:18-21
+confidence: 95
+reasoning: docker-compose.yml contains hardcoded plaintext credentials:
+impact: MEDIUM — If any radau instance uses these default keys, the management API (user
+verify_steps: 1) Send Authorization header with these keys to any radau /user or /token endpoint.
+[HYP] Default CORS AllowAllOrigins + AllowCredentials in Radau
+class: MISCONFIG
+asset: sipgate/radau/main.go:16-17
+confidence: 85
+reasoning: When CORS_ORIGINS env var is not set (the default), initCORSConfig() sets
+impact: MEDIUM — An attacker-controlled page can perform cross-origin requests with the user's
+verify_steps: 1) Confirm the default path (no CORS_ORIGINS env) is the production configuration.
+[HYP] Hardcoded OAuth Client Credentials in REST API Example
+class: SECRET
+asset: sipgate/rest-api-examples/webapp-nodejs/.npmrc.dist:2-3
+confidence: 60
+reasoning: Contains client_id=2414245-0-e24e0091-8265-11e7-93e7-e5fb754b756f and
+impact: LOW — If the sipgate OAuth server has not revoked this client credential, it could be
+verify_steps: 1) Attempt OAuth token exchange using these credentials against
+[HYP] Hardcoded Session Secret in REST API Example
+class: OTHER
+asset: sipgate/rest-api-examples/webapp-nodejs/index.js:30
+confidence: 70
+reasoning: Express session middleware uses secret: 'sipgate-rest-api-demo' — a hardcoded,
+impact: LOW — Session fixation risk if used in production. In an example repo, impact is
+verify_steps: 1) Verify no production instances copy this exact secret.
+[HYP] Default Cookie Secret in Ansible Logger
+class: MISCONFIG
+asset: sipgate/ansible-logger/ansible-logger-web/includes/Slim/Slim.php:307
+confidence: 70
+reasoning: Default cookie secret key set to 'CHANGE_ME'. If deployed without changing this,
+impact: LOW — Session forgery if ansible-logger is deployed in production with default config.
+verify_steps: 1) Check if ansible-logger is deployed in production. 2) Verify if the secret
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
