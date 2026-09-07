@@ -269,3 +269,5 @@ reasoning: The browser extension manifest exposes internal API endpoints includi
 impact: LOW — Information disclosure of internal infrastructure; the dev endpoint is HTTP (not HTTPS).
 verify_steps: 1) Verify if `api.dev.sipgate.net` and `samurai.sipgate.net` are accessible externally. 2) Check if the extension is still maintained.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-07 23:53:30 UTC
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
