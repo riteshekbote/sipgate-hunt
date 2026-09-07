@@ -1827,3 +1827,22 @@ testability: AUTH_HELPED
 [LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin
 [RISK] sipgate: 52 — new PROD asset (integration.sipgate.com) disclosed with full integration-platform spec + permissive CORS + declared-public OAuth handlers, raising surface (formerly unknown). Swagger-ui 5.x live at api.sipgate.com/v2/doc/* with implicit-only `sipgate-swagger-ui` client exposing extreme scopes (same-origin-XSS amplifier). All data paths remain externally 403-gated and no standalone exploit confirmed this cycle; surviving high-impact chains (Prod-Platypus gate bypass ~55, cross-tenant /v2 BOLA 50/AUTH_HELPED, S3-write 55/HUMAN) all remain gated on bypass/tenant/HUMAN sign-off. Program risk up modestly (+2) from newly-confirmed prod platform disclosure and SSRF/OAuth chain potential once any gate weakness or realm token is obtained.
 ## 2026-09-07 15:56:17 UTC [target] (model bigpickle)
+## 2026-09-07 19:58:28 UTC [target] (model bigpickle)
+[HYP] Firebase-JWT gate continuity: token minting for the revalidated Firebase project
+class: AUTH
+asset: integration.sipgate.com / integration.sipgate.cloud / integration.dev.sipgate.com
+confidence: 55
+reasoning: /metrics exposes gate state: `firebase_jwt_forbidden_requests` 77707 (live increments per my invalid-JWT probe), `api_key_forbidden_requests` ≤6 (Firebase JWT dominant). Swagger declares Keycloak oauth2 to login.sipgate.com sipgate-apps realm, but the live gate validates Firebase JWT/API keys — **auth-mechanism drift** (spec Keycloak vs runtime Firebase). Chatbot dev builds load react from unpkg (dev toolchain), no embedded Firebase config found in chatbot demo.js or prod bundle (bundle has 0 firebase refs) — so the token source is not in the public SPA; it must be acquired at OAuth callback (oauth2/callback exchanges code→Firebase token) or a hidden bot/web surface.
+evidence_needed: (a) any Firebase project id / web API key reference leaked in any public asset (chatbot builds, sourcemap at chatbot.dev /lib/demo.js.map, GKE ingress headers), or (b) confirm `/oauth2/callback` performs code→Firebase-session exchange by triggering with a Keycloak code (requires auth).
+verify_steps: PROBE (read-only): (1) fetch `https://chatbot.dev.sipgate.com/lib/demo.js.map` next — grep for firebase/API key; (2) compare `GET /metrics` before/after a single forged-but-structurally-valid Firebase JWT (already shows counter incremented, proving validation path); (3) check `/swagger/oauth2-redirect.html` on `.cloud` vs `.com` — tokenUrl differences reveal token-exchange target.
+impact: If a valid Firebase session token can be minted/acq for the trusted project → full 26-op Platypus API (contacts/call-logs/entities/streaming) with Keycloak-less direct auth. MEDIUM-HIGH if gate-only; the .dev host metrics also leaked live counters confirming same validator. No standalone exploit yet (no token source found passively).
+testability: PASSIVE (deep) → AUTH_HELPED for code exchange
+[HYP] spec-vs-runtime OAuth handler reachability (oauth2/redirect no sec)
+class: OATH
+asset: integration.sipgate.com/oauth2/{redirect,callback}
+confidence: 40
+reasoning: Spec marks both no-security; external 403 gate blocks; the /metrics signal shows token-validator precedes routing, so handler-behind-gate is plausible but unproven. No bypass found on gate.
+evidence_needed: a way through the gate (none found after ~40 variants) → downgraded.
+impact: if reachable → redirect_uri pump / code interception. Currently inert.
+testability: PASSIVE
+[NEXT] PROBE: fetch `https://chatbot.dev.sipgate.com/lib/demo.js.map` and grep for `firebase|apiKey|AIza|project_?id|storageBucket|appId` (zero-mutation; completed for demo.js, map now available); then `GET https://integration.sipgate.cloud/swagger/oauth2-redirect.html` and diff its tokenUrl/tokenendpoint vs `.com` to locate the token-exchange target host (Keycloak vs Firebase identity).
