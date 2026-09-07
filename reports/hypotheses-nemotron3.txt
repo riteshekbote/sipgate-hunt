@@ -1,16 +1,16 @@
-## 2026-09-06 22:13:51 UTC [target] (model nemotron3)
+## 2026-09-07 00:06:02 UTC [target] (model nemotron3)
 [NEW] integration.dev.sipgate.com — NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle from app.dev.sipgate.com
 [NEW] app.dev.sipgate.com — JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.116.x.x / 217.10.x.x
 [CHANGED] chatbot.dev.sipgate.com WS — direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
 [CHANGED] api.sipgate.com/v2/doc/oauth2-redirect.html — Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin
 [CHANGED] team-uk.live.sipgate.com — confirmed second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)
 [CHANGED] api.sipgate.com/v2/swagger.json — live spec (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated
-[PRIO] integration.dev.sipgate.com,8.1,attack_surface=8,business_value=7,tech_exposure=7,gate_ease=10,cloud_surface=8,freshness=10
+[PRIO] integration.dev.sipgate.com,8.10,attack_surface=8,business_value=7,tech_exposure=7,gate_ease=10,cloud_surface=8,freshness=10
 [PRIO] app.dev.sipgate.com,8.05,attack_surface=9,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
 [PRIO] login.sipgate.com,8.75,attack_surface=8,business_value=10,tech_exposure=9,gate_ease=10,cloud_surface=7,freshness=7
-[PRIO] api.sipgate.com/v2,7.9,attack_surface=9,business_value=10,tech_exposure=8,gate_ease=3,cloud_surface=8,freshness=7
-[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,7.4,attack_surface=7,business_value=10,tech_exposure=6,gate_ease=5,cloud_surface=9,freshness=6
-[PRIO] team-uk.live.sipgate.com,6.8,attack_surface=6,business_value=5,tech_exposure=7,gate_ease=10,cloud_surface=6,freshness=8
+[PRIO] api.sipgate.com/v2,7.90,attack_surface=9,business_value=10,tech_exposure=8,gate_ease=3,cloud_surface=8,freshness=7
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,7.40,attack_surface=7,business_value=10,tech_exposure=6,gate_ease=5,cloud_surface=9,freshness=6
+[PRIO] team-uk.live.sipgate.com,6.80,attack_surface=6,business_value=5,tech_exposure=7,gate_ease=10,cloud_surface=6,freshness=8
 [HYP] Integration Dev Endpoint SSRF via Webhook/Callback Handlers
 class: SSRF
 asset: integration.dev.sipgate.com

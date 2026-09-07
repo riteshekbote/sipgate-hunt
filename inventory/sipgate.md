@@ -254,3 +254,28 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html — Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert c
 - CHANGED team-uk.live.sipgate.com — confirmed second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)
 - CHANGED api.sipgate.com/v2/swagger.json — live spec (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated
+
+## 2026-09-07 00:12:56 UTC
+- NEW `chatbot.dev.sipgate.com` — LIVE (HTTP/2 200, nginx/1.24.0, via Google Cloud), serves HTML with `x-robots-tag: noindex`, socket.io endpoint likely accessible — contrary to KB implication of dev env in
+- NEW `team-uk.live.sipgate.com` — LIVE (from KB 2026-09-05), second team portal with identical CSP dev-origin leak (`frame-ancestors app.local.sipgate.com:3443`) + `connect-src *.sipgate.com:3396` — family
+- CHANGED `app.dev.sipgate.com` — CSP reflects arbitrary Origin? No ACAO/ACAC headers returned on evil Origin probe; CSP unchanged (wildcard `*.sipgate.com:3396` connect-src, `wss://*.sipgate.*` WS).
+- CHANGED `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout), confirming KB "externally inert".
+- CHANGED `api.sipgate.com/v2/swagger.json` — Live spec (144 paths, global `security: []`), re-confirms stale annotations vs edge-401 enforcement.
+- NEW `chatbot.dev.sipgate.com` — LIVE (HTTP/2 200, nginx/1.24.0, Google Cloud), serves HTML with `x-robots-tag: noindex`, socket.io endpoint accessible — contradicts prior "dev env externally inert" assess
+- NEW `team-uk.live.sipgate.com` — LIVE second team portal with identical CSP dev-origin leak (`frame-ancestors app.local.sipgate.com:3443` + `connect-src *.sipgate.com:3396`) — family-wide info disclosure 
+- CHANGED `app.dev.sipgate.com` — CSP probe with evil Origin: no ACAO/ACAC headers returned; CSP unchanged (wildcard `*.sipgate.com:3396` connect-src, `wss://*.sipgate.*` WS)
+- CHANGED `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout), confirming KB "externally inert"
+- CHANGED `api.sipgate.com/v2/swagger.json` — Live spec (144 paths, global `security: []`), re-confirms stale annotations vs edge-401 enforcement
+- CHANGED `chatbot.sipgate.com/chat/session/socket.io/` — WS transport REJECTED for arbitrary Origin (evil → 400 no-ACAO); polling transport also blocks cross-origin reads (Vary:Origin, no ACAO)
+- NEW integration.dev.sipgate.com — NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle from app.dev.sipgate.com
+- NEW app.dev.sipgate.com — JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.1
+- CHANGED chatbot.dev.sipgate.com WS — direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html — Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert c
+- CHANGED team-uk.live.sipgate.com — confirmed second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)
+- CHANGED api.sipgate.com/v2/swagger.json — live spec (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated
+- NEW integration.dev.sipgate.com — NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle from app.dev.sipgate.com
+- NEW app.dev.sipgate.com — JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.1
+- CHANGED chatbot.dev.sipgate.com WS — direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html — Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert c
+- CHANGED team-uk.live.sipgate.com — confirmed second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)
+- CHANGED api.sipgate.com/v2/swagger.json — live spec (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated

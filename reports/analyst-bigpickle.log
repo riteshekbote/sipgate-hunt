@@ -10320,3 +10320,1441 @@ testability: HUMAN_ONLY
 ---
 
 **Executive summary:** The engagement has converged on two unconfirmed high-impact chains, both gated by external requirements (human sign-off for S3 write; two test tenants for BOLA). All passive/unauthenticated angles against `api.sipgate.com`, `chatbot.sipgate.com`, `login.sipgate.com`, and dev endpoints have been exhausted. The KB confirms uniform edge authz, stale swagger annotations, and origin-aware WS/polling on chatbot. No new passive attack surface emerged this cycle. The next progression requires human action on either the S3 write probe or the AUTH_HELPED BOLA differential test.
+===== ANALYST bigpickle 2026-09-07 00:12:56 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m# [0mTodos
+[•] STEP 1 — DELTA: Compare inventory+knowledge+last leads against current surface
+[ ] STEP 2 — PRIORITIZE: Score top assets 0-10 on attack dimensions
+[ ] STEP 3 — HYPOTHESES: Top 3 assets, max 1 hypothesis each
+[ ] STEP 4 — SELF-CRITIQUE: Drop low-confidence or REJECTED hypotheses
+[ ] STEP 5 — NEXT ACTION: One concrete probe/scan/human action
+[ ] STEP 6 — LEARNING: Log rejected/accepted findings
+[ ] STEP 7 — RISK: Score program risk 0-100
+[0m
+Let me review the current state. Let me check the workspace for the lead files and current probes referenced in the hypotheses.
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/art/ 2>/dev/null; echo "---"; ls -la /home/runner/work/sipgate-hunt/sipgate-hunt/ 2>/dev/null
+---
+total 244
+drwxr-xr-x 12 runner runner  4096 Sep  7 00:02 .
+drwxr-xr-x  3 runner runner  4096 Sep  7 00:02 ..
+drwxr-xr-x  7 runner runner  4096 Sep  7 00:02 .git
+drwxr-xr-x  3 runner runner  4096 Sep  7 00:02 .github
+-rw-r--r--  1 runner runner  1755 Sep  7 00:02 README.md
+-rw-r--r--  1 runner runner   641 Sep  7 00:03 analyst-out.txt
+-rw-r--r--  1 runner runner 78328 Sep  7 00:02 analyst-prompt.txt
+-rw-r--r--  1 runner runner 74511 Sep  7 00:02 ctx.txt
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 inventory
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 knowledge
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 leads
+-rw-r--r--  1 runner runner   899 Sep  7 00:02 probe-results.md
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 recon-notes
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 reports
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 reposcan-raw
+-rw-r--r--  1 runner runner  3230 Sep  7 00:02 scope.yml
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 scripts
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_bigpickle.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_laguna.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_ling3.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_longcat.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_mimo.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_nemotron3.json
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 triage
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && ls leads/ inventory/ knowledge/ triage/ reports/ scripts/ 2>/dev/null; echo "=== state ==="; cat state_bigpickle.json; echo; echo "=== analyst-out ==="; cat analyst-out.txt; echo "=== probe-results ==="; cat probe-results.md
+inventory/:
+sipgate.md
+
+knowledge/:
+index.md
+
+leads/:
+lead-bigpickle.md
+lead-laguna.md
+lead-ling3.md
+lead-longcat.md
+lead-mimo.md
+lead-nemotron3.md
+reposcan-sipgate.md
+
+reports/:
+analyst-bigpickle.log
+analyst-laguna.log
+analyst-ling3.log
+analyst-longcat.log
+analyst-nemotron3.log
+hypotheses-bigpickle.txt
+hypotheses-laguna.txt
+hypotheses-ling3.txt
+hypotheses-longcat.txt
+hypotheses-nemotron3.txt
+hypotheses.md
+valid-bugs.md
+
+scripts/:
+sync-issues.py
+
+triage/:
+run-2026-09-02-21-54.md
+run-2026-09-02-23-57.md
+run-2026-09-03-04-11.md
+run-2026-09-03-09-00.md
+run-2026-09-03-13-31.md
+run-2026-09-03-17-15.md
+run-2026-09-03-19-56.md
+run-2026-09-03-22-30.md
+run-2026-09-04-00-35.md
+run-2026-09-04-05-08.md
+run-2026-09-04-09-44.md
+run-2026-09-04-14-08.md
+run-2026-09-04-17-40.md
+run-2026-09-04-19-55.md
+run-2026-09-04-22-17.md
+run-2026-09-05-00-13.md
+run-2026-09-05-04-40.md
+run-2026-09-05-08-40.md
+run-2026-09-05-12-06.md
+run-2026-09-05-15-22.md
+run-2026-09-05-17-39.md
+run-2026-09-05-19-33.md
+run-2026-09-05-21-41.md
+run-2026-09-05-23-46.md
+run-2026-09-06-04-06.md
+run-2026-09-06-08-44.md
+run-2026-09-06-12-47.md
+run-2026-09-06-16-07.md
+run-2026-09-06-18-25.md
+run-2026-09-06-20-49.md
+run-2026-09-06-22-50.md
+=== state ===
+{"phase": "POC", "target": "api"}
+=== analyst-out ===
+[0m
+> build · big-pickle
+[0m
+[0m# [0mTodos
+[•] STEP 1 — DELTA: Compare inventory+knowledge+last leads against current surface
+[ ] STEP 2 — PRIORITIZE: Score top assets 0-10 on attack dimensions
+[ ] STEP 3 — HYPOTHESES: Top 3 assets, max 1 hypothesis each
+[ ] STEP 4 — SELF-CRITIQUE: Drop low-confidence or REJECTED hypotheses
+[ ] STEP 5 — NEXT ACTION: One concrete probe/scan/human action
+[ ] STEP 6 — LEARNING: Log rejected/accepted findings
+[ ] STEP 7 — RISK: Score program risk 0-100
+[0m
+Let me review the current state. Let me check the workspace for the lead files and current probes referenced in the hypotheses.
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/art/ 2>/dev/null; echo "---"; ls -la /home/runner/work/sipgate-hunt/sipgate-hunt/ 2>/dev/null
+---
+total 244
+drwxr-xr-x 12 runner runner  4096 Sep  7 00:02 .
+drwxr-xr-x  3 runner runner  4096 Sep  7 00:02 ..
+drwxr-xr-x  7 runner runner  4096 Sep  7 00:02 .git
+drwxr-xr-x  3 runner runner  4096 Sep  7 00:02 .github
+-rw-r--r--  1 runner runner  1755 Sep  7 00:02 README.md
+-rw-r--r--  1 runner runner   641 Sep  7 00:03 analyst-out.txt
+-rw-r--r--  1 runner runner 78328 Sep  7 00:02 analyst-prompt.txt
+-rw-r--r--  1 runner runner 74511 Sep  7 00:02 ctx.txt
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 inventory
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 knowledge
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 leads
+-rw-r--r--  1 runner runner   899 Sep  7 00:02 probe-results.md
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 recon-notes
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 reports
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 reposcan-raw
+-rw-r--r--  1 runner runner  3230 Sep  7 00:02 scope.yml
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 scripts
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_bigpickle.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_laguna.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_ling3.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_longcat.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_mimo.json
+-rw-r--r--  1 runner runner    33 Sep  7 00:02 state_nemotron3.json
+drwxr-xr-x  2 runner runner  4096 Sep  7 00:02 triage
+[0m
+=== probe-results ===
+
+## 2026-09-02 21:56:19 UTC
+
+
+## 2026-09-02 23:58:18 UTC
+
+
+## 2026-09-03 04:11:02 UTC
+
+
+## 2026-09-03 09:00:28 UTC
+
+
+## 2026-09-03 13:32:10 UTC
+
+
+## 2026-09-03 17:20:36 UTC
+
+
+## 2026-09-03 20:17:13 UTC
+
+
+## 2026-09-03 22:33:27 UTC
+
+
+## 2026-09-04 00:50:23 UTC
+
+
+## 2026-09-04 05:09:31 UTC
+
+
+## 2026-09-04 09:52:41 UTC
+
+
+## 2026-09-04 14:17:10 UTC
+
+
+## 2026-09-04 17:48:42 UTC
+
+
+## 2026-09-04 20:05:47 UTC
+
+
+## 2026-09-04 22:21:10 UTC
+
+
+## 2026-09-05 00:18:49 UTC
+
+
+## 2026-09-05 04:44:20 UTC
+
+
+## 2026-09-05 08:45:49 UTC
+
+
+## 2026-09-05 12:12:08 UTC
+
+
+## 2026-09-05 15:25:31 UTC
+
+
+## 2026-09-05 17:42:02 UTC
+
+
+## 2026-09-05 19:37:52 UTC
+
+
+## 2026-09-05 21:50:48 UTC
+
+
+## 2026-09-05 23:45:04 UTC
+
+
+## 2026-09-06 04:14:13 UTC
+
+
+## 2026-09-06 08:40:48 UTC
+
+
+## 2026-09-06 12:30:51 UTC
+
+
+## 2026-09-06 15:53:17 UTC
+
+
+## 2026-09-06 17:45:31 UTC
+
+
+## 2026-09-06 20:28:47 UTC
+
+
+## 2026-09-06 22:14:00 UTC
+[0m
+Let me look at the latest triage run and my own lead/hypotheses files, plus the nemotron lead which produced the current top hypothesis about integration.dev.sipgate.com SSRF.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && echo "=== LATEST TRIAGE ===" && cat triage/run-2026-09-06-22-50.md; echo "=== LEAD NEMOTRON ===" && cat leads/lead-nemotron3.md; echo "=== LEAD BIGPICKLE ===" && cat leads/lead-bigpickle.md
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_0792d03e40016NWHNuvIFLjEYb
+
+class: AUTH
+asset: chatbot.sipgate.com/chat/session/socket.io/
+confidence: 55
+reasoning: KB 2026-09-05 confirms polling transport blocks cross-origin reads (Vary:Origin, no ACAO). Direct WS handshake test (KB 2026-09-05 REJECTED) shows evil Origin → 400 no-ACAO; same-origin → 400 with ACAO. However, socket.io WS handshake may accept connection before origin validation (engine.io allowRequest callback runs post-upgrade). Production JS uses getToken() for socket auth, but if WS handshake completes (101) before auth validation on namespace/events, attacker page could establish WS connection and intercept/inject chat messages. CSP on app.sipgate.com allows wss://*.sipgate.*.
+evidence_needed: Confirm WebSocket handshake from arbitrary Origin returns 101 Switching Protocols (not 400); inspect frames for auth challenge vs immediate session data; verify socket.io server allowRequest/origin config.
+verify_steps: WS handshake: wss://chatbot.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket with Origin: https://evil.example — confirm 101; if 101, send unauthenticated socket.io packet (0{"sid":"...","upgrades":[],"pingInterval":25000,"pingTimeout":20000}) — observe if server rejects or processes; check for ACAO on WS response headers.
+impact: Session hijack of customer chat sessions = PII exposure (chat transcripts, account info); if admin/support chat → lateral movement. Severity: HIGH.
+testability: HUMAN_ONLY
+[HYP] S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: KB 2026-09-05 re-confirmed publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19 + latest aliases, stale since 2024-06-11). ACL/policy reads denied but write path NOT tested (mutating, HUMAN sign-off required). If bucket policy allows PutObject from authenticated AWS principals (or public-write misconfig), attacker could upload malicious installer signed with valid cert (or swap .exe/.msi) and serve to users via latest aliases. Softphone installers run with user privileges — supply-chain RCE.
+evidence_needed: Bucket policy allowing s3:PutObject from broad principal; or ACL granting WRITE/WRITE_ACP to AuthenticatedUsers/AllUsers; or bucket versioning enabled allowing overwrite.
+verify_steps: HEAD https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/ — confirm bucket exists; GET ?list-type=2 — confirm listing works; (HUMAN_ONLY) Single PUT probe with unique object name (test-<uuid>.json) and application/json CT to verify write permission — DELETE immediately after.
+impact: Supply-chain compromise of desktop softphone (Windows/macOS/Linux) → RCE on customer endpoints, credential theft, VoIP toll fraud. Severity: CRITICAL.
+testability: HUMAN_ONLY
+[HYP] Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration
+class: MISCONFIG
+asset: app.dev.sipgate.com
+confidence: 70
+reasoning: KB 2026-09-05: Live dev SPA on Fastly CDN serves identical production JS bundle (main-D04St2Sb.js, 5.65MB) with no IP restriction. Bundle hardcodes internal RFC1918 hostnames and ports: api.local.sipgate.com:3396, app.local.sipgate.com:3443, payment.local.sipgate.com:8080, team-de.local.sipgate.com:10443, team-uk.local.sipgate.com:10443, login.dev.sipgate.com, chatbot.dev.sipgate.com, plus new .net TLD hosts (admin.dev.sipgate.net, integration.dev.sipgate.com). Dev Keycloak realm (login.dev.sipgate.com) returns HTTP 000 (dead); dev API (api.dev.sipgate.com) returns 403 (WAF). However, internal service mesh topology, port assignments, and naming conventions fully disclosed. If any sipgate service has SSRF (e.g., webhook handler, PDF generator, image fetcher), attacker can target disclosed internal endpoints.
+evidence_needed: Confirm no other dev subdomains resolve (login.dev, chatbot.dev, team-de.dev, payment.dev); check if any public sipgate endpoint accepts user-supplied URLs (webhooks, callbacks, imports); enumerate additional internal hosts referenced in dev JS bundle source map or chunk files.
+verify_steps: GET https://app.dev.sipgate.com — verify JS bundle hash matches production; GET https://app.dev.sipgate.com with Origin:https://evil.example — check CORS headers; DNS resolve login.dev.sipgate.com, chatbot.dev.sipgate.com, team-de.dev.sipgate.com, payment.dev.sipgate.com — confirm dead/alive; GET https://api.sipgate.com/v2/webhooks (or similar) — check if user-supplied URL parameter exists.
+impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement if any SSRF vector exists. Severity: MEDIUM (info leak) → HIGH (if SSRF chain found).
+testability: PASSIVE
+[PARKED] Production Chatbot Socket.io WebSocket Transport Origin Validation Bypass: KB 2026-09-05 REJECTED direct WS arbitrary-origin reads (evil→400 no-ACAO; same-origin→400 with ACAO) — browser-readable arbitrary-origin channel NOT demonstrable on WS either; earlier "accepts arbitrary origins" was headless-handshake-only. Confidence 55 but evidence shows WS handshake itself rejects arbitrary Origin at TCP/HTTP upgrade layer. No verify path that yields 101 from arbitrary Origin per KB.
+[FINAL] 1. S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise (confidence 60, HUMAN_ONLY)
+[FINAL] 2. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration (confidence 70, PASSIVE)
+[NEXT] PROBE: GET https://app.dev.sipgate.com with Origin: https://evil.example — check for CORS headers (ACAO, ACAC) on dev SPA; DNS resolve login.dev.sipgate.com, chatbot.dev.sipgate.com, team-de.dev.sipgate.com, payment.dev.sipgate.com — confirm which dev subdomains resolve/alive. Read-only, ≤1 rps.
+[LEARN] REJECTED AUTH @ chatbot.sipgate.com WS: direct WS-transport responses origin-aware (evil → 400 no-ACAO; same-origin → 400 with ACAO); browser-readable arbitrary-origin channel not demonstrable on polling or WS — earlier "accepts arbitrary origins" was headless-handshake-only.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec relocated/live (144 paths, global security=[] => spec-claims-public vs edge-401) — re-confirms stale spec annotations, no server authz drift.
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2: 6 newly-tested paths (/calls, /channels, /app/events, /balance, /autorecordings/greetings, numbers/quickdial/validation) and /v1/* → uniform 401/404; userId-prefixed sms/fax topology confirmed.
+[LEARN] ACCEPTED MISCONFIG @ sipgate-desktop-app.s3: re-confirmed listable bucket, stale 2024-06-11, write path untested (HUMAN sign-off required).
+[LEARN] REJECTED AUTH @ app.dev.sipgate.com: login.dev.sipgate.com dead (HTTP 000) and api.dev.sipgate.com 403 → dev env externally inert; dev weaker-auth/ATO path deflated to static info-leak only.
+[LEARN] CHANGED AUTH @ chatbot.sipgate.com: polling transport serves Vary:Origin with no ACAO for arbitrary origin → cross-origin response reads blocked; "accepts arbitrary origins" narrowed to WS transport (HUMAN_ONLY) — then WS also REJECTED per direct test.
+[LEARN] ACCEPTED INFO @ api.sipgate.com: public swagger.json (144 paths) + /translations/{language} unauthenticated; spec security annotations stale vs server behavior — authz-drift triage input.
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2: every docd high-value path returns 401 empty-body unauth; 404 only for truly-unknown paths. Stale swagger annotations confirmed, but server authz uniformly enforced at edge → authz-drift/BOLA not reachable unauthenticated; requires AUTH_HELPED tenant pairs.
+[LEARN] REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-fallback) → no LFI/traversal.
+[LEARN] ACCEPTED INFO @ api.sipgate.com: 401 responses leak x-b3-traceid (Zipkin trace id) + vary:origin; descriptive header only, OOS as standalone; confirms per-request tracing middleware.
+[LEARN] ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA publicly accessible on Fastly CDN with identical production JS bundle, hardcoded internal dev/local URLs, no IP restriction — infrastructure info disclosure.
+[LEARN] ACCEPTED MISCONFIG @ team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portal; leaks SERVERID=team-web03.
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/health: unauthenticated endpoint reflects arbitrary-origin CORS with credentials (defense-in-depth gap, no data leak).
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: Arbitrary-origin CORS reflection with credentials confirmed across multiple v2 endpoints — no Origin allowlist, exposes sensitive headers.
+[RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure — if any SSRF vector exists in sipgate services, disclosed endpoints are directly targetable; (2) S3 bucket write access (sipgate-desktop-app.s3.eu-central-1.amazonaws.com) enabling supply-chain compromise of desktop softphone installers — CRITICAL if write permitted; (3) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (4) Potential BOLA on multi-tenant /v2 endpoints (portings, history, addresses, devices, groups, contacts) with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (5) Public repo internal infrastructure exposure (Redis IP 10.37.248.211:6378, GCP project clinq-services) enabling SSRF chains; (6) Team portal CSP misconfiguration exposing local dev origin. Third-party realm well-hardened (DCR blocked, redirect_uri strict, demo creds revoked). Chatbot WS origin validation hardened (both polling and WS reject arbitrary Origin). No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, and potential object-level authz-drift on high-value API endpoints.
+## 2026-09-05 23:43:37 UTC [target] (model nemotron3)
+[NEW] `chatbot.dev.sipgate.com` — LIVE (HTTP/2 200, nginx/1.24.0, via Google Cloud), serves HTML with `x-robots-tag: noindex`, socket.io endpoint likely accessible — contrary to KB implication of dev env inert.
+[NEW] `team-uk.live.sipgate.com` — LIVE (from KB 2026-09-05), second team portal with identical CSP dev-origin leak (`frame-ancestors app.local.sipgate.com:3443`) + `connect-src *.sipgate.com:3396` — family-wide info disclosure confirmed.
+[CHANGED] `app.dev.sipgate.com` — CSP reflects arbitrary Origin? No ACAO/ACAC headers returned on evil Origin probe; CSP unchanged (wildcard `*.sipgate.com:3396` connect-src, `wss://*.sipgate.*` WS).
+[CHANGED] `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout), confirming KB "externally inert".
+[CHANGED] `api.sipgate.com/v2/swagger.json` — Live spec (144 paths, global `security: []`), re-confirms stale annotations vs edge-401 enforcement.
+[PRIO] chatbot.dev.sipgate.com,7.2,attack_surface=7,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.2,attack_surface=5,business_value=6,tech_exposure=5,gate_ease=10,cloud_surface=8,freshness=6
+[PRIO] app.dev.sipgate.com,5.8,attack_surface=5,business_value=4,tech_exposure=6,gate_ease=10,cloud_surface=6,freshness=8
+[PRIO] api.sipgate.com/v2/,5.5,attack_surface=7,business_value=8,tech_exposure=6,gate_ease=3,cloud_surface=5,freshness=7
+[PRIO] team-uk.live.sipgate.com,5.1,attack_surface=4,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=4,freshness=8
+[PRIO] chatbot.sipgate.com/chat/session/socket.io/,4.8,attack_surface=6,business_value=7,tech_exposure=5,gate_ease=5,cloud_surface=5,freshness=6
+[PRIO] team-de.live.sipgate.com,4.3,attack_surface=4,business_value=5,tech_exposure=5,gate_ease=10,cloud_surface=4,freshness=6
+[PRIO] payment.sipgate.com,3.8,attack_surface=3,business_value=7,tech_exposure=4,gate_ease=5,cloud_surface=5,freshness=6
+[PRIO] login.sipgate.com/realms/third-party/,3.5,attack_surface=4,business_value=6,tech_exposure=4,gate_ease=5,cloud_surface=4,freshness=5
+[PRIO] api.sipgate.com/health,3.2,attack_surface=3,business_value=2,tech_exposure=4,gate_ease=10,cloud_surface=3,freshness=5
+[HYP] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 75
+reasoning: KB 2026-09-04 confirms chatbot.dev.sipgate.com polling transport accepts arbitrary Origin (no CORS check). Live probe 2026-09-05 confirms host is LIVE (HTTP/2 200, nginx/1.24.0, behind Google Cloud). Production chatbot WS transport was tested and REJECTED (evil Origin → 400), but dev environment may have relaxed origin validation. Dev CSP on app.dev.sipgate.com allows `wss://*.sipgate.*` — includes chatbot.dev.sipgate.com.
+evidence_needed: WebSocket handshake from arbitrary Origin returns 101 Switching Protocols (not 400); socket.io handshake completes without auth token; namespace events process unauthenticated messages.
+verify_steps: WS handshake: `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm 101; send unauthenticated socket.io packet `0{"sid":"...","upgrades":[],"pingInterval":25000,"pingTimeout":20000}` — observe server response; check for ACAO on WS response headers.
+impact: Full chat session hijack in dev environment — PII exposure (dev chat transcripts, test account credentials), potential lateral movement to dev API/internal services via chatbot integrations. Severity: HIGH (dev) → CRITICAL if same config mirrors prod.
+testability: PASSIVE (handshake only) → HUMAN_ONLY for full exploit
+[HYP] S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: KB 2026-09-05 re-confirmed publicly listable bucket (439 keys, versions disabled, stale since 2024-06-11). ACL/policy reads denied; write path NOT tested (HUMAN sign-off required per KB). Softphone installers (Windows/macOS/Linux) run with user privileges — supply-chain RCE if malicious artifact uploaded to `latest` aliases.
+evidence_needed: Bucket policy allowing `s3:PutObject` from broad principal; or ACL granting WRITE/WRITE_ACP to AuthenticatedUsers/AllUsers.
+verify_steps: HEAD `https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/` — confirm bucket exists; GET `?list-type=2` — confirm listing; (HUMAN_ONLY) Single PUT probe with unique object `test-<uuid>.json` CT `application/json` — verify write permission — DELETE immediately.
+impact: Supply-chain compromise of desktop softphone → RCE on customer endpoints, credential theft, VoIP toll fraud. Severity: CRITICAL.
+testability: HUMAN_ONLY
+[HYP] Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration
+class: MISCONFIG
+asset: app.dev.sipgate.com
+confidence: 70
+reasoning: KB 2026-09-05: Live dev SPA on Fastly CDN serves production JS bundle (main-D04St2Sb.js, 5.65MB) with no IP restriction. Bundle hardcodes internal RFC1918 hosts/ports: `api.local.sipgate.com:3396`, `app.local.sipgate.com:3443`, `payment.local.sipgate.com:8080`, `team-de.local.sipgate.com:10443`, `team-uk.local.sipgate.com:10443`, plus new `.net` TLD hosts (`admin.dev.sipgate.net`, `integration.dev.sipgate.com`). Dev Keycloak (login.dev) and dev API (api.dev) are dead/403, but `chatbot.dev.sipgate.com` is LIVE (confirmed 2026-09-05). If any sipgate service has SSRF (webhook handler, PDF generator, image fetcher), attacker can target disclosed internal endpoints.
+evidence_needed: Confirm no other dev subdomains resolve (admin.dev.sipgate.net, integration.dev.sipgate.com); check if any public sipgate endpoint accepts user-supplied URLs (webhooks, callbacks, imports); enumerate additional internal hosts in dev JS bundle source maps/chunks.
+verify_steps: GET `https://app.dev.sipgate.com` — verify JS bundle hash; GET with `Origin: https://evil.example` — check CORS (done: no ACAO); DNS resolve `admin.dev.sipgate.net`, `integration.dev.sipgate.com` — confirm alive/dead; GET `https://api.sipgate.com/v2/webhooks` (or similar) — check for user-supplied URL parameter.
+impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement if any SSRF vector exists. Severity: MEDIUM (info leak) → HIGH (if SSRF chain found).
+testability: PASSIVE
+[PARKED] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance: Production WS transport already REJECTED (KB 2026-09-05: evil Origin → 400 no-ACAO). Dev environment may differ but same codebase likely; confidence 75 but evidence suggests WS handshake rejects arbitrary Origin at upgrade layer. No verify path yielding 101 from arbitrary Origin per KB pattern.
+[FINAL] 1. S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise (confidence 60, HUMAN_ONLY)
+[FINAL] 2. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration (confidence 70, PASSIVE)
+[NEXT] PROBE: GET https://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket with Origin: https://evil.example — confirm WS handshake response code (101 vs 400) and ACAO header presence. Read-only, ≤1 rps.
+[LEARN] ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally inert" assessment; polling transport historically accepted arbitrary Origin (KB 2026-09-04).
+[LEARN] REJECTED OTHER @ login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com: DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — externally inert confirmed.
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-src *.sipgate.com:3396) — family-wide info disclosure.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated.
+[LEARN] REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable.
+[RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io. Primary risks: (1) Dev chatbot WS origin validation bypass (chatbot.dev.sipgate.com) — if dev mirrors prod config, session hijack = PII exposure; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Potential BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (6) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, dev chatbot WS validation, and potential object-level authz-drift on high-value API endpoints.
+## 2026-09-06 04:01:27 UTC [target] (model nemotron3)
+[NEW] `chatbot.dev.sipgate.com` — LIVE (HTTP/2 200, nginx/1.24.0, Google Cloud), serves HTML with `x-robots-tag: noindex`, socket.io endpoint accessible — contradicts prior "dev env externally inert" assessment
+[NEW] `team-uk.live.sipgate.com` — LIVE second team portal with identical CSP dev-origin leak (`frame-ancestors app.local.sipgate.com:3443` + `connect-src *.sipgate.com:3396`) — family-wide info disclosure confirmed
+[CHANGED] `app.dev.sipgate.com` — CSP probe with evil Origin: no ACAO/ACAC headers returned; CSP unchanged (wildcard `*.sipgate.com:3396` connect-src, `wss://*.sipgate.*` WS)
+[CHANGED] `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout), confirming KB "externally inert"
+[CHANGED] `api.sipgate.com/v2/swagger.json` — Live spec (144 paths, global `security: []`), re-confirms stale annotations vs edge-401 enforcement
+[CHANGED] `chatbot.sipgate.com/chat/session/socket.io/` — WS transport REJECTED for arbitrary Origin (evil → 400 no-ACAO); polling transport also blocks cross-origin reads (Vary:Origin, no ACAO)
+[PRIO] chatbot.dev.sipgate.com/chat/session/socket.io/,7.8,attack_surface=8,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.65,attack_surface=5,business_value=7,tech_exposure=5,gate_ease=10,cloud_surface=8,freshness=6
+[PRIO] app.dev.sipgate.com,6.7,attack_surface=6,business_value=5,tech_exposure=7,gate_ease=10,cloud_surface=6,freshness=8
+[PRIO] api.sipgate.com/v2/,6.3,attack_surface=7,business_value=8,tech_exposure=6,gate_ease=3,cloud_surface=5,freshness=7
+[PRIO] team-uk.live.sipgate.com,5.85,attack_surface=4,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=4,freshness=8
+[PRIO] chatbot.sipgate.com/chat/session/socket.io/,5.85,attack_surface=6,business_value=7,tech_exposure=5,gate_ease=5,cloud_surface=5,freshness=6
+[PRIO] team-de.live.sipgate.com,5.5,attack_surface=4,business_value=5,tech_exposure=5,gate_ease=10,cloud_surface=4,freshness=6
+[PRIO] login.sipgate.com/realms/third-party/,4.75,attack_surface=4,business_value=6,tech_exposure=4,gate_ease=5,cloud_surface=4,freshness=5
+[PRIO] api.sipgate.com/health,3.9,attack_surface=3,business_value=2,tech_exposure=4,gate_ease=10,cloud_surface=3,freshness=5
+[PRIO] payment.sipgate.com,3.6,attack_surface=3,business_value=7,tech_exposure=4,gate_ease=5,cloud_surface=5,freshness=5
+[HYP] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 75
+reasoning: KB 2026-09-04 confirms chatbot.dev.sipgate.com polling transport accepts arbitrary Origin (no CORS check). Live probe 2026-09-05 confirms host is LIVE (HTTP/2 200, nginx/1.24.0, behind Google Cloud). Production chatbot WS transport was tested and REJECTED (evil Origin → 400), but dev environment may have relaxed origin validation. Dev CSP on app.dev.sipgate.com allows `wss://*.sipgate.*` — includes chatbot.dev.sipgate.com.
+evidence_needed: WebSocket handshake from arbitrary Origin returns 101 Switching Protocols (not 400); socket.io handshake completes without auth token; namespace events process unauthenticated messages.
+verify_steps: WS handshake: `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm 101; send unauthenticated socket.io packet `0{"sid":"...","upgrades":[],"pingInterval":25000,"pingTimeout":20000}` — observe server response; check for ACAO on WS response headers.
+impact: Full chat session hijack in dev environment — PII exposure (dev chat transcripts, test account credentials), potential lateral movement to dev API/internal services via chatbot integrations. Severity: HIGH (dev) → CRITICAL if same config mirrors prod.
+testability: PASSIVE (handshake only) → HUMAN_ONLY for full exploit
+[HYP] S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 60
+reasoning: KB 2026-09-05 re-confirmed publicly listable bucket (439 keys, versions disabled, stale since 2024-06-11). ACL/policy reads denied; write path NOT tested (HUMAN sign-off required per KB). Softphone installers (Windows/macOS/Linux) run with user privileges — supply-chain RCE if malicious artifact uploaded to `latest` aliases.
+evidence_needed: Bucket policy allowing `s3:PutObject` from broad principal; or ACL granting WRITE/WRITE_ACP to AuthenticatedUsers/AllUsers.
+verify_steps: HEAD `https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/` — confirm bucket exists; GET `?list-type=2` — confirm listing; (HUMAN_ONLY) Single PUT probe with unique object `test-<uuid>.json` CT `application/json` — verify write permission — DELETE immediately.
+impact: Supply-chain compromise of desktop softphone → RCE on customer endpoints, credential theft, VoIP toll fraud. Severity: CRITICAL.
+testability: HUMAN_ONLY
+[HYP] Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration
+class: MISCONFIG
+asset: app.dev.sipgate.com
+confidence: 70
+reasoning: KB 2026-09-05: Live dev SPA on Fastly CDN serves production JS bundle (main-D04St2Sb.js, 5.65MB) with no IP restriction. Bundle hardcodes internal RFC1918 hosts/ports: `api.local.sipgate.com:3396`, `app.local.sipgate.com:3443`, `payment.local.sipgate.com:8080`, `team-de.local.sipgate.com:10443`, `team-uk.local.sipgate.com:10443`, plus new `.net` TLD hosts (`admin.dev.sipgate.net`, `integration.dev.sipgate.com`). Dev Keycloak (login.dev) and dev API (api.dev) are dead/403, but `chatbot.dev.sipgate.com` is LIVE (confirmed 2026-09-05). If any sipgate service has SSRF (webhook handler, PDF generator, image fetcher), attacker can target disclosed internal endpoints.
+evidence_needed: Confirm no other dev subdomains resolve (admin.dev.sipgate.net, integration.dev.sipgate.com); check if any public sipgate endpoint accepts user-supplied URLs (webhooks, callbacks, imports); enumerate additional internal hosts in dev JS bundle source maps/chunks.
+verify_steps: GET `https://app.dev.sipgate.com` — verify JS bundle hash; GET with `Origin: https://evil.example` — check CORS (done: no ACAO); DNS resolve `admin.dev.sipgate.net`, `integration.dev.sipgate.com` — confirm alive/dead; GET `https://api.sipgate.com/v2/webhooks` (or similar) — check for user-supplied URL parameter.
+impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement if any SSRF vector exists. Severity: MEDIUM (info leak) → HIGH (if SSRF chain found).
+testability: PASSIVE
+[PARKED] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance: Production WS transport already REJECTED (KB 2026-09-05: evil Origin → 400 no-ACAO). Dev environment may differ but same codebase likely; confidence 75 but evidence suggests WS handshake rejects arbitrary Origin at upgrade layer. No verify path yielding 101 from arbitrary Origin per KB pattern.
+[FINAL] 1. S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise (confidence 60, HUMAN_ONLY)
+[FINAL] 2. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration (confidence 70, PASSIVE)
+[NEXT] PROBE: GET https://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket with Origin: https://evil.example — confirm WS handshake response code (101 vs 400) and ACAO header presence. Read-only, ≤1 rps.
+[LEARN] ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally inert" assessment; polling transport historically accepted arbitrary Origin (KB 2026-09-04).
+[LEARN] REJECTED OTHER @ login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com: DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — externally inert confirmed.
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-src *.sipgate.com:3396) — family-wide info disclosure.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated.
+[LEARN] REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable.
+[RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io. Primary risks: (1) Dev chatbot WS origin validation bypass (chatbot.dev.sipgate.com) — if dev mirrors prod config, session hijack = PII exposure; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Potential BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (6) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, dev chatbot WS validation, and potential object-level authz-drift on high-value API endpoints.
+## 2026-09-06 08:40:36 UTC [target] (model nemotron3)
+[PRIO] chatbot.dev.sipgate.com/chat/session/socket.io/,7.80,attack_surface=8,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9  
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.65,attack_surface=5,business_value=7,tech_exposure=5,gate_ease=10,cloud_surface=8,freshness=6  
+[PRIO] app.dev.sipgate.com,6.70,attack_surface=6,business_value=5,tech_exposure=7,gate_ease=10,cloud_surface=6,freshness=8  
+[PRIO] api.sipgate.com/v2/,6.30,attack_surface=7,business_value=8,tech_exposure=6,gate_ease=3,cloud_surface=5,freshness=7  
+[PRIO] team-uk.live.sipgate.com,5.85,attack_surface=4,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=4,freshness=8  
+[PRIO] team-de.live.sipgate.com,5.50,attack_surface=4,business_value=5,tech_exposure=5,gate_ease=10,cloud_surface=4,freshness=6  
+[PRIO] api.sipgate.com/health,3.90,attack_surface=3,business_value=2,tech_exposure=4,gate_ease=10,cloud_surface=3,freshness=5
+[HYP] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance  
+class: AUTH  
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/  
+confidence: 75  
+reasoning: KB 2026-09-04 confirms chatbot.dev.sipgate.com polling transport accepts arbitrary Origin (no CORS check). Live probe 2026-09-05/06 confirms host is LIVE (HTTP/2 200, nginx/1.24.0, behind Google Cloud). Production chatbot WS transport was tested and REJECTED (evil Origin → 400), but dev environment may have relaxed origin validation. Dev CSP on app.dev.sipgate.com allows `wss://*.sipgate.*` — includes chatbot.dev.sipgate.com.  
+evidence_needed: WebSocket handshake from arbitrary Origin returns 101 Switching Protocols (not 400); socket.io handshake completes without auth token; namespace events process unauthenticated messages.  
+verify_steps: WS handshake: `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm 101; send unauthenticated socket.io packet `0{"sid":"...","upgrades":[],"pingInterval":25000,"pingTimeout":20000}` — observe server response; check for ACAO on WS response headers.  
+impact: Full chat session hijack in dev environment — PII exposure (dev chat transcripts, test account credentials), potential lateral movement to dev API/internal services via chatbot integrations. Severity: HIGH (dev) → CRITICAL if same config mirrors prod.  
+testability: PASSIVE (handshake only) → HUMAN_ONLY for full exploit
+[HYP] S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise  
+class: MISCONFIG  
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com  
+confidence: 60  
+reasoning: KB 2026-09-05 re-confirmed publicly listable bucket (439 keys, versions disabled, stale since 2024-06-11). ACL/policy reads denied; write path NOT tested (HUMAN sign-off required per KB). Softphone installers (Windows/macOS/Linux) run with user privileges — supply-chain RCE if malicious artifact uploaded to `latest` aliases.  
+evidence_needed: Bucket policy allowing `s3:PutObject` from broad principal; or ACL granting WRITE/WRITE_ACP to AuthenticatedUsers/AllUsers.  
+verify_steps: HEAD `https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/` — confirm bucket exists; GET `?list-type=2` — confirm listing; (HUMAN_ONLY) Single PUT probe with unique object `test-<uuid>.json` CT `application/json` — verify write permission — DELETE immediately.  
+impact: Supply-chain compromise of desktop softphone → RCE on customer endpoints, credential theft, VoIP toll fraud. Severity: CRITICAL.  
+testability: HUMAN_ONLY
+[HYP] Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration  
+class: MISCONFIG  
+asset: app.dev.sipgate.com  
+confidence: 70  
+reasoning: KB 2026-09-05: Live dev SPA on Fastly CDN serves production JS bundle (main-D04St2Sb.js, 5.65MB) with no IP restriction. Bundle hardcodes internal RFC1918 hosts/ports: `api.local.sipgate.com:3396`, `app.local.sipgate.com:3443`, `payment.local.sipgate.com:8080`, `team-de.local.sipgate.com:10443`, `team-uk.local.sipgate.com:10443`, plus new `.net` TLD hosts (`admin.dev.sipgate.net`, `integration.dev.sipgate.com`). Dev Keycloak (login.dev) and dev API (api.dev) are dead/403, but `chatbot.dev.sipgate.com` is LIVE (confirmed 2026-09-05/06). If any sipgate service has SSRF (webhook handler, PDF generator, image fetcher), attacker can target disclosed internal endpoints.  
+evidence_needed: Confirm no other dev subdomains resolve (admin.dev.sipgate.net, integration.dev.sipgate.com); check if any public sipgate endpoint accepts user-supplied URLs (webhooks, callbacks, imports); enumerate additional internal hosts in dev JS bundle source maps/chunks.  
+verify_steps: GET `https://app.dev.sipgate.com` — verify JS bundle hash; GET with `Origin: https://evil.example` — check CORS (done: no ACAO); DNS resolve `admin.dev.sipgate.net`, `integration.dev.sipgate.com` — confirm alive/dead; GET `https://api.sipgate.com/v2/webhooks` (or similar) — check for user-supplied URL parameter.  
+impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement if any SSRF vector exists. Severity: MEDIUM (info leak) → HIGH (if SSRF chain found).  
+testability: PASSIVE
+[PARKED] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance: Production WS transport already REJECTED (KB 2026-09-05: evil Origin → 400 no-ACAO). Dev environment may differ but same codebase likely; confidence 75 but evidence suggests WS handshake rejects arbitrary Origin at upgrade layer. No verify path yielding 101 from arbitrary Origin per KB pattern.  
+[PARKED] S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise: Confidence 60, but write testing is HUMAN_ONLY mutating operation requiring explicit sign-off; cannot be verified passively.  
+[FINAL] 1. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration (confidence 70, PASSIVE)  
+[FINAL] 2. Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance (confidence 75, PASSIVE handshake probe only)  
+[FINAL] 3. S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise (confidence 60, HUMAN_ONLY)
+[NEXT] PROBE: GET `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm WS handshake response code (101 vs 400) and ACAO header presence. Read-only, ≤1 rps.
+[LEARN] ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally inert" assessment; polling transport historically accepted arbitrary Origin (KB 2026-09-04).  
+[LEARN] REJECTED OTHER @ login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com: DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — externally inert confirmed.  
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-src *.sipgate.com:3396) — family-wide info disclosure.  
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated.  
+[LEARN] REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable.  
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swaggerUIRedirectOauth2` throws `SecurityError`; token fragment stays same-origin; unconditional opener callback is inert cross-origin.
+[RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io. Primary risks: (1) Dev chatbot WS origin validation bypass (chatbot.dev.sipgate.com) — if dev mirrors prod config, session hijack = PII exposure; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Potential BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (6) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, dev chatbot WS validation, and potential object-level authz-drift on high-value API endpoints.
+## 2026-09-06 12:30:43 UTC [target] (model nemotron3)
+[PRIO] chatbot.dev.sipgate.com/chat/session/socket.io/,7.80,attack_surface=8,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9  
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,6.65,attack_surface=5,business_value=7,tech_exposure=5,gate_ease=10,cloud_surface=8,freshness=6  
+[PRIO] app.dev.sipgate.com,6.70,attack_surface=6,business_value=5,tech_exposure=7,gate_ease=10,cloud_surface=6,freshness=8  
+[PRIO] api.sipgate.com/v2/,6.30,attack_surface=7,business_value=8,tech_exposure=6,gate_ease=3,cloud_surface=5,freshness=7  
+[PRIO] team-uk.live.sipgate.com,5.85,attack_surface=4,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=4,freshness=8  
+[PRIO] team-de.live.sipgate.com,5.50,attack_surface=4,business_value=5,tech_exposure=5,gate_ease=10,cloud_surface=4,freshness=6  
+[PRIO] api.sipgate.com/health,3.90,attack_surface=3,business_value=2,tech_exposure=4,gate_ease=10,cloud_surface=3,freshness=5  
+[PRIO] api.sipgate.com/v2/doc/,4.20,attack_surface=5,business_value=7,tech_exposure=6,gate_ease=10,cloud_surface=4,freshness=9  
+[HYP] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance
+class: AUTH
+asset: chatbot.dev.sipgate.com/chat/session/socket.io/
+confidence: 75
+reasoning: KB 2026-09-04 confirms chatbot.dev.sipgate.com polling transport accepts arbitrary Origin (no CORS check). Live probe 2026-09-05/06 confirms host is LIVE (HTTP/2 200, nginx/1.24.0, behind Google Cloud). Production chatbot WS transport was tested and REJECTED (evil Origin → 400), but dev environment may have relaxed origin validation. Dev CSP on app.dev.sipgate.com allows `wss://*.sipgate.*` — includes chatbot.dev.sipgate.com.
+evidence_needed: WebSocket handshake from arbitrary Origin returns 101 Switching Protocols (not 400); socket.io handshake completes without auth token; namespace events process unauthenticated messages.
+verify_steps: WS handshake: `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm 101; send unauthenticated socket.io packet `0{"sid":"...","upgrades":[],"pingInterval":25000,"pingTimeout":20000}` — observe server response; check for ACAO on WS response headers.
+impact: Full chat session hijack in dev environment — PII exposure (dev chat transcripts, test account credentials), potential lateral movement to dev API/internal services via chatbot integrations. Severity: HIGH (dev) → CRITICAL if same config mirrors prod.
+testability: PASSIVE (handshake only) → HUMAN_ONLY for full exploit
+[HYP] Swagger UI Implicit Flow Token Capture via Same-Origin XSS Amplifier
+class: AUTH
+asset: api.sipgate.com/v2/doc/oauth2-redirect.html
+confidence: 55
+reasoning: KB 2026-09-06 confirms live Swagger UI 5.x with implicit-only third-party client `sipgate-swagger-ui` exposing extreme scopes (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write). Nonce is random, redirect_uri fixed to same-origin doc page. Cross-origin popup test REJECTED (SecurityError on opener access), but if ANY same-origin XSS exists on api.sipgate.com/v2/doc/*, attacker can complete implicit flow and steal token from fragment via `window.opener.swaggerUIRedirectOauth2` callback. Doc page carries no opener check.
+evidence_needed: Confirm same-origin XSS on api.sipgate.com/v2/doc/* (e.g., via swagger.json parameter injection, DOM clobbering, or CSP bypass); verify implicit flow completes and token lands in fragment on oauth2-redirect.html; confirm callback reads fragment and passes to opener.
+verify_steps: GET https://api.sipgate.com/v2/doc/ — inspect for XSS vectors (swagger.json loading, URL parameters reflected); GET https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/auth?response_type=token&client_id=sipgate-swagger-ui&redirect_uri=https://api.sipgate.com/v2/doc/oauth2-redirect.html&nonce=xyz&scope=... — follow to oauth2-redirect.html, observe fragment handling; test if opener callback executes with token.
+impact: Full third-party realm token with extreme scopes → access to contacts, SMS, account, balance, payment methods, OAuth2 client management. Severity: CRITICAL (requires same-origin XSS chain).
+testability: AUTH_HELPED (needs valid session for XSS probe) → HUMAN_ONLY for full chain
+[HYP] Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration
+class: MISCONFIG
+asset: app.dev.sipgate.com
+confidence: 70
+reasoning: KB 2026-09-05: Live dev SPA on Fastly CDN serves production JS bundle (main-D04St2Sb.js, 5.65MB) with no IP restriction. Bundle hardcodes internal RFC1918 hosts/ports: `api.local.sipgate.com:3396`, `app.local.sipgate.com:3443`, `payment.local.sipgate.com:8080`, `team-de.local.sipgate.com:10443`, `team-uk.local.sipgate.com:10443`, plus new `.net` TLD hosts (`admin.dev.sipgate.net`, `integration.dev.sipgate.com`). Dev Keycloak (login.dev) and dev API (api.dev) are dead/403, but `chatbot.dev.sipgate.com` is LIVE (confirmed 2026-09-05/06). If any sipgate service has SSRF (webhook handler, PDF generator, image fetcher), attacker can target disclosed internal endpoints.
+evidence_needed: Confirm no other dev subdomains resolve (admin.dev.sipgate.net, integration.dev.sipgate.com); check if any public sipgate endpoint accepts user-supplied URLs (webhooks, callbacks, imports); enumerate additional internal hosts in dev JS bundle source maps/chunks.
+verify_steps: GET `https://app.dev.sipgate.com` — verify JS bundle hash; GET with `Origin: https://evil.example` — check CORS (done: no ACAO); DNS resolve `admin.dev.sipgate.net`, `integration.dev.sipgate.com` — confirm alive/dead; GET `https://api.sipgate.com/v2/webhooks` (or similar) — check for user-supplied URL parameter.
+impact: Information disclosure of internal infrastructure (hostnames, ports, service architecture) enabling targeted SSRF/lateral movement if any SSRF vector exists. Severity: MEDIUM (info leak) → HIGH (if SSRF chain found).
+testability: PASSIVE
+[PARKED] Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance: Production WS transport already REJECTED (KB 2026-09-05: evil Origin → 400 no-ACAO). Dev environment may differ but same codebase likely; confidence 75 but evidence suggests WS handshake rejects arbitrary Origin at upgrade layer. No verify path yielding 101 from arbitrary Origin per KB pattern. — KEPT (dev env untested for WS, only polling confirmed historically; handshake probe is passive read-only)
+[PARKED] S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise: Confidence 60, but write testing is HUMAN_ONLY mutating operation requiring explicit sign-off; cannot be verified passively. — DROPPED from top-3 (no passive verify path)
+[PARKED] Swagger UI Implicit Flow Token Capture via Same-Origin XSS Amplifier: Confidence 55, requires undiscovered same-origin XSS on api.sipgate.com/v2/doc/* as prerequisite; chain-dependent with no confirmed XSS vector. — KEPT as #3 (high-value if chain completed)
+[FINAL] 1. Dev SPA Infrastructure Exposure Enables Targeted SSRF/Lateral Movement via Internal Host Enumeration (confidence 70, PASSIVE)  
+[FINAL] 2. Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance (confidence 75, PASSIVE handshake probe only)  
+[FINAL] 3. Swagger UI Implicit Flow Token Capture via Same-Origin XSS Amplifier (confidence 55, AUTH_HELPED chain)
+[NEXT] PROBE: GET `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm WS handshake response code (101 vs 400) and ACAO header presence. Read-only, ≤1 rps.
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swaggerUIRedirectOauth2` throws `SecurityError`; token fragment stays same-origin; unconditional opener callback is inert cross-origin.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: live swagger-ui 5.x; implicit-only third-party client `sipgate-swagger-ui` exposes extreme scope set (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); nonce random, redirect_uri fixed, doc page carries no opener check — high-value only as a same-origin-XSS amplifier.
+[LEARN] ACCEPTED INFO @ sipgate.io / developer.sipgate.io: developer platform = Cloudflare-fronted static marketing/docs (301 → www.sipgate.io/for-developer), links back to login.sipgate.com — no new console/auth surface; org `sipgate-io` already scanned.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/keycloak-logout.js: logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, no open redirect.
+[LEARN] ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally inert" assessment; polling transport historically accepted arbitrary Origin (KB 2026-09-04).
+[LEARN] REJECTED OTHER @ login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com: DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — externally inert confirmed.
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-src *.sipgate.com:3396) — family-wide info disclosure.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated.
+[LEARN] REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable.
+[RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io. Primary risks: (1) Dev chatbot WS origin validation bypass (chatbot.dev.sipgate.com) — if dev mirrors prod config, session hijack = PII exposure; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Potential BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (6) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exp
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && echo "=== hypotheses-bigpickle ===" && cat reports/hypotheses-bigpickle.txt; echo "=== hypotheses-nemotron3 (tail) ===" && tail -60 reports/hypotheses-nemotron3.txt
+=== hypotheses-bigpickle ===
+## 2026-09-06 22:10:37 UTC [target] (model bigpickle)
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: fresh swagger documents top-level per-id namespaces without user prefix; 401 empty-body unauth before lookup; cross-tenant boundary never exercised; uniform edge authz confirmed
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 (data/creds) instead of 403/404
+verify_steps: AUTH_HELPED — after registering 2 test tenants, GET /v2/portings/{B-id}, /v2/devices/{B-id}, /v2/voicemails/{B-id}, /v2/authorization/oauth2/clients/{B-clientId} with A-bearer
+impact: cross-tenant PII, SIP/device creds (password change = device takeover), OAuth client secrets → tenant compromise. CRITICAL if confirmed
+testability: AUTH_HELPED
+[HYP] Desktop-app S3 bucket writable → signed-installer / electron-updater swap
+class: MISCONFIG
+asset: sipgate-desktop-app.s3.eu-central-1.amazonaws.com
+confidence: 55
+reasoning: re-confirmed listable 200; artifact family includes electron-updater manifests; bucket stale since 2024-06-11; ACL/policy read denied; write path never probed
+evidence_needed: PUT/OVERWRITE success on unique object
+verify_steps: HUMAN single PUT `test-probe-$(date +%s).json` CT application/json → confirm 200 → immediately DELETE
+impact: supply-chain RCE for all softphone + desktop-app downloaders/auto-updaters. CRITICAL if writable
+testability: HUMAN_ONLY
+[HYP] OAuth implicit token theft via open redirect
+class: OATH
+asset: app.sipgate.com/implicit-auth-redirect
+confidence: 45
+reasoning: unvalidated redirect parameter in JS ImplicitAuthenticator; React Router history.replace(external) resolves same-origin; token stored in localStorage first
+evidence_needed: live browser confirmation of token-in-fragment leak to attacker origin
+verify_steps: HUMAN private-tab full login flow on `https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example`
+impact: account-session abuse / ATO. HIGH if confirmed
+testability: HUMAN_ONLY
+[PARKED] OAuth implicit token theft: confidence 45, HUMAN_ONLY; React Router same-origin resolution likely prevents fragment leak; retained as last resort
+[FINAL] survivors ranked:
+[NEXT] HUMAN: one session — (1) obtain reporter+legal sign-off then execute single-PUT S3 write probe `PUT https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/test-probe-$(date +%s).json` (CT application/json, verify 200, then DELETE); (2) register two independent sipgate test tenants, capture two bearer tokens, and differential-test cross-tenant BOLA on /v2/portings/{B-id}, /v2/devices/{B-id}, /v2/voicemails/{B-id}, /v2/authorization/oauth2/clients/{B-clientId} with tenant-A bearer
+[LEARN] REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads; identical to prod chatbot REJECT class
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as same-origin-XSS amplifier
+[LEARN] ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot with socket.io endpoint — contradicts prior "dev env externally inert"
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401
+[RISK] sipgate: 45 — surface stable; no new standalone critical chain surfaced; both surviving high-impact paths (S3 write ~55/HUMAN, cross-tenant BOLA 50/AUTH_HELPED) remain externally gated; program risk unchanged pending those two gates
+=== hypotheses-nemotron3 (tail) ===
+## 2026-09-06 22:13:51 UTC [target] (model nemotron3)
+[NEW] integration.dev.sipgate.com — NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle from app.dev.sipgate.com
+[NEW] app.dev.sipgate.com — JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.116.x.x / 217.10.x.x
+[CHANGED] chatbot.dev.sipgate.com WS — direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+[CHANGED] api.sipgate.com/v2/doc/oauth2-redirect.html — Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin
+[CHANGED] team-uk.live.sipgate.com — confirmed second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)
+[CHANGED] api.sipgate.com/v2/swagger.json — live spec (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated
+[PRIO] integration.dev.sipgate.com,8.1,attack_surface=8,business_value=7,tech_exposure=7,gate_ease=10,cloud_surface=8,freshness=10
+[PRIO] app.dev.sipgate.com,8.05,attack_surface=9,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
+[PRIO] login.sipgate.com,8.75,attack_surface=8,business_value=10,tech_exposure=9,gate_ease=10,cloud_surface=7,freshness=7
+[PRIO] api.sipgate.com/v2,7.9,attack_surface=9,business_value=10,tech_exposure=8,gate_ease=3,cloud_surface=8,freshness=7
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,7.4,attack_surface=7,business_value=10,tech_exposure=6,gate_ease=5,cloud_surface=9,freshness=6
+[PRIO] team-uk.live.sipgate.com,6.8,attack_surface=6,business_value=5,tech_exposure=7,gate_ease=10,cloud_surface=6,freshness=8
+[HYP] Integration Dev Endpoint SSRF via Webhook/Callback Handlers
+class: SSRF
+asset: integration.dev.sipgate.com
+confidence: 65
+reasoning: Newly alive dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle served from app.dev.sipgate.com; internal integration service potentially exposing webhook/callback handlers that accept user-supplied URLs
+evidence_needed: Discovery of endpoint accepting user-supplied URLs (webhook registration, callback configuration, URL parameters) that triggers outbound requests
+verify_steps: GET https://integration.dev.sipgate.com/health, /swagger.json, /actuator/health, /webhooks, /callbacks, /api, /v2/health — with `-k` flag for self-signed cert; check for CORS reflection with credentials, user-supplied URL parameters, or sensitive data exposure
+impact: Internal integration service exposure enabling SSRF pivot to cloud metadata (169.254.169.254), webhook hijacking, or callback manipulation; severity MEDIUM (info leak + attack surface) → HIGH if SSRF/webhook handler found
+testability: PASSIVE
+[HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement
+class: SSRF
+asset: app.dev.sipgate.com
+confidence: 75
+reasoning: Live dev SPA on Fastly CDN serves identical production JS bundle with hardcoded internal dev/local URLs (api.local:3396, app.local:3443, payment.local:8080, team-de.local:10443, admin.dev.sipgate.net, integration.dev.sipgate.com, admin.live.sipgate.net); no IP restriction; bundle rotated to main-Dr5Dd34d.js 2026-09-06; multiple internal hosts resolve to sipgate-owned 217.116.x.x/217.10.x.x but HTTP 000 (timeout)
+evidence_needed: Identification of any internal host:port that responds to HTTP/HTTPS and exposes debug endpoints, actuator, swagger, or internal APIs; or discovery of SSRF-vulnerable parameter in dev SPA that can target internal hosts
+verify_steps: GET https://app.dev.sipgate.com — fetch current JS bundle, extract all hardcoded host:port pairs from source/chunks, DNS-resolve any new *.dev.sipgate.com / *.dev.sipgate.net hosts not yet cataloged; probe discovered hosts for HTTP responses (read-only, ≤1 rps)
+impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, integration.dev); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface)
+testability: PASSIVE
+[HYP] Cross-Tenant BOLA on Credential-Bearing /v2 Resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: Public swagger (144 paths) documents dual parameter names and legacy resources; 5 ops marked noauth but all return 401 unauthenticated → security annotations stale, implying per-endpoint authz drift; KB 2026-09-05/06 confirms uniform edge auth but object-level tenant isolation untested
+evidence_needed: Two authenticated tenant sessions showing 200 for a resourceId belonging to the other tenant on /v2/portings/{id}, /v2/devices/{id}/credentials/password, /v2/authorization/oauth2/clients/{clientId}
+verify_steps: PASSIVE triage: GET /v2/portings, /v2/log/webhooks, /v2/app/tacs, /v2/settings/sipgateio without auth — flag any non-401/404/405; full cross-tenant test requires AUTH_HELPED sessions
+impact: Cross-tenant PII/call-history/device-SIP-credential exposure or overwrite; severity CRITICAL if confirmed
+testability: AUTH_HELPED
+[PARKED] S3 Bucket Write Access Enables Signed Installer Supply-Chain Compromise: HUMAN_ONLY testability requires explicit reporter/legal sign-off for mutating PUT operation; cannot verify passively per rules
+[FINAL] 1. Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement (confidence 75, PASSIVE)
+[FINAL] 2. Integration Dev Endpoint SSRF via Webhook/Callback Handlers (confidence 65, PASSIVE)
+[FINAL] 3. Cross-Tenant BOLA on Credential-Bearing /v2 Resources (confidence 50, AUTH_HELPED)
+[NEXT] PROBE: GET https://app.dev.sipgate.com — fetch current JS bundle (main-Dr5Dd34d.js or rotated), extract all hardcoded host:port pairs from source/chunks, and DNS-resolve any new *.dev.sipgate.com / *.dev.sipgate.net hosts not yet cataloged. Read-only, ≤1 rps.
+[LEARN] REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin
+[LEARN] ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally inert"
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated
+[LEARN] REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstrable
+[LEARN] ACCEPTED MISCONFIG @ integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *` — hardcoded in production JS bundle, expands dev attack surface
+[LEARN] ACCEPTED INFO @ app.dev.sipgate.com: JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.116.x.x / 217.10.x.x
+[RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io, NEWLY ALIVE integration.dev endpoint with permissive CORS. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target + integration.dev target; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Cross-tenant BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, and potential object-level authz-drift on high-value API endpoints.
+[0m
+This is a large context. Let me look at my own (bigpickle) latest hypotheses file and the nemotron lead which is driving the top SSRF hypothesis on integration.dev.sipgate.com. Let me read the current hypotheses file and my own lead to understand the current state as of the last run.
+Now I have a clear picture. The key new development from the last cycle is the **integration.dev.sipgate.com** newly-alive endpoint (with `access-control-allow-origin: *` on a 403). This is the top fresh lead. Let me run a few read-only passive probes to validate/advance this before writing my analysis. Let me probe integration.dev.sipgate.com for reachable endpoints.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && for p in / /health /swagger.json /actuator/health /webhooks /callbacks /api /v2/health /actuator /api/v1; do code=$(curl -s -k -o /dev/null -w "%{http_code}" -m 8 -H "Origin: https://evil.example" "https://integration.dev.sipgate.com${p}" 2>/dev/null); echo "$p -> $code"; sleep 1; done
+/ -> 403
+/health -> 404
+/swagger.json -> 404
+/actuator/health -> 404
+/webhooks -> 404
+/callbacks -> 404
+/api -> 404
+/v2/health -> 404
+/actuator -> 404
+/api/v1 -> 404
+[0m
+Root returns 403 with permissive CORS, everything else 404. Let me check the full headers on the 403 root response and the 404 responses for useful info.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -D - -m 10 -H "Origin: https://evil.example" "https://integration.dev.sipgate.com/" 2>/dev/null | head -40
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 0
+date: Mon, 07 Sep 2026 00:03:35 GMT
+[0m
+[0m$ [0mcurl -s -k -D - -m 10 -H "Origin: https://evil.example" "https://integration.dev.sipgate.com/health" 2>/dev/null | head -20
+HTTP/1.1 404 Not Found
+access-control-allow-origin: *
+content-length: 122
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:03:39 GMT
+
+{"status":404,"type":"https://http.cat/status/404","title":"Not Found","detail":"Cannot GET /health","instance":"/health"}
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && for p in /register /subscribe /integration /integrations /config /status /debug /graphql /internal /admin /login /token /auth /oauth /sso /healthcheck /ready /ping /docs /openapi.json /api-docs /swagger /swagger-ui /redoc /v1/auth /oauth2 /api/integrations; do code=$(curl -s -k -o /dev/null -w "%{http_code}" -m 5 -H "Origin: https://evil.example" "https://integration.dev.sipgate.com${p}" 2>/dev/null); echo "$p -> $code"; sleep 0.3; done
+/register -> 404
+/subscribe -> 404
+/integration -> 404
+/integrations -> 404
+/config -> 404
+/status -> 404
+/debug -> 404
+/graphql -> 404
+/internal -> 404
+/admin -> 404
+/login -> 404
+/token -> 404
+/auth -> 404
+/oauth -> 403
+/sso -> 404
+/healthcheck -> 404
+/ready -> 404
+/ping -> 404
+/docs -> 404
+/openapi.json -> 404
+/api-docs -> 404
+/swagger -> 200
+/swagger-ui -> 404
+/redoc -> 404
+/v1/auth -> 404
+/oauth2 -> 403
+/api/integrations -> 404
+[0m
+Three distinct responses: `/swagger` → 200, `/oauth` and `/oauth2` → 403 (handled routes, not 404). Let me examine /swagger first.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -D - -m 10 "https://integration.dev.sipgate.com/swagger" 2>/dev/null | head -30
+HTTP/1.1 200 OK
+access-control-allow-origin: *
+content-type: text/html
+date: Mon, 07 Sep 2026 00:04:11 GMT
+transfer-encoding: chunked
+
+
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Swagger UI</title>
+  <link rel="stylesheet" type="text/css" href="./swagger/swagger-ui.css" >
+  <link rel="icon" type="image/png" href="./swagger/favicon-32x32.png" sizes="32x32" /><link rel="icon" type="image/png" href="./swagger/favicon-16x16.png" sizes="16x16" />
+  <style>
+    html
+    {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *,
+    *:before,
+    *:after
+    {
+      box-sizing: inherit;
+    }
+
+    body {
+[0m
+Live Swagger UI on integration.dev.sipgate.com. Let me extract the spec URL from the HTML and probe common spec paths.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -m 10 "https://integration.dev.sipgate.com/swagger" 2>/dev/null | grep -oE 'url\s*:\s*"[^"]*"|"url"\s*:\s*"[^"]*"|SwaggerUIBundle[^;]*' | head -5; echo "---probe specs---"; for p in /swagger.json /v3/api-docs /api-docs /swagger/swagger.json /openapi.json /swagger-resources /swagger-resources/configuration/ui; do code=$(curl -s -k -o /dev/null -w "%{http_code}" -m 5 "https://integration.dev.sipgate.com${p}" 2>/dev/null); echo "$p -> $code"; sleep 0.3; done
+SwaggerUIBundle
+SwaggerUIBundle = Wrapped
+---probe specs---
+/swagger.json -> 404
+/v3/api-docs -> 404
+/api-docs -> 404
+/swagger/swagger.json -> 404
+/openapi.json -> 404
+/swagger-resources -> 404
+/swagger-resources/configuration/ui -> 404
+[0m
+Let me get the actual spec URL from the Swagger UI HTML config.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -m 10 "https://integration.dev.sipgate.com/swagger" 2>/dev/null | grep -A2 -B2 -iE "url|config|spec" | head -40
+if (!original) return;
+      function Wrapped(opts) {
+        opts.oauth2RedirectUrl =
+          window.location.origin + '/swagger/oauth2-redirect.html';
+        return original(opts);
+--
+<style>
+  
+  .swagger-ui .topbar .download-url-wrapper { display: none }
+</style>
+</body>
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -m 10 "https://integration.dev.sipgate.com/swagger" 2>/dev/null | grep -iE "SwaggerUIBundle\(" -A6 | head -20
+(no output)
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -m 10 "https://integration.dev.sipgate.com/swagger" 2>/dev/null | grep -iE "bundle|initOAuth|dom_id|preset|deepLinking|displayOperationId" | head -20
+<!-- HTML for static distribution bundle build -->
+<script src="./swagger/swagger-ui-bundle.js"> </script>
+<script src="./swagger/swagger-ui-standalone-preset.js"> </script>
+      var original = window.SwaggerUIBundle;
+      window.SwaggerUIBundle = Wrapped;
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -m 10 "https://integration.dev.sipgate.com/swagger" 2>/dev/null | sed -n '/<script>/,/<\/script>/p' | head -40
+<script>(function () {
+      var original = window.SwaggerUIBundle;
+      if (!original) return;
+      function Wrapped(opts) {
+        opts.oauth2RedirectUrl =
+          window.location.origin + '/swagger/oauth2-redirect.html';
+        return original(opts);
+      }
+      Object.assign(Wrapped, original);
+      window.SwaggerUIBundle = Wrapped;
+    })();</script>
+[0m
+Standard springdoc static swagger-ui. Let me probe springdoc-specific spec locations and webjars.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && for p in /swagger-ui.html /swagger-ui/index.html /v3/api-docs/swagger-config /swagger-config /webjars /swagger/swagger-ui-bundle.js /swagger/oauth2-redirect.html /swagger/swagger-ui.css /swagger/favicon-32x32.png; do code=$(curl -s -k -o /dev/null -w "%{http_code}" -m 5 "https://integration.dev.sipgate.com${p}" 2>/dev/null); echo "$p -> $code"; sleep 0.3; done
+/swagger-ui.html -> 404
+/swagger-ui/index.html -> 404
+/v3/api-docs/swagger-config -> 404
+/swagger-config -> 404
+/webjars -> 404
+/swagger/swagger-ui-bundle.js -> 200
+/swagger/oauth2-redirect.html -> 200
+/swagger/swagger-ui.css -> 200
+/swagger/favicon-32x32.png -> 200
+[0m
+Static resources exist. `/oauth` and `/oauth2` return 403 (registered routes). Let me probe OAuth sub-paths and check the oauth2-redirect.html to identify the stack.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && for p in /oauth/authorize /oauth/token /oauth/webhook /oauth/callback /oauth2/authorize /oauth2/token /oauth2/callback /oauth2/authorization /oauth2/logout /oauth2/jwks /oauth2/userinfo /oauth/callback/login; do code=$(curl -s -k -o /dev/null -w "%{http_code}" -m 5 "https://integration.dev.sipgate.com${p}" 2>/dev/null); echo "$p -> $code"; sleep 0.3; done; echo "--- oauth2-redirect head ---"; curl -s -k -m 8 "https://integration.dev.sipgate.com/swagger/oauth2-redirect.html" 2>/dev/null | head -5; echo "--- 403 body on /oauth2 ---"; curl -s -k -D - -m 8 "https://integration.dev.sipgate.com/oauth2" 2>/dev/null | head -12
+/oauth/authorize -> 403
+/oauth/token -> 403
+/oauth/webhook -> 403
+/oauth/callback -> 403
+/oauth2/authorize -> 403
+/oauth2/token -> 403
+/oauth2/callback -> 403
+/oauth2/authorization -> 403
+/oauth2/logout -> 403
+/oauth2/jwks -> 403
+/oauth2/userinfo -> 403
+/oauth/callback/login -> 403
+--- oauth2-redirect head ---
+<!doctype html>
+<html lang="en-US">
+<body>
+<script src="oauth2-redirect.js"></script>
+</body>
+--- 403 body on /oauth2 ---
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 122
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:05:01 GMT
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/oauth2"}
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -m 10 "https://integration.dev.sipgate.com/swagger" 2>/dev/null | grep -nE "<script|window|url|\.yaml|\.yml|\.json|spec|SwaggerUIBu" | head -30
+69:<script src="./swagger/swagger-ui-bundle.js"> </script>
+70:<script src="./swagger/swagger-ui-standalone-preset.js"> </script>
+71:<script src="./swagger/swagger-ui-init.js"> </script>
+73:<script>(function () {
+74:      var original = window.SwaggerUIBundle;
+78:          window.location.origin + '/swagger/oauth2-redirect.html';
+82:      window.SwaggerUIBundle = Wrapped;
+87:  .swagger-ui .topbar .download-url-wrapper { display: none }
+[0m
+`swagger-ui-init.js`. Let me fetch it — this is springdoc's initializer that contains the spec config.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -m 10 "https://integration.dev.sipgate.com/swagger/swagger-ui-init.js" 2>/dev/null | head -40
+window.onload = function() {
+  // Build a system
+  let url = window.location.search.match(/url=([^&]+)/);
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    url = window.location.origin;
+  }
+  let options = {
+  "swaggerDoc": {
+    "openapi": "3.0.3",
+    "info": {
+      "title": "Platypus",
+      "description": "Platform for integration Purposes",
+      "version": "0.0.1",
+      "contact": {}
+    },
+    "servers": [],
+    "paths": {
+      "/streaming.start": {
+        "post": {
+          "operationId": "StreamingController_start",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": "Streaming start job created"
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Start streaming for all connected integrations of a user",
+          "tags": [
+            "streaming"
+          ]
+        }
+      },
+[0m
+Major find — the full embedded OpenAPI spec of the "Platypus" integration platform is in `swagger-ui-init.js`. Let me download and analyze the complete spec.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -m 15 "https://integration.dev.sipgate.com/swagger/swagger-ui-init.js" -o /tmp/opencode/platypus-spec.js 2>/dev/null; wc -c /tmp/opencode/platypus-spec.js; grep -oE '"\s*/[a-zA-Z0-9\-_./{}:]*"\s*:' /tmp/opencode/platypus-spec.js | sort -u
+386546 /tmp/opencode/platypus-spec.js
+"/contacts.create":
+"/contacts.delete":
+"/contacts.get":
+"/contacts.getPhoneNumberMap":
+"/contacts.list":
+"/contacts.listByIntegration":
+"/contacts.listByPhoneNumber":
+"/contacts.listByPhoneNumbers":
+"/contacts.search":
+"/contacts.update":
+"/entities.get":
+"/entities.listByContactId":
+"/oauth2/callback":
+"/oauth2/redirect":
+"/streaming.start":
+"/tasks.create":
+"/tasks.get":
+"/tasks.type.describe":
+"/users.integrations.create":
+"/users.integrations.delete":
+"/users.integrations.getAuthSessionUrl":
+"/users.integrations.list":
+"/users.profiles.list":
+[0m
+Full Platypus API surface exposed. Let me extract the security schemes and analyze the highest-value endpoints (oauth2/redirect, oauth2/callback = classic SSRF targets).
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && grep -oE '"components"|"securitySchemes"|"oauth2"|"security": \[[^]]*\]' /tmp/opencode/platypus-spec.js | sort | uniq -c | head -20; echo "=== securitySchemes block ==="; grep -oE '"securitySchemes":\{[^}]*\}[^}]*\}' /tmp/opencode/platypus-spec.js | head -5
+1 "components"
+     26 "oauth2"
+      1 "securitySchemes"
+=== securitySchemes block ===
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && python3 - <<'EOF'
+import re, json
+s = open('/tmp/opencode/platypus-spec.js').read()
+m = re.search(r'"swaggerDoc":\s*(\{.*?\})\s*;\s*$', s, re.S)
+spec = json.loads(m.group(1))
+print("=== SECURITY SCHEMES ===")
+print(json.dumps(spec.get('components',{}).get('securitySchemes',{}), indent=1)[:2000])
+print("=== PATHS w/ methods ===")
+for p, ops in spec['paths'].items():
+    for method, op in ops.items():
+        sec = op.get('security', [])
+        print(f"{method.upper()} {p} | sec={sec}")
+print("=== streaming/oauth2/tasks/auth op detail ===")
+for p in ['/streaming.start','/users.integrations.create','/users.integrations.getAuthSessionUrl','/oauth2/redirect','/oauth2/callback','/tasks.create','/contacts.listByPhoneNumber']:
+    ops = spec['paths'].get(p, {})
+    for method, op in ops.items():
+        print(f"\n--- {method.upper()} {p} ---")
+        print("summary:", op.get('summary'))
+        for par in op.get('parameters', []):
+            print("PARAM:", par.get('name'), par.get('in'), par.get('required'), par.get('schema',{}).get('type'))
+        rb = op.get('requestBody',{}).get('content',{})
+        for ct, sch in rb.items():
+            print("BODY [{ct}]:", json.dumps(sch)[:600])
+EOF
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+AttributeError: 'NoneType' object has no attribute 'group'
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && python3 - <<'EOF'
+import re, json
+s = open('/tmp/opencode/platypus-spec.js').read()
+i = s.find('"swaggerDoc":')
+sub = s[i+len('"swaggerDoc":'):]
+# find matching brace
+depth = 0
+j = 0
+for ch in sub:
+    if ch == '{': depth += 1
+    elif ch == '}':
+        depth -= 1
+        if depth == 0:
+            j += 1
+            break
+    j += 1
+spec = json.loads(sub[:j])
+print("=== TITLE ===", spec.get('info'))
+print("=== SECURITY SCHEMES ===")
+print(json.dumps(spec.get('components',{}).get('securitySchemes',{}), indent=1)[:2500])
+print("=== PATHS ===")
+for p, ops in spec['paths'].items():
+    for method, op in ops.items():
+        print(f"{method.upper()} {p} | sec={op.get('security')}")
+EOF
+=== TITLE === {'title': 'Platypus', 'description': 'Platform for integration Purposes', 'version': '0.0.1', 'contact': {}}
+=== SECURITY SCHEMES ===
+{
+ "oauth2": {
+  "type": "oauth2",
+  "flows": {
+   "implicit": {
+    "authorizationUrl": "https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth",
+    "tokenUrl": "https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token",
+    "scopes": {}
+   }
+  }
+ }
+}
+=== PATHS ===
+POST /streaming.start | sec=[{'oauth2': []}]
+GET /contacts.list | sec=[{'oauth2': []}]
+GET /contacts.get | sec=[{'oauth2': []}]
+GET /contacts.listByPhoneNumber | sec=[{'oauth2': []}]
+GET /contacts.listByPhoneNumbers | sec=[{'oauth2': []}]
+POST /contacts.create | sec=[{'oauth2': []}]
+POST /contacts.update | sec=[{'oauth2': []}]
+POST /contacts.delete | sec=[{'oauth2': []}]
+GET /contacts.getPhoneNumberMap | sec=[{'oauth2': []}]
+GET /contacts.listByIntegration | sec=[{'oauth2': []}]
+GET /contacts.search | sec=[{'oauth2': []}]
+GET /entities.get | sec=[{'oauth2': []}]
+GET /entities.listByContactId | sec=[{'oauth2': []}]
+POST /users.integrations.create | sec=[{'oauth2': []}]
+GET /users.integrations.list | sec=[{'oauth2': []}]
+POST /users.integrations.delete | sec=[{'oauth2': []}]
+GET /users.integrations.getAuthSessionUrl | sec=[{'oauth2': []}]
+GET /users.profiles.list | sec=[{'oauth2': []}]
+GET /oauth2/redirect | sec=None
+GET /oauth2/callback | sec=None
+POST /call-logs.upsert | sec=[{'oauth2': []}]
+GET /call-logs.outcome.describe | sec=[{'oauth2': []}]
+POST /tasks.create | sec=[{'oauth2': []}]
+GET /tasks.get | sec=[{'oauth2': []}]
+GET /tasks.type.describe | sec=[{'oauth2': []}]
+POST /call-log-drafts.edit | sec=[{'oauth2': []}]
+[0m
+Two unauthenticated endpoints discovered: `/oauth2/redirect` and `/oauth2/callback`. Let me extract their full parameter definitions.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && python3 - <<'EOF'
+import re, json
+s = open('/tmp/opencode/platypus-spec.js').read()
+i = s.find('"swaggerDoc":')
+sub = s[i+len('"swaggerDoc":'):]
+depth=0; j=0
+for ch in sub:
+    if ch=='{': depth+=1
+    elif ch=='}':
+        depth-=1
+        if depth==0: j+=1; break
+    j+=1
+spec = json.loads(sub[:j])
+for p in ['/oauth2/redirect','/oauth2/callback','/users.integrations.getAuthSessionUrl','/streaming.start','/users.integrations.create','/contacts.listByIntegration']:
+    ops = spec['paths'].get(p, {})
+    for method, op in ops.items():
+        print(f"\n===== {method.upper()} {p} =====")
+        print("summary:", op.get('summary', op.get('description')))
+        for par in op.get('parameters', []):
+            print(f"  PARAM {par.get('name')} in={par.get('in')} required={par.get('required')} type={par.get('schema',{}).get('type')}")
+        rb = op.get('requestBody',{})
+        for ct, body in rb.get('content',{}).items():
+            print(f"  BODY[{ct}]:", json.dumps(body)[:800])
+EOF
+===== GET /oauth2/redirect =====
+summary: None
+
+===== GET /oauth2/callback =====
+summary: None
+  PARAM code in=query required=True type=string
+  PARAM accounts-server in=query required=False type=string
+  PARAM error in=query required=False type=string
+
+===== GET /users.integrations.getAuthSessionUrl =====
+summary: Get a new auth session URL for the integration
+  PARAM integrationName in=query required=True type=string
+  PARAM successUrl in=query required=True type=string
+  PARAM errorUrl in=query required=True type=string
+  PARAM domainModifier in=query required=False type=string
+  PARAM locale in=query required=False type=string
+  PARAM region in=query required=False type=string
+  PARAM language in=query required=False type=string
+
+===== POST /streaming.start =====
+summary: Start streaming for all connected integrations of a user
+
+===== POST /users.integrations.create =====
+summary: Add an integration to the user
+  BODY[application/json]: {"schema": {"type": "object", "properties": {"integrationName": {"type": "string", "description": "Name of the integration", "example": "HUBSPOT"}, "key": {"type": "string", "description": "Key of the integration, must be an existing integration profile key", "example": "some-key"}, "apiUrl": {"type": "string", "description": "Api URL of the integration", "example": "https://api.example.com"}, "locale": {"type": "string", "description": "Locale of the integration", "example": "de-DE", "deprecated": true}, "region": {"type": "string", "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)", "example": "DE"}, "language": {"type": "string", "minLength": 2, "maxLength": 2, "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")", "example": "
+
+===== GET /contacts.listByIntegration =====
+summary: Get contacts from a specific integration
+  PARAM integrationName in=query required=True type=string
+  PARAM timestamp in=query required=False type=number
+  PARAM offset in=query required=False type=number
+  PARAM limit in=query required=False type=number
+  PARAM pageToken in=query required=False type=string
+[0m
+Critical: `/oauth2/redirect` and `/oauth2/callback` are marked unauthenticated (`sec=None`) in the spec. Let me probe them read-only with benign values.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && echo "=== GET /oauth2/redirect ===" && curl -s -k -D - -m 8 "https://integration.dev.sipgate.com/oauth2/redirect" 2>/dev/null | head -15; sleep 1; echo; echo "=== GET /oauth2/callback?code=test ===" && curl -s -k -D - -m 8 "https://integration.dev.sipgate.com/oauth2/callback?code=test" 2>/dev/null | head -20
+=== GET /oauth2/redirect ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 131
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:05:42 GMT
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/oauth2/redirect"}
+=== GET /oauth2/callback?code=test ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 141
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:05:43 GMT
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/oauth2/callback?code=test"}
+[0m
+Only `/oauth*` prefix is WAF-blocked at 403; the JSON-RPC-style API paths are outside that prefix. Let me verify how the API endpoints behave unauthenticated (GET-only, read-only).
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && for p in "/contacts.list" "/users.integrations.list" "/users.profiles.list" "/tasks.type.describe" "/call-logs.outcome.describe"; do code=$(curl -s -k -o /dev/null -w "%{http_code}" -m 8 -X GET "https://integration.dev.sipgate.com${p}" 2>/dev/null); echo "GET $p -> $code"; sleep 1; done
+GET /contacts.list -> 403
+GET /users.integrations.list -> 403
+GET /users.profiles.list -> 403
+GET /tasks.type.describe -> 403
+GET /call-logs.outcome.describe -> 403
+[0m
+Let me compare the 403 body structure between `/oauth*` and API paths to distinguish WAF-level vs app-level blocking.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && echo "=== /contacts.list 403 body ===" && curl -s -k -D - -m 8 "https://integration.dev.sipgate.com/contacts.list" 2>/dev/null | head -12; echo; echo "=== POST /streaming.start (no body) ===" && curl -s -k -D - -m 8 -X POST -H "Content-Type: application/json" -d '{}' "https://integration.dev.sipgate.com/streaming.start" 2>/dev/null | head -12
+=== /contacts.list 403 body ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 129
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:06:17 GMT
+x-ratelimit-limit: 800
+x-ratelimit-remaining: 799
+x-ratelimit-reset: 60
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/contacts.list"}
+=== POST /streaming.start (no body) ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 131
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:06:17 GMT
+x-ratelimit-limit: 800
+x-ratelimit-remaining: 799
+x-ratelimit-reset: 60
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/streaming.start"}
+[0m
+App-level 403 (Express problem+json, rate-limit headers) on every API path — only `/swagger` static bundle is reachable. Let me check a few remaining angles: method/CORS variation, sourcemaps, and the oauth2-redirect.js.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && echo "=== OPTIONS preflight /contacts.list ===" && curl -s -k -D - -m 8 -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" "https://integration.dev.sipgate.com/contacts.list" 2>/dev/null | head -12; sleep 1; echo "=== HEAD /swagger/swagger-ui-bundle.js.map ===" && curl -s -k -o /dev/null -w "%{http_code}\n" -m 8 "https://integration.dev.sipgate.com/swagger/swagger-ui-bundle.js.map" 2>/dev/null; echo "=== GET /oauth2/redirect with Origin evil ===" && curl -s -k -D - -m 8 -H "Origin: https://evil.example" "https://integration.dev.sipgate.com/oauth2/redirect" 2>/dev/null | head -12
+=== OPTIONS preflight /contacts.list ===
+HTTP/1.1 204 No Content
+access-control-allow-methods: GET,HEAD,POST
+access-control-allow-origin: *
+date: Mon, 07 Sep 2026 00:06:28 GMT
+vary: Access-Control-Request-Headers
+
+=== HEAD /swagger/swagger-ui-bundle.js.map ===
+200
+=== GET /oauth2/redirect with Origin evil ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 131
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:06:32 GMT
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/oauth2/redirect"}
+[0m
+Key facts confirmed: app-level 403 on all data paths, `/swagger*` fully public including source maps, permissive CORS everywhere, rate-limit headers (800/60s) leak. Let me extract integration names and any SSRF-relevant schema details from the embedded spec, and check for app source maps.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && python3 - <<'EOF'
+import re, json
+s = open('/tmp/opencode/platypus-spec.js').read()
+i = s.find('"swaggerDoc":')
+sub = s[i+len('"swaggerDoc":'):]
+depth=0; j=0
+for ch in sub:
+    if ch=='{': depth+=1
+    elif ch=='}':
+        depth-=1
+        if depth==0: j+=1; break
+    j+=1
+spec = json.loads(sub[:j])
+print("=== integrationName examples across schema ===")
+names = set(re.findall(r'integrationName\b.{0,80}?example",\s*"([^"]+)"', json.dumps(spec)))
+for n in sorted(names): print(" ", n)
+print("=== apiUrl / url / webhook fields in schemas ===")
+blob = json.dumps(spec)
+for kw in ['apiUrl','url','callback','webhook','redirect','accounts-server','domainModifier','successUrl','errorUrl']:
+    idx = blob.find(kw)
+    if idx>=0: print(f"  {kw}: ...{blob[idx-40:idx+120]}...".replace('\\"','"'))
+print("=== components.schemas keys ===")
+print(sorted(spec.get('components',{}).get('schemas',{}).keys()))
+EOF
+=== integrationName examples across schema ===
+=== apiUrl / url / webhook fields in schemas ===
+  apiUrl: ... profile key", "example": "some-key"}, "apiUrl": {"type": "string", "description": "Api URL of the integration", "example": "https://api.example.com"}, "locale"...
+  url: ...s": {"200": {"description": "Returns an url to initiate the auth session", "content": {"application/json": {"schema": {"type": "object", "properties": {"url": {...
+  callback: ...n": ""}}, "tags": ["OAuth"]}}, "/oauth2/callback": {"get": {"operationId": "OAuthController_handleCallback[1]", "parameters": [{"name": "code", "required": true...
+  redirect: ..., "in": "query", "description": "URL to redirect the user after the authentication process", "schema": {"format": "uri", "example": "https://example.com/welcome...
+  accounts-server: ...schema": {"type": "string"}}, {"name": "accounts-server", "required": false, "in": "query", "schema": {"type": "string"}}, {"name": "error", "required": false, ...
+  domainModifier: ...MESSAGE", "type": "string"}}, {"name": "domainModifier", "required": false, "in": "query", "description": "User specific URL or subdomain", "schema": {"example"...
+  successUrl: ...HUBSPOT", "type": "string"}}, {"name": "successUrl", "required": true, "in": "query", "description": "URL to redirect the user after the authentication process"...
+  errorUrl: ...ESFORCE", "type": "string"}}, {"name": "errorUrl", "required": true, "in": "query", "description": "URL to redirect the user after the authentication process wi...
+=== components.schemas keys ===
+['AdditionalProperties', 'BridgeExceptionDto', 'CallLogDraft$RequestDto', 'CallLogs$UpsertRequest', 'CallLogs$UpsertResponse', 'CallLogsOutcome$DescribeResponse', 'Contact', 'ContactNotFoundExceptionDto', 'Contacts$CreateRequest', 'Contacts$CreateResponse', 'Contacts$DeleteRequest', 'Contacts$GetPhoneNumberMapResponse', 'Contacts$GetResponse', 'Contacts$ListByIntegrationResponse', 'Contacts$ListByPhoneNumberResponse', 'Contacts$ListResponse', 'Contacts$UpdateRequest', 'Contacts$UpdateResponse', 'CreateData', 'CreateData1', 'DebugContactInfoDto', 'DebugFieldMatchDto', 'DebugStatsDto', 'DebugWordBreakdownDto', 'Entities$GetResponse', 'Entities$ListByContactIdResponse', 'EntityNotFoundExceptionDto', 'IntegrationEntity', 'IntegrationEntityOption', 'IntegrationExceptionDto', 'IntegrationProfileResponse', 'LabeledIntegrationEntities', 'LocalizedPhoneNumberEntity', 'LoggedIntegrationEntity', 'LogoResponse', 'MaybeLoggedIntegrationEntity', 'Participant', 'PhoneNumberEntity', 'PublicConnectedIntegration', 'Search$SearchResponse', 'SearchContactsResult', 'SearchHighlight', 'SearchHighlightSnippet', 'StaleTimestampExceptionDto', 'Tasks$CreateRequest', 'Tasks$GetResponse', 'TasksType$DescribeResponse', 'UpsertData', 'UsersIntegrationProfiles$ListResponse', 'UsersIntegrations$CreateRequest', 'UsersIntegrations$DeleteRequest', 'UsersIntegrations$GetAuthSessionUrlResponse', 'UsersIntegrations$ListResponse']
+[0m
+Let me determine whether the 403 gate is token-based (→401 with dummy Bearer) or IP-allowlist, and inspect the `oauth2/redirect` param set — this determines the residual exploitability of the spec.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && echo "=== Bearer dummy ===" && curl -s -k -D - -m 8 -H "Authorization: Bearer dummy" "https://integration.dev.sipgate.com/contacts.list" 2>/dev/null | head -12; sleep 1; echo "=== redirect param spec ===" && python3 - <<'EOF'
+import re, json
+s = open('/tmp/opencode/platypus-spec.js').read()
+i = s.find('"swaggerDoc":'); sub = s[i+len('"swaggerDoc":'):]
+depth=0; j=0
+for ch in sub:
+    if ch=='{': depth+=1
+    elif ch=='}':
+        depth-=1
+        if depth==0: j+=1; break
+    j+=1
+spec = json.loads(sub[:j])
+for p in ['/oauth2/redirect']:
+    ops = spec['paths'][p]
+    for method, op in ops.items():
+        print(f"--- {method.upper()} {p} ---")
+        for par in op.get('parameters', []):
+            print(" ", par.get('name'), "| in:", par.get('in'), "| req:", par.get('required'), "|", json.dumps(par.get('schema',{}))[:200])
+EOF
+=== Bearer dummy ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 129
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:06:55 GMT
+x-ratelimit-limit: 800
+x-ratelimit-remaining: 799
+x-ratelimit-reset: 60
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/contacts.list"}=== redirect param spec ===
+--- GET /oauth2/redirect ---
+[0m
+Let me run a couple more read-only checks: source maps for the init js, the `?url=` spec-override behavior, and HTTP (port 80) status.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && for u in "/swagger/swagger-ui-init.js.map" "/swagger-ui-init.js" "/swagger/?url=https://evil.example/x.json" "/swagger/swagger-ui.js.map"; do echo "== $u =="; curl -s -k -o /dev/null -w "%{http_code} %{size_download}\n" -m 8 "https://integration.dev.sipgate.com${u}" 2>/dev/null; sleep 1; done; echo "== port 80 =="; curl -s -k -o /dev/null -w "%{http_code}\n" -m 8 "http://integration.dev.sipgate.com/swagger" 2>/dev/null
+== /swagger/swagger-ui-init.js.map ==
+404 170
+== /swagger-ui-init.js ==
+404 146
+== /swagger/?url=https://evil.example/x.json ==
+200 3510
+== /swagger/swagger-ui.js.map ==
+200 1258506
+== port 80 ==
+301
+[0m
+Let me check whether the same "Platypus" integration platform spec is exposed anywhere else (prod integration host or variants), then check the sourcemap hint.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && for h in integration.sipgate.com integration.sipgate.de integration.live.sipgate.com integration-uk.sipgate.com integration-de.sipgate.com integrations.sipgate.com platypus.sipgate.com; do echo "== $h =="; getent hosts "$h" 2>/dev/null | head -1 || echo "NXDOMAIN"; sleep 0.3; done
+== integration.sipgate.com ==
+217.10.72.89    integration.sipgate.com
+== integration.sipgate.de ==
+== integration.live.sipgate.com ==
+== integration-uk.sipgate.com ==
+== integration-de.sipgate.com ==
+== integrations.sipgate.com ==
+== platypus.sipgate.com ==
+[0m
+`integration.sipgate.com` resolves (217.10.72.89) — potential production Platypus. Read-only probe for the same spec surface.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && for p in / /swagger /swagger.json /health; do code=$(curl -s -k -o /dev/null -w "%{http_code}" -m 10 "https://integration.sipgate.com${p}" 2>/dev/null); echo "integration.sipgate.com$p -> $code"; sleep 1; done
+integration.sipgate.com/ -> 403
+integration.sipgate.com/swagger -> 200
+integration.sipgate.com/swagger.json -> 404
+integration.sipgate.com/health -> 404
+[0m
+Critical: production `integration.sipgate.com/swagger` also 200. Let me fetch and diff the production spec against the dev one.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && curl -s -k -m 15 "https://integration.sipgate.com/swagger/swagger-ui-init.js" -o /tmp/opencode/platypus-prod.js 2>/dev/null; wc -c /tmp/opencode/platypus-prod.js; cmp -s /tmp/opencode/platypus-spec.js /tmp/opencode/platypus-prod.js && echo "IDENTICAL" || echo "DIFFERENT"; echo "=== prod auth server ==="; grep -oE 'authorizationUrl[^,]*|title[^,]*' /tmp/opencode/platypus-prod.js | head -5
+386538 /tmp/opencode/platypus-prod.js
+DIFFERENT
+=== prod auth server ===
+title": "Platypus"
+title": {
+title"
+title": {
+title"
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && python3 - <<'EOF'
+import re, json
+def parse(path):
+    s = open(path).read()
+    i = s.find('"swaggerDoc":')
+    sub = s[i+len('"swaggerDoc":'):]
+    depth=0; j=0
+    for ch in sub:
+        if ch=='{': depth+=1
+        elif ch=='}':
+            depth-=1
+            if depth==0: j+=1; break
+        j+=1
+    return json.loads(sub[:j])
+prod = parse('/tmp/opencode/platypus-prod.js')
+dev = parse('/tmp/opencode/platypus-spec.js')
+print("PROD auth scheme:", json.dumps(prod.get('components',{}).get('securitySchemes',{})))
+print("DEV  auth scheme:", json.dumps(dev.get('components',{}).get('securitySchemes',{})))
+pp = set(prod['paths'].keys()); dp = set(dev['paths'].keys())
+print("PROD-only paths:", sorted(pp-dp))
+print("DEV-only paths:", sorted(dp-pp))
+print("PROD path count:", len(pp), "| DEV path count:", len(dp))
+EOF
+PROD auth scheme: {"oauth2": {"type": "oauth2", "flows": {"implicit": {"authorizationUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth", "tokenUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token", "scopes": {}}}}}
+DEV  auth scheme: {"oauth2": {"type": "oauth2", "flows": {"implicit": {"authorizationUrl": "https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth", "tokenUrl": "https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token", "scopes": {}}}}}
+PROD-only paths: []
+DEV-only paths: []
+PROD path count: 26 | DEV path count: 26
+[0m
+Production spec is live and confirmed — 26 identical paths, but authenticating against real `login.sipgate.com` sipgate-apps realm. Let me verify the production API paths' unauth behavior and check scope requirements.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && for p in "/users.integrations.list" "/contacts.list" "/oauth2/callback?code=test" "/streaming.start"; do code=$(curl -s -k -o /dev/null -w "%{http_code}" -m 8 -X GET "https://integration.sipgate.com${p}" 2>/dev/null); echo "integration.sipgate.com GET $p -> $code"; sleep 1; done; echo "=== check scope usage in spec (any scopes defined?) ==="; grep -oE '"(scope|scopes)"\s*:[^]]*\]' /tmp/opencode/platypus-prod.js | head -3; grep -oE 'oauth2\s*:\s*\[[^]]*\]' /tmp/opencode/platypus-prod.js | head -3
+integration.sipgate.com GET /users.integrations.list -> 403
+integration.sipgate.com GET /contacts.list -> 403
+integration.sipgate.com GET /oauth2/callback?code=test -> 403
+integration.sipgate.com GET /streaming.start -> 403
+=== check scope usage in spec (any scopes defined?) ===
+[0m
+Both prod and dev expose the full Platypus spec. Let me check the prod 403 body type, source maps, and confirm the prod host details.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && echo "=== prod /contacts.list 403 body ===" && curl -s -k -D - -m 8 "https://integration.sipgate.com/contacts.list" 2>/dev/null | head -14; sleep 1; echo "=== prod /swagger-ui-bundle.js.map ===" && curl -s -k -o /dev/null -w "%{http_code} %{size_download}\n" -m 8 "https://integration.sipgate.com/swagger/swagger-ui-bundle.js.map" 2>/dev/null; echo "=== prod root headers ===" && curl -s -k -I -m 8 "https://integration.sipgate.com/" 2>/dev/null | head -12
+=== prod /contacts.list 403 body ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 129
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:08:29 GMT
+x-ratelimit-limit: 800
+x-ratelimit-remaining: 798
+x-ratelimit-reset: 52
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/contacts.list"}=== prod /swagger-ui-bundle.js.map ===
+200 1920878
+=== prod root headers ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+date: Mon, 07 Sep 2026 00:08:33 GMT
+[0m
+Let me fully extract the `/users.integrations.create` body (has `apiUrl` — potential SSRF with a valid token) and `/oauth2/redirect` params from the PROD spec.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && python3 - <<'EOF'
+import re, json
+def parse(path):
+    s = open(path).read()
+    i = s.find('"swaggerDoc":')
+    sub = s[i+len('"swaggerDoc":'):]
+    depth=0; j=0
+    for ch in sub:
+        if ch=='{': depth+=1
+        elif ch=='}':
+            depth-=1
+            if depth==0: j+=1; break
+        j+=1
+    return json.loads(sub[:j])
+prod = parse('/tmp/opencode/platypus-prod.js')
+for p in ['/users.integrations.create','/oauth2/redirect','/oauth2/callback','/contacts.create','/entities.listByContactId','/call-log-drafts.edit','/tasks.create']:
+    for method, op in prod['paths'].get(p,{}).items():
+        print(f"\n===== {method.upper()} {p} =====")
+        rb = op.get('requestBody',{})
+        for ct, body in rb.get('content',{}).items():
+            props = body.get('schema',{}).get('properties',{})
+            for k,v in props.items():
+                print(f"   BODY.{k}: {v.get('type')} | {str(v.get('description'))[:80]}")
+        for par in op.get('parameters',[]):
+            print(f"   QPARAM {par.get('name')} req={par.get('required')} | {str(par.get('description'))[:80]}")
+EOF
+===== POST /users.integrations.create =====
+   BODY.integrationName: string | Name of the integration
+   BODY.key: string | Key of the integration, must be an existing integration profile key
+   BODY.apiUrl: string | Api URL of the integration
+   BODY.locale: string | Locale of the integration
+   BODY.region: string | Phone number region of the integration (ISO 3166-1 alpha-2 country code)
+   BODY.language: string | Language of the integration (ISO 639-1 code, e.g. "de")
+
+===== GET /oauth2/redirect =====
+
+===== GET /oauth2/callback =====
+   QPARAM code req=True | None
+   QPARAM accounts-server req=False | None
+   QPARAM error req=False | None
+
+===== POST /contacts.create =====
+   BODY.integrationName: string | Name of the integration
+   BODY.data: None | Data of the contact to create
+
+===== GET /entities.listByContactId =====
+   QPARAM integrationName req=True | Name of the integration
+   QPARAM contactId req=True | None
+
+===== POST /call-log-drafts.edit =====
+   BODY.correlationAttributes: object | Attributes by which to identify the call log draft in the returning event, this 
+   BODY.readyToSend: boolean | Indicates whether the call log draft is ready to be sent to integrations. Set th
+   BODY.sendAutomaticallyAfter: number | Unix timestamp in milliseconds after which the call log should be sent automatic
+   BODY.startTime: number | Unix timestamp in milliseconds when the call started
+   BODY.endTime: number | Unix timestamp in milliseconds when the call ended. Optional for ongoing calls.
+   BODY.direction: string | Direction of the call - incoming or outgoing
+   BODY.participants: array | Should always contain local and remote participants.
+   BODY.note: string | User provided notes or comments about the call. Will be sent to integrations.
+   BODY.summary: string | (AI generated) summary of call (usually provided by backend services)
+   BODY.shouldIncludeSummary: boolean | Determines, if summary should be appended to call log when pushing to CRM
+   BODY.state: string | Current state of the call (e.g., connected, disconnected, missed)
+   BODY.outcome: string | CRM outcome id or label string
+   BODY.integrationEntities: array | Integration entities that should receive this call log. Source must be the same 
+   BODY.loggedIntegrationEntities: array | Integration entities for which a call log has already been created in the CRM. S
+
+===== POST /tasks.create =====
+   BODY.integrationName: string | Name of the integration
+   BODY.data: None | the data to create the task with
+[0m
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && diff <(tr ',' '\n' < /tmp/opencode/platypus-spec.js) <(tr ',' '\n' < /tmp/opencode/platypus-prod.js) | head -30
+15633c15633
+<               "authorizationUrl": "https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth"
+---
+>               "authorizationUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth"
+15635c15635
+<               "tokenUrl": "https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token"
+---
+>               "tokenUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token"
+[0m
+Let me diff the prod vs dev spec to confirm what changed, and verify the CORS behavior on the prod spec endpoint precisely.
+One final read-only probe of the prod no-auth OAuth endpoints with their documented params, to make the next-step concrete.
+[0m$ [0mcd /home/runner/work/sipgate-hunt/sipgate-hunt/ && echo "=== GET /oauth2/redirect?redirect=https://example.com/welcome (documented example) ===" && curl -s -k -D - -m 8 "https://integration.sipgate.com/oauth2/redirect?redirect=https://example.com/welcome" 2>/dev/null | head -12; sleep 1; echo "=== GET /oauth2/callback?code=vdummy&accounts-server=integration.sipgate.com ===" && curl -s -k -D - -m 8 "https://integration.sipgate.com/oauth2/callback?code=vdummy&accounts-server=integration.sipgate.com" 2>/dev/null | head -12
+=== GET /oauth2/redirect?redirect=https://example.com/welcome (documented example) ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 168
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:11:28 GMT
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/oauth2/redirect?redirect=https://example.com/welcome"}=== GET /oauth2/callback?code=vdummy&accounts-server=integration.sipgate.com ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 183
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 00:11:30 GMT
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/oauth2/callback?code=vdummy&accounts-server=integration.sipgate.com"}
+[0m
+[0m# [0mTodos
+[✓] STEP 1 — DELTA: Compare inventory+knowledge+last leads against current surface
+[✓] STEP 2 — PRIORITIZE: Score top assets 0-10 on attack dimensions
+[✓] STEP 3 — HYPOTHESES: Top 3 assets, max 1 hypothesis each
+[✓] STEP 4 — SELF-CRITIQUE: Drop low-confidence or REJECTED hypotheses
+[✓] STEP 5 — NEXT ACTION: One concrete probe/scan/human action
+[✓] STEP 6 — LEARNING: Log rejected/accepted findings
+[✓] STEP 7 — RISK: Score program risk 0-100
+[0m
+All API data paths return app-level 403 regardless of headers — the prod spec is publicly served but the API itself is externally gated. I have strong, complete evidence now. Let me finalize.
+STEPS 1-7 COMPLETE. Summary of this cycle's work: probed integration.dev.sipgate.com (newly alive) and discovered the full "Platypus" integration-platform OpenAPI spec is served publicly on BOTH dev (integration.dev.sipgate.com, 217.116.121.180) and PROD (integration.sipgate.com, 217.10.72.89) — 26 JSON-RPC-style endpoints (contacts/list/create/update/delete, oauth2/redirect+callback, users.integrations.create with `apiUrl`, call-logs.upsert, tasks.create, streaming.start). All API data paths return app-level 403 "Forbidden resource" (same gate with `x-ratelimit-limit:800`), so the live API is externally gated; only `/swagger` static bundle + spec + sourcemaps are public. Prod spec authenticates against real `login.sipgate.com` sipgate-apps realm.
+
+---
+
+STEP 1 — DELTA
+- [NEW] integration.sipgate.com: PROD (217.10.72.89) serves full public OpenAPI spec of "Platypus" integration platform at `/swagger`; 26 JSON-RPC endpoints incl contacts/call-logs/oauth2-callback/tasks/streaming; spec auth = real `login.sipgate.com` sipgate-apps realm (implicit); all API paths app-403 externally; CORS `access-control-allow-origin: *` on all responses.
+- [CHANGED] integration.dev.sipgate.com: no longer just "403 ACAO*"; serves byte-near-identical spec (26 paths, only auth host differs: login.dev.sipgate.com); `/swagger/swagger-ui-bundle.js.map` + `swagger-ui-bundle.js` public; rate-limit headers leak (800/60s); data paths app-403.
+- [NEW] integration.sipgate.com/oauth2/callback documented with NO security: params `code`(req), `accounts-server`, `error`; ALSO `oauth2/redirect` documented with no params but a `redirect?` described in `getAuthSessionUrl` returns `url` — OAuth redirect-URI pumping surface if gate bypassed.
+- [NEW] integration.sipgate.com/users.integrations.create takes user-supplied `apiUrl` string — SSRF/redirect surface (gated behind 403 now).
+
+STEP 2 — PRIORITIZE (priority=0.25a+0.25b+0.15t+0.15g+0.10c+0.10f)
+- [PRIO] integration.sipgate.com,7.45,0.25*8+0.25*9+0.15*9(swagger+oauth2+SSRF-params)+0.15*4(403-gated)+0.10*6+0.10*10
+- [PRIO] integration.dev.sipgate.com,6.9,0.25*7+0.25*7+0.15*9+0.15*4+0.10*6+0.10*10
+- [PRIO] api.sipgate.com/v2,6.3,0.25*8+0.25*10+0.15*7+0.15*3+0.10*5+0.10*5 (BOLA unch'd authz-drift triage)
+- [PRIO] app.dev.sipgate.com,5.7,0.25*7+0.25*5+0.15*6+0.15*10+0.10*6+0.10*8
+
+STEP 3 — HYPOTHESES (top 3 assets, 1 each)
+[HYP] Integration platform "Platypus" OAuth/SSRF/backdoor surface on publicly-documented prod+dev origins
+class: AUTH
+asset: integration.sipgate.com (prod) + integration.dev.sipgate.com (dev) — /oauth2/redirect, /oauth2/callback, /users.integrations.create, /call-logs.upsert, /contacts.*
+confidence: 55
+reasoning: both hosts serve full 26-op OpenAPI spec publicly under /swagger (prod auth->login.sipgate.com sipgate-apps REAL realm, implicit); /oauth2/redirect and /oauth2/callback documented with NO security block; users.integrations.create takes free-form apiUrl; call-logs.upsert/contacts.* carry tenant/CRM data; external unauthenticated calls return uniform app-403 (Forbidden resource, x-ratelimit 800) with Bearer: dummy also 403 -> gate is not token-validating at edge, likely IP/network allowlist before app routing; spec disclosure is real, reachability is blocked.
+evidence_needed: (a) any path that returns !=403 externally (gate bypass, method/path normalization, alternate host header), or (b) confirmation 403 is a network ACL by checking response source vs swagger static (Fastly/nginx vs app).
+verify_steps: PROBE (read-only, <=1rps): OPTIONS/HEAD variants already 204/403; try `GET /swagger/../contacts.list`, `GET /Contacts.list`, `GET /contacts.list%2f`, Host: integration.sipgate.com vs IP:217.10.72.89 SNI mismatch — flag ANY 200/204/302/401 that is not 403/404.
+impact: if gate bypassed -> OAuth redirect_uri pump, apiUrl SSRF to 169.254.169.254, CRM/contact PII read/write, call-log injection. HIGH-CRITICAL. If not bypassed -> remains prod spec disclosure (MEDIUM info).
+testability: PASSIVE (gate-bypass sweep) → AUTH_HELPED (login via app.sipgate.com implicit to get real realm token, retest same paths)
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings/{id},devices/{id}/credentials/password,authorization/oauth2/clients/{clientId}}
+confidence: 50
+reasoning: unchanged — swagger documents top-level per-id namespaces; uniform edge-401 before lookup; cross-tenant boundary never exercised (no 2nd tenant bearer).
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 vs 403/404.
+verify_steps: AUTH_HELPED — after registering 2 test tenants, GET /v2/portings/{B-id}, /v2/devices/{B-id}, /v2/devices/{B-id}/credentials/password, /v2/voicemails/{B-id}, /v2/authorization/oauth2/clients/{B-clientId} with A-bearer.
+impact: cross-tenant PII, SIP/device creds (password change → device takeover), OAuth client secrets → tenant compromise. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[HYP] Prod "Platypus" spec {oauth2/redirect, oauth2/callback} declared no-security but enforced 403 — config/authz drift triage when a real realm token exists
+class: AUTH
+asset: integration.sipgate.com/oauth2/{redirect,callback}
+confidence: 45
+reasoning: spec's global security? — openid-configuration says sipgate-apps; oauth2/redirect+callback lack `security` blocks in embedded swaggerDoc → spec-implies-public; server returns 403 with dummy Bearer → server may demand valid token that spec says not required; classic spec-vs-behavior drift; same class as KB api.v2 swagger drift (edge enforced over spec).
+evidence_needed: real realm token changes 403→302/200 on oauth2 paths; or >400 status codes unauthenticated.
+verify_steps: PASSIVE re-read of spec (done) → AUTH_HELPED with real app.sipgate.com implicit-flow token: GET /oauth2/redirect & /oauth2/callback?code=xxx.
+impact: if token accepted on declared-public paths → OAuth flow manipulation/chain to CRM integrations. MEDIUM-HIGH, chain-dependent.
+testability: AUTH_HELPED
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] OAuth implicit token theft via open redirect (app.sipgate.com): conf 45, HUMAN_ONLY; React-Router same-origin resolution blocks fragment leak; kept as last resort — unchanged.
+- [PARKED] Desktop S3 write (conf 55, HUMAN, mutating) — still the top supply-chain if sign-off granted; not statically verifiable.
+- [PARKED] integration.dev endpoint SSRF "conf 65" from prior cycle → REPLACED/upgraded by prod discovery: actual reachable data paths all 403; the REAL novel fact is prod+dev full-spec disclosure + declared-public oauth2 handlers.
+- [FINAL] 1. integration.sipgate.com Platypus gate-bypass/SSRF/OAuth drift (55, PASSIVE→AUTH_HELPED) — new prod asset, highest upside.
+- [FINAL] 2. Cross-tenant /v2 BOLA (50, AUTH_HELPED) — surviving high-impact, still needs tenants.
+- [FINAL] 3. integration oauth2/redirect+callback spec-vs-behavior drift (45, AUTH_HELPED).
+
+STEP 5 — NEXT ACTION
+[NEXT] PROBE: passive gate-bypass sweep on prod integration.sipgate.com (read-only, <=1rps) — `GET https://integration.sipgate.com/contacts.list` variants: `/../contacts.list`, `/Contacts.list`, `/%63ontacts.list`, `//contacts.list`, trailing `%00`, `%2f`, double-encoding, and Host-header SNI-mismatch `curl -k https://217.10.72.89/contacts.list -H 'Host: integration.sipgate.com'` — flag ANY status != {403,404} (esp. 200/204/302/401). Zero mutation, incremental over the uniform-403 baseline already captured.
+
+STEP 6 — LEARNING
+[LEARN] ACCEPTED INFO @ integration.sipgate.com: PROD integration platform "Platypus" exposes full 26-op OpenAPI spec publicly under /swagger (contacts/call-logs/tasks/oauth2/streaming); spec auth = real login.sipgate.com sipgate-apps realm; all data paths app-403 externally with rate-limit headers; CORS `allow-origin:*` on all responses; prod asset new to inventory.
+[LEARN] ACCEPTED INFO @ integration.dev.sipgate.com: dev twin serves near-identical spec (only auth host differs: login.dev); swagger bundle+sourcemap public; same uniform 403 gate; extends prior "403 ACAO*" finding to documented full API surface.
+[LEARN] ACCEPTED MISCONFIG @ integration.sipgate.com: `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external requests app-403 — spec-vs-behavior drift, gated now but token-gated-or-IP-gated undetermined; `users.integrations.create` accepts free-form `apiUrl` (SSRF surface) in docs.
+[LEARN] REJECTED AUTH @ integration.sipgate.com direct: unauthenticated GET on all 26 documented paths returns uniform app-403 "Forbidden resource" (Bearer: dummy identical) — no standalone unauthenticated data leak; gate must be bypassed or token acquired.
+
+STEP 7 — RISK
+[RISK] sipgate: 50 — new PROD asset (integration.sipgate.com) disclosed with full integration-platform spec + permissive CORS + declared-public OAuth handlers, raising surface (formerly unknown). But all data paths remain externally 403-gated and no standalone exploit confirmed this cycle; surviving high-impact chains (Prod-Platypus gate bypass ~55, cross-tenant /v2 BOLA 50/AUTH_HELPED, S3-write 55/HUMAN) all remain gated on bypass/tenant/HUMAN sign-off. Program risk up modestly (+5) purely from the newly-confirmed prod platform disclosure and its SSRF/OAuth chain potential once any gate weakness or realm token is obtained.
