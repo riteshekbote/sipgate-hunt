@@ -12455,3 +12455,50 @@ testability: AUTH_HELPED
 **STEP 7 — RISK**
 
 [RISK] sipgate: 52 — new PROD asset (integration.sipgate.com) disclosed with full integration-platform spec + permissive CORS + declared-public OAuth handlers, raising surface (formerly unknown). Swagger-ui 5.x live at api.sipgate.com/v2/doc/* with implicit-only `sipgate-swagger-ui` client exposing extreme scopes (same-origin-XSS amplifier). All data paths remain externally 403-gated and no standalone exploit confirmed this cycle; surviving high-impact chains (Prod-Platypus gate bypass ~55, cross-tenant /v2 BOLA 50/AUTH_HELPED, S3-write 55/HUMAN) all remain gated on bypass/tenant/HUMAN sign-off. Program risk up modestly (+2) from newly-confirmed prod platform disclosure and SSRF/OAuth chain potential once any gate weakness or realm token is obtained.
+===== ANALYST bigpickle 2026-09-07 16:05:44 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m✱ [0mGlob "**/*"[90m 75 matches[0m
+[0m→ [0mRead state_bigpickle.json
+[0m→ [0mRead reports/hypotheses-bigpickle.txt
+[0m→ [0mRead leads/lead-bigpickle.md
+[0m→ [0mRead scope.yml
+[0m→ [0mRead triage/run-2026-09-07-12-09.md
+[0m→ [0mRead probe-results.md
+Let me review the latest state, including any recent probes or triage results that may indicate what's been tested since the last cycle.
+The probe-results.md is empty (no actual probe results recorded). The prior cycle (bigpickle) set [NEXT] PROBE for the integration.sipgate.com gate-bypass sweep. Let me check the last triage run that had content and whether the probe was actually executed, and check the knowledge base index.
+
+Since I'm the deep-hunt analyst and the prior state's [NEXT] was a PROBE on integration.sipgate.com gate-bypass, I should execute that probe (or at least incorporate it). Let me check whether there's any record that the probe ran. The probe-results.md shows the 10:22:36 UTC header with no results below — so the probe was NOT executed yet.
+
+Let me run the passive gate-bypass sweep on integration.sipgate.com as planned. This is the highest-confidence PASSIVE hypothesis. Let me do the read-only probes at ≤1 rps.
+
+Let me first confirm the baseline and IPs.
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code} %{url_effective}\n" --max-time 15 "https://integration.sipgate.com/contacts.list" ; echo "---"; curl -s -i --max-time 15 "https://integration.sipgate.com/contacts.list" 2>&1 | head -30
+403 https://integration.sipgate.com/contacts.list
+---
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 129
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 15:56:15 GMT
+x-ratelimit-limit: 800
+x-ratelimit-remaining: 799
+x-ratelimit-reset: 60
+
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/contacts.list"}
+[0m
+[93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting
+[0m✗ [0mprobe() {
+  local url="$1"
+  sleep 1
+  echo "=== GET $url ==="
+  curl -s -o /tmp/resp.txt -w "HTTP %{http_code}\n" --max-time 15 "$url"
+  cat /tmp/resp.txt; echo; echo "---"
+}
+probe "https://integration.sipgate.com/../contacts.list"
+probe "https://integration.sipgate.com/Contacts.list"
+probe "https://integration.sipgate.com/%63ontacts.list" failed
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.
+Baseline confirmed: 403 with ACAO `*`, rate-limit headers. Now let me run the gate-bypass variants at ≤1rps. I'll space them out.
