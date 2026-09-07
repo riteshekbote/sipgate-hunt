@@ -5578,3 +5578,1924 @@ testability: AUTH_HELPED
 ### STEP 7 — RISK
 
 [RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io, NEWLY ALIVE integration.dev endpoint with permissive CORS. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target + integration.dev target; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Cross-tenant BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, and potential object-level authz-drift on high-value API endpoints.
+===== ANALYST nemotron3 2026-09-07 10:22:36 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mcurl -s -I https://app.dev.sipgate.com 2>&1 | head -20
+HTTP/2 200 
+cache-control: max-age=3600
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk wss://ws-eu.pusher.com stats.pusher.com sentry.io api-iam.intercom.io nexus-websocket-a.intercom.io nexus-websocket-b.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io *.zopim.com *.zdassets.com *.zendesk.com wss://*.zopim.com https://amp.sipgate.de *.instana.io https://status.sipgate.de/ https://integration.sipgate.cloud https://docs.google.com *.didww.com/v3/public_keys; script-src 'unsafe-eval' 'unsafe-inline' 'self' stats.pusher.com connect.facebook.com connect.facebook.net *.cloudfront.net www.google-analytics.com *.google.com www.googletagmanager.com www.googleadservices.com sjs.bizographics.com bat.bing.com snap.licdn.com *.doubleclick.net *.linkedin.com secure.adnxs.com js.intercomcdn.com widget.intercom.io data: *.zopim.com *.zdassets.com *.instana.io; style-src 'unsafe-inline' 'self' *.google.com *.googleapis.com static.sipgate.com data: blob: *.zdassets.com; font-src 'self' fonts.intercomcdn.com js.intercomcdn.com static.sipgate.com data: *.zdassets.com *.zopim.com; frame-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com https://player.vimeo.com *.zdassets.com *.zopim.com; child-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com; worker-src 'self' blob:; img-src *.googleusercontent.com *.facebook.com 'self' *.gstatic.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net www.google-analytics.com *.googleapis.com *.doubleclick.net *.google.com *.google.de bat.bing.com *.linkedin.com secure.adnxs.com js.intercomcdn.com downloads.intercomcdn.com static.intercomassets.com data: *.zopim.com *.zdassets.com *.zopim.io; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net js.intercomcdn.com blob: *.zopim.com data: *.zdassets.com; frame-ancestors 'self' *.sipgate.com *.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa;
+content-type: text/html; charset=utf-8
+cross-origin-opener-policy: same-origin-allows-popups
+etag: "68a20e986474426a55d9b731a364e1b193eb9460d1c069af91ede2ae79417b0c"
+last-modified: Mon, 07 Sep 2026 10:01:06 GMT
+strict-transport-security: max-age=31556926
+x-content-type-options: nosniff
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/* https://*.sipgate.com/* https://*.sipgate.de/* https://*.sipgate.co.uk/*
+x-xss-protection: 1; mode=block
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 10:03:23 GMT
+x-served-by: cache-chi-kmdw8640039-CHI
+x-cache: MISS
+x-cache-hits: 0
+x-timer: S1788775403.126342,VS0,VE207
+vary: x-fh-requested-host, accept-encoding
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
+content-length: 14409
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com 2>&1 | head -50
+<!doctype html>
+<html lang="" translate="no">
+	<head>
+		<meta charset="utf-8" />
+		<title>sipgate</title>
+
+		<!-- Make the page behave sensibly on mobile devices -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<!-- Vendor-specific configs -->
+		<link rel="manifest" href="/site.webmanifest" />
+		<meta name="msapplication-config" content="/browserconfig.xml" />
+
+		<!-- Prevent chrome from auto-translating our page -->
+		<meta name="google" content="notranslate" />
+
+		<!-- Colors for menu bars etc. -->
+		<meta name="theme-color" content="#000000" />
+		<meta name="msapplication-TileColor" content="#000000" />
+		<meta name="msapplication-navbutton-color" content="#000000" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="#000000" />
+
+		<!-- Allow adding to homescreen -->
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+
+		<!-- Prevent browser from making phonenumbers clickable -->
+		<meta name="format-detection" content="telephone=no" />
+
+		<!-- Icons -->
+		<link rel="icon" sizes="16x16 32x32" href="/favicons/favicon.ico" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
+		<link rel="apple-touch-icon" href="/favicons/apple/apple-touch-icon.png" />
+
+		<!-- Font Preloading -->
+		<link
+			rel="preload"
+			href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin=""
+		/>
+
+		<script>
+			if (!/^app\.local/.test(window.location.hostname)) {
+				console.log(
+					'%cStop!',
+					'color:red; font-size:60px; font-weight: bold; -webkit-text-stroke: 1px black;'
+				);
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com 2>&1 | grep -oE 'main-[a-zA-Z0-9]+\.js'
+main-PzQhPZFG.js
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/main-PzQhPZFG.js 2>&1 | strings | grep -oE '(api|app|payment|team-de|team-uk|admin|integration|login)\.(dev|live|local)\.(sipgate\.(com|net|de)|sipgate\.(com|net|de)):[0-9]+' | sort -u
+(no output)
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/main-PzQhPZFG.js 2>&1 | grep -oE '"[^"]*sipgate[^"]*"' | head -50
+"https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2"
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/main-PzQhPZFG.js 2>&1 | tr '}' '\n' | grep -i sipgate | head -100
+<title>sipgate</title>
+			href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2"
+					'%cThis is a browser feature intended for developers. If someone told you to copy and paste something here, it is a scam and will give them access to your sipgate account.',
+					'%cDas ist eine Funktion, welche für Entwickler vorgesehen ist. Falls Ihnen jemand gesagt hat, hier etwas hin zu kopieren und auszuführen, ist das eine Falle. Derjenige kann danach Zugriff auf ihr sipgate Konto erhalten',
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/main-PzQhPZFG.js 2>&1 | tr ',' '\n' | grep -iE 'sipgate\.(com|net|de|co\.uk)' | head -50
+href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2"
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/main-PzQhPZFG.js 2>&1 | grep -oE '(api|app|payment|team-de|team-uk|admin|integration|login)\.(dev|live|local)\.(sipgate\.(com|net|de|co\.uk))' | sort -u
+(no output)
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/main-PzQhPZFG.js 2>&1 | grep -oE '[a-z-]+\.sipgate\.(com|net|de|co\.uk)' | sort -u
+static.sipgate.com
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/main-PzQhPZFG.js 2>&1 | strings | grep -iE 'sipgate' | head -100
+<title>sipgate</title>
+			href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2"
+					'%cThis is a browser feature intended for developers. If someone told you to copy and paste something here, it is a scam and will give them access to your sipgate account.',
+hren, ist das eine Falle. Derjenige kann danach Zugriff auf ihr sipgate Konto erhalten',
+[0m
+[0m$ [0mcurl -s -I https://integration.dev.sipgate.com 2>&1 | head -30
+(no output)
+[0m
+[0m$ [0mcurl -k -s -I https://integration.dev.sipgate.com 2>&1 | head -30
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+date: Mon, 07 Sep 2026 10:12:29 GMT
+[0m
+[0m$ [0mcurl -k -s https://integration.dev.sipgate.com/swagger 2>&1 | head -50
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Swagger UI</title>
+  <link rel="stylesheet" type="text/css" href="./swagger/swagger-ui.css" >
+  <link rel="icon" type="image/png" href="./swagger/favicon-32x32.png" sizes="32x32" /><link rel="icon" type="image/png" href="./swagger/favicon-16x16.png" sizes="16x16" />
+  <style>
+    html
+    {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *,
+    *:before,
+    *:after
+    {
+      box-sizing: inherit;
+    }
+
+    body {
+      margin:0;
+      background: #fafafa;
+    }
+  </style>
+</head>
+
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position:absolute;width:0;height:0">
+  <defs>
+    <symbol viewBox="0 0 20 20" id="unlocked">
+      <path d="M15.8 8H14V5.6C14 2.703 12.665 1 10 1 7.334 1 6 2.703 6 5.6V6h2v-.801C8 3.754 8.797 3 10 3c1.203 0 2 .754 2 2.199V8H4c-.553 0-1 .646-1 1.199V17c0 .549.428 1.139.951 1.307l1.197.387C5.672 18.861 6.55 19 7.1 19h5.8c.549 0 1.428-.139 1.951-.307l1.196-.387c.524-.167.953-.757.953-1.306V9.199C17 8.646 16.352 8 15.8 8z"></path>
+    </symbol>
+
+    <symbol viewBox="0 0 20 20" id="locked">
+      <path d="M15.8 8H14V5.6C14 2.703 12.665 1 10 1 7.334 1 6 2.703 6 5.6V8H4c-.553 0-1 .646-1 1.199V17c0 .549.428 1.139.951 1.307l1.197.387C5.672 18.861 6.55 19 7.1 19h5.8c.549 0 1.428-.139 1.951-.307l1.196-.387c.524-.167.953-.757.953-1.306V9.199C17 8.646 16.352 8 15.8 8zM12 8H8V5.199C8 3.754 8.797 3 10 3c1.203 0 2 .754 2 2.199V8z"/>
+    </symbol>
+
+    <symbol viewBox="0 0 20 20" id="close">
+      <path d="M14.348 14.849c-.469.469-1.229.469-1.697 0L10 11.819l-2.651 3.029c-.469.469-1.229.469-1.697 0-.469-.469-.469-1.229 0-1.697l2.758-3.15-2.759-3.152c-.469-.469-.469-1.228 0-1.697.469-.469 1.228-.469 1.697 0L10 8.183l2.651-3.031c.469-.469 1.228-.469 1.697 0 .469.469.469 1.229 0 1.697l-2.758 3.152 2.758 3.15c.469.469.469 1.229 0 1.698z"/>
+    </symbol>
+
+    <symbol viewBox="0 0 20 20" id="large-arrow">
+      <path d="M13.25 10L6.109 2.58c-.268-.27-.268-.707 0-.979.268-.27.701-.27.969 0l7.83 7.908c.268.271.268.709 0 .979l-7.83 7.908c-.268.271-.701.27-.969 0-.268-.269-.268-.707 0-.979L13.25 10z"/>
+    </symbol>
+[0m
+[0m$ [0mcurl -k -s https://integration.dev.sipgate.com/swagger/swagger.json 2>&1 | head -100
+{"status":404,"type":"https://http.cat/status/404","title":"Not Found","detail":"Cannot GET /swagger/swagger.json","instance":"/swagger/swagger.json"}
+[0m
+[0m$ [0mcurl -k -s https://integration.dev.sipgate.com/swagger.yaml 2>&1 | head -100
+{"status":404,"type":"https://http.cat/status/404","title":"Not Found","detail":"Cannot GET /swagger.yaml","instance":"/swagger.yaml"}
+[0m
+[0m$ [0mcurl -k -s https://integration.dev.sipgate.com/swagger/swagger-ui-init.js 2>&1 | head -100
+window.onload = function() {
+  // Build a system
+  let url = window.location.search.match(/url=([^&]+)/);
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    url = window.location.origin;
+  }
+  let options = {
+  "swaggerDoc": {
+    "openapi": "3.0.3",
+    "info": {
+      "title": "Platypus",
+      "description": "Platform for integration Purposes",
+      "version": "0.0.1",
+      "contact": {}
+    },
+    "servers": [],
+    "paths": {
+      "/streaming.start": {
+        "post": {
+          "operationId": "StreamingController_start",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": "Streaming start job created"
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Start streaming for all connected integrations of a user",
+          "tags": [
+            "streaming"
+          ]
+        }
+      },
+      "/contacts.list": {
+        "get": {
+          "operationId": "ContactController_list",
+          "parameters": [
+            {
+              "name": "page",
+              "required": false,
+              "in": "query",
+              "deprecated": true,
+              "description": "Use pageToken instead",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": false,
+              "in": "query",
+              "description": "Maximum number of contacts to return",
+              "schema": {
+                "example": 10000,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageToken",
+              "required": false,
+              "in": "query",
+              "description": "Token for the next page of results",
+              "schema": {
+                "format": "base64",
+                "type": "string"
+              }
+            },
+            {
+              "name": "scope",
+              "required": false,
+              "in": "query",
+              "description": "The scope to search in all | team (sipgate account members) | contacts)",
+              "schema": {
+                "example": "team",
+                "type": "string",
+                "enum": [
+                  "all",
+                  "team",
+                  "contacts"
+                ]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The active contact objects and ids of deleted contacts along with the next pagination cursor.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "description": "List of contacts",
+[0m
+[0m$ [0mcurl -k -s https://integration.dev.sipgate.com/swagger/swagger-ui-init.js 2>&1 | grep -oE '(oauth2|callback|redirect|apiUrl|webhook)' | sort -u
+apiUrl
+callback
+oauth2
+redirect
+[0m
+[0m$ [0mcurl -k -s https://integration.dev.sipgate.com/swagger/swagger-ui-init.js 2>&1 | grep -B5 -A20 'apiUrl'
+"key": {
+                      "type": "string",
+                      "description": "Key of the integration, must be an existing integration profile key",
+                      "example": "some-key"
+                    },
+                    "apiUrl": {
+                      "type": "string",
+                      "description": "Api URL of the integration",
+                      "example": "https://api.example.com"
+                    },
+                    "locale": {
+                      "type": "string",
+                      "description": "Locale of the integration",
+                      "example": "de-DE",
+                      "deprecated": true
+                    },
+                    "region": {
+                      "type": "string",
+                      "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+                      "example": "DE"
+                    },
+                    "language": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 2,
+                      "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+--
+            "key": {
+              "type": "string",
+              "description": "Key of the integration, must be an existing integration profile key",
+              "example": "some-key"
+            },
+            "apiUrl": {
+              "type": "string",
+              "description": "Api URL of the integration",
+              "example": "https://api.example.com"
+            },
+            "locale": {
+              "type": "string",
+              "description": "Locale of the integration",
+              "example": "de-DE",
+              "deprecated": true
+            },
+            "region": {
+              "type": "string",
+              "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+              "example": "DE"
+            },
+            "language": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 2,
+              "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+[0m
+[0m$ [0mcurl -k -s https://integration.dev.sipgate.com/swagger/swagger-ui-init.js 2>&1 | grep -B5 -A30 '"\/oauth2'
+"tags": [
+            "users"
+          ]
+        }
+      },
+      "/oauth2/redirect": {
+        "get": {
+          "operationId": "OAuthController_getAuthSessionRedirect[1]",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "tags": [
+            "OAuth"
+          ]
+        }
+      },
+      "/oauth2/callback": {
+        "get": {
+          "operationId": "OAuthController_handleCallback[1]",
+          "parameters": [
+            {
+              "name": "code",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "accounts-server",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "error",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+[0m
+[0m$ [0mcurl -k -s https://integration.dev.sipgate.com/swagger/swagger-ui-init.js 2>&1 | grep -B5 -A50 '"security"'
+"responses": {
+            "204": {
+              "description": "Streaming start job created"
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Start streaming for all connected integrations of a user",
+          "tags": [
+            "streaming"
+          ]
+        }
+      },
+      "/contacts.list": {
+        "get": {
+          "operationId": "ContactController_list",
+          "parameters": [
+            {
+              "name": "page",
+              "required": false,
+              "in": "query",
+              "deprecated": true,
+              "description": "Use pageToken instead",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": false,
+              "in": "query",
+              "description": "Maximum number of contacts to return",
+              "schema": {
+                "example": 10000,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageToken",
+              "required": false,
+              "in": "query",
+              "description": "Token for the next page of results",
+              "schema": {
+                "format": "base64",
+                "type": "string"
+              }
+            },
+            {
+              "name": "scope",
+              "required": false,
+              "in": "query",
+              "description": "The scope to search in all | team (sipgate account members) | contacts)",
+              "schema": {
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Get contact pages from an integration. Optionally filtered by timestamp.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.get": {
+        "get": {
+          "operationId": "ContactController_get",
+          "parameters": [
+            {
+              "name": "integrationName",
+              "required": true,
+              "in": "query",
+              "description": "Name of the integration",
+              "schema": {
+                "example": "HUBSPOT",
+                "type": "string"
+              }
+            },
+            {
+              "name": "contactId",
+              "required": true,
+              "in": "query",
+              "description": "ID of the contact to retrieve",
+              "schema": {
+                "example": "123456",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "A contact with the given id was found in the database.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "ID of the contact",
+                        "example": "123456"
+                      },
+                      "source": {
+                        "type": "string",
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Get a contact by id from the given integration. The contact will be retrieved from the Database.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.listByPhoneNumber": {
+        "get": {
+          "operationId": "ContactController_listByPhoneNumber",
+          "parameters": [
+            {
+              "name": "phoneNumber",
+              "required": true,
+              "in": "query",
+              "description": "e164 phone number to get the contact for. E.g. always include country code even if it is a local number.",
+              "schema": {
+                "example": "+4912345678",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "At least one contact with the given phoneNumber was found in the database. Returns empty array if nothing found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "description": "List of contacts",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "ID of the contact",
+                              "example": "123456"
+                            },
+                            "source": {
+                              "type": "string",
+                              "description": "Source of the contact",
+                              "example": "HUBSPOT"
+                            },
+                            "name": {
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "List contacts that have a matching phoneNumber.e164 field. The contact will be retrieved from the database.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.listByPhoneNumbers": {
+        "get": {
+          "operationId": "ContactController_listByPhoneNumbers",
+          "parameters": [
+            {
+              "name": "phoneNumbers",
+              "required": true,
+              "in": "query",
+              "description": "e164 phone number(s) to get the contact for. Can be a single phone number or an array of phone numbers. E.g. always include country code even if it is a local number.",
+              "schema": {
+                "example": [
+                  "+4912345678",
+                  "+4912345679"
+                ],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "At least one contact with the given phoneNumbers was found in the database. Returns empty array if nothing found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "description": "List of contacts",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "ID of the contact",
+                              "example": "123456"
+                            },
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "List contacts that have a matching phoneNumber.e164 fields. The contacts will be retrieved from the database.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.create": {
+        "post": {
+          "operationId": "ContactController_create",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "integrationName": {
+                      "type": "string",
+                      "description": "Name of the integration",
+                      "example": "HUBSPOT"
+                    },
+                    "data": {
+                      "description": "Data of the contact to create",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "Full name of the contact, should be used if integration uses combined first and last name",
+                              "example": "Hans Wurst"
+                            },
+                            "firstName": {
+                              "type": "string",
+                              "description": "First name of the contact, should be used if integration uses separate first and last name",
+                              "example": "Hans"
+                            },
+                            "lastName": {
+                              "type": "string",
+                              "description": "Last name of the contact, should be used if integration uses separate first and last name",
+                              "example": "Wurst"
+                            },
+                            "email": {
+                              "type": "string",
+                              "description": "Email address of the contact",
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Create a contact in the given integration.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.update": {
+        "post": {
+          "operationId": "ContactController_update",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "integrationName": {
+                      "type": "string",
+                      "description": "Name of the integration",
+                      "example": "HUBSPOT"
+                    },
+                    "data": {
+                      "description": "Data of the contact to create",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "Full name of the contact, should be used if integration uses combined first and last name",
+                              "example": "Hans Wurst"
+                            },
+                            "firstName": {
+                              "type": "string",
+                              "description": "First name of the contact, should be used if integration uses separate first and last name",
+                              "example": "Hans"
+                            },
+                            "lastName": {
+                              "type": "string",
+                              "description": "Last name of the contact, should be used if integration uses separate first and last name",
+                              "example": "Wurst"
+                            },
+                            "email": {
+                              "type": "string",
+                              "description": "Email address of the contact",
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Update a contact in the given integration.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.delete": {
+        "post": {
+          "operationId": "ContactController_delete",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "integrationName": {
+                      "type": "string",
+                      "description": "Name of the integration",
+                      "example": "HUBSPOT"
+                    },
+                    "contactId": {
+                      "type": "string",
+                      "description": "ID of the contact to retrieve",
+                      "example": "123456"
+                    }
+                  },
+                  "required": [
+                    "integrationName",
+                    "contactId"
+                  ]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": ""
+            },
+            "400": {
+              "description": "Integration is not connected or integration is invalid",
+              "links": {},
+              "content": {
+                "application/json": {
+                  "schema": {
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Remove a contact from the given integration. The contact will be deleted in the Database as well as in the CRM.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.getPhoneNumberMap": {
+        "get": {
+          "operationId": "ContactController_getPhoneNumberMap",
+          "parameters": [
+            {
+              "name": "phoneNumbers",
+              "required": true,
+              "in": "query",
+              "description": "e164 phone number(s) to get the contact for. Can be a single phone number or an array of phone numbers. E.g. always include country code even if it is a local number.",
+              "schema": {
+                "example": [
+                  "+4912345678",
+                  "+4912345679"
+                ],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The map of e164 phone numbers as keys, and the integrationName and contactID of the matching contacts",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "map": {
+                        "type": "object",
+                        "description": "The map of e164 phone numbers as keys, and the integrationName and contactID of the matching contacts",
+                        "example": {
+                          "+491234": "SIPGATE_123456"
+                        },
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Get a map of contacts by phone number in bulk",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.listByIntegration": {
+        "get": {
+          "deprecated": true,
+          "description": "\n        @deprecated This endpoint is deprecated and will be removed in a future version.\n        We only use it in the clinq mobile app and the clinq mobile app is deprecated.\n      ",
+          "operationId": "ContactController_listByIntegration",
+          "parameters": [
+            {
+              "name": "integrationName",
+              "required": true,
+              "in": "query",
+              "description": "Name of the integration to fetch contacts from",
+              "schema": {
+                "example": "HUBSPOT",
+                "type": "string"
+              }
+            },
+            {
+              "name": "timestamp",
+              "required": false,
+              "in": "query",
+              "description": "Timestamp to filter contacts",
+              "schema": {
+                "example": 1634567890000,
+                "type": "number"
+              }
+            },
+            {
+              "name": "offset",
+              "required": false,
+              "in": "query",
+              "deprecated": true,
+              "description": "Number of contacts to skip",
+              "schema": {
+                "example": 0,
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": false,
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Get contacts from a specific integration",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.search": {
+        "get": {
+          "operationId": "SearchController_search",
+          "parameters": [
+            {
+              "name": "query",
+              "required": true,
+              "in": "query",
+              "description": "The query to search for",
+              "schema": {
+                "example": "John Doe",
+                "type": "string"
+              }
+            },
+            {
+              "name": "scope",
+              "required": false,
+              "in": "query",
+              "description": "The scope to search in all | team (sipgate account members) | contacts)",
+              "schema": {
+                "example": "team",
+                "type": "string",
+                "enum": [
+                  "all",
+                  "team",
+                  "contacts"
+                ]
+              }
+            },
+            {
+              "name": "debug",
+              "required": false,
+              "in": "query",
+              "description": "Enable debug mode to see scoring details for each result.",
+              "schema": {
+                "example": true,
+                "type": "boolean"
+              }
+            }
+          ],
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Search contacts by name, email, organization and phoneNumber based on a given query string.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/entities.get": {
+        "get": {
+          "description": "Fetches LabeledEntity from integration by type and id and returns label. Works for all integrations that support the feature IntegrationFeature.CONTACT_READ.",
+          "operationId": "IntegrationEntityController_get",
+          "parameters": [
+            {
+              "name": "integrationName",
+              "required": true,
+              "in": "query",
+              "description": "Name of the integration",
+              "schema": {
+                "example": "HUBSPOT",
+                "type": "string"
+              }
+            },
+            {
+              "name": "entityType",
+              "required": true,
+              "in": "query",
+              "description": "Type of the entity, e.g. \"contacts\", \"companies\", etc.",
+              "schema": {
+                "example": "contacts",
+                "type": "string",
+                "enum": [
+                  "contacts",
+                  "deals",
+                  "companies",
+                  "tickets",
+                  "leads",
+                  "accounts",
+                  "opportunities",
+                  "cases",
+                  "contacts_folder",
+                  "users",
+                  "tasks",
+                  "building_objects",
+                  "building_objects_leads"
+                ]
+              }
+            },
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Get label for entity by type and id.",
+          "tags": [
+            "entities"
+          ]
+        }
+      },
+      "/entities.listByContactId": {
+        "get": {
+          "description": "Fetches LabeledEntities directly from the CRM. Works for all integrations that implement the feature IntegrationFeature.CONTACT_INTEGRATION_ENTITIES_GET.",
+          "operationId": "IntegrationEntityController_listByContactId",
+          "parameters": [
+            {
+              "name": "integrationName",
+              "required": true,
+              "in": "query",
+              "description": "Name of the integration",
+              "schema": {
+                "example": "HUBSPOT",
+                "type": "string"
+              }
+            },
+            {
+              "name": "contactId",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "example": "1234",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "description": "The entities that are related to the contact",
+                        "example": [
+                          {
+                            "id": "1234",
+                            "type": "deals",
+                            "source": "HUBSPOT",
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Get all entity by contact id.",
+          "tags": [
+            "entities"
+          ]
+        }
+      },
+      "/users.integrations.create": {
+        "post": {
+          "operationId": "UserController_createIntegration",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "integrationName": {
+                      "type": "string",
+                      "description": "Name of the integration",
+                      "example": "HUBSPOT"
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "Key of the integration, must be an existing integration profile key",
+                      "example": "some-key"
+                    },
+                    "apiUrl": {
+                      "type": "string",
+                      "description": "Api URL of the integration",
+                      "example": "https://api.example.com"
+                    },
+                    "locale": {
+                      "type": "string",
+                      "description": "Locale of the integration",
+                      "example": "de-DE",
+                      "deprecated": true
+                    },
+                    "region": {
+                      "type": "string",
+                      "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+                      "example": "DE"
+                    },
+                    "language": {
+                      "type": "string",
+                      "minLength": 2,
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Add an integration to the user",
+          "tags": [
+            "users"
+          ]
+        }
+      },
+      "/users.integrations.list": {
+        "get": {
+          "operationId": "UserController_listIntegrations",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Returns the list of integrations for the user",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "description": "List of connected integrations",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the integration",
+                              "example": "HUBSPOT"
+                            },
+                            "authenticationRequired": {
+                              "type": "boolean",
+                              "description": "is authentication required for this integration",
+                              "example": true
+                            },
+                            "region": {
+                              "type": "string",
+                              "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+                              "example": "DE",
+                              "nullable": true
+                            },
+                            "language": {
+                              "type": "string",
+                              "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+                              "example": "de",
+                              "nullable": true
+                            }
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "List all integrations for the user",
+          "tags": [
+            "users"
+          ]
+        }
+      },
+      "/users.integrations.delete": {
+        "post": {
+          "operationId": "UserController_deleteIntegration",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "integrationName": {
+                      "type": "string",
+                      "description": "Name of the integration",
+                      "example": "HUBSPOT"
+                    }
+                  },
+                  "required": [
+                    "integrationName"
+                  ]
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": "The integration was removed from the user"
+            },
+            "400": {
+              "description": "The integration could not be removed from the user",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "detail": {
+                        "type": "string",
+                        "example": "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179"
+                      },
+                      "title": {
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Remove an integration from the user",
+          "tags": [
+            "users"
+          ]
+        }
+      },
+      "/users.integrations.getAuthSessionUrl": {
+        "get": {
+          "operationId": "UserController_getAuthSessionUrl",
+          "parameters": [
+            {
+              "name": "integrationName",
+              "required": true,
+              "in": "query",
+              "description": "Name of the integration",
+              "schema": {
+                "example": "HUBSPOT",
+                "type": "string"
+              }
+            },
+            {
+              "name": "successUrl",
+              "required": true,
+              "in": "query",
+              "description": "URL to redirect the user after the authentication process",
+              "schema": {
+                "format": "uri",
+                "example": "https://example.com/welcome?integration=SALESFORCE",
+                "type": "string"
+              }
+            },
+            {
+              "name": "errorUrl",
+              "required": true,
+              "in": "query",
+              "description": "URL to redirect the user after the authentication process with error",
+              "schema": {
+                "format": "uri",
+                "example": "https://example.com/error?integration=SALESFORCE&message=FORBIDDENMESSAGE",
+                "type": "string"
+              }
+            },
+            {
+              "name": "domainModifier",
+              "required": false,
+              "in": "query",
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Get a new auth session URL for the integration",
+          "tags": [
+            "users"
+          ]
+        }
+      },
+      "/users.profiles.list": {
+        "get": {
+          "operationId": "UserController_listProfiles",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Returns the list of available integrations profiles for the user",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "description": "List of integration profiles",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the integration. Works as unique identifier",
+                              "example": "HUBSPOT"
+                            },
+                            "displayName": {
+                              "type": "string",
+                              "description": "DisplayName of the integration",
+                              "example": "HubSpot"
+                            },
+                            "configurationValues": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "url",
+                                  "key",
+                                  "username",
+                                  "account_url"
+                                ]
+                              },
+                              "description": "Which configuration values are required to connect the integration. Can be several or none",
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "List all available integration profiles for the user",
+          "tags": [
+            "users"
+          ]
+        }
+      },
+      "/oauth2/redirect": {
+        "get": {
+          "operationId": "OAuthController_getAuthSessionRedirect[1]",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "tags": [
+            "OAuth"
+          ]
+        }
+      },
+      "/oauth2/callback": {
+        "get": {
+          "operationId": "OAuthController_handleCallback[1]",
+          "parameters": [
+            {
+              "name": "code",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "accounts-server",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "error",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string"
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Create or update call logs for the given integration.",
+          "tags": [
+            "call-logs"
+          ]
+        }
+      },
+      "/call-logs.outcome.describe": {
+        "get": {
+          "operationId": "CallLogController_describe",
+          "parameters": [
+            {
+              "name": "integrationName",
+              "required": true,
+              "in": "query",
+              "description": "Name of the integration",
+              "schema": {
+                "example": "HUBSPOT",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The call outcome options for the given integration.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string",
+                        "description": "The display value of the option in the CRM.",
+                        "example": "Call back Later"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "The key of the option in the CRM.",
+                        "example": "busy",
+                        "nullable": true
+                      },
+                      "options": {
+                        "description": "Options for the call log outcome, e.g. \"Call back Later\", \"Busy\", etc.",
+                        "nullable": true,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Returns the call outcome options for a given integration.",
+          "tags": [
+            "call-logs"
+          ]
+        }
+      },
+      "/tasks.create": {
+        "post": {
+          "operationId": "TaskController_create",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "integrationName": {
+                      "type": "string",
+                      "description": "Name of the integration",
+                      "example": "HUBSPOT"
+                    },
+                    "data": {
+                      "description": "the data to create the task with",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "attributes": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "description": "attributes by which to identify the task in the returning event",
+                              "example": {
+                                "accountId": "f240bbac-87c9-4f6e-bf70-924b57d47db7",
+                                "sessionId": "1234",
+                                "channelId": "4373987"
+                              }
+                            },
+                            "content": {
+                              "type": "string",
+                              "description": "the content of the task",
+                              "example": "hello"
+                            },
+                            "dueAt": {
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Creates a task for the given integration entity.",
+          "tags": [
+            "tasks"
+          ]
+        }
+      },
+      "/tasks.get": {
+        "get": {
+          "operationId": "TaskController_get",
+          "parameters": [
+            {
+              "name": "integrationName",
+              "required": true,
+              "in": "query",
+              "description": "Name of the integration",
+              "schema": {
+                "example": "HUBSPOT",
+                "type": "string"
+              }
+            },
+            {
+              "name": "taskId",
+              "required": true,
+              "in": "query",
+              "description": "the id of the task to fetch",
+              "schema": {
+                "example": "123",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The task for a given taskId.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "example": "123"
+                      },
+                      "title": {
+                        "type": "string",
+                        "description": "the title of the task",
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Returns one task by taskId.",
+          "tags": [
+            "tasks"
+          ]
+        }
+      },
+      "/tasks.type.describe": {
+        "get": {
+          "operationId": "TaskController_describeType",
+          "parameters": [
+            {
+              "name": "integrationName",
+              "required": true,
+              "in": "query",
+              "description": "Name of the integration",
+              "schema": {
+                "example": "HUBSPOT",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The task type options for the given integration.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string",
+                        "description": "The display value of the option in the CRM.",
+                        "example": "Call back Later"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "The key of the option in the CRM.",
+                        "example": "busy"
+                      },
+                      "options": {
+                        "description": "Options for the task type, e.g. \"Call back Later\", \"Busy\", etc.",
+                        "nullable": true,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Returns the task type options for a given integration. Contains information about the task types and their properties.",
+          "tags": [
+            "tasks"
+          ]
+        }
+      },
+      "/call-log-drafts.edit": {
+        "post": {
+          "description": "This endpoint allows you to edit a call log draft. It requires the user to have the necessary permissions and features enabled. The CallLog will be send to the CRM when it is sufficiently ready, which requires the following attributes: 'readyToSend', 'startTime', 'direction', 'participants', 'state' and 'integrationEntities'",
+          "operationId": "CallLogDraftController_edit",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "correlationAttributes": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attributes by which to identify the call log draft in the returning event, this example is for clinq-services",
+                      "example": {
+                        "sessionId": "f240bbac-87c9-4f6e-bf70-924b57d47db7",
+                        "channelId": "12039182093"
+                      }
+                    },
+                    "readyToSend": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ],
+                      "description": "Indicates whether the call log draft is ready to be sent to integrations. Set this to true only when the draft is complete and ready for submission. Can only be unset or true",
+                      "example": true
+                    },
+                    "sendAutomaticallyAfter": {
+                      "type": "number",
+                      "description": "Unix timestamp in milliseconds after which the call log should be sent automatically",
+                      "example": 1630953600000
+                    },
+                    "startTime": {
+                      "type": "number",
+                      "description": "Unix timestamp in milliseconds when the call started",
+                      "example": 1630953600000
+--
+          "responses": {
+            "202": {
+              "description": "The call log draft was successfully edited."
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Edit a call log draft",
+          "tags": [
+            "call-log-drafts"
+          ]
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "LocalizedPhoneNumberEntity": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string",
+              "description": "Label for the phone number, only lables compatible to CRM should be used ",
+              "example": "Mobile"
+            },
+            "type": {
+              "enum": [
+                "DIRECT_DIAL",
+                "STANDARD"
+              ],
+              "type": "string",
+              "description": "Type of the phone number"
+            },
+            "e164": {
+              "type": "string",
+              "description": "E164 formatted phone number",
+              "example": "+49123456789"
+            },
+            "localized": {
+              "type": "string",
+              "description": "Localized formatted phone number",
+              "example": "+49 1234 56789"
+            }
+          },
+          "required": [
+            "label",
+            "type",
+            "e164",
+            "localized"
+          ]
+        },
+        "IntegrationEntity": {
+          "type": "object",
+          "properties": {
+[0m
+[0m$ [0mcurl -s -I https://integration.sipgate.com/swagger 2>&1 | head -20
+HTTP/1.1 200 OK
+access-control-allow-origin: *
+content-type: text/html
+date: Mon, 07 Sep 2026 10:19:41 GMT
+[0m
+[0m$ [0mcurl -s https://integration.sipgate.com/swagger/swagger-ui-init.js 2>&1 | head -100
+window.onload = function() {
+  // Build a system
+  let url = window.location.search.match(/url=([^&]+)/);
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    url = window.location.origin;
+  }
+  let options = {
+  "swaggerDoc": {
+    "openapi": "3.0.3",
+    "info": {
+      "title": "Platypus",
+      "description": "Platform for integration Purposes",
+      "version": "0.0.1",
+      "contact": {}
+    },
+    "servers": [],
+    "paths": {
+      "/streaming.start": {
+        "post": {
+          "operationId": "StreamingController_start",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": "Streaming start job created"
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Start streaming for all connected integrations of a user",
+          "tags": [
+            "streaming"
+          ]
+        }
+      },
+      "/contacts.list": {
+        "get": {
+          "operationId": "ContactController_list",
+          "parameters": [
+            {
+              "name": "page",
+              "required": false,
+              "in": "query",
+              "deprecated": true,
+              "description": "Use pageToken instead",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": false,
+              "in": "query",
+              "description": "Maximum number of contacts to return",
+              "schema": {
+                "example": 10000,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageToken",
+              "required": false,
+              "in": "query",
+              "description": "Token for the next page of results",
+              "schema": {
+                "format": "base64",
+                "type": "string"
+              }
+            },
+            {
+              "name": "scope",
+              "required": false,
+              "in": "query",
+              "description": "The scope to search in all | team (sipgate account members) | contacts)",
+              "schema": {
+                "example": "team",
+                "type": "string",
+                "enum": [
+                  "all",
+                  "team",
+                  "contacts"
+                ]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The active contact objects and ids of deleted contacts along with the next pagination cursor.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "description": "List of contacts",
+[0m
+[0m$ [0mcurl -s https://integration.sipgate.com/swagger/swagger-ui-init.js 2>&1 | grep -B5 -A30 '"\/oauth2'
+"tags": [
+            "users"
+          ]
+        }
+      },
+      "/oauth2/redirect": {
+        "get": {
+          "operationId": "OAuthController_getAuthSessionRedirect[1]",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "tags": [
+            "OAuth"
+          ]
+        }
+      },
+      "/oauth2/callback": {
+        "get": {
+          "operationId": "OAuthController_handleCallback[1]",
+          "parameters": [
+            {
+              "name": "code",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "accounts-server",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "error",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+[0m
+[0m$ [0mcurl -s -I "https://integration.sipgate.com/oauth2/redirect" 2>&1
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 131
+content-type: application/problem+json; charset=utf-8
+date: Mon, 07 Sep 2026 10:22:16 GMT
+[0m

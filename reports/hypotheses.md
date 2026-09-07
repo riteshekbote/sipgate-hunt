@@ -671,3 +671,15 @@
 - LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstr
 - LEARN: ACCEPTED MISCONFIG @ integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *` — hardcode
 - LEARN: ACCEPTED INFO @ app.dev.sipgate.com: JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integratio
+
+## RANKED HYPOTHESES 2026-09-07 10:22:36 UTC
+- [55] integration.sipgate.com: Integration platform "Platypus" gate-bypass enables OAuth/SSRF/CRM chain on prod+dev (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: passive gate-bypass sweep on prod integration.sipgate.com (read-only, ≤1rps) — `GET https://integration.sipgate.com/contacts.list` variants: `/../contact
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: live swagger-ui 5.x; implicit-only third-party client `sipgate-swagger-ui` exposes extreme scope set (oauth2-clients:w
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/keycloak-logout.js: logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, n
+- LEARN: ACCEPTED INFO @ sipgate.io / developer.sipgate.io: developer platform = Cloudflare-fronted static marketing/docs (301 → www.sipgate.io/for-developer), links bac
+- LEARN: ACCEPTED MISCONFIG @ integration.sipgate.com: `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external re
+- LEARN: REJECTED AUTH @ integration.sipgate.com direct: unauthenticated GET on all 26 documented paths returns uniform app-403 "Forbidden resource" (Bearer: dummy ident
+- LEARN: ACCEPTED INFO @ integration.dev.sipgate.com: dev twin serves near-identical spec (only auth host differs: login.dev); swagger bundle+sourcemap public; same unif
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads; identical to prod chatbot REJECT class
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s

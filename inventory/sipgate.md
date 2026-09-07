@@ -294,3 +294,9 @@ www.sipgate.de
 - NEW integration.sipgate.com — `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external requests return app-403 — spec-vs-behavior drift, gate must be
 - CHANGED api.sipgate.com/v2/swagger.json — now returns 404 (was live 144-path spec per KB 2026-09-05/06)
 - CHANGED chatbot.dev.sipgate.com — confirmed LIVE (nginx/1.24.0, Google Cloud) with socket.io endpoint; contradicts prior "dev env externally inert" assessment
+
+## 2026-09-07 10:22:36 UTC
+- NEW `api.sipgate.com/v2/doc/*` — live swagger-ui 5.x; implicit-only third-party client `sipgate-swagger-ui` exposes extreme scope set (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/a
+- NEW `api.sipgate.com/v2/doc/keycloak-logout.js` — logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, no open redirect (KB ACCEPTED INFO 2026-09-07)
+- CHANGED `api.sipgate.com/v2/swagger.json` — now returns 404 (was live 144-path spec per KB 2026-09-05/06); spec relocated to /v2/doc/ swagger-ui or removed
+- CHANGED `integration.sipgate.com` — full 26-op OpenAPI spec confirmed at /swagger with OAuth/SSRF chain potential; all external paths 403-gated; spec-vs-behavior drift on /oauth2/{redirect,callback} documente
