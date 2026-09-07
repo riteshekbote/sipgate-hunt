@@ -183,3 +183,89 @@ verify_steps: 1) Check if ansible-logger is deployed in production. 2) Verify if
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-07 18:50:57 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-07 21:54:55 UTC
+[HYP] Hardcoded Internal Redis Endpoint (RFC-1918) Across 4 CLINQ Bridge Deployments
+class: MISCONFIG
+asset: sipgate/clinq-bridge-{sipgate,hubspot,google,pipedrive}/k8s/template/deployment.yml:46-49
+confidence: 95
+reasoning: All four deployment manifests hardcode `REDIS_URL: rediss://10.37.248.211:6378` as plaintext env var. This is an internal RFC-1918 IP with TLS-enabled Redis on non-standard port 6378. The GCP project `clinq-services` and cluster `clinq-services-cluster` in `europe-west3` are confirmed via `cloudbuild.yaml` in each repo. Exposed in public repos under the `sipgate` GitHub org.
+impact: HIGH — Exposes internal Redis endpoint, GCP project ID, cluster zone, and private network topology. Aids lateral movement or targeted SSRF if any internal-facing service is reachable.
+verify_steps: 1) Confirm `10.37.248.211` resolves from any sipgate GCP VPC. 2) Verify `rediss://` TLS termination. 3) Confirm GCP project `clinq-services` zone `europe-west3` still hosts this Redis.
+[HYP] TLS Certificate Verification Disabled for Redis Connection
+class: MISCONFIG
+asset: sipgate/clinq-bridge/src/cache/storage/redis-storage-adapter.ts:22
+confidence: 90
+reasoning: Redis client connects with `tls: { rejectUnauthorized: false }`, disabling TLS certificate verification. This allows MITM attacks on the Redis connection even when using the `rediss://` (TLS) scheme configured in the K8s deployment manifests.
+impact: MEDIUM — Enables man-in-the-middle on Redis connections despite TLS being configured. Cached contact data could be intercepted or tampered with.
+verify_steps: 1) Confirm production deployment uses `rediss://` URL (it does per deployment.yml). 2) Verify whether this setting is overridden via environment variables in production.
+[HYP] Hardcoded HubSpot OAuth Client ID in K8s Deployment
+class: SECRET
+asset: sipgate/clinq-bridge-hubspot/k8s/template/deployment.yml:50-51
+confidence: 85
+reasoning: `HUBSPOT_CLIENT_ID: 6bd4c77d-7d54-47fe-b637-6be96d8c3c05` is hardcoded in plaintext in the public K8s deployment manifest. While client IDs alone don't grant access (secrets are in K8s secrets), this reveals the exact HubSpot OAuth app registered for the CLINQ HubSpot bridge, including the callback URL `https://hubspot.bridge.clinq.com/oauth2/callback`.
+impact: LOW-MEDIUM — Reveals registered OAuth client identity and callback URL. Combined with other findings, enables targeted phishing or OAuth misconfiguration attacks.
+verify_steps: 1) Verify this client ID is registered in HubSpot's developer portal. 2) Check if the OAuth app has excessive scopes.
+[HYP] Hardcoded Pipedrive OAuth Client ID in K8s Deployment
+class: SECRET
+asset: sipgate/clinq-bridge-pipedrive/k8s/template/deployment.yml:54-55
+confidence: 85
+reasoning: `CLIENT_ID: 36bc4ebf413cf06b` is hardcoded in plaintext in the public K8s deployment manifest. The `CLIENT_SECRET` is properly referenced from a K8s secret, but the client ID and OAuth identifier `PIPEDRIVE` are exposed.
+impact: LOW — Reveals registered OAuth client identity. Combined with other findings, enables targeted attacks.
+verify_steps: 1) Verify this client ID is registered in Pipedrive's developer portal.
+[HYP] Hardcoded OAuth Client Credentials in REST API Example
+class: SECRET
+asset: sipgate/rest-api-examples/webapp-nodejs/.npmrc.dist:2-3
+confidence: 65
+reasoning: Contains `client_id=2414245-0-e24e0091-8265-11e7-93e7-e5fb754b756f` and `client_secret=187812ce-b546-4fa9-96e8-771e9775c3cb`. These follow the sipgate OAuth client credential format. The `.dist` template ships real-looking credentials (not placeholder values). The README instructs users to copy this file to `.npmrc` (gitignored), but the `.dist` is committed.
+impact: LOW-MEDIUM — If the sipgate OAuth server hasn't revoked this specific client credential, it could be used to obtain access tokens via the authorization code flow. Even if revoked, it reveals the exact credential format.
+verify_steps: 1) Attempt OAuth token exchange using these credentials against `https://api.sipgate.com/login/third-party/protocol/openid-connect/token`. 2) Check if the client is listed in sipgate's developer portal. 3) Verify `.gitignore` properly excludes `.npmrc`.
+[HYP] Hardcoded Default Session Secret in REST API Example
+class: OTHER
+asset: sipgate/rest-api-examples/webapp-nodejs/index.js:30
+confidence: 70
+reasoning: Express session middleware uses `secret: 'sipgate-rest-api-demo'` — a hardcoded, publicly known signing key committed to a public repo. While this is example/demo code, it establishes a pattern that could be copy-pasted into production.
+impact: LOW — Session fixation risk if used in production. In an example repo, impact is limited to demonstrating an insecure pattern.
+verify_steps: 1) Verify no production instances copy this exact secret. 2) Check if the session secret is overridable via environment variable.
+[HYP] Default Cookie Secret in Ansible Logger (Slim Framework)
+class: MISCONFIG
+asset: sipgate/ansible-logger/ansible-logger-web/includes/Slim/Slim.php:307
+confidence: 70
+reasoning: Default cookie secret key set to `'CHANGE_ME'`. If deployed without changing this, session cookies can be forged by anyone who knows this default value. Also, `cookies.secure` and `cookies.httponly` are both set to `false`.
+impact: LOW — Session forgery if ansible-logger is deployed in production with default config.
+verify_steps: 1) Check if ansible-logger is deployed in production. 2) Verify if the secret was changed from default.
+[HYP] Default Database Credentials in Ansible Logger Config
+class: SECRET
+asset: sipgate/ansible-logger/ansible-logger-web/config/config.inc.php.dist:6
+confidence: 65
+reasoning: Contains `$config["db"]["password"] = "secret"` and `$config["db"]["user"] = "someuser"` as distribution defaults. While these are clearly placeholder values, they are committed to a public repo.
+impact: LOW — Placeholder credentials unlikely to be used in production, but pattern encourages insecure defaults.
+verify_steps: 1) Check if ansible-logger is deployed with these default credentials.
+[HYP] Default Database Credentials in Ansible Logger Callback Config
+class: SECRET
+asset: sipgate/ansible-logger/ansible-callbacks/ansible-logger.conf.dist:3-4
+confidence: 65
+reasoning: Contains `password = somepassword` and `user = someuser` as distribution defaults for MySQL connection. Committed to public repo.
+impact: LOW — Placeholder credentials, but pattern encourages insecure defaults.
+verify_steps: 1) Check if any production ansible instances use these credentials.
+[HYP] Hardcoded JWT Secret in AI Demo MCP Server Mock Service
+class: SECRET
+asset: sipgate/sipgate-ai-demo-auth-mcp-server/src/mock-service/server.ts:8
+confidence: 75
+reasoning: `JWT_SECRET = "mock-service-secret-key"` is hardcoded in the mock authentication service. This JWT secret is used to sign and verify tokens for the `/contracts` API. While this is a mock/demo service, the secret is committed to a public repo.
+impact: LOW — Demo/mock service only, but if deployed alongside real services, could be used to forge JWT tokens.
+verify_steps: 1) Check if the mock service is deployed in any environment. 2) Verify if the JWT_SECRET is overridable via environment variable.
+[HYP] Public CORS with Credentials in CLINQ Bridge Express App
+class: MISCONFIG
+asset: sipgate/clinq-bridge/src/index.ts:17-20
+confidence: 80
+reasoning: CORS middleware configured with `credentials: true, origin: true` — this reflects any Origin header and allows credentials. Any origin can make credentialed cross-origin requests to the CLINQ bridge API, enabling potential account takeover or data exfiltration if a user visits a malicious link while authenticated.
+impact: MEDIUM — An attacker-controlled page can perform cross-origin requests with the user's session/credentials.
+verify_steps: 1) Confirm this default CORS config is used in production deployments. 2) Test a cross-origin request from `evil.com` with credentials. 3) Check if a reverse proxy strips or overrides CORS headers.
+[HYP] Hardcoded Internal Dev URLs in sipgategcx Browser Extension
+class: MISCONFIG
+asset: sipgate/sipgategcx/manifest.json (permissions list)
+confidence: 70
+reasoning: The browser extension manifest exposes internal API endpoints including `http://api.dev.sipgate.net/RPC2` and `https://samurai.sipgate.net/RPC2` in its permissions list. This reveals internal hostnames and API paths that are not intended for public knowledge.
+impact: LOW — Information disclosure of internal infrastructure; the dev endpoint is HTTP (not HTTPS).
+verify_steps: 1) Verify if `api.dev.sipgate.net` and `samurai.sipgate.net` are accessible externally. 2) Check if the extension is still maintained.
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
