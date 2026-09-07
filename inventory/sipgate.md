@@ -318,3 +318,12 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/swagger.json — now returns 404 (was live 144-path spec per KB 2026-09-05/06); spec relocated to `/v2/doc/` swagger-ui or removed
 - CHANGED chatbot.dev.sipgate.com — confirmed LIVE (nginx/1.24.0, Google Cloud) with socket.io endpoint; contradicts prior "dev env externally inert" assessment (KB REJECTED 2026-09-05)
 - CHANGED login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — externally inert confirmed
+
+## 2026-09-07 22:44:23 UTC
+- NEW `integration.sipgate.com` — PROD "Platypus" integration platform exposes full 26-operation OpenAPI spec at `/swagger/swagger-ui-init.js` (contacts, call-logs, tasks, oauth2, streaming); all data paths
+- NEW `integration.sipgate.com` — `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external requests return app-403 — spec-vs-behavior drift; `users.int
+- NEW `integration.dev.sipgate.com` — DEV twin serves near-identical 26-op spec (only auth host differs: `login.dev.sipgate.com`); HTTPS 403 with `access-control-allow-origin: *`; swagger bundle + sourcemap
+- CHANGED `app.dev.sipgate.com` — JS bundle rotated to `main-DFko0cRT.js` (from `main-Dr5Dd34d.js` 2026-09-06); Fastly CDN, 200 OK, identical production bundle
+- CHANGED `api.sipgate.com/v2/swagger.json` — now returns 404 (was live 144-path spec per KB 2026-09-05/06); spec relocated to `/v2/doc/` swagger-ui or removed
+- CHANGED `chatbot.dev.sipgate.com` — confirmed LIVE (nginx/1.24.0, Google Cloud) with socket.io endpoint; contradicts prior "dev env externally inert" assessment
+- CHANGED `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — externally inert confirmed

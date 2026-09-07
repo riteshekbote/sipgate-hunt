@@ -1846,3 +1846,33 @@ evidence_needed: a way through the gate (none found after ~40 variants) → down
 impact: if reachable → redirect_uri pump / code interception. Currently inert.
 testability: PASSIVE
 [NEXT] PROBE: fetch `https://chatbot.dev.sipgate.com/lib/demo.js.map` and grep for `firebase|apiKey|AIza|project_?id|storageBucket|appId` (zero-mutation; completed for demo.js, map now available); then `GET https://integration.sipgate.cloud/swagger/oauth2-redirect.html` and diff its tokenUrl/tokenendpoint vs `.com` to locate the token-exchange target host (Keycloak vs Firebase identity).
+## 2026-09-07 22:44:12 UTC [target] (model bigpickle)
+[HYP] GCP-backed Platypus instance SSRF → cloud-metadata amplification (users.integrations.create apiUrl)
+class: SSRF
+asset: integration.sipgate.cloud (+ .com/.dev)
+confidence: 55
+reasoning: .cloud is on GCP 35.246.154.68 (metadata.google.internal / GCP LB → link-local 169.254.169.254); spec documents `users.integrations.create` accepting free-form `apiUrl`; gate uniform-403 on all 26 paths incl /oauth2/* on .cloud, .com, .dev (this cycle re-confirmed on .cloud); swagger-ui-init public on all three.
+evidence_needed: a way past the 403 gate (none found) OR a handler reachable with a registered API key (api_key_forbidden_requests counter = 7).
+verify_steps: PROBE read-only — diff .cloud vs .com `.cloud/swagger/swagger-ui-init.js` for instance-level config drift; GET `https://integration.sipgate.cloud/` root headers for server/ingress fingerprint; GET `/swagger-resources`, `/v3/api-docs`, `/api-docs`, `/docs/` on .cloud looking for non-403. Flag any != {403,404}.
+impact: with gate pass: metadata keys theft (GCP SA), CRM/contact PII read/write, call-log injection via integration handlers. CRITICAL if reachable; MEDIUM-INFO (spec disclosure) now.
+testability: PASSIVE (gate-gated)
+[HYP] Firebase-JWT gate continuity: token acquisition path for the validated Firebase project
+class: AUTH
+asset: integration.sipgate.com /oauth2/callback
+confidence: 45
+reasoning: /metrics this cycle PROVES the live gate is Firebase-JWT-dominant (79799 denied) with API-key fallback (7) and rate-limit layer (2450) — spec claims Keycloak OAuth but runtime validates Firebase → mechanism drift confirmed. oauth2/callback is where Keycloak code→Firebase-session exchange must occur; chatbot surface has zero firebase refs (demo.js.map = HTML, no apiKey).
+evidence_needed: token source — either a leaked Firebase web API key/product id, or drive /oauth2/callback with a real realm code (requires logged-in session).
+verify_steps: AUTH_HELPED — fetch full `.cloud/.com swagger-ui-init.js` (already 200) grep for firebase/apiKey/AIza; if none, obtain Keycloak code for `platypus-swagger` (real realm login.sipgate.com, shown in spec) then GET `/oauth2/callback?code=…` and observe exchange.
+impact: valid Firebase session → full 26-op API (contacts/call-logs/streaming) with Keycloak-less auth. HIGH if token source found.
+testability: AUTH_HELPED
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings,devices,authorization/oauth2/clients}
+confidence: 50
+reasoning: uniform edge auth (401 empty) confirmed across all /v2 paths pre-auth; object-level tenant isolation never exercised — requires two tenant bearers.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 vs 403/404.
+verify_steps: AUTH_HELPED — after 2 test tenants: GET `/v2/portings/{B-id}`, `/v2/devices/{B-id}/credentials/password`, `/v2/authorization/oauth2/clients/{B-clientId}` with A-bearer.
+impact: cross-tenant PII, SIP device creds → device takeover, OAuth client secrets → tenant compromise. CRITICAL if confirmed.
+testability: AUTH_HELPED
+[NEXT] PROBE: `GET https://integration.sipgate.com/swagger/swagger-ui-init.js` — save; diff against `/tmp/opencode/cloud_init.js` for instance-level drift (auth host, any `firebase|apiKey|AIza`); then `GET https://integration.sipgate.cloud/` + `/swagger-resources` + `/v3/api-docs` + `/docs/` — flag ANY status != {403,404} on the GCP instance (≤1 rps, read-only).
+[RISK] sipgate: 53 — new GCP-hosted Platypus instance (.cloud) surfaced with identical full 26-op spec, REAL-realm OAuth client `platypus-swagger`, and permissive `ACAO:*`; public /metrics on .com now hard-confirms Firebase-JWT-gated architecture. All data paths remain uniformly 403-gated across .com/.dev/.cloud (no bypass found this cycle; 40+ variants already exhausted). No standalone exploit confirmed; surviving high-impact chains (Platypus gate/SSRF 55, /v2 BOLA 50-AUTH, S3-write 55-HUMAN) all still gate-bound. +1 vs prior 52 on new GCP prod asset + confirmed gate-architecture disclosure.

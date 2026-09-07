@@ -14344,3 +14344,224 @@ testability: PASSIVE
 
 ## STEP 7 — RISK
 - [RISK] sipgate: 55 — new prod host (integration.sipgate.cloud, GCP) and live auth-drift disclosure raise the Platypus chain's realism: the Firebase-JWT gate is now mechanically confirmed (unauth /metrics exposes its counters) but the token source is not publicly reachable — the exploit still hinges on acquiring a Firebase session (OAuth exchange or leaked key). Modest (+3) upward given newly-confirmed gate mechanism and expanded prod surface.
+===== ANALYST bigpickle 2026-09-07 22:44:23 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/demo.js.map -w "HTTP %{http_code} %{size_download}B %{content_type}\n" --max-time 20 "https://chatbot.dev.sipgate.com/lib/demo.js.map" ; echo "---grep---"; grep -oiE "AIza[0-9A-Za-z_-]{35}|apiKey[\"'=: ]+[0-9a-zA-Z{].{0,40}|firebase[A-Za-z.]{0,20}|storageBucket|projectId|appId[:=]" /tmp/opencode/demo.js.map 2>/dev/null | sort -u | head -30
+HTTP 200 3399B text/html
+---grep---
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/cloud_oar.html -w "HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.cloud/swagger/oauth2-redirect.html" ; echo "---tokenUrl grep---"; grep -oiE "tokenUrl|authorizationUrl|tokenurl[^,}]{0,120}|https?://[^\"']{0,80}" /tmp/opencode/cloud_oar.html 2>/dev/null | sort -u | head -20
+HTTP 200 102B
+---tokenUrl grep---
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/com_oar.html -w "HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.com/swagger/oauth2-redirect.html" ; echo "---tokenUrl grep---"; grep -oiE "tokenUrl|authorizationUrl|tokenurl[^,}]{0,120}|https?://[^\"']{0,80}" /tmp/opencode/com_oar.html 2>/dev/null | sort -u | head -20
+HTTP 200 102B
+---tokenUrl grep---
+[0m
+[0m$ [0mecho "=== demo.js.map content (3399B, text/html?!) ==="; head -c 1200 /tmp/opencode/demo.js.map; echo; echo "=== cloud_oar (102B) ==="; cat /tmp/opencode/cloud_oar.html; echo; echo "=== com_oar (102B) ==="; cat /tmp/opencode/com_oar.html
+=== demo.js.map content (3399B, text/html?!) ===
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Botify Chat Widget Demo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+    <!-- Fonts -->
+    <link rel="preload" href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2" as="font" type="font/woff2" crossorigin="" />
+    <link rel="preload" href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff" as="font" type="font/woff" crossorigin="" />
+    <link rel="preload" href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-bold.woff2" as="font" type="font/woff2" crossorigin="" />
+    <link rel="preload" href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-bold.woff" as="font" type="font/woff" crossorigin="" />
+    <link rel="preload" href="https://static.sipgate.com/fonts/texta/texta-regular.woff2" as="font" type="font/woff2" crossorigin="" />
+    <link rel="preload" href="https://static.sipgate.com/fonts/texta/texta-regular.woff" as="font" type="font/woff" crossorigin="" />
+ 
+=== cloud_oar (102B) ===
+<!doctype html>
+<html lang="en-US">
+<body>
+<script src="oauth2-redirect.js"></script>
+</body>
+</html>
+
+=== com_oar (102B) ===
+<!doctype html>
+<html lang="en-US">
+<body>
+<script src="oauth2-redirect.js"></script>
+</body>
+</html>
+[0m
+[0m$ [0mdig +short integration.sipgate.cloud A; echo "--CNAME--"; dig +short integration.sipgate.cloud CNAME; echo "--com--"; dig +short integration.sipgate.com A
+35.246.154.68
+--CNAME--
+--com--
+217.10.72.89
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/cloud_oar.js -w "cloud oauth2-redirect.js: HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.cloud/swagger/oauth2-redirect.js"; grep -oiE "oauth2RedirectUrl[^;]{0,120}|tokenUrl[^;]{0,120}|https?://[^\"';]{0,80}" /tmp/opencode/cloud_oar.js | sort -u | head; echo "===="; curl -sS -o /tmp/opencode/com_oar.js -w "com oauth2-redirect.js: HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.com/swagger/oauth2-redirect.js"; grep -oiE "oauth2RedirectUrl[^;]{0,120}|tokenUrl[^;]{0,120}|https?://[^\"';]{0,80}" /tmp/opencode/com_oar.js | sort -u | head
+cloud oauth2-redirect.js: HTTP 200 1329B
+====
+com oauth2-redirect.js: HTTP 200 1329B
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/cloud_contacts.txt -D /tmp/opencode/cloud_contacts.hdr -w "cloud /contacts.list: HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.cloud/contacts.list"; grep -iE "^HTTP|x-ratelimit|access-control|content-type|server|via" /tmp/opencode/cloud_contacts.hdr | head; echo "---body---"; head -c 300 /tmp/opencode/cloud_contacts.txt
+cloud /contacts.list: HTTP 403 129B
+HTTP/2 403 
+content-type: application/problem+json; charset=utf-8
+access-control-allow-origin: *
+x-ratelimit-limit: 800
+x-ratelimit-remaining: 799
+x-ratelimit-reset: 60
+---body---
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/contacts.list"}
+[0m
+[0m$ [0msha256sum /tmp/opencode/cloud_oar.js /tmp/opencode/com_oar.js; echo "---cloud oar.js body---"; cat /tmp/opencode/cloud_oar.js
+a5c8a34e09e49737382cc5019446eec7c3db3461963fc5bfe448361d3c5549e9  /tmp/opencode/cloud_oar.js
+a5c8a34e09e49737382cc5019446eec7c3db3461963fc5bfe448361d3c5549e9  /tmp/opencode/com_oar.js
+---cloud oar.js body---
+"use strict";function run(){var e,r,t,a=window.opener.swaggerUIRedirectOauth2,o=a.state,n=a.redirectUrl;if((t=(r=/code|token|error/.test(window.location.hash)?window.location.hash.substring(1).replace("?","&"):location.search.substring(1)).split("&")).forEach((function(e,r,t){t[r]='"'+e.replace("=",'":"')+'"'})),e=(r=r?JSON.parse("{"+t.join()+"}",(function(e,r){return""===e?r:decodeURIComponent(r)})):{}).state===o,"accessCode"!==a.auth.schema.get("flow")&&"authorizationCode"!==a.auth.schema.get("flow")&&"authorization_code"!==a.auth.schema.get("flow")||a.auth.code)a.callback({auth:a.auth,token:r,isValid:e,redirectUrl:n});else if(e||a.errCb({authId:a.auth.name,source:"auth",level:"warning",message:"Authorization may be unsafe, passed state was changed in server Passed state wasn't returned from auth server"}),r.code)delete a.state,a.auth.code=r.code,a.callback({auth:a.auth,redirectUrl:n});else{let e;r.error&&(e="["+r.error+"]: "+(r.error_description?r.error_description+". ":"no accessCode received from the server. ")+(r.error_uri?"More info: "+r.error_uri:"")),a.errCb({authId:a.auth.name,source:"auth",level:"error",message:e||"[Authorization failed]: no accessCode received from the server"})}window.close()}"loading"!==document.readyState?run():document.addEventListener("DOMContentLoaded",(function(){run()}));
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/cloud_init.js -w "cloud swagger-ui-init.js: HTTP %{http_code} %{size_download}B\n" --max-time 25 "https://integration.sipgate.cloud/swagger/swagger-ui-init.js"; echo "---cloud oauth refs---"; grep -oiE "\"?(authUrl|tokenUrl|clientId|realm|authorizationUrl|scopes)\"?[\"']?\s*[:=]\s*[^,}]{1,90}|https?://[^\"']{1,60}" /tmp/opencode/cloud_init.js | sort -u | head -30
+cloud swagger-ui-init.js: HTTP 200 386538B
+---cloud oauth refs---
+"authorizationUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth"
+"clientId": "platypus-swagger"
+"scopes": {
+"tokenUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token"
+https://api.example.com
+https://crm.com/avatar/123456
+https://crm.com/contact/123456
+https://crm.example.com/auth/session
+https://crm.example.com/tasks/123
+https://example.com or mycompany.crm.com or mycompany
+https://example.com/error?integration=SALESFORCE&message=FORBIDDENME
+https://example.com/logo-dark.png
+https://example.com/logo-light.png
+https://example.com/logo.png
+https://example.com/welcome?integration=SALESFORCE
+https://sipgatede.notion.site/Contact-Not-Found-160333fb479c80bb9cae
+https://sipgatede.notion.site/Entity-Not-Found-8fe72fbcf56f4afc81f8c
+https://sipgatede.notion.site/Error-123
+https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e20812
+https://sipgatede.notion.site/Stale-Timestamp-Error
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/c_metrics -D /tmp/opencode/c_metrics.hdr -w "/metrics: HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.cloud/metrics"; head -c 500 /tmp/opencode/c_metrics; echo; grep -iE "^HTTP|server|via|access-control" /tmp/opencode/c_metrics.hdr
+/metrics: HTTP 403 0B
+
+HTTP/2 403 
+access-control-allow-origin: *
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/c_contacts_dummy.txt -D /tmp/opencode/c_contacts_dummy.hdr -w "/contacts.list Bearer:dummy: HTTP %{http_code}\n" --max-time 20 -H "Authorization: Bearer dummy" "https://integration.sipgate.cloud/contacts.list"; grep -iE "^HTTP|x-ratelimit-remaining|access-control" /tmp/opencode/c_contacts_dummy.hdr; echo "---dummy com for compare---"; curl -sS -o /dev/null -D - -w "\n/contacts.list Bearer:dummy (com): HTTP %{http_code}\n" --max-time 20 -H "Authorization: Bearer dummy" "https://integration.sipgate.com/contacts.list" 2>/dev/null | grep -iE "^HTTP|x-ratelimit-remaining|access-control|HTTP/"
+/contacts.list Bearer:dummy: HTTP 403
+HTTP/2 403 
+access-control-allow-origin: *
+x-ratelimit-remaining: 799
+---dummy com for compare---
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+x-ratelimit-remaining: 799
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/c_act -D /tmp/opencode/c_act.hdr -w "/actuator/health: HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.cloud/actuator/health"; head -c 300 /tmp/opencode/c_act; echo; echo "=== swagger-ui html page ==="; curl -sS -o /tmp/opencode/c_swagger_html -w "/swagger/: HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.cloud/swagger/"; grep -oiE "<title>[^<]*|swagger[^<]{0,30}" /tmp/opencode/c_swagger_html | head -5
+/actuator/health: HTTP 404 140B
+{"status":404,"type":"https://http.cat/status/404","title":"Not Found","detail":"Cannot GET /actuator/health","instance":"/actuator/health"}
+=== swagger-ui html page ===
+/swagger/: HTTP 200 3462B
+<title>Swagger UI
+swagger-ui.css" >
+swagger-ui">
+swagger-ui-bundle.js"> 
+swagger-ui-standalone-preset.js">
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/com_metrics -D /tmp/opencode/com_metrics.hdr -w "/metrics (com): HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.com/metrics"; grep -iE "^HTTP|access-control" /tmp/opencode/com_metrics.hdr; echo "---counters---"; grep -iE "firebase|api_key|requests|histogram|_total" /tmp/opencode/com_metrics 2>/dev/null | head -20
+/metrics (com): HTTP 200 513B
+HTTP/1.1 200 OK
+access-control-allow-origin: *
+---counters---
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 7
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 79799
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+# TYPE rate_limit_forbidden_requests counter
+rate_limit_forbidden_requests 2450
+[0m
+[0m$ [0mfor p in oauth2/redirect oauth2/callback; do curl -sS -o /tmp/opencode/cv -D /tmp/opencode/cv.hdr -w ".cloud /$p: HTTP %{http_code} %{size_download}B\n" --max-time 20 "https://integration.sipgate.cloud/$p"; grep -iE "^HTTP|location:|x-ratelimit-remaining" /tmp/opencode/cv.hdr; head -c 200 /tmp/opencode/cv; echo; echo ---; done
+.cloud /oauth2/redirect: HTTP 403 131B
+HTTP/2 403 
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/oauth2/redirect"}
+---
+.cloud /oauth2/callback: HTTP 403 131B
+HTTP/2 403 
+{"status":403,"type":"https://http.cat/status/403","title":"Forbidden","detail":"Forbidden resource","instance":"/oauth2/callback"}
+---
+[0m
+## STEP 1 — DELTA
+
+- NEW `integration.sipgate.cloud` (35.246.154.68, GCP): third Platypus instance, byte-identical swagger-ui set, same uniform-403 gate incl. `/oauth2/{redirect,callback}`; swagger OAuth → REAL realm login.sipgate.com, clientId `platypus-swagger`.
+- NEW `integration.sipgate.com/metrics`: PUBLIC Prometheus counters (200, `ACAO:*`) — `firebase_jwt_forbidden_requests 79799` live, `api_key_forbidden_requests 7`, `rate_limit_forbidden_requests 2450`.
+- CHANGED `chatbot.dev.sipgate.com/lib/demo.js.map`: returns 200 demo-HTML catch-all (3399B), not a sourcemap, zero firebase/apiKey refs → Firebase-token-source via chatbot deflated.
+- CHANGED `integration.sipgate.cloud /metrics + /actuator/health`: 403 / 404 Express-problem+json — tighter than .com (metrics public there); no actuator on GCP instance.
+
+## STEP 2 — PRIORITIZE
+
+- [PRIO] integration.sipgate.cloud, 6.25, gated-26-op-A PI-on-GCP fresh shell (cloud metadata SSRF amplifier, spec disclosure)
+- [PRIO] integration.sipgate.com/metrics, 5.30, public-prometheus-counters leak confirms Firebase/API-key gate architecture
+- [PRIO] app.dev.sipgate.com, 5.00, live dev SPA JS-topology continuation
+
+## STEP 3 — HYPOTHESES
+
+[HYP] GCP-backed Platypus instance SSRF → cloud-metadata amplification (users.integrations.create apiUrl)
+class: SSRF
+asset: integration.sipgate.cloud (+ .com/.dev)
+confidence: 55
+reasoning: .cloud is on GCP 35.246.154.68 (metadata.google.internal / GCP LB → link-local 169.254.169.254); spec documents `users.integrations.create` accepting free-form `apiUrl`; gate uniform-403 on all 26 paths incl /oauth2/* on .cloud, .com, .dev (this cycle re-confirmed on .cloud); swagger-ui-init public on all three.
+evidence_needed: a way past the 403 gate (none found) OR a handler reachable with a registered API key (api_key_forbidden_requests counter = 7).
+verify_steps: PROBE read-only — diff .cloud vs .com `.cloud/swagger/swagger-ui-init.js` for instance-level config drift; GET `https://integration.sipgate.cloud/` root headers for server/ingress fingerprint; GET `/swagger-resources`, `/v3/api-docs`, `/api-docs`, `/docs/` on .cloud looking for non-403. Flag any != {403,404}.
+impact: with gate pass: metadata keys theft (GCP SA), CRM/contact PII read/write, call-log injection via integration handlers. CRITICAL if reachable; MEDIUM-INFO (spec disclosure) now.
+testability: PASSIVE (gate-gated)
+
+[HYP] Firebase-JWT gate continuity: token acquisition path for the validated Firebase project
+class: AUTH
+asset: integration.sipgate.com /oauth2/callback
+confidence: 45
+reasoning: /metrics this cycle PROVES the live gate is Firebase-JWT-dominant (79799 denied) with API-key fallback (7) and rate-limit layer (2450) — spec claims Keycloak OAuth but runtime validates Firebase → mechanism drift confirmed. oauth2/callback is where Keycloak code→Firebase-session exchange must occur; chatbot surface has zero firebase refs (demo.js.map = HTML, no apiKey).
+evidence_needed: token source — either a leaked Firebase web API key/product id, or drive /oauth2/callback with a real realm code (requires logged-in session).
+verify_steps: AUTH_HELPED — fetch full `.cloud/.com swagger-ui-init.js` (already 200) grep for firebase/apiKey/AIza; if none, obtain Keycloak code for `platypus-swagger` (real realm login.sipgate.com, shown in spec) then GET `/oauth2/callback?code=…` and observe exchange.
+impact: valid Firebase session → full 26-op API (contacts/call-logs/streaming) with Keycloak-less auth. HIGH if token source found.
+testability: AUTH_HELPED
+
+[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
+class: IDOR
+asset: api.sipgate.com/v2/{portings,devices,authorization/oauth2/clients}
+confidence: 50
+reasoning: uniform edge auth (401 empty) confirmed across all /v2 paths pre-auth; object-level tenant isolation never exercised — requires two tenant bearers.
+evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 vs 403/404.
+verify_steps: AUTH_HELPED — after 2 test tenants: GET `/v2/portings/{B-id}`, `/v2/devices/{B-id}/credentials/password`, `/v2/authorization/oauth2/clients/{B-clientId}` with A-bearer.
+impact: cross-tenant PII, SIP device creds → device takeover, OAuth client secrets → tenant compromise. CRITICAL if confirmed.
+testability: AUTH_HELPED
+
+## STEP 4 — SELF-CRITIQUE
+
+- [PARKED] Firebase-token-source via chatbot surfaces: demo.js.map = HTML catch-all, zero firebase refs — vector dead this cycle (was source of confidence-55).
+- [PARKED] "Third instance weaker gate": .cloud /oauth2/* + data paths all uniform-403 — dismissed, no weaker config.
+- [FINAL] 1. Platypus GCP SSRF/metadata amplification across .cloud/.com/.dev (55, PASSIVE)
+- [FINAL] 2. Firebase-JWT gate continuity / token acquisition (45, AUTH_HELPED)
+- [FINAL] 3. Cross-tenant /v2 BOLA (50, AUTH_HELPED)
+
+## STEP 5 — NEXT ACTION
+
+[NEXT] PROBE: `GET https://integration.sipgate.com/swagger/swagger-ui-init.js` — save; diff against `/tmp/opencode/cloud_init.js` for instance-level drift (auth host, any `firebase|apiKey|AIza`); then `GET https://integration.sipgate.cloud/` + `/swagger-resources` + `/v3/api-docs` + `/docs/` — flag ANY status != {403,404} on the GCP instance (≤1 rps, read-only).
+
+## STEP 6 — LEARNING
+
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: Prometheus counters PUBLIC (200, `ACAO:*`) — `firebase_jwt_forbidden_requests 79799` live, `api_key_forbidden_requests 7`, `rate_limit_forbidden_requests 2450`; proves Firebase-JWT-dominant gate + API-key fallback + rate-limit layer; counter-only leak.
+- [LEARN] ACCEPTED INFO @ integration.sipgate.cloud: NEW third Platypus instance on GCP 35.246.154.68; byte-identical swagger-ui + oauth2-redirect.js (sha256 a5c8a34e…); OAuth spec = REAL realm login.sipgate.com, clientId `platypus-swagger`; /metrics 403 (tighter than .com).
+- [LEARN] REJECTED OTHER @ chatbot.dev.sipgate.com/lib/demo.js.map: 200 demo-HTML catch-all, not sourcemap, no firebase/apiKey — Firebase-token-source via chatbot deflated.
+- [LEARN] REJECTED AUTH @ integration.sipgate.cloud /oauth2/{redirect,callback}: uniform 403 identical to .com/.dev — no weaker gate on GCP instance.
+
+## STEP 7 — RISK
+
+[RISK] sipgate: 53 — new GCP-hosted Platypus instance (.cloud) surfaced with identical full 26-op spec, REAL-realm OAuth client `platypus-swagger`, and permissive `ACAO:*`; public /metrics on .com now hard-confirms Firebase-JWT-gated architecture. All data paths remain uniformly 403-gated across .com/.dev/.cloud (no bypass found this cycle; 40+ variants already exhausted). No standalone exploit confirmed; surviving high-impact chains (Platypus gate/SSRF 55, /v2 BOLA 50-AUTH, S3-write 55-HUMAN) all still gate-bound. +1 vs prior 52 on new GCP prod asset + confirmed gate-architecture disclosure.

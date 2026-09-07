@@ -715,3 +715,21 @@
 - LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-
 - LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
 - LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstr
+
+## RANKED HYPOTHESES 2026-09-07 22:44:23 UTC
+- [65] integration.dev.sipgate.com: Integration Dev Endpoint SSRF via Webhook/Callback Handlers (from art/lead_nemotron3.txt)
+- [55] integration.sipgate.cloud: GCP-backed Platypus instance SSRF → cloud-metadata amplification (users.integrations.create apiUrl) (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: `GET https://integration.sipgate.com/swagger/swagger-ui-init.js` — save; diff against `/tmp/opencode/cloud_init.js` for instance-level drift (auth host, 
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://app.dev.sipgate.com/main-DFko0cRT.js — fetch current JS bundle, extract all hardcoded host:port pairs from source/chunks, DNS-resolve any new
+- LEARN: ACCEPTED MISCONFIG @ integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *` — hardcode
+- LEARN: ACCEPTED INFO @ app.dev.sipgate.com: JS bundle rotated to `main-DFko0cRT.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integratio
+- LEARN: ACCEPTED INFO @ integration.sipgate.com: PROD integration platform "Platypus" exposes full 26-op OpenAPI spec publicly under /swagger (contacts/call-logs/tasks/
+- LEARN: ACCEPTED INFO @ integration.dev.sipgate.com: dev twin serves near-identical spec (only auth host differs: login.dev); swagger bundle+sourcemap public; same unif
+- LEARN: ACCEPTED MISCONFIG @ integration.sipgate.com: `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external re
+- LEARN: REJECTED AUTH @ integration.sipgate.com direct: unauthenticated GET on all 26 documented paths returns uniform app-403 "Forbidden resource" (Bearer: dummy ident
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to pr
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally iner
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstr
