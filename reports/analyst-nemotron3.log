@@ -10523,3 +10523,351 @@ testability: PASSIVE
 ## STEP 7 — RISK
 
 [RISK] sipgate: 78 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure, LIVE dev chatbot with socket.io, NEWLY ALIVE integration.dev endpoint with permissive CORS. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target + integration.dev target; (2) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (3) Cross-tenant BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (4) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (5) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, and potential object-level authz-drift on high-value API endpoints.
+===== ANALYST nemotron3 2026-09-08 01:23:37 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/
+total 300
+drwxr-xr-x 12 runner runner   4096 Sep  8 01:03 .
+drwxr-xr-x  3 runner runner   4096 Sep  8 01:03 ..
+drwxr-xr-x  7 runner runner   4096 Sep  8 01:03 .git
+drwxr-xr-x  3 runner runner   4096 Sep  8 01:03 .github
+-rw-r--r--  1 runner runner   1755 Sep  8 01:03 README.md
+-rw-r--r--  1 runner runner     43 Sep  8 01:03 analyst-out.txt
+-rw-r--r--  1 runner runner 109817 Sep  8 01:03 analyst-prompt.txt
+-rw-r--r--  1 runner runner 106000 Sep  8 01:03 ctx.txt
+drwxr-xr-x  2 runner runner   4096 Sep  8 01:03 inventory
+drwxr-xr-x  2 runner runner   4096 Sep  8 01:03 knowledge
+drwxr-xr-x  2 runner runner   4096 Sep  8 01:03 leads
+-rw-r--r--  1 runner runner   1073 Sep  8 01:03 probe-results.md
+drwxr-xr-x  2 runner runner   4096 Sep  8 01:03 recon-notes
+drwxr-xr-x  2 runner runner   4096 Sep  8 01:03 reports
+drwxr-xr-x  2 runner runner   4096 Sep  8 01:03 reposcan-raw
+-rw-r--r--  1 runner runner   3230 Sep  8 01:03 scope.yml
+drwxr-xr-x  2 runner runner   4096 Sep  8 01:03 scripts
+-rw-r--r--  1 runner runner     33 Sep  8 01:03 state_bigpickle.json
+-rw-r--r--  1 runner runner     33 Sep  8 01:03 state_laguna.json
+-rw-r--r--  1 runner runner     33 Sep  8 01:03 state_ling3.json
+-rw-r--r--  1 runner runner     33 Sep  8 01:03 state_longcat.json
+-rw-r--r--  1 runner runner     33 Sep  8 01:03 state_mimo.json
+-rw-r--r--  1 runner runner     33 Sep  8 01:03 state_nemotron3.json
+drwxr-xr-x  2 runner runner   4096 Sep  8 01:03 triage
+[0m
+[0m→ [0mRead state_nemotron3.json
+[0m→ [0mRead scope.yml
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/leads/
+total 668
+drwxr-xr-x  2 runner runner   4096 Sep  8 01:03 .
+drwxr-xr-x 12 runner runner   4096 Sep  8 01:03 ..
+-rw-r--r--  1 runner runner 278607 Sep  8 01:03 lead-bigpickle.md
+-rw-r--r--  1 runner runner   1632 Sep  8 01:03 lead-laguna.md
+-rw-r--r--  1 runner runner   1600 Sep  8 01:03 lead-ling3.md
+-rw-r--r--  1 runner runner   1664 Sep  8 01:03 lead-longcat.md
+-rw-r--r--  1 runner runner     18 Sep  8 01:03 lead-mimo.md
+-rw-r--r--  1 runner runner 350901 Sep  8 01:03 lead-nemotron3.md
+-rw-r--r--  1 runner runner  23897 Sep  8 01:03 reposcan-sipgate.md
+[0m
+[0m→ [0mRead leads/lead-nemotron3.md[90m [limit=200, offset=1][0m
+[0m→ [0mRead leads/lead-nemotron3.md[90m [offset=1750, limit=200][0m
+[0m→ [0mRead probe-results.md
+[0m→ [0mRead inventory/sipgate.md
+[0m
+[0m$ [0mcurl -s -I "https://app.dev.sipgate.com/main-DFko0cRT.js" 2>&1 | head -20
+HTTP/2 200 
+cache-control: max-age=3600
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk wss://ws-eu.pusher.com stats.pusher.com sentry.io api-iam.intercom.io nexus-websocket-a.intercom.io nexus-websocket-b.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io *.zopim.com *.zdassets.com *.zendesk.com wss://*.zopim.com https://amp.sipgate.de *.instana.io https://status.sipgate.de/ https://integration.sipgate.cloud https://docs.google.com *.didww.com/v3/public_keys; script-src 'unsafe-eval' 'unsafe-inline' 'self' stats.pusher.com connect.facebook.com connect.facebook.net *.cloudfront.net www.google-analytics.com *.google.com www.googletagmanager.com www.googleadservices.com sjs.bizographics.com bat.bing.com snap.licdn.com *.doubleclick.net *.linkedin.com secure.adnxs.com js.intercomcdn.com widget.intercom.io data: *.zopim.com *.zdassets.com *.instana.io; style-src 'unsafe-inline' 'self' *.google.com *.googleapis.com static.sipgate.com data: blob: *.zdassets.com; font-src 'self' fonts.intercomcdn.com js.intercomcdn.com static.sipgate.com data: *.zdassets.com *.zopim.com; frame-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com https://player.vimeo.com *.zdassets.com *.zopim.com; child-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com; worker-src 'self' blob:; img-src *.googleusercontent.com *.facebook.com 'self' *.gstatic.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net www.google-analytics.com *.googleapis.com *.doubleclick.net *.google.com *.google.de bat.bing.com *.linkedin.com secure.adnxs.com js.intercomcdn.com downloads.intercomcdn.com static.intercomassets.com data: *.zopim.com *.zdassets.com *.zopim.io; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net js.intercomcdn.com blob: *.zopim.com data: *.zdassets.com; frame-ancestors 'self' *.sipgate.com *.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa;
+content-type: text/html; charset=utf-8
+cross-origin-opener-policy: same-origin-allows-popups
+etag: "7d08c6d95088fb5ebbd3834759f0d95b84837fd0f8469c50c0f4044dabcb2506"
+last-modified: Mon, 07 Sep 2026 13:59:21 GMT
+strict-transport-security: max-age=31556926
+x-content-type-options: nosniff
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/* https://*.sipgate.com/* https://*.sipgate.de/* https://*.sipgate.co.uk/*
+x-xss-protection: 1; mode=block
+accept-ranges: bytes
+date: Tue, 08 Sep 2026 01:17:55 GMT
+x-served-by: cache-phx1710137-PHX
+x-cache: HIT
+x-cache-hits: 0
+x-timer: S1788830276.559405,VS0,VE1
+vary: x-fh-requested-host, accept-encoding
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
+content-length: 14409
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/" 2>&1 | grep -o 'main-[^"]*\.js' | head -5
+main-DFko0cRT.js
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/main-DFko0cRT.js" 2>&1 | head -500
+<!doctype html>
+<html lang="" translate="no">
+	<head>
+		<meta charset="utf-8" />
+		<title>sipgate</title>
+
+		<!-- Make the page behave sensibly on mobile devices -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<!-- Vendor-specific configs -->
+		<link rel="manifest" href="/site.webmanifest" />
+		<meta name="msapplication-config" content="/browserconfig.xml" />
+
+		<!-- Prevent chrome from auto-translating our page -->
+		<meta name="google" content="notranslate" />
+
+		<!-- Colors for menu bars etc. -->
+		<meta name="theme-color" content="#000000" />
+		<meta name="msapplication-TileColor" content="#000000" />
+		<meta name="msapplication-navbutton-color" content="#000000" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="#000000" />
+
+		<!-- Allow adding to homescreen -->
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+
+		<!-- Prevent browser from making phonenumbers clickable -->
+		<meta name="format-detection" content="telephone=no" />
+
+		<!-- Icons -->
+		<link rel="icon" sizes="16x16 32x32" href="/favicons/favicon.ico" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
+		<link rel="apple-touch-icon" href="/favicons/apple/apple-touch-icon.png" />
+
+		<!-- Font Preloading -->
+		<link
+			rel="preload"
+			href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin=""
+		/>
+
+		<script>
+			if (!/^app\.local/.test(window.location.hostname)) {
+				console.log(
+					'%cStop!',
+					'color:red; font-size:60px; font-weight: bold; -webkit-text-stroke: 1px black;'
+				);
+				console.log(
+					'%cThis is a browser feature intended for developers. If someone told you to copy and paste something here, it is a scam and will give them access to your sipgate account.',
+					'font-size: 18px;'
+				);
+				console.log(
+					'%cDas ist eine Funktion, welche für Entwickler vorgesehen ist. Falls Ihnen jemand gesagt hat, hier etwas hin zu kopieren und auszuführen, ist das eine Falle. Derjenige kann danach Zugriff auf ihr sipgate Konto erhalten',
+					'font-size: 18px;'
+				);
+			}
+		</script>
+
+		<script>
+			(function () {
+				try {
+					localStorage.setItem('test', 'test');
+					localStorage.removeItem('test');
+				} catch (e) {
+					window.location.href = '/yunocookie.html';
+				}
+			})();
+		</script>
+
+		<style>#root,body,html{height:100%;margin:0;padding:0;width:100%}@media print{#root,body,html{height:auto}}noscript{align-items:center;display:flex;font-family:sans-serif;height:100%;justify-content:center;text-align:center}noscript p{margin-bottom:4rem}</style>
+
+		<style>@keyframes loading-animation-grow{0%{stroke-dasharray:2.8225 138.3041}50%{stroke-dasharray:21.1689 119.9576}to{stroke-dasharray:2.8225 138.3041}}@keyframes loading-animation-move{0%{stroke-dashoffset:1.4112}to{stroke-dashoffset:-139.7153}}#loading-animation{--logo-width:50px;--fadeout-animation:0.35s;align-items:center;background-color:#fff;bottom:0;display:none;justify-content:center;left:0;opacity:1;position:fixed;right:0;top:0;transition:opacity var(--fadeout-animation) cubic-bezier(.685,.03,.695,.99);z-index:10000000}.script #loading-animation{display:flex}#loading-animation.exit{opacity:0}#loading-animation .background{display:none}#loading-animation .content{align-items:center;display:flex;height:100%;justify-content:center;position:absolute;width:100%}#loading-animation .content .logo{display:none}#loading-animation .content svg{width:var(--logo-width)}#loading-animation .content svg .spinner{stroke:#000;animation:loading-animation-grow 1.2s cubic-bezier(.355,.005,.315,.8) infinite,loading-animation-move 1.2s cubic-bezier(.355,.005,.315,1) infinite}</style>
+		<script type="module" crossorigin src="/assets/main-DFko0cRT.js" integrity="sha384-oSX0VnXjy5bfyCZ5IBT/43IDvW0dp7tZOaNKGxwKwERt6y9eIR1aVJKWDzvNiVuF"></script>
+		<link rel="modulepreload" crossorigin href="/assets/chunk-CernVdwh.js" integrity="sha384-uILkyZ2n65/hJcSSKTdDrDMN87YYUWqO34RrNDsCwjm27WNsBDwfxqdzYohmf1o/">
+		<link rel="modulepreload" crossorigin href="/assets/preload-helper-rov5CBGT.js" integrity="sha384-8InSgMswcsm3QCJHLGMdkfiCGDIpbPF6GICb5tM0n57hnytd/rkZ2MYqDXXGpKOn">
+		<link rel="modulepreload" crossorigin href="/assets/datetime-Bg9M5dlC.js" integrity="sha384-SLwk2ljke25ZZc4rEdT1/FULRoEzLrDjr8lM7gADPG6xCWwrMYLV3JRaXZembDTj">
+		<link rel="modulepreload" crossorigin href="/assets/alertManager-CR3OwFaI.js" integrity="sha384-x8Qs2uAD/xGE4kr1tNcnxjJg5XIn9BBucTDgNx3lj2XKzRlnIbB8x3VoL/7I+954">
+		<link rel="modulepreload" crossorigin href="/assets/selectors-Ha8aXEmA.js" integrity="sha384-kkCu8bcrCWp4V3NjubzkyKLMBxbr1RiHUGsb0bnmVR+9uWtN/d90tttYyQfeDTGM">
+		<link rel="modulepreload" crossorigin href="/assets/types-CYN05_7p.js" integrity="sha384-oNh9z85vLiHxxN+BAhqOtVeGm1yKgVk4hkz1pqBXszddcsVN3J2jtetFmubS3WBP">
+		<link rel="modulepreload" crossorigin href="/assets/aria-id-CNzcc1wy.js" integrity="sha384-cIakr2c0nm9cvZCXgTqALM7wbA4EY8RA0f3P6Un1pctGbrvY6eAE4zw2hnj5oQV3">
+		<link rel="modulepreload" crossorigin href="/assets/environment-D9ixW1Um.js" integrity="sha384-rktOFEMx2aE34zMJE/8uHBDum88mwHaqWii/vwg/NnN5b0vA2knGgxgxgFoVzPUL">
+		<link rel="modulepreload" crossorigin href="/assets/merge-refs-6VZKPg6C.js" integrity="sha384-DpJ6isbVJeSkpNdRxPEqOUgPklMJJVLo9ug24JSBe+VFRongB1IyD1VRpb0x4+Yj">
+		<link rel="stylesheet" crossorigin href="/assets/main-B43Poju_.css" integrity="sha384-Qr9cFkZhxfzQxncnycRl6z/n6uZvdonjFeLgNFwONkKRM3YavghD2Vbfi4x03p/X">
+	</head>
+
+	<body>
+		<script>
+			document.body.classList.add('script');
+		</script>
+
+		<div id="root">
+			<noscript>
+				<div>
+					<h1>JavaScript aktivieren oder installieren!</h1>
+					<p>
+						Um die Web-App nutzen zu können, müssen Sie
+						<a href="http://enable-javascript.com/de" target="_blank"
+							>JavaScript in Ihrem Browser aktivieren.</a
+						>
+					</p>
+
+					<h1>Enable or install JavaScript!</h1>
+					<p>
+						In order to use the web-app, you have to enable
+						<a href="http://enable-javascript.com/en" target="_blank"
+							>JavaScript in your browser.</a
+						>
+					</p>
+				</div>
+			</noscript>
+		</div>
+
+		<div id="overlay-portal"></div>
+
+		<div id="loading-animation">
+			<div class="background"></div>
+
+			<div class="content">
+				<img
+					class="logo"
+					src="data:image/png;base64,
+                        iVBORw0KGgoAAAANSUhEUgAAAGUAAACUCAYAAACKsudzAAAACXBIWXMAABYlAAAWJQFJUiTwAAAM
+                        +0lEQVR42u2dPagkWRXHz62q2VnHXXeZYXZ1d/wYZVlXdAJXUBRERMHAQEQMDMRgQQwEwURMBCPB
+                        yESMRCPFxMBMA8HESDAyMDAQURBRRHd2nNd1j1NulZw98z/n3vrqd/u9W9B0d3VVd9X53f/5ulXv
+                        BWamupS1hBOCstWBhgrlfAGcJKSSoJRwIKFCKQNEcYDOC8opZRfhokM55VQvXDQoFynvDhcBykUs
+                        hMKpQrkMVWk4JSiXqU0QTgHKZe3bhBKh1CbaRmC2glKBbAhmCygVyMZg1kKpQHYAswZKBbITmKVQ
+                        KpAdwVQoBYJZAqUC2RnMXCgVSGFQKpAjgalQCgSTC6UCKQxKBXJkMBVKgWBSUCqQCqWCSUGpQCqU
+                        CiYFpQKpUCqUCqVwMAhKBVKh1KVCOQEwGkoFUqHUpUI5ETAVSuFQKpAC3VeFUmBKXKGcM4wKpVAg
+                        FUqBQCqUwmBUKIUCqVAKBFKhFAajQikUSIVSGIwKpVAgFUqBQCqUwmBUKIUCqVAKBFKhLFu68bmv
+                        UMpYrowKkY97Fcr5LI+Mz414lmD+XaEcd7lqgJgeE6h/7gGlgnl4edSAoNcNS/vg8bcKZb/ldQl3
+                        ZUGaXv+lQtl2uZbpriQE9PzHCmWb5fVKHRoOKcOjbVqx7g9bQLmsYB7LcFdT3JCKIAEnAKDD9r+v
+                        UOYvjydANGr0B8NlBQB12O93Fco8GMFwV3q0EwDTODGmFeuHDsBv10K5DGCeWBk3OkNdLXg97f+b
+                        CsVenlSxgEB21RixpAUwW2O/AOD+ukJ5GEYwQAQnbjSOi5LbtJmp8q+WQrloYK6rEa4DM4oblmE7
+                        pR5LZe1oQw3tlxUK0Q0QK4IRrBsRpJH7QbFjCuYMoKCkYfjs50uhnDqYG4nWiA7gnaGeThmbAKjG
+                        CfCNysSm7/7ZZYNyMyNuIBhBjfIA3FSjEgCtAgIq0aobPv/pUiinBuamk+qiAN0CtaDKPahA3hrK
+                        Q+6xBaCm7/jJUiinAuapRNyQxtEjXNcgVgsFuTZyADVGp2Da/8cXGcrTRkalX7dGUNcpLTn1R2sk
+                        Di1QkaVYORB+uBRKqWDeaLgrbdDOGMmdMYIDCNABBHupLJ2REXCVqC3z/YsE5U3GaG2UETpDLdI4
+                        nRGULfVY2RcZamjFcSPFfm8plJLAPANSztYYmVdA7EDtdrk/KyBIfY2oTQjEKyvoM2jXfHcNlPMG
+                        8yzIlnSx1qrPEIDOGPmoTmkIz6NIeCEBQ8ci7e6+sxbKeYG55bihKT50oB/lBWsvdQ4OjAb0xRqQ
+                        AOiYpTM2Ekr+9looxwRzS43ETlXaCE5jpLOo0rZmFRsQI4Ix6kkNmA702lDRKSF+awsoxwDzFmD4
+                        zgHRqqyoES7GUwORPZNoBXkNojEyL1kfMYhb03F/8xSg3FYBXKawE5gOKKFTStCGJZAVeZV/BOlu
+                        q2obMjrHXm8MXUP2jS2g7AHn7SB7ahUQaZAriZHfApfFoP2BsqJuhOKpCMWbAKYEUDeaVdb29S2h
+                        bAXmOaWEVkAJQClWkzHV5kBwgtF28VRAxoi3lIHAyN/52tZQ1oJ5p1BEI2A0ChIK1p0DIBCeW2ej
+                        MUlq5HcAXgNUw06LhUA3WcalabB9dQ8oS8C8ICAMz1eBm9KjvgWVeev0mZChkbtpjOyICE8LNyDl
+                        tWIJJToE0+Mr5/2vz98zHthVUG+QEdDRnAeDyrwBoxG5K0sJLI6DMpSI+mIo3hD4LbnPl/eCkoJz
+                        ZzzhR4QRpeGvKKNLt9Ml0k89Z8EqhuiWSlAuzXNllgKsK2MslXhX8H9pbygIzIuj0a+omkMHd92O
+                        6AAIXQM0zsl6RZ9uSDIY5S2IR60DDiUE5ECdXn/xGFCGm2mGO51+8eDxA5U9aRidcitNxvwFiiNk
+                        +PtGuSNUDFpVeDDiDPqcE8fSGINoWPfS3lD+M+b5w/PfHzx+RK9eiX6fXr2RszPkr31uBxRBxomT
+                        MQIt/y5HfgDdX912jyrWoNgSjToGZWT6fL6wJ5TDeHA8QnjlwePP9OrFaIN6Xh7XSzenb4OWymEw
+                        wkjEAQZ+nQhfwUJgOwKpLYFWPoHv0gqy3FYwsjX5/vN7QJlAsHh/GAEMIP40quVfo1sb1p+Jk5/2
+                        68VIjcaJ6dil6w9WRmXlKnSVHwxYVnZlvbfAEVCI3vdzW0OJwkASSj+CGdzY3QePv46Pl0cFDVDu
+                        CXUFATeCyaRopLdRnTAD4wYABW2vVYXmUhrDwJ4SrcE17f/ZraBEkG2xMG4/Pt8fjT+A+cf4fHdc
+                        d2+Ew+PztB+LR1C/pQeAPB4rwHPCjYUEHHLilHZ91vcT2G7a5jNbQImJNHga7XE09v1REXeF+5ri
+                        y33xeS+U0yvYpJRIavTLQNsLw7LhToIR1xqQPgcAt1H7I/XluLzh9afXQokZtQkLMJOx+9GVSYW8
+                        ImLP2fj6TADp6bV/ekO6NwLqlCfaG/UJeq/jEymX1zjr2Ans6PcQ9E+tmQ7mGVW8jA0HoYD7AsIU
+                        V3qxrhfPBwUiKgg6wWA1SuW2wTlelFZb27CjJlSvsKEW+fqTay+c4BlQpDGjcEtnom45A0qJ4jUr
+                        5RzEb/TAhelBEWYMJG1kNlyUZ2QC39EYA2Byt5/Y4hIjzux3ITCsYLDI0qSrO4jtogBwUJBIpcGs
+                        XF1K+Tr9JqA6FA/YqJuCkwGi2Dbs9/EtLludA4UUDJ0ynwkwZ8JlSRi9gsEiu7NcmB4U0i0xgKnj
+                        iQat3VcAcS04cSs4RefHtrjqnmcCZBVjpHoOwsAHFX+ien8A7kun0QRij5W6swJhHb9VtKa2a5yu
+                        gwT50S3u5OIFEDWYIFTQKzC9UsmkFFbbRmF06cp6I0PToDgR0FF8oUQmF4xkw6tfPrLVjag8c18G
+                        7oQMI/dALWgbHatkHDk4QZ+dIjg4cdTKyjzlMHBfev8Pb/HHDXihulAQ1q6MlMG1aqIK9FIZ+jd0
+                        Oq2VwI4RdXodQbrMoIsgW0YNUBxycR/a4g/mzIGCTpTBaJUQCACREM4UPFb761omgj6dl1larR2U
+                        BFj1ipWOa9f1wf+9OQKUkHBflAAjDa2BRGM9K5BIMVa6zAkwWl0NOH4UK9hJIKb1H0BQtnJfIXMf
+                        dnpY0TE0Sql7w1XpQG+lzjFxTijYsxGbyOi3kaOYYbv3bwFlTePMUwoZMSAaKmLgvhjEGgLzNXqq
+                        wDomyw1FI00mp1YJ4LuH5X0lQEFwvNSZlFqiAYBB14AAMKQQb6ogp6MRMu2iQb74/w9WpMRre/4p
+                        KNqt9PTw5BdSkd4HQdUKRDHNUw3PMD4Zcyv6O99bAhTrZClTLWy4KxIZGRt1i3RfvVG7sJF1xYwC
+                        cw6gKVm4sxbKVnPInJHBacMGJ9aQCvDkqCICd8UOgOgMppBIqcmYm5me77yG1II2y5aT+rlQrEJT
+                        Z2HawMjloe+KBhxr6tmKNcFwc5RIi9+9Bsoe1yNxZhFnGSwCd8Oi20zO9tb3WlPOXrrMoCZBWVgE
+                        anlXLpSlLZS91ZIyZDRcVA4QNoI/G4MnKJc6NxYP+73wUKDJhLLnZZScWYRGI13NMXIERWnMhJyr
+                        FjLa//p9VNX+86cCxdouGp1dNuoQcgBEYHBOdBusjnLKnVkd4+dhSpYxyRVp32UOFHYyIc5ociLD
+                        xQQYcuKZ1WbhRB9w+uy5pVD2BjMnbnHCaJaicqAQUBBShqcWdgacnmp+h1m8nCgUz2Be3dFnpNpW
+                        TMn57WDYDfW6bq+FsicYTuT61nFwAlbMiBFkVPvRCNwx0afzjlee1223zC8IypZq8eDlujF22kA8
+                        A4re723J3svM675iIVByRzE7NQ45tU9IpMcMlG3VMXrdW7eGsgeYNVC8qj84qrBGurfeW5dzbMPy
+                        5qwu5cJrieNOQOY2Q1NxxUqPKZFaU6JwZKOK91zarezWcWFQci+8yFGLlzlZ+/eZ35uzXr5+do5R
+                        1twKEY8EJWQGek8tBOqYMMNdpYI7mvSaPn9mrlH2uj9lresKC3tlqanlnO1TqpiTDg/L08eGshQM
+                        bwSTnWPxLsrgDNcTE/03Snz/IiBbQVkCZi8oc5TCRuBeohb0e08tPcEt7w6ORwCSchlM6fmZVBIQ
+                        jIQhdWWL3P7mmpPb65btY0DJcWG0QDmpzMq7z/PGFkbc6y9OxB2BpFxHzFRWylURzbtq8vpWxtvz
+                        z4DEI0HhTNeWUhBnfoZgXd/ScHv/wZy4AxDLgCGzoMt1U6lUelqe3Npox/jTUrJS3qtfZhk5ZLqv
+                        XMXI10/sZaxjQdkaTOoO5NwRTzOATM9v2NtQx4SyJZwcpeQG+hQU+f7xYxjoPKBsASdnZjI30Ott
+                        0BzIY8c0zHlCWQNnrlIIxJlUdnjtvAxSApQlgLz5/NQEVMp9XTtvI5QGJQcQumh6DZRHSzvxkqGg
+                        5eCoA6W/aN3V0k/y1KBciuW/eIY5UXJah2MAAAAASUVORK5CYII="
+				/>
+
+				<svg viewBox="0 0 52 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<g
+						class="spinner"
+						stroke-linecap="round"
+						stroke-dasharray="2.8225 138.3041"
+						stroke-dashoffset="1.4112"
+					>
+						<path
+							d="
+                                M 26.2718 3.3269
+                                C 20.9237 3.32665 15.7247 5.08954 11.4798 8.34261
+                                C 7.23494 11.5957 4.18091 16.1575 2.79062 21.3216
+                                C 1.40032 26.4858 1.75132 31.9643 3.78927 36.9088
+                                C 5.82722 41.8534 9.43843 45.9881 14.0638 48.6729
+                                L 38.4798 30.9339
+                                L 50.0468 22.5339
+                                C 48.8768 17.0968 45.8789 12.2248 41.5527 8.72986
+                                C 37.2265 5.23488 31.8333 3.32797 26.2718 3.3269
+                                V 3.3269Z
+                            "
+						/>
+
+						<path
+							x="0"
+							y="40"
+							d="
+                                M 26.2718 3.3269
+                                C 20.9237 3.32665 15.7247 5.08954 11.4798 8.34261
+                                C 7.23494 11.5957 4.18091 16.1575 2.79062 21.3216
+                                C 1.40032 26.4858 1.75132 31.9643 3.78927 36.9088
+                                C 5.82722 41.8534 9.43843 45.9881 14.0638 48.6729
+                                L 38.4798 30.9339
+                                L 50.0468 22.5339
+                                C 48.8768 17.0968 45.8789 12.2248 41.5527 8.72986
+                                C 37.2265 5.23488 31.8333 3.32797 26.2718 3.3269
+                                V 3.3269Z
+                            "
+							transform="rotate(-180 26 40)"
+						/>
+					</g>
+				</svg>
+			</div>
+		</div>
+
+		<audio id="audio"></audio>
+		<!-- Smoketest - OK -->
+	</body>
+</html>
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-DFko0cRT.js" 2>&1 | head -2000
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_07e9b1332001FsAkUphIHJmVG6
+
+onfig as Di,fetchTwoFactorAuthenticationSetting as Dl,hasAvatarForWebuserId as Dm,getE164NumberForRegion as Dn,selectFullAccessChannels as Do,fetchContracts as Dp,useGetChannelReferrersQuery as Dr,getNextCustomDate as Ds,validateEnum as Dt,selectById$14 as Du,useResizeObserver as Dv,Banner as Dy,PageTitle as E,useSipgateDomain as E_,useSipgateAppsActions as Ea,Redirect as Eb,selectById$10 as Ec,replaceDestinationInStep as Ed,getRegisterDevices as Ef,unlinkedDevicePath as Eg,platypusApi as Eh,fetchCalcomConfig as Ei,useTwoFactorAuthentication as El,findAvatarForWebuserIdAndSizeInAvatarArray as Em,getDialCodeForRegion as En,selectFullAccessChannel as Eo,createDeviceContract as Ep,useGetPlaybookStatisticsQuery as Er,getHolidayDateBasedForwardings as Es,validateEmpty as Et,isFetching$11 as Eu,useResponsiveBreakpoints as Ev,Tab as Ey,renderGbFormAddress as F,RestApiClient as F_,isTrial as Fa,withRouter as Fb,hasFailed$9 as Fc,updateTimeBasedSets as Fd,isRoutingActive as Ff,usersPath as Fg,apiClientsPath as Fh,isUserNotification as Fi,renameTrunk as Fl,ContactFaxNumberTypes as Fm,getLanguageKeyForSubscriptionName as Fn,usePhonenumbersActions as Fo,isCallPackageContract as Fp,useRenameIvrMutation as Fr,useAllAudioFiles as Fs,validateNotIn as Ft,createGroup as Fu,FilterPanelTrigger as Fv,MenuItem as Fy,useGetCountryCode as G,TabSwitch as G_,useBatchUserImportExecution as Ga,require_react as Gb,callTerminated as Gc,useAppDevices as Gd,fetchDeviceProperties as Gf,forceFetchRestrictions as Gg,contactCenterChannelPath as Gh,createFaxReportNotification as Gi,useTransferAudioFiles as Gl,updateBlocklistEntry as Gm,SubViewTitleScope as Gn,createFaxLine as Go,selectContractsForDevice as Gp,useSetUserStatisticsStatusMutation as Gr,getDefaultAudioFile as Gs,useManagedFormSubmit as Gt,fetchGroupStatisticsHistoryAvailableData as Gu,GridLogicOperator as Gv,MenuList as Gy,useCallingCode as H,InternalLink as H_,useBatchUserCSVImport as Ha,require_react_dom as Hb,callAccepted as Hc,useInit as Hd,useDeviceIcons as Hf,getRestriction as Hg,ciDatahubPath as Hh,useFaxReports as Hi,fetchTrunkCallRestrictions as Hl,createBlocklistEntry as Hm,useView as Hn,useFaxLine as Ho,selectAllDataContingents as Hp,useSetChannelLegacyStatisticsAvailabilityTargetMutation as Hr,setAudioFileAlias as Hs,renderError as Ht,selectGroupsByUserId as Hu,getGridSingleSelectOperators as Hv,useMediaQuery as Hy,renderGermanFormAddress as I,ApiError as I_,require_moment as Ia,_objectWithoutPropertiesLoose$3 as Ib,isFetched$9 as Ic,convertTimeBasedForwardingsSet as Id,isUnlinkedRegisterDevice as If,variablesPath as Ig,baseContractPath as Ih,useConfig as Ii,setTrunkEmergencyLocation as Il,ContactNumberTypes as Im,sipgate_bildmarke_default as In,findPhonenumber as Io,isCancelledContract as Ip,useSetIvrKeyMappingMutation as Ir,useAudioFileActions as Is,validateOneOf as It,fetchGroups as Iu,debounce$8 as Iv,Button$1 as Iy,useIsPotentialPhonenumer as J,NestedTabs as J_,convertDataURIToBinaryArray as Ja,autoBatchEnhancer as Jb,sipClientConnected as Jc,useIsDeviceUpdating as Jd,isFetched$12 as Jf,useWarningSnackbar as Jg,contactDetailPath as Jh,useTTS as Ji,updateSsoConfiguration as Jl,useAddresses as Jm,useBookDidwwPhoneNumberMutation as Jn,faxLinesFetched as Jo,selectFrontdeskMinuteContingent as Jp,useDeleteCostCenterMutation as Jr,shouldForceFetchOnError as Js,esm_default as Jt,canForwardingDelayBeChanged as Ju,resolveProps as Jv,Grow as Jy,useGetE164Number as K,SubTab as K_,useBatchUserImportUsers as Ka,_extends$4 as Kb,callTerminationFinished as Kc,useDeviceActions as Kd,setDeviceProperty as Kf,forceFetchRestrictionsForUser as Kg,contactCenterChannelsPath as Kh,deleteNotification as Ki,createSsoConfiguration as Kl,useAppProperties as Km,JoyrideTour as Kn,deleteFaxLine as Ko,selectFrontDeskBaseContract as Kp,useToggleChannelLegacyStatisticsActivationStatusMutation as Kr,isAudioFileUsed as Ks,HighlightedText as Kt,areForwardingsFetchedForExtension as Ku,GridFilterInputMultipleValue as Kv,ListItemText$1 as Ky,renderInternationalFormAddress as L,isApiError as L_,useBalance as La,require_react_is$4 as Lb,selectById$12 as Lc,WEBPHONE_TOUR as Ld,selectCurrentSim as Lf,require_dist$2 as Lg,blocklistPath as Lh,useConfigAction as Li,selectTotalContingentUsage as Ll,ContactWebsiteTypes as Lm,sipgate_wort_bild_marke_schwarz_default as Ln,flatMapRoutablePhonenumbers as Lo,isContingentContract as Lp,isTimeRangeToday as Lr,useAudioFiles as Ls,validateRegex as Lt,setActiveAudioFileCallQueue as Lu,GridFilterPanel as Lv,DisabledContext as Ly,formatAddressState as M,Provider_default as M_,isSipgateAppWithSubscription as Ma,useLocation as Mb,deleteDataAutomation as Mc,isTerminalNeoEndpointForwardingDestinationType as Md,isGroupRoutingActive as Mf,userPath as Mg,aiFlowMinutePackages as Mh,useUsersAndNotification as Mi,fetchTrunks as Ml,forceFetchContacts as Mm,normalizeDialableCharacterSequence as Mn,selectPersonalChannels as Mo,calculateTotalContingentUsed as Mp,useDeleteIvrMutation as Mr,saveDateBasedForwardingDestination as Ms,validateNoDots as Mt,useGroupActions as Mu,GRID_DETAIL_PANEL_TOGGLE_COL_DEF as Mv,ContextMenu as My,formatUsState as N,shallowEqual as N_,isSipgateFreeApp as Na,useParams as Nb,fetchDataAutomation as Nc,fetchTimeBasedForwardings as Nd,isMobileDevice as Nf,userRoutingPath as Ng,aiFlowPath as Nh,useUsersAndNotificatonsActions as Ni,forceFetchTrunks as Nl,ContactAddressTypes as Nm,getAccountMenuLinks as Nn,selectSharedChannels as No,isActiveContract as Np,useGetIvrQuery as Nr,saveDateBasedForwardings as Ns,validateNoEmoji as Nt,useGroups as Nu,ExportCsv as Nv,useScrollFade as Ny,Address as O,fetchUserInfo as O_,hasConnectedIntegrations as Oa,Switch$1 as Ob,isFetched$8 as Oc,replaceStepInUnconditionalSet as Od,getUnlinkedMobileDevices as Of,userAreaDevicesPath as Og,isInFrontdeskIntegrationContext as Oh,updateCalendarConfig as Oi,useTrunk as Ol,hasUploadedAvatar as Om,isAnonymous as On,selectFullAccessPersonalChannel as Oo,fetchDeviceContracts as Op,useAssignAudioFileToIvrMutation as Or,getNextSelectedHolidayDate as Os,validateExactLength as Ot,selectByTokenId as Ou,DataGridDetailPanelToggle as Ov,Alert as Oy,renderDidwwFormAddress as P,require_moment_timezone as P_,isTerminated as Pa,useRouteMatch as Pb,setDataAutomation as Pc,updateTimeBasedForwardings as Pd,isRegisterDevice as Pf,userSettingsPath as Pg,apiClientPath as Ph,isCustomNotification as Pi,generateTrunkCredentialsPassword as Pl,ContactEmailTypes as Pm,Pill as Pn,usePhonenumbers as Po,isBaseContract as Pp,useGetIvrsQuery as Pr,fetchAppSubcriptionTypes as Ps,validateNonEmpty as Pt,bookGroupStatisticsContract as Pu,ColumnsPanelTrigger as Pv,ResizeObserver$2 as Py,useNormalizePhonenumber as Q,SectionPlaceholder as Q_,fetchSipgateIo as Qa,createSlice as Qb,selectVoicemail as Qc,createDevice as Qd,useDeviceLocalPrefixActions as Qf,trackAgentsControl as Qg,devicePoolPath as Qh,fetchDirectDials as Qi,forceFetchSms as Ql,useCreateAddress as Qm,useGetDidwwAddressQuery as Qn,selectFaxlinesForOwnersFromState as Qo,selectExternalContacts as Qp,useUpdateCostCenterMutation as Qr,useConferenceRoomActions as Qs,getDaysInMonth as Qt,isFullWeek as Qu,useEnhancedEffect as Qv,Button$2 as Qy,renderUsFormAddress as R,hasKey as R_,useBalanceActions as Ra,require_path_to_regexp as Rb,selectFetchItemById$6 as Rc,createLocalEvent as Rd,selectDevice as Rf,useCanUseChannelsRestriction as Rg,channelPath as Rh,useBusiness as Ri,selectTrunk as Rl,useUserCallRestrictionActions as Rm,ensureVoicemail as Rn,isCancelablePhonenumber as Ro,isDataSnackContract as Rp,useChannelLegacyLiveStatistics as Rr,useAudioFilesFetchedForOwner as Rs,validateStartsWith as Rt,setActiveAudioFileGreeting$1 as Ru,GridColumnsPanel as Rv,isDisabled as Ry,usePseudo as S,isNeoPBXCustomer as S_,useSipgateAppNotification as Sa,instanaLog as Sb,PersistenceLevels as Sc,parseTime as Sd,getMobileDeviceForWebuser as Sf,sharedContactsPath as Sg,createSmsCallerIds as Sh,contingentTypes as Si,setUserEmail as Sl,require_lodash as Sm,BorderedContainer as Sn,selectChannelsByType as So,formatNettoUnitCost as Sp,useQueuedCallsPerChannel as Sr,getCustomDateBasedForwardingsInPast as Ss,validateGermanIBAN as St,createPersonalAccessToken as Su,Option as Sv,Input as Sy,useAlert as T,useFeatureScope as T_,useSipgateApps as Ta,Link as Tb,isFetching$7 as Tc,replaceDelayInStep as Td,getOwnedMobileDevices as Tf,trunksPath as Tg,verifySmsCallerId as Th,useFrontdesks as Ti,isTwoFactorFetching as Tl,findAvatarForWebuserIdAndAllSizesInArray as Tm,formatPhonenumberForScreenreader as Tn,selectContactCenterChannels as To,translatePaymentInterval as Tp,useGetIncomingCallDurationStatisticsQuery as Tr,getDateBasedForwardingsNotInPast as Ts,init_ibantools as Tt,isFetched$11 as Tu,useTouchDevice as Tv,Tabs as Ty,useCallingCodeRegion as U,useToast as U_,useBatchUserImport as Ua,FocusTrap$1 as Ub,callCreated as Uc,useAllDevices as Ud,useDeviceProperties as Uf,hasRestriction as Ug,conferenceRoomPath as Uh,selectFaxReportEmail as Ui,forceFetchTrunkCallRestrictions as Ul,deleteBlocklistEntry as Um,withFullView as Un,useFaxLines as Uo,selectClassicPbxMinuteContingent as Up,useSetChannelLegacyStatisticsAverageHandlingTimeTargetMutation as Ur,getAudioFile as Us,chainValidators as Ut,fetchGroupStatistics as Uu,getGridNumericOperators as Uv,Tooltip$1 as Uy,AuthenticatedLayoutContext as V,ExternalLink as V_,useApiClientsActions as Va,require_prop_types as Vb,browserOnline as Vc,useGenericAudioFiles as Vd,sortDevices as Vf,useUserRestrictions as Vg,channelsPath as Vh,useChannelInboxActions as Vi,isReplacedTrunkContract as Vl,useDeactivateCallRecorder as Vm,ViewSwitch as Vn,selectPhonenumbersForWebusers as Vo,selectAiFlowMinuteContingent as Vp,useGetChannelLegacyStatisticsActivationsQuery as Vr,fetchAudioFiles as Vs,validateEmail as Vt,selectGroup$1 as Vu,useForkRef as Vv,NeoIcon as Vy,useFindNumberMatchLocation as W,SaveBar as W_,useBatchUserImportAuthRequest as Wa,require_jsx_runtime as Wb,callMuted as Wc,useAllDevicesOfUsers as Wd,useSetDeviceProperty as Wf,fetchRestrictions as Wg,conferenceRoomsPath as Wh,changeFaxReportNotification as Wi,setTrunkCallRestrictions as Wl,fetchBlocklistEntries as Wm,withView as Wn,useFaxLinesActions as Wo,selectContactCenterContingentContracts as Wp,useSetChannelLegacyStatisticsCallPercentageInTimeLimitTargetMutation as Wr,getAudioFilesForOwner as Ws,ManagedForm$1 as Wt,fetchGroupStatisticsHistory as Wu,getGridStringOperators as Wv,MenuItem$1 as Wy,useLocalizeNumber as X,StateIcon as X_,bookSipgateIo as Xa,createAction$1 as Xb,getVoicemailsForOwner as Xc,activateSim as Xd,selectDeviceIconFromEntities as Xf,snapshotAgentsStandardContext as Xg,createTrunkPath as Xh,useDirectDialActions as Xi,useSmsActions as Xl,useBrokenAddresses as Xm,useDeleteDidwwAddressMutation as Xn,selectFaxlinesForOwnerFromState as Xo,findContactsForPhonenumber as Xp,useImportCostCentersMutation as Xr,useMobileInfoActions as Xs,getDayEnd as Xt,getTimeBasedForwardingSets as Xu,generateUtilityClass as Xv,FocusTrap as Xy,useIsValidPhonenumber as Y,AvatarStack as Y_,getFileContent as Ya,configureStore as Yb,sipClientDisconnected as Yc,useUserDevices as Yd,selectDeviceIcon as Yf,openWarningSnackbar as Yg,contactsPath as Yh,useTTSActions as Yi,useSMSforUser as Yl,useAddressesActions as Ym,useCreateDidwwAddressMutation as Yn,selectFaxlinesForOwner as Yo,selectPrimaryDataContingents as Yp,useGetCostCentersQuery as Yr,useMobileInfo as Ys,getDate as Yt,getAllActiveTimeframes as Yu,generateUtilityClasses as Yv,Divider$1 as Yy,useNormalizeE164 as Z,SectionSurface as Z_,cancelSipgateIo as Za,createListenerMiddleware as Zb,selectValidVoicemailForwardingTargetsForUser as Zc,changeSim as Zd,useDeviceLocalPrefix as Zf,trackAgents as Zg,csvMappingPath as Zh,useDirectDials as Zi,fetchSms as Zl,useBusinessTypes as Zm,useDeleteDidwwUploadedProofMutation as Zn,selectFaxlinesForOwners as Zo,selectContactByContactId as Zp,useSetCostCenterAssignmentsMutation as Zr,fetchMobileInfo as Zs,getDayStart as Zt,hasActiveForwardingSteps as Zu,useEventCallback$1 as Zv,ClickAwayListener as Zy,withDialogPage as _,HttpClient as __,useAiFlowUsageSessions as _a,styled$1 as _b,useDataUsageSettings as _c,insertStepBeforeTerminalStep as _d,canCreateAdditionalVoipPhonesWithoutCharge as _f,personalAccessTokenPath as _g,deleteLogo as _h,titlePriority as _i,fetchUserEmailChangeRequest as _l,useDialogs as _m,DropdownWithOpener as _n,getDomainVerification as _o,selectContingentType as _p,useGetFilterValuesQuery as _r,deleteChannel as _s,validateDigits as _t,usePhoneProvisioning as _u,useLayout as _v,Radio as _y,Legal as a,isFrontdeskQualificationCompleted as a_,isDowngrade as aa,Paper as ab,selectConferenceRoom as ac,selectForwardings as ad,setAlias as af,groupPath as ag,useAffiliateConsent as ah,useLinks as ai,setActiveAudioFile as al,getImageTypeFromBase64EncodedImage as am,getMonthStart as an,fetchLabels as ao,useContractActions as ap,useGetDidwwVerificationRequirementsQuery as ar,isPhonenumberWithAddress as as,createEndpointIdFromExtension as at,usePhonelines as au,SubNavEntityHeader as av,lruMemoize as ax,Checkbox$1 as ay,useScreenreaderAnnouncementsActions as b,hasFeatureToggle as b_,useAiFlows as ba,useTheme$3 as bb,isFetched$6 as bc,makeSetConditional as bd,getMobileDevice$1 as bf,routingPath as bg,selectSmsCallerIdByNumber as bh,useSetChartDisplayLimit as bi,resetUserPassword as bl,fetchLinks as bm,SlideIn as bn,useChannels as bo,formatMoney as bp,useUserPresence as br,isFullAccessChannel as bs,oneOfValidators as bt,selectPhone as bu,ManagedSelect as bv,TextArea as by,DialogErrors as c,useTranslate as c_,isXLtoLdowngrade as ca,useEventCallback_default as cb,forceFetchConferenceRooms as cc,addStepToUnconditionalSet as cd,setDeviceRouting as cf,isAccountSection as cg,useCommissionPayoutAccount as ch,useEvents as ci,setVoicemailPin as cl,getTranslatedContactScopeForContactDetailView as cm,getYearStart as cn,fetchCallRecordingAudioFileContent as co,useDeviceProducts as cp,useUploadDidwwVerificationDocumentMutation as cr,deleteRoutings as cs,CenteredSpinner as ct,forceFetchPhonelines as cu,SubNavStickyContext as cv,Dropdown$2 as cy,selectPaymentMethodById as d,MarkdownProvider as d_,useBaseContract as da,styled as db,deleteRoutingConfigurations as dc,getDurationToEndTime as dd,setIntendedUse as df,locationsPath as dg,itemizedBillingPhoneNumberFormats as dh,appToastManager as di,useUserActions as dl,getTranslatedNumberType as dm,DropdownButton as dn,setCallRecordingAudioFileAlias as do,useProductActions as dp,useGetUsersPerformanceStatisticsQuery as dr,setRoutings as ds,Form_module_default as dt,usePhonelineBlockAnonymous as du,ViewHeader as dv,SearchNoResult as dy,setAgentsActiveDrawer as e_,baseContractOptionsInfo as ea,Popper$1 as eb,useConferenceRooms as ec,isVoicemailStep as ed,createUnlinkedMobileDevice as ef,faxLinePath as eg,useEditAddress as eh,useGetAnonymousForwardingQuery as ei,deleteVoicemailPin as el,searchContacts as em,getDecadeStart as en,updateSipgateIoSettings as eo,fetchLocalprefix as ep,useGetDidwwCitiesByCountryQuery as er,frontdesksRestClient$1 as es,useGetCallingCodeForUserQuery as et,openPoliteScreenreaderAnnouncement as eu,Section as ev,isRejected as ex,useOnMount$1 as ey,DialogContent as f,require_sprintf as f_,useBaseContractActions as fa,useTheme$1 as fb,fetchRoutingConfigurations as fc,getForwardingStep as fd,setSimAlias as ff,minuteContingentsPath as fg,useAccounting as fh,Overlay$1 as fi,useUserById as fl,getTranslatedWebsiteType as fm,Spinner as fn,igelIsScrolled as fo,useProductOptions as fp,useGetLiveUserStatusesStatisticsQuery as fr,createChannelAudioFile as fs,validateHttpsURL as ft,fetchBlockAnonymous as fu,EmptyState as fv,Search as fy,withDialogFlow as g,paymentApi as g_,useAiFlowLogs as ga,getThemeProps$1 as gb,fetchFqdns as gc,getWeekDays as gd,areDevicesFetched as gf,paymentPath as gg,verifyAccount as gh,a11y_module_default as gi,cancelUserEmailChangeRequest as gl,Dialogs as gm,DropdownMenu as gn,fetchDomainVerifications as go,fetchProductTacs as gp,useGetCustomFieldStatisticsQuery as gr,setChannelAudioFileAlias as gs,validateDate as gt,selectById$13 as gu,LayoutContext as gv,RadioCard as gy,LoadingDialogFlow as h,api$1 as h_,useAiFlowActions as ha,alpha as hb,createFqdns as hc,getUnconditionalForwardingSetWithEmptySteps as hd,getAppDeviceAlias as hf,myChannelPath as hg,useLogo as hh,breakPoints as hi,useUsers as hl,UserAvatar as hm,SmartLink as hn,deleteDomainVerification as ho,getProductsTacFromProductId as hp,useGetCallEventsQuery as hr,fetchChannelAudioFiles as hs,validateRange as ht,isUpdating$3 as hu,HeadingBoundary as hv,RadioCardPrice as hy,useAppDownloadUrl as i,isInboundValue as i_,getLegacyBaseProductName as ia,ButtonBase as ib,usePaymentMethods as ic,selectForwardingTimezone as id,resetPassword as if,googleContactCallbackPath as ig,forceFetchAddresses as ih,useOutsideClick as ii,resetVoicemails as il,getContactDisplayName as im,getMonthHuman as in,useUserNotifications as io,useActiveDeviceContract as ip,useGetDidwwUploadedProofsQuery as ir,isPhonenumberBlock as is,ConnectedEventList_default as it,usePhonelineActions as iu,SubNavLogoHeader as iv,createSelectorCreator as ix,composeClasses as iy,formatAddressLine1 as j,useSelector as j_,isCanceledTrial as ja,useHistory as jb,useDataAutomationHistoryActions as jc,isTerminalNeoEndpointForwardingDestination as jd,isExternalDevice as jf,userNotificationsPath as jg,adminIntegrationsPath as jh,useVoices as ji,fetchTrunkContingents as jl,fetchContacts as jm,findMatchLocation as jn,selectPersonalChannel as jo,calculateTotalContingentAmount as jp,useDeleteIvrKeyMappingMutation as jr,fetchDateBasedForwardings as js,validateMinLength as jt,fetchHolidayPresets as ju,useGridApiContext as jv,PhoneLink as jy,formatAddress as k,connect as k_,hasLoggedIn as ka,generatePath as kb,selectById$11 as kc,validateActiveTimes as kd,hasMobileDeviceVoiceSims as kf,userDevicePoolPath as kg,adminIntegrationDetailPath as kh,selectFrontdeskById as ki,useTrunkActions as kl,deleteUserAvatar as km,isDirectDialNumber as kn,selectLimitedAccessChannel as ko,forceFetchContracts as kp,useAssignPhoneNumbersToIvrMutation as kr,isHolidayDateBasedForwarding as ks,validateHttpHeaderName as kt,fetchMobileDeviceTariffAnnouncement as ku,DataGridPremium as kv,Headline as ky,PandaInputLabel as l,useTranslationActions as l_,isXLtoSdowngrade as la,useEnhancedEffect$1 as lb,renameConferenceRoom as lc,findDelayAndPositionForNewForwardingStep as ld,setDeviceSettings as lf,ivrPath as lg,useReferredCustomers as lh,useEventsAction as li,updateTranscriptionSettingForVoicemail as ll,getTranslatedEmailType as lm,getUserLocale as ln,fetchCallRecordingAudioFiles as lo,useFutureDeviceContract as lp,useGetTeamPerformanceStatisticsQuery as lr,fetchPhonenumbers as ls,CenterContainer as lt,selectPhoneline as lu,ListView as lv,FileUpload as ly,useRoute as m,useAction as m_,useBaseContractOptions as ma,useRtl as mb,syncRoutingConfigurations as mc,getFreeActiveTimes as md,setTariffAnnouncement as mf,mobileTelephonyPath as mg,useEventLifetime as mh,MediaQueryDecorator as mi,useUserLanguage as ml,mapContactToUpdateApiContact as mm,DropdownMenuItem as mn,createDomainVerification as mo,useProductsTacs as mp,useGetAvailableVariablesQuery as mr,fetchChannelAudioFileContent as ms,validateNumeric as mt,isFetched$10 as mu,useTheme as mv,RadioGroup as my,useInfoToast as n,toDrawerWidthBucket as n_,getEasyOptionUserLimit as na,Typography as nb,useOpenPositions as nc,selectAllForwardingSteps as nd,fetchDevices as nf,frontDeskPath as ng,usePhoneBookEntry as nh,pusher as ni,fetchVoicemailsForAccount as nl,getBase64ContentFromBase64EncodedImage as nm,getISOLocalMonth as nn,useDeleteUserNotification as no,isFetched$13 as np,useGetDidwwPhoneNumbersQuery as nr,hasRoutingPhoneline as ns,useSetCallingCodeForExtensionMutation as nt,createPseudo as nu,SubNavView as nv,unwrapResult as nx,require_with_selector$1 as ny,CreatePaymentMethodDialogPage as o,track as o_,isLtoSdowngrade as oa,TransitionGroup as ob,deleteGreeting as oc,selectSimpleForwardingSteps as od,setCallerId as of,groupsPath as og,useAffiliateInfo as oh,sipgate_wort_bild_marke_weiss_default$1 as oi,setVoicemailAlias as ol,getTranslatedAddressType as om,getYear as on,createCallRecordingAudioFile as oo,useContracts as op,useResubmitDidwwVerificationMutation as or,isPhonenumberWithChildren as os,resolveEndpoint as ot,createPhoneline as ou,Avatar as ov,current as ox,ManagedCheckbox as oy,route as p,didFetch as p_,useBaseContractCostSummary as pa,defaultTheme as pb,setRoutingConfigurations as pc,getForwardingSteps as pd,setSingleRowDisplay as pf,mobileTelephonyDevicePath as pg,useAccount as ph,withTranslate as pi,useUserEmailChangeRequest as pl,guessImageType as pm,RevealComponent as pn,useDomainVerificationActions as po,useProducts as pp,useDeleteCallEventMutation as pr,deleteChannelAudioFile as ps,validateURL as pt,updateBlockAnonymous as pu,useLocalizedNode as pv,ManagedRadioGroup as py,useIsEWRNumber as q,MainTab as q_,useBatchUserJobs as qa,skipToken as qb,callUnmuted as qc,useDeviceItems as qd,areFetched$1 as qf,useOpenClickToDialSnackbar as qg,contactCenterMinutePackagesPath as qh,fetchNotifications as qi,fetchSsoConfiguration as ql,fetchAppProperties as qm,Pusher_default as qn,fetchFaxLines as qo,selectFrontDeskContingentContracts as qp,useCreateCostCenterMutation as qr,selectAudioFile as qs,SearchInput as qt,areForwardingsUpdating as qu,useId$9 as qv,ListItemIcon as qy,googleContactCallbackChannel as r,toDrawerWidthShareBucket as r_,getLegacyBaseProductGeneralName as ra,IconButton as rb,usePaymentActions as rc,selectForwardingStepsForType as rd,forceFetchDevices as rf,frontDesksPath as rg,fetchAddresses as rh,AccountNumber as ri,forceFetchVoicemails as rl,getContactAvatar as rm,getMonthEnd as rn,useReplaceUserNotification as ro,selectLocalPrefix as rp,useGetDidwwProductInfoQuery as rr,isInternationalPhonenumberWithUnfinishedVerification as rs,useSetCallingCodeForUserMutation as rt,useAllPhonelines as ru,SubNavTextHeader as rv,createSelector$5 as rx,require_shim as ry,PaymentMethodIcon as s,api as s_,isUpgrade as sa,CSSTransition as sb,fetchConferenceRooms as sc,addStepToConditionalSet as sd,setDeviceGroupRouting as sf,hardwarePath as sg,useCommissionBalance as sh,useEvent as si,setVoicemailAuthorizedNumbers as sl,getTranslatedContactScope as sm,getYearEnd as sn,deleteCallRecordingAudioFile as so,useDeviceContingentAndCombinedFlatProducts as sp,useUpdateDidwwIdentityDetailsMutation as sr,isPhonenumberWithPorting as ss,validateCommaSeparatedLabels as st,fetchPhonelines as su,State as sv,combineReducers as sx,VisualCheckbox as sy,ClipboardButton as t,clampedMaxWidth as t_,getBaseProductOptionInfo as ta,createPopper as tb,useAutoCreditingSettings as tc,selectAllForwardingSets as td,deleteDeviceRouting as tf,frontDeskMinutePackages as tg,useMoveAddress as th,useSetAnonymousForwardingMutation as ti,fetchVoicemails as tl,searchInContacts as tm,getISOLocalDate as tn,useCreateUserNotification as to,setLocalprefix as tp,useGetDidwwCountriesQuery as tr,E164_FOR_BROKEN_BLOCK as ts,useGetCountryCallingCodesQuery as tt,fetchScopes as tu,DetailView as tv,prepareAutoBatched as tx,useLazyRef as ty,SubmitButton as u,createTranslate as u_,translateBaseContractOption as ua,createSvgIcon$1 as ub,setActiveAudioFileGreeting as uc,fullWeek as ud,setIncomingCallDisplayForExternalDevice as uf,ivrsPath as ug,itemizedBillEntryTypes as uh,LogoSpinner as ui,useCurrentUser as ul,getTranslatedFaxNumberType as um,DropdownScrollFadeSurface as un,setActiveCallRecordingAudioFile as uo,useProduct as up,useGetUserStatusesStatisticsQuery as ur,forceFetchPhonenumbers as us,ManagedForm as ut,selectPhonelinesForWebuser as uu,ListHeader as uv,FileUpload_module_default as uy,DialogCloseInterceptorContext as v,auth_default as v_,useAiFlowUsageSummaries as va,shouldForwardProp as vb,fetchDataUsageSettings as vc,invertActiveTimes as vd,compareDevices as vf,phonenumbersPath as vg,fetchAccount as vh,useDocumentTitle as vi,fetchUsers as vl,withDialogs as vm,handleKeyUp as vn,resetDomainVerification as vo,fetchProducts as vp,useGetUserPresenceQuery as vr,fetchChannels as vs,validateDirectDials as vt,usePhoneProvisioningActions as vu,Combobox as vv,Toggle as vy,useReducedMotion as w,useFeatureFlag as w_,useSipgateApp as wa,useAudioPlayer as wb,isFetched$7 as wc,renderActiveTimeValidationError as wd,getOwnDevices as wf,trunkPath as wg,setSmsCallerIdActive as wh,useFrontdeskActions as wi,isTwoFactorEnabled as wl,useAvatars as wm,EWRCountries as wn,selectChannelsByUserIdAndTeamLeadId as wo,sumCosts as wp,useGetIncomingAcceptedCallsStatisticsQuery as wr,getDateBasedForwardingName as ws,ibantools_exports as wt,fetchPersonalAccessTokens as wu,Table as wv,Label$1 as wy,buildAuthenticateUrl as x,isClassicPBXCustomer as x_,useNqNupsi as xa,identifier_default as xb,selectById$9 as xc,makeSetUnconditional as xd,getMobileDeviceById as xf,sharedContactDetailPath as xg,selectSmsCallerIds as xh,useContingents as xi,setLegacyBusyOnBusy as xl,useViewStack as xm,OverlayTransition as xn,selectChannelsByEditorId as xo,formatNettoCost as xp,useGetQueuedCallsStatisticQuery as xr,getCustomDateBasedForwardings as xs,validateCommissionPayoutAllowedIBAN as xt,usePersonalAccessTokenActions as xu,Select as xv,VisualMeta as xy,DialogChromeContext as y,useIsAffiliateImpersonationAndTargetingSelf as y_,useAiFlowVocabulary as ya,clsx as yb,setDataUsageSettings as yc,isForwardingSetActive as yd,getDefaultDevice as yf,portingsPath as yg,selectDefaultNumber as yh,useChartDisplayLimit as yi,forceFetchUsers as yl,PageNotFoundRedirect_default as ym,Tooltip as yn,useChannelActions as yo,compareCosts as yp,useSetUserPresenceLoginStatusMutation as yr,setChannelUserDevices as ys,validatePhonenumber as yt,fetchPhones as yu,ManagedCombobox as yv,ManagedTextArea as yy,translateCountry as z,src_default$1 as z_,fetchBalance as za,invariant as zb,useWebphoneViews as zc,fetchEvents as zd,selectDeviceAlias as zf,useHasRestriction as zg,channelRoutingPath as zh,useBusinessActions as zi,useTrunkContractActions as zl,fetchUserCallRestrictionsForUser as zm,TitleOverride as zn,isRevokablePhonenumber as zo,isFutureContract as zp,useChannelLegacyStatistics as zr,deleteAudioFile as zs,validateTrimmedNonEmpty as zt,setGroupAlias as zu,Toolbar as zv,require_classnames as zy};
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-DFko0cRT.js" 2>&1 | grep -oE 'https?://[a-zA-Z0-9.-]+\.sipgate\.(com|de|net|co\.uk)(:[0-9]+)?' | sort -u
+https://admin.dev.sipgate.net
+https://admin.live.sipgate.net
+https://amp.sipgate.de
+https://api.dev.sipgate.com
+https://api.local.sipgate.com:3396
+https://api.sipgate.com
+https://app.dev.sipgate.com
+https://app.local.sipgate.com:3443
+https://app.sipgate.com
+https://chatbot.dev.sipgate.com
+https://chatbot.sipgate.com
+https://info.sipgate.de
+https://integration.dev.sipgate.com
+https://login.dev.sipgate.com
+https://login.sipgate.com
+https://payment.dev.sipgate.com
+https://payment.local.sipgate.com:8080
+https://payment.sipgate.com
+https://static.sipgate.com
+https://status.sipgate.de
+https://team-de.dev.sipgate.com
+https://team-de.live.sipgate.com
+https://team-de.local.sipgate.com:10443
+https://team-uk.dev.sipgate.com
+https://team-uk.live.sipgate.com
+https://team-uk.local.sipgate.com:10443
+https://www.sipgate.de
+[0m

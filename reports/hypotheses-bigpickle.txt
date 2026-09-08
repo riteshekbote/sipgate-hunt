@@ -1,30 +1,153 @@
-## 2026-09-07 22:44:12 UTC [target] (model bigpickle)
-[HYP] GCP-backed Platypus instance SSRF → cloud-metadata amplification (users.integrations.create apiUrl)
-class: SSRF
-asset: integration.sipgate.cloud (+ .com/.dev)
-confidence: 55
-reasoning: .cloud is on GCP 35.246.154.68 (metadata.google.internal / GCP LB → link-local 169.254.169.254); spec documents `users.integrations.create` accepting free-form `apiUrl`; gate uniform-403 on all 26 paths incl /oauth2/* on .cloud, .com, .dev (this cycle re-confirmed on .cloud); swagger-ui-init public on all three.
-evidence_needed: a way past the 403 gate (none found) OR a handler reachable with a registered API key (api_key_forbidden_requests counter = 7).
-verify_steps: PROBE read-only — diff .cloud vs .com `.cloud/swagger/swagger-ui-init.js` for instance-level config drift; GET `https://integration.sipgate.cloud/` root headers for server/ingress fingerprint; GET `/swagger-resources`, `/v3/api-docs`, `/api-docs`, `/docs/` on .cloud looking for non-403. Flag any != {403,404}.
-impact: with gate pass: metadata keys theft (GCP SA), CRM/contact PII read/write, call-log injection via integration handlers. CRITICAL if reachable; MEDIUM-INFO (spec disclosure) now.
-testability: PASSIVE (gate-gated)
-[HYP] Firebase-JWT gate continuity: token acquisition path for the validated Firebase project
-class: AUTH
-asset: integration.sipgate.com /oauth2/callback
+## 2026-09-08 01:23:06 UTC [target] (model bigpickle)
+[NEW] login.sipgate.com exposed as Apache+Keycloak realm `sipgate-apps`, OAuth2 IMPLICIT flow (response_type=token) with redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=/ — the real customer app login (in-scope, sipgate-owned).
+[NEW] app.sipgate.com SPA: `/implicit-auth-redirect` reads client-controlled `redirect` from search, stores token, then `history.replace(redirect)` unvalidated (main.js `ImplicitAuthenticator`, main-C3206pWE.js).
+[NEW] OIDC discovery signals: grant `password`(ROPC), `client_secret_jwt`, id_token algs incl HS256/512, PKCE `plain`+`S256`.
+[CHANGED] dev.sipgate.de resolves to sipgate IP 217.10.68.23 but dead (no HTTP 80/443, timeout) — abandoned host, owned IP, no takeover.
+[PRIO] login.sipgate.com,7.05,tech_exposure(OAuth/Keycloak/JWT)+business_value(auth gate)
+[PRIO] app.sipgate.com,6.85,tech_exposure(OAuth2 implicit+client redirect)+business_value(customer dashboard)
+[PRIO] dev.sipgate.de,2.50,attack_surface(dead host only)
+[HYP] OAuth implicit token leakage via client-side unvalidated redirect on post-login handler
+class: OATH
+asset: app.sipgate.com/implicit-auth-redirect?redirect=<attacker>
 confidence: 45
-reasoning: /metrics this cycle PROVES the live gate is Firebase-JWT-dominant (79799 denied) with API-key fallback (7) and rate-limit layer (2450) — spec claims Keycloak OAuth but runtime validates Firebase → mechanism drift confirmed. oauth2/callback is where Keycloak code→Firebase-session exchange must occur; chatbot surface has zero firebase refs (demo.js.map = HTML, no apiKey).
-evidence_needed: token source — either a leaked Firebase web API key/product id, or drive /oauth2/callback with a real realm code (requires logged-in session).
-verify_steps: AUTH_HELPED — fetch full `.cloud/.com swagger-ui-init.js` (already 200) grep for firebase/apiKey/AIza; if none, obtain Keycloak code for `platypus-swagger` (real realm login.sipgate.com, shown in spec) then GET `/oauth2/callback?code=…` and observe exchange.
-impact: valid Firebase session → full 26-op API (contacts/call-logs/streaming) with Keycloak-less auth. HIGH if token source found.
+reasoning: JS confirms `ImplicitAuthenticator` reads `redirect` from location.search and after `initializeFromToken({access})` (token persisted to localStorage) does `history.replace(redirect)` with NO origin/allowlist validation; `redirect_uri` embeds attacker-influenced value into the same flow.
+evidence_needed: browser confirms `history.replace('https://evil.example')` causes off-origin navigation (leaks/denies) OR only same-origin path push (no leak); verify token present in url fragment/history/referrer to attacker.
+verify_steps: HUMAN browser: craft auth URL redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example, complete login, observe final destination and whether access_token reaches attacker-controlled origin (NC, no live customer data).
+impact: if off-origin nav: access token + from_idp exfil -> full customer account compromise (ATO). If same-origin only: low open redirect. Severity: HIGH if confirmed, LOW otherwise.
+testability: HUMAN_ONLY
+[HYP] Keycloak id_token alg confusion (HS256 enabled alongside RS256) for auth bypass
+class: AUTH
+asset: login.sipgate.com/auth/realms/sipgate-apps
+confidence: 35
+reasoning: OIDC discovery lists id_token_signing_alg_values_supported incl HS256/512 alongside RS256/PS/ES; JWT alg-confusion applies only if any sipgate verifier validates token with RS256 public key as HMAC secret. Realm `sipgate-apps`, token_endpoint also allows client_secret_jwt.
+evidence_needed: identify an app-endpoint token verifier that accepts attacker HS256-signed token (public key as secret) — requires a scoped verifier and live testing on test/sandbox, never live auth data.
+verify_steps: passive config review only; active verify requires sandbox/test token endpoint and is AUTH_HELPED/HUMAN (no live customer-data bypass per scope).
+impact: forged tokens -> authentication bypass across app -> full account takeover. Severity: CRITICAL if verifier flawed.
+testability: HUMAN_ONLY
+[HYP] ROPC/password grant + client_secret_jwt enabled enables credential/secret abuse
+class: AUTH
+asset: login.sipgate.com token endpoint
+confidence: 25
+reasoning: grant_types_supported includes `password`(ROPC) and token_endpoint_auth_methods_supported includes client_secret_jwt/private_key_jwt; ROPC enables credential-stuffing/offline guesses; client_secret_jwt risks alg confusion on client auth.
+evidence_needed: demonstrate an affected confidential client uses client_secret_jwt and its secret/JWK is derivable, or ROPC leaks PII — mostly brute/rate-limit territory which is REJECTED.
+verify_steps: not actionable without rate-limit bypass or secret leak; low confidence, config-only.
+impact: account-session abuse / ATO; Severity: HIGH if a real client reachable, otherwise config hardening issue.
+testability: HUMAN_ONLY
+[PARKED] OAuth implicit token theft via open redirect (conf 45): code path confirmed unvalidated, but `history.replace(external)` in React Router typically pushes same-origin path (404), not off-origin — token stored in localStorage first, so fragment-based leak likely absent. Confidence below 50; needs live browser to resolve. Retained as top.
+[PARKED] Keycloak alg-confusion (conf 35): config signal only (HS256 listed is standard Keycloak realm metadata, not proof of vulnerable verifier); REJECTED-adjacent (known-vulnerable library without program-specific exploit). Dropped from FINAL.
+[PARKED] ROPC/password grant (conf 25): config-only, brute-force/rate-limit class is REJECTED. Dropped.
+[PARKED] dev.sipgate.de (conf 20): abandoned host on owned IP; no dangling CNAME to attacker-controllable service -> not a takeover. Dropped.
+[FINAL] survivors: OAuth implicit client-side redirect confirm (conf 45, HUMAN_ONLY) — only defensible non-REJECTED candidate; rest parked.
+[NEXT] HUMAN: open a private-tab full login flow on `https://app.sipgate.com/implicit-auth-redirect?redirect=https://evil.example` via the standard login, and report final URL + whether access_token/from_idp appear in history/referrer/network to the attacker origin; do NOT use live customer accounts (sandbox/test creds only).
+[LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin. Class signal: unvalidated client redirect is not by itself token theft.
+[LEARN] REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reachable flawed verifier; treat as config hardening, not a vulnerability.
+[RISK] sipgate: 15 — Customer-facing Keycloak OAuth implicit flow + a confirmed unvalidated client-side `redirect` on the post-login handler warrant a human browser confirmation; but static analysis indicates the token is stored before navigation and React-router treats external targets as same-origin paths, so the high-impact token-theft chain is likely NOT real. Remaining signals are config-level/REJECTED. No confirmed in-scope vulnerability this cycle; risk primarily the unconfirmed redirect behavior.
+[HYP] Valid registered API client discoverable via third-party realm for OAuth token acquisition
+class: AUTH
+asset: login.sipgate.com/auth/realms/third-party token endpoint
+confidence: 25
+reasoning: The only known client credential (from rest-api-examples) returns invalid_client → revoked. DCR is gated by Trusted Hosts. No public client_id list for this realm found; `client_id=junit`/`web-app` rejected. Without a valid client credential or DCR access, no token obtainable.
+evidence_needed: a registered third-party client's client_id+secret, or a DCR Trusted-Hosts bypass — none demonstrated passively.
+verify_steps: PASSIVE only: enumerate client_id guesses at auth endpoint (rejected → no leak of validity beyond 400); do NOT active-token or register clients (mutating/live-auth prohibited).
+impact: if a live confidential client credential were leaked/derivable, attacker reaches social-scoped APIs (contacts/sms/balance/payment read). Severity HIGH; but not demonstrable. 
+testability: PASSIVE
+[NEXT] PROBE: GET `https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/registrations/openid-connect` and the realm `/auth/realms/third-party` page with a normal browser User-Agent to confirm no additional public registration/open redirect surface — read-only.
+[LEARN] REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. revoked/not registered — not a live credential exposure; the pattern is example-code-only.
+[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scope`), no Host-header bypass found; redirect_uri validation correct (invalid URI → 400); treat as hardened config, not a vulnerability.
+[LEARN] ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/account/balance/payment) — a legitimate high-value target if a client credential or DCR bypass is ever obtained.
+[RISK] sipgate: 10 — On the api surface the OIDC `third-party` realm is well-hardened: redirect_uri strictly validated, token endpoint requires valid client auth, DCR blocked by a Trusted Hosts policy, and the only publicly leaked API client credential is inert (`invalid_client`). Broad sensitive scopes exist but are unreachable without a valid client grant or DCR bypass, neither demonstrable passively. No confirmed in-scope API vulnerability this cycle.
+class: AUTH
+asset: login.sipgate.com/auth/realms/third-party
+confidence: 25
+reasoning: Leaked demo credential returns invalid_client (revoked). DCR gated by Trusted Hosts policy. No bypass found. Broad scopes (contacts/sms/account/balance/payment) unreachable without valid client grant.
+evidence_needed: Registered third-party client_id+secret or DCR bypass (none found)
+verify_steps: PASSIVE only. GET DCR discovery/resource and realm page; enumerate client_id guesses at realm auth endpoint (distinguished 400 only)
+impact: HIGH if reachable (social-scoped customer data); not currently demonstrable
+testability: PASSIVE
+class: AUTH
+asset: login.sipgate.com/auth/realms/sipgate-apps
+confidence: 30
+reasoning: OIDC discovery lists HS256/384/512 and client_secret_jwt. Only exploitable if a sipgate verifier validates an RS-signed token using RS public key as HMAC secret — no such verifier identified. Standard Keycloak metadata, not proof of flawed verifier.
+evidence_needed: Locate verifier accepting attacker HS256-signed token (public key as secret)
+verify_steps: passive config review; active verify requires sandbox (HUMAN_ONLY)
+impact: CRITICAL if flawed verifier found; currently unproven
+testability: HUMAN_ONLY
+class: OATH
+asset: app.sipgate.com/implicit-auth-redirect?redirect=<attacker>
+confidence: 45
+reasoning: `ImplicitAuthenticator` reads `redirect` from location.search, persists token to localStorage, calls `history.replace(h)` with no origin validation. Token stored BEFORE navigation — fragment-based leak unlikely.
+[NEW] `*.integration.sipgate.cloud` (94 hosts via CT): per-vendor CRM adapters (hubspot, salesforce, zendesk, pipeforce...) all on GCP LB 35.246.154.68 behind nginx **Basic-auth 401** (distinct second gate tier vs apex Firebase-JWT 403); CORS reflect-all exposes `x-provider-{locale,region,language,url,key}` headers — SSRF-relevant inputs; ~25 dev-* hosts inert 404.
+[NEW] `grafana.sipgate.cloud` + `grafana.aws.sipgate.cloud`: LIVE Grafana 11.5.1 internet-exposed (AWS 3.33.226.160), login-only, no anonymous read.
+[NEW] `share1.sipgate.cloud`: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → **NXDOMAIN** — subdomain-takeover candidate.
+[NEW] CT `*.sipgate.cloud` enumeration (276 names): 146 `*.influxdb` monitoring hosts (Hetzner 168.119.232.113, externally inert), AWS+GCP multicloud wildcards (`*.eu-central-1.prod.aws`, `*.sandbox.dev.aws`, `*.gcp.sipgate.cloud`), k8s cluster names (`nauticat.k8s-tools-public.live.he01`), `dependency-track.prod.pub.gcp`, `essensbot.sipgate.cloud` (live Express/Caddy, `/health` 200), `loki.prod.he01` (78.47.184.81).
+[CHANGED] `integration.sipgate.com/metrics` still public: `firebase_jwt_forbidden_requests 80373` (+574 vs prior KB), api_key 6, rate_limit 2500 → live Firebase-JWT validator confirmed.
+[CHANGED] swagger-ui-init.js: `.com`/`.cloud` **byte-identical** (386538b), no firebase/apiKey/AIza in bundle — token source not in spec bundle.
+[CHANGED] `app.dev.sipgate.com/assets/main-DFko0cRT.js` (5.65MB) has **zero** Firebase/AIza/identitytoolkit refs — token source not in public SPA.
+[CHANGED] `docs.sipgate.cloud` family → CNAME `sipgate.github.io` private GitHub Pages (302 GitHub auth) — sipgate-owned, NOT takeover.
+[PRIO] *.integration.sipgate.cloud,7.65,attack_surface=8 business=9 tech=8 gate=2 cloud=9 fresh=10
+[PRIO] integration.sipgate.com(apex Firebase gate),6.75,attack_surface=6 business=9 tech=9 gate=1 cloud=9 fresh=6
+[PRIO] grafana.sipgate.cloud,6.40,attack_surface=4 business=8 tech=7 gate=3 cloud=9 fresh=10
+[PRIO] share1.sipgate.cloud,5.60,attack_surface=3 business=5 tech=6 gate=8 cloud=5 fresh=10
+[NEW] `*.integration.sipgate.cloud` (94 hostnames via CT): per-vendor CRM adapter tier (hubspot, salesforce, zendesk, zapier, etc.) all on GCP LB 35.246.154.68; uniform nginx Basic-auth 401 (`WWW-Authenticate: Basic`), CORS exposes `x-provider-{locale,region,language,url,key}` headers; ~30 live-basic + ~60 inert-404, none unprotected.
+[NEW] `grafana.sipgate.cloud` + `grafana.aws.sipgate.cloud` (CT): LIVE internet-facing Grafana 11.5.1, login-gated (no anonymous dashboards/API).
+[NEW] CT enumeration of `*.sipgate.cloud` (276 names): 146 `*.influxdb` internal monitoring hosts → 168.119.232.113 (externally inert); AWS/GCP/Hetzner multicloud + K8s tool cluster names (`nauticat.k8s-tools-public.live.he01`, `loki.prod.he01`), `dependency-track.prod.pub.gcp`, `essensbot.sipgate.cloud` (Express/Caddy /health:up live), `learn-ml`, `share1` (dangling CNAME→`nx38603.your-storageshare.de` NXDOMAIN).
+[CHANGED] `integration.sipgate.com/metrics` still public: `firebase_jwt_forbidden_requests 80373` (+574), `api_key_forbidden_requests 6`, `rate_limit_forbidden_requests 2500` → live Firebase-JWT validator confirmed.
+[CHANGED] swagger-ui-init.js byte-identical `.com`/`.cloud` (386538b), zero firebase/apiKey/AIza; `app.dev` main bundle (5.65MB) zero firebase refs → Firebase token source NOT in any public bundle.
+[CHANGED] `dev.integration.sipgate.cloud` / `test.integration.sipgate.cloud` → 404 inert behind same LB; `integration.dev.sipgate.com` still 403 ACAO* (TLS artifact earlier).
+[CHANGED] `docs.sipgate.cloud` family → private GitHub Pages (`sipgate.github.io`, 302 GitHub auth) — sipgate-owned org, NOT takeover.
+[PRIO] *.integration.sipgate.cloud (per-vendor adapters),7.65,high surface(94 hosts)+biz(CRM PII)+tech(provider adapter SSRF headers)
+[PRIO] integration.sipgate.com apex (Platypus FB-JWT gate),7.20,26-op API+Firebase drift unmatched
+[PRIO] grafana.sipgate.cloud,6.40,live monitoring UI internet-facing (login-gated)
+[PRIO] sipgate.cloud CT namespace,6.10,whole internal topology disclosed via CT
+[HYP] Per-vendor integration adapters accept provider-key header auth / SSRF via x-provider-url
+class: SSRF
+asset: *.integration.sipgate.cloud /users.integrations.create (94 hosts)
+confidence: 55
+reasoning: Per-vendor `*.integration.sipgate.cloud` tier is a distinct gate from apex — nginx Basic-auth 401 (WWW-Authenticate: Basic) on ALL paths incl /metrics and /swagger; CORS reflects `x-provider-locale/x-provider-region/x-provider-language/x-provider-url/x-provider-key`; apex spec documents `users.integrations.create apiUrl` free-form. Same code path family (Platypus NSC) serves both tiers. Any Basic-auth cred leak or provider-key reuse across the 94-host family → provider CRM PII via handler.
+evidence_needed: (a) Basic cred in any public repo/config (none found yet), (b) provider-key/url header pair passing the nginx gate, (c) any 200/204 on data path.
+verify_steps: read-only — (1) HEAD/GET `/api/health` and `/.well-known` on 5 more live vendor hosts to map exposure (done for hubspot: all 401); (2) WAF/nginx banner fingerprint on `hubspot/zendesk/salesforce.integration` for version skew; (3) OPTIONS to confirm CORS method/header set invariance; (4) passive grep of public sipgate GitHub repos (camel-temporary-target-number, lukebot) for `x-provider-key` or basic-auth strings. No credential guessing.
+impact: CRM contacts/call-logs PII across vendored integrations, SSRF to internal Hetzner/GCP services if x-provider-url unvalidated. HIGH if gate passed.
+testability: AUTH_HELPED (Basic-provider-key pair needed)
+[HYP] Firebase-JWT token is minted only at OAuth callback — no passive mint path
+class: AUTH
+asset: integration.sipgate.com/oauth2/callback
+confidence: 45
+reasoning: /metrics proves live Firebase-JWT validator (firebase counter +574); /oauth2/callback + /oauth2/redirect declared no-security in spec but app-403 externally; swagger declares Keycloak sipgate-apps implicit client `platypus-swagger`; NO firebase config in swagger bundle or app.dev SPA bundle; per-vendor tier uses nginx Basic not Firebase → two-gate architecture confirmed; token exchange presumably code→Firebase session at callback (Keycloak-less direct auth to 26-op API unproven).
+evidence_needed: real Keycloak authorization code for `platypus-swagger` hitting /oauth2/callback → observe 302/set-cookie (requires logged session).
+verify_steps: AUTH_HELPED — with an authenticated browser session at login.sipgate.com, initiate swagger-ui authorize for `platypus-swagger` and capture the callback exchange; compare response vs anonymous 401/403.
+impact: if callback mints a Firebase session without additional gate → full Platypus API (contacts/call-logs/streaming) Keycloak-less. HIGH.
 testability: AUTH_HELPED
-[HYP] Cross-tenant BOLA on credential-bearing /v2 resources
-class: IDOR
-asset: api.sipgate.com/v2/{portings,devices,authorization/oauth2/clients}
-confidence: 50
-reasoning: uniform edge auth (401 empty) confirmed across all /v2 paths pre-auth; object-level tenant isolation never exercised — requires two tenant bearers.
-evidence_needed: tenant-A bearer → tenant-B resourceId returns 200/204 vs 403/404.
-verify_steps: AUTH_HELPED — after 2 test tenants: GET `/v2/portings/{B-id}`, `/v2/devices/{B-id}/credentials/password`, `/v2/authorization/oauth2/clients/{B-clientId}` with A-bearer.
-impact: cross-tenant PII, SIP device creds → device takeover, OAuth client secrets → tenant compromise. CRITICAL if confirmed.
-testability: AUTH_HELPED
-[NEXT] PROBE: `GET https://integration.sipgate.com/swagger/swagger-ui-init.js` — save; diff against `/tmp/opencode/cloud_init.js` for instance-level drift (auth host, any `firebase|apiKey|AIza`); then `GET https://integration.sipgate.cloud/` + `/swagger-resources` + `/v3/api-docs` + `/docs/` — flag ANY status != {403,404} on the GCP instance (≤1 rps, read-only).
-[RISK] sipgate: 53 — new GCP-hosted Platypus instance (.cloud) surfaced with identical full 26-op spec, REAL-realm OAuth client `platypus-swagger`, and permissive `ACAO:*`; public /metrics on .com now hard-confirms Firebase-JWT-gated architecture. All data paths remain uniformly 403-gated across .com/.dev/.cloud (no bypass found this cycle; 40+ variants already exhausted). No standalone exploit confirmed; surviving high-impact chains (Platypus gate/SSRF 55, /v2 BOLA 50-AUTH, S3-write 55-HUMAN) all still gate-bound. +1 vs prior 52 on new GCP prod asset + confirmed gate-architecture disclosure.
+[HYP] share1.sipgate.cloud dangling CNAME → subdomain takeover
+class: MISCONFIG
+asset: share1.sipgate.cloud (CNAME nx38603.your-storageshare.de NXDOMAIN)
+confidence: 45
+reasoning: CT shows `share1.sipgate.cloud` → `nx38603.your-storageshare.de`; dig +trace = direct CNAME, target has NO A/AAAA and HTTPS 000; target domain `your-storageshare.de` is Hetzner StorageShare (external SaaS, not sipgate-controlled); dangling external SaaS CNAME with dead target = takeable if provider allows instance-name claim; not yet validated (registration attempt = mutating).
+evidence_needed: confirm your-storageshare.de instance naming is user-claimable without payment of the original account; no CAA/security.txt on share1.
+verify_steps: PASSIVE — (1) `dig CNAME share1.sipgate.cloud` re-check for drift; (2) `dig any your-storageshare.de` for hostmaster/registrar; (3) HEAD `http://your-storageshare.de` for service banner. Registration test requires HUMAN sign-off (mutating).
+impact: full control of `share1.sipgate.cloud` → phishing/session cookie (sipgate.cloud supercookies?) if claimed. MEDIUM.
+testability: HUMAN_ONLY (for final claim; passive recon done)
+[HYP] Grafana 11.5.1 internet-facing is a credential-target (login, admin brute)
+class: MISCONFIG
+asset: grafana.sipgate.cloud / grafana.aws.sipgate.cloud
+confidence: 40
+reasoning: 12.2.x/11.5.1 Grafana exposed on internet (both AWS and .cloud vhost → same LB 3.33.226.160); /api/health leaks version; /api/user, /api/org, /api/search all 401 → no anonymous mode; TF/K8s CT names confirm prod he01/GCP tooling; default admin creds or known Grafana CVE a target but all require active auth bypass or brute (both REJECTED/out-of-scope without POC).
+evidence_needed: known CVE reachable unauthenticated against 11.5.1 (none obvious passive), or a leaked Grafana password.
+verify_steps: PASSIVE — (1) GET /api/health (done, 11.5.1); (2) GET /api/dashboards/home, /api/frontend/settings already 401; (3) no further active testing (auth/brute = OUT_OF_SCOPE).
+impact: internal metrics dashboards/infra URLs + potentially alerting configs. MEDIUM if creds obtained; info-only now.
+testability: PASSIVE (info) → AUTH_HELPED for credential reuse
+[PARKED] Firebase-JWT continuity (conf 45→45): /metrics confirms validator live but no passive mint path; remains top AUTH_HELPED.
+[PARKED] integration.dev / integration.sipgate.dev: dev twin identical gate, no diff — no independent value left.
+[PARKED] Grafana CVE/default-creds: brute-force and known-vuln-without-POC = REJECTED class; kept as info.
+[PARKED] dependencytrack.prod.pub.gcp: NORESOLVE externally, not reachable — dropped.
+[PARKED] essensbot / learn-ml / loki / nauticat: health-only or 404/000 — dropped.
+[PARKED] docs.sipgate.cloud: private GH Pages on sipgate-owned org — not takeover.
+[FINAL] 1. Per-vendor adapter gate/SSRF (55, AUTH_HELPED); 2. Firebase-token callback mint (45, AUTH_HELPED); 3. share1 dangling CNAME takeover (45, HUMAN); 4. Grafana exposure info (40, PASSIVE).
+[NEXT] PROBE: `GET https://hubspot.integration.sipgate.cloud/swagger/swagger-ui-init.js` (live vendor host, read-only) + same on `zendesk.integration.sipgate.cloud` — diff against apex init.js for per-vendor spec drift (auth scheme, x-provider-* params, any Basic-cred hint); then `OPTIONS /contacts.list` on 3 vendor hosts to record CORS/header set; ≤1rps. If any vendor spec differs in security scheme → deep-dive that vendor.
+[LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapter tier uniformly behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct second gate tier (nginx) vs apex Firebase-JWT (GCP) — family-wide topology+gate disclosure.
+[LEARN] ACCEPTED INFO @ sf6.integration CT namespace: 276 *.sipgate.cloud hostnames (146 influxdb monitoring, AWS/hetzner/GCP multicloud, k8s tool clusters, dependency-track, docs) — deep infrastructure topology disclosure via public CT.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: public FB-JWT gate counters increment live (+574); confirms Firebase validator + auth-mechanism drift (spec Keycloak vs runtime Firebase).
+[LEARN] ACCEPTED MISCONFIG @ grafana.sipgate.cloud: live internet-facing Grafana 11.5.1 (version leaked via /api/health) on AWS LB; login-gated, no anonymous.
+[LEARN] ACCEPTED MISCONFIG @ share1.sipgate.cloud: dangling CNAME → external Hetzner StorageShare NXDOMAIN; takeover candidate (needs HUMAN claim validation).
+[LEARN] REJECTED MISCONFIG @ docs.sipgate.cloud family: private GitHub Pages on sipgate-owned `sipgate.github.io` org — authenticated pages, not a public doc leak nor takeover.
+[LEARN] REJECTED AUTH @ dev.integration.sipgate.cloud + test.integration.sipgate.cloud: shared GCP LB but 404-inert hostname routing — no dev twin token source.
+[RISK] sipgate: 55 — This cycle added a large fresh surface (94-host per-vendor adapter tier with Basic-auth + x-provider-* SSRF inputs on GCP LB, live internet Grafana, dangling share1 CNAME, and full .cloud internal topology in CT) but NO standalone exploit confirmed: every data path remains gated (nginx-basic on vendor tier, Firebase-JWT on apex), no FireFire token mint path in any public bundle, no unprotected vendor instance. +2 vs prior 53 on surface/breadth (new host families + confirmed metric leak + takeover candidate); surviving high-impact chains unchanged (Platypus gate/SSRF 55-AUTH, /v2 BOLA 50-AUTH, S3-write 55-HUMAN).

@@ -327,3 +327,24 @@ www.sipgate.de
 - CHANGED `api.sipgate.com/v2/swagger.json` — now returns 404 (was live 144-path spec per KB 2026-09-05/06); spec relocated to `/v2/doc/` swagger-ui or removed
 - CHANGED `chatbot.dev.sipgate.com` — confirmed LIVE (nginx/1.24.0, Google Cloud) with socket.io endpoint; contradicts prior "dev env externally inert" assessment
 - CHANGED `login.dev.sipgate.com` / `team-de.dev.sipgate.com` / `payment.dev.sipgate.com` — DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — externally inert confirmed
+
+## 2026-09-08 01:23:37 UTC
+- NEW login.sipgate.com exposed as Apache+Keycloak realm `sipgate-apps`, OAuth2 IMPLICIT flow (response_type=token) with redirect_uri=https://app.sipgate.com/implicit-auth-redirect?redirect=/ — the real cus
+- NEW app.sipgate.com SPA: `/implicit-auth-redirect` reads client-controlled `redirect` from search, stores token, then `history.replace(redirect)` unvalidated (main.js `ImplicitAuthenticator`, main-C3206pW
+- NEW OIDC discovery signals: grant `password`(ROPC), `client_secret_jwt`, id_token algs incl HS256/512, PKCE `plain`+`S256`.
+- CHANGED dev.sipgate.de resolves to sipgate IP 217.10.68.23 but dead (no HTTP 80/443, timeout) — abandoned host, owned IP, no takeover.
+- NEW `*.integration.sipgate.cloud` (94 hosts via CT): per-vendor CRM adapters (hubspot, salesforce, zendesk, pipeforce...) all on GCP LB 35.246.154.68 behind nginx **Basic-auth 401** (distinct second gate 
+- NEW `grafana.sipgate.cloud` + `grafana.aws.sipgate.cloud`: LIVE Grafana 11.5.1 internet-exposed (AWS 3.33.226.160), login-only, no anonymous read.
+- NEW `share1.sipgate.cloud`: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → **NXDOMAIN** — subdomain-takeover candidate.
+- NEW CT `*.sipgate.cloud` enumeration (276 names): 146 `*.influxdb` monitoring hosts (Hetzner 168.119.232.113, externally inert), AWS+GCP multicloud wildcards (`*.eu-central-1.prod.aws`, `*.sandbox.dev.aws
+- CHANGED `integration.sipgate.com/metrics` still public: `firebase_jwt_forbidden_requests 80373` (+574 vs prior KB), api_key 6, rate_limit 2500 → live Firebase-JWT validator confirmed.
+- CHANGED swagger-ui-init.js: `.com`/`.cloud` **byte-identical** (386538b), no firebase/apiKey/AIza in bundle — token source not in spec bundle.
+- CHANGED `app.dev.sipgate.com/assets/main-DFko0cRT.js` (5.65MB) has **zero** Firebase/AIza/identitytoolkit refs — token source not in public SPA.
+- CHANGED `docs.sipgate.cloud` family → CNAME `sipgate.github.io` private GitHub Pages (302 GitHub auth) — sipgate-owned, NOT takeover.
+- NEW `*.integration.sipgate.cloud` (94 hostnames via CT): per-vendor CRM adapter tier (hubspot, salesforce, zendesk, zapier, etc.) all on GCP LB 35.246.154.68; uniform nginx Basic-auth 401 (`WWW-Authentica
+- NEW `grafana.sipgate.cloud` + `grafana.aws.sipgate.cloud` (CT): LIVE internet-facing Grafana 11.5.1, login-gated (no anonymous dashboards/API).
+- NEW CT enumeration of `*.sipgate.cloud` (276 names): 146 `*.influxdb` internal monitoring hosts → 168.119.232.113 (externally inert); AWS/GCP/Hetzner multicloud + K8s tool cluster names (`nauticat.k8s-too
+- CHANGED `integration.sipgate.com/metrics` still public: `firebase_jwt_forbidden_requests 80373` (+574), `api_key_forbidden_requests 6`, `rate_limit_forbidden_requests 2500` → live Firebase-JWT validator confi
+- CHANGED swagger-ui-init.js byte-identical `.com`/`.cloud` (386538b), zero firebase/apiKey/AIza; `app.dev` main bundle (5.65MB) zero firebase refs → Firebase token source NOT in any public bundle.
+- CHANGED `dev.integration.sipgate.cloud` / `test.integration.sipgate.cloud` → 404 inert behind same LB; `integration.dev.sipgate.com` still 403 ACAO* (TLS artifact earlier).
+- CHANGED `docs.sipgate.cloud` family → private GitHub Pages (`sipgate.github.io`, 302 GitHub auth) — sipgate-owned org, NOT takeover.
