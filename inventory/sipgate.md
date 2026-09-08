@@ -348,3 +348,14 @@ www.sipgate.de
 - CHANGED swagger-ui-init.js byte-identical `.com`/`.cloud` (386538b), zero firebase/apiKey/AIza; `app.dev` main bundle (5.65MB) zero firebase refs → Firebase token source NOT in any public bundle.
 - CHANGED `dev.integration.sipgate.cloud` / `test.integration.sipgate.cloud` → 404 inert behind same LB; `integration.dev.sipgate.com` still 403 ACAO* (TLS artifact earlier).
 - CHANGED `docs.sipgate.cloud` family → private GitHub Pages (`sipgate.github.io`, 302 GitHub auth) — sipgate-owned org, NOT takeover.
+
+## 2026-09-08 06:04:43 UTC
+- NEW `*.integration.sipgate.cloud` (94 hosts via CT): per-vendor CRM adapters (hubspot, salesforce, zendesk, pipeforce...) all on GCP LB 35.246.154.68 behind nginx **Basic-auth 401** with `ACAO:*` CORS exp
+- NEW `grafana.sipgate.cloud` + `grafana.aws.sipgate.cloud`: LIVE Grafana 11.5.1 internet-exposed (AWS 3.33.226.160), login-gated, no anonymous read
+- NEW `share1.sipgate.cloud`: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → **NXDOMAIN** — subdomain-takeover candidate
+- NEW CT `*.sipgate.cloud` enumeration (276 names): 146 `*.influxdb` monitoring hosts (Hetzner 168.119.232.113, externally inert), AWS+GCP multicloud wildcards (`*.eu-central-1.prod.aws`, `*.sandbox.dev.aws
+- CHANGED `integration.sipgate.com/metrics` still public: `firebase_jwt_forbidden_requests 80373` (+574 vs prior KB), `api_key_forbidden_requests 6`, `rate_limit_forbidden_requests 2500` → live Firebase-JWT val
+- CHANGED `swagger-ui-init.js`: `.com`/`.cloud` **byte-identical** (386538b), no firebase/apiKey/AIza in bundle — token source not in spec bundle
+- CHANGED `app.dev.sipgate.com/assets/main-DFko0cRT.js` (5.65MB) has **zero** Firebase/AIza/identitytoolkit refs — token source not in public SPA
+- CHANGED `docs.sipgate.cloud` family → CNAME `sipgate.github.io` private GitHub Pages (302 GitHub auth) — sipgate-owned, NOT takeover
+- CHANGED `dev.integration.sipgate.cloud` / `test.integration.sipgate.cloud` → 404 inert behind same LB; `integration.dev.sipgate.com` still 403 ACAO* (TLS artifact earlier)
