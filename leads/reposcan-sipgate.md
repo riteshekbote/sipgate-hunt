@@ -273,3 +273,33 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-08 02:29:08 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-08 07:30:30 UTC
+[HYP] Command Injection in Kong JWT Firebase Plugin
+class: OTHER
+asset: kong-plugin-jwt-firebase/kong/plugins/jwt-firebase/handler.lua:30-37
+confidence: 85
+reasoning: The `grab_public_key_bykid()` function constructs a shell command using user-controlled `kid` (JWT key ID) value without sanitization. The `t_kid` parameter is directly interpolated into a `wget | grep | sed | openssl` pipeline via `io.popen()`. An attacker controlling the JWT header's `kid` field could inject arbitrary shell commands.
+impact: HIGH - Remote Code Execution if the plugin processes untrusted JWT tokens
+verify_steps: Review if the `kid` value from JWT headers is used directly in production; confirm the kong plugin configuration uses untrusted JWT sources
+[HYP] Hardcoded Session Secret in Web Application
+class: SECRET
+asset: rest-api-examples/webapp-nodejs/index.js:35
+confidence: 90
+reasoning: Express session middleware is configured with a hardcoded secret `'sipgate-rest-api-demo'`. This allows session forgery if the application is deployed without changing the default secret.
+impact: MEDIUM - Session hijacking in deployed web applications using this example code
+verify_steps: Check if any sipgate production deployments use this example code pattern; verify the session secret is overridden via environment variables
+[HYP] Hardcoded Internal Redis URL in Kubernetes Manifest
+class: MISCONFIG
+asset: clinq-bridge-sipgate/k8s/template/deployment.yml:38
+confidence: 75
+reasoning: The Kubernetes deployment template contains a hardcoded internal Redis URL `rediss://10.37.248.211:6378`. This exposes internal infrastructure IP addresses and assumes a specific Redis configuration.
+impact: LOW - Information disclosure of internal infrastructure; potential for lateral movement if Redis is accessible
+verify_steps: Verify if this IP is routable from outside the cluster; confirm Redis is not exposed publicly
+[HYP] Example Credentials in Java API Client
+class: SECRET
+asset: sipgateapi-java-example/src/sipgateAPI/Client.java:25-26
+confidence: 95
+reasoning: The example Java client contains hardcoded placeholder credentials `username = "johndoe@example.org"` and `password = "password"`. While this appears to be example code, developers may copy this pattern to production.
+impact: LOW - Example code demonstrates insecure credential handling pattern
+verify_steps: Confirm this is only example code and not used in production; check for similar patterns in actual sipgate Java codebases
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
