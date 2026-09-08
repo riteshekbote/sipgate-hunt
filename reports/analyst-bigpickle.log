@@ -16833,3 +16833,741 @@ testability: HUMAN_ONLY (final claim)
 ## STEP 7 — RISK
 
 [RISK] sipgate: 50 — Down from 55. This cycle empirically closed two fresh-surface chains: the vendor per-vendor spec drift is unreachable (uniform nginx 401, no provider-key bypass) and the Firebase-mint-at-callback hypothesis deflated (callback is behind the same 403 gate). Every real path now gates on an authenticated session (BOLA 50/AUTH, vendor SSRF 50/AUTH, Platypus 50/AUTH) or HUMAN sign-off (S3 write 55, share1 CNAME 45). No standalone unauthenticated critical chain confirmed.
+===== ANALYST bigpickle 2026-09-08 21:54:26 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/swagger-ui-init.js -w "HTTP %{http_code} size=%{size_download}\n" "https://integration.sipgate.com/swagger/swagger-ui-init.js" --max-time 30
+HTTP 200 size=386538
+[0m
+[0m$ [0mcd /tmp/opencode && python3 - <<'EOF'
+import re, json
+data = open('swagger-ui-init.js').read()
+# The file is typically: window.swaggerUi = {...; spec = {...}; ...}
+m = re.search(r'spec\s*=\s*(\{.*?\});?\s*\n?//?\s*.*?', data, re.S)
+# find 'securityDefinitions' or 'components'
+for key in ['securityDefinitions','securitySchemes','paths','users.integrations.create','x-provider','apiUrl','oauth2','authorizationUrl','tokenUrl','bearerFormat','flow']:
+    idxs = [mm.start() for mm in re.finditer(re.escape(key), data)]
+    print(key, len(idxs))
+EOF
+securityDefinitions 0
+securitySchemes 1
+paths 1
+users.integrations.create 1
+x-provider 0
+apiUrl 2
+oauth2 28
+authorizationUrl 1
+tokenUrl 1
+bearerFormat 0
+flow 1
+[0m
+[0m$ [0mcd /tmp/opencode && python3 - <<'EOF'
+import re, json
+data = open('swagger-ui-init.js').read()
+# Find the spec object: look for 'spec:' after SwaggerUIBundle
+i = data.find('spec:')
+j = data.find('SwaggerUIBundle')
+print("spec:", i, "bundle:", j)
+# try window.swaggerUi = { ... "spec": {...}, ... }
+# Locate spec value start
+start = data.find('"spec":')
+end = data.find('"dom_id"')
+print("start/end", start, end)
+spec = data[start+len('"spec":'):end].rstrip().rstrip(',')
+try:
+    specj = json.loads(spec)
+    print("parsed spec JSON")
+    open('spec.json','w').write(json.dumps(specj, indent=1))
+except Exception as e:
+    print("parse fail:", e)
+    # print a window around to inspect
+    print(spec[:500])
+EOF
+spec: 385917 bundle: 386031
+start/end -1 -1
+parse fail: Expecting value: line 1 column 1 (char 0)
+w.onload = function() {
+  // Build a system
+  let url = window.location.search.match(/url=([^&]+)/);
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    url = window.location.origin;
+  }
+  let options = {
+  "swaggerDoc": {
+    "openapi": "3.0.3",
+    "info": {
+      "title": "Platypus",
+      "description": "Platform for integration Purposes",
+      "version": "0.0.1",
+      "contact": {}
+    },
+    "servers": [],
+    "paths": {
+      "/streaming.start": {
+[0m
+[0m$ [0mcd /tmp/opencode && python3 - <<'EOF'
+import re, json
+data = open('swagger-ui-init.js').read()
+start = data.find('"swaggerDoc":')
+assert start>0
+# The swaggerDoc object is the whole spec. Find matching closing brace by tracking depth from the '{' after the colon.
+i = start + len('"swaggerDoc":')
+# data[i] should be '{'
+depth=0
+for k in range(i, len(data)):
+    c=data[k]
+    if c=='{': depth+=1
+    elif c=='}':
+        depth-=1
+        if depth==0:
+            end=k+1
+            break
+raw = data[i:end]
+print("swaggerDoc span", i, end, "len", len(raw))
+try:
+    spec = json.loads(raw)
+    open('spec.json','w').write(json.dumps(spec, indent=1))
+    print("parsed OK, top keys:", list(spec.keys()))
+    print("paths:", len(spec['paths']))
+except Exception as e:
+    print("parse fail:", e)
+EOF
+swaggerDoc span 258 385652 len 385394
+parsed OK, top keys: ['openapi', 'info', 'servers', 'paths', 'components']
+paths: 26
+[0m
+[0m$ [0mcd /tmp/opencode && python3 - <<'EOF'
+import json
+s = json.load(open('spec.json'))
+# components.securitySchemes
+print("=== securitySchemes ===")
+print(json.dumps(s['components'].get('securitySchemes',{}), indent=1))
+print("=== global security ===")
+print(json.dumps(s.get('security', 'NONE'), indent=1))
+# oauth2 paths
+for p, item in s['paths'].items():
+    if 'oauth2' in p:
+        print("OAUTH PATH:", p)
+        print(json.dumps(item, indent=1))
+# users.integrations.create
+for p in s['paths']:
+    if 'users.integrations' in p:
+        print("INTEG PATH:", p)
+        print(json.dumps(s['paths'][p], indent=1)[:3000])
+EOF
+=== securitySchemes ===
+{
+ "oauth2": {
+  "type": "oauth2",
+  "flows": {
+   "implicit": {
+    "authorizationUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth",
+    "tokenUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/token",
+    "scopes": {}
+   }
+  }
+ }
+}
+=== global security ===
+"NONE"
+OAUTH PATH: /oauth2/redirect
+{
+ "get": {
+  "operationId": "OAuthController_getAuthSessionRedirect[1]",
+  "parameters": [],
+  "responses": {
+   "200": {
+    "description": ""
+   }
+  },
+  "tags": [
+   "OAuth"
+  ]
+ }
+}
+OAUTH PATH: /oauth2/callback
+{
+ "get": {
+  "operationId": "OAuthController_handleCallback[1]",
+  "parameters": [
+   {
+    "name": "code",
+    "required": true,
+    "in": "query",
+    "schema": {
+     "type": "string"
+    }
+   },
+   {
+    "name": "accounts-server",
+    "required": false,
+    "in": "query",
+    "schema": {
+     "type": "string"
+    }
+   },
+   {
+    "name": "error",
+    "required": false,
+    "in": "query",
+    "schema": {
+     "type": "string"
+    }
+   }
+  ],
+  "responses": {
+   "200": {
+    "description": ""
+   }
+  },
+  "tags": [
+   "OAuth"
+  ]
+ }
+}
+INTEG PATH: /users.integrations.create
+{
+ "post": {
+  "operationId": "UserController_createIntegration",
+  "parameters": [],
+  "requestBody": {
+   "required": true,
+   "content": {
+    "application/json": {
+     "schema": {
+      "type": "object",
+      "properties": {
+       "integrationName": {
+        "type": "string",
+        "description": "Name of the integration",
+        "example": "HUBSPOT"
+       },
+       "key": {
+        "type": "string",
+        "description": "Key of the integration, must be an existing integration profile key",
+        "example": "some-key"
+       },
+       "apiUrl": {
+        "type": "string",
+        "description": "Api URL of the integration",
+        "example": "https://api.example.com"
+       },
+       "locale": {
+        "type": "string",
+        "description": "Locale of the integration",
+        "example": "de-DE",
+        "deprecated": true
+       },
+       "region": {
+        "type": "string",
+        "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+        "example": "DE"
+       },
+       "language": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 2,
+        "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+        "example": "de"
+       }
+      },
+      "required": [
+       "integrationName",
+       "key"
+      ]
+     }
+    }
+   }
+  },
+  "responses": {
+   "204": {
+    "description": "The integration was added to the user"
+   },
+   "400": {
+    "description": "The integration could not be added to the user",
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object",
+       "properties": {
+        "detail": {
+         "type": "string",
+         "example": "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179"
+        },
+        "title": {
+         "type": "string",
+         "example": "Integration exception"
+        },
+        "type": {
+         "type": "string",
+         "example": "Invalid Integration (MOCK)"
+        },
+        "integrationName": {
+         "type": "string",
+         "example": "MOCK"
+        },
+        "translationKey": {
+         "type": "string",
+         "example": "INVALID_INTEGRATION",
+         "enum": [
+          "INTEGRATION_NOT_CONNECTED",
+          "INVALID_INTEGRATION",
+          "INTEGRATION_ALREADY_CONNECTED",
+          "INTEGRATION_DID_NOT_PROVIDE_GRANT_CODE",
+          "INVALID_CREDENTIALS"
+         ]
+        }
+       },
+       "required": [
+        "detail",
+        "title",
+        "type",
+        "integrationName",
+        "translationKey"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "security": [
+   {
+    "oauth2": []
+   }
+  ],
+  "summary": "Add an integration to the user",
+  "tags": [
+   "users"
+  ]
+ }
+}
+INTEG PATH: /users.integrations.list
+{
+ "get": {
+  "operationId": "UserController_listIntegrations",
+  "parameters": [],
+  "responses": {
+   "200": {
+    "description": "Returns the list of integrations for the user",
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object",
+       "properties": {
+        "list": {
+         "description": "List of connected integrations",
+         "type": "array",
+         "items": {
+          "type": "object",
+          "properties": {
+           "name": {
+            "type": "string",
+            "description": "Name of the integration",
+            "example": "HUBSPOT"
+           },
+           "authenticationRequired": {
+            "type": "boolean",
+            "description": "is authentication required for this integration",
+            "example": true
+           },
+           "region": {
+            "type": "string",
+            "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+            "example": "DE",
+            "nullable": true
+           },
+           "language": {
+            "type": "string",
+            "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+            "example": "de",
+            "nullable": true
+           }
+          },
+          "required": [
+           "name",
+           "authenticationRequired"
+          ]
+         }
+        }
+       },
+       "required": [
+        "list"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "security": [
+   {
+    "oauth2": []
+   }
+  ],
+  "summary": "List all integrations for the user",
+  "tags": [
+   "users"
+  ]
+ }
+}
+INTEG PATH: /users.integrations.delete
+{
+ "post": {
+  "operationId": "UserController_deleteIntegration",
+  "parameters": [],
+  "requestBody": {
+   "required": true,
+   "content": {
+    "application/json": {
+     "schema": {
+      "type": "object",
+      "properties": {
+       "integrationName": {
+        "type": "string",
+        "description": "Name of the integration",
+        "example": "HUBSPOT"
+       }
+      },
+      "required": [
+       "integrationName"
+      ]
+     }
+    }
+   }
+  },
+  "responses": {
+   "204": {
+    "description": "The integration was removed from the user"
+   },
+   "400": {
+    "description": "The integration could not be removed from the user",
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object",
+       "properties": {
+        "detail": {
+         "type": "string",
+         "example": "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179"
+        },
+        "title": {
+         "type": "string",
+         "example": "Integration exception"
+        },
+        "type": {
+         "type": "string",
+         "example": "Invalid Integration (MOCK)"
+        },
+        "integrationName": {
+         "type": "string",
+         "example": "MOCK"
+        },
+        "translationKey": {
+         "type": "string",
+         "example": "INVALID_INTEGRATION",
+         "enum": [
+          "INTEGRATION_NOT_CONNECTED",
+          "INVALID_INTEGRATION",
+          "INTEGRATION_ALREADY_CONNECTED",
+          "INTEGRATION_DID_NOT_PROVIDE_GRANT_CODE",
+          "INVALID_CREDENTIALS"
+         ]
+        }
+       },
+       "required": [
+        "detail",
+        "title",
+        "type",
+        "integrationName",
+        "translationKey"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "security": [
+   {
+    "oauth2": []
+   }
+  ],
+  "summary": "Remove an integration from the user",
+  "tags": [
+   "users"
+  ]
+ }
+}
+INTEG PATH: /users.integrations.getAuthSessionUrl
+{
+ "get": {
+  "operationId": "UserController_getAuthSessionUrl",
+  "parameters": [
+   {
+    "name": "integrationName",
+    "required": true,
+    "in": "query",
+    "description": "Name of the integration",
+    "schema": {
+     "example": "HUBSPOT",
+     "type": "string"
+    }
+   },
+   {
+    "name": "successUrl",
+    "required": true,
+    "in": "query",
+    "description": "URL to redirect the user after the authentication process",
+    "schema": {
+     "format": "uri",
+     "example": "https://example.com/welcome?integration=SALESFORCE",
+     "type": "string"
+    }
+   },
+   {
+    "name": "errorUrl",
+    "required": true,
+    "in": "query",
+    "description": "URL to redirect the user after the authentication process with error",
+    "schema": {
+     "format": "uri",
+     "example": "https://example.com/error?integration=SALESFORCE&message=FORBIDDENMESSAGE",
+     "type": "string"
+    }
+   },
+   {
+    "name": "domainModifier",
+    "required": false,
+    "in": "query",
+    "description": "User specific URL or subdomain",
+    "schema": {
+     "example": "https://example.com or mycompany.crm.com or mycompany",
+     "type": "string"
+    }
+   },
+   {
+    "name": "locale",
+    "required": false,
+    "in": "query",
+    "description": "Locale of the integration",
+    "deprecated": true,
+    "schema": {
+     "example": "de-DE",
+     "type": "string"
+    }
+   },
+   {
+    "name": "region",
+    "required": false,
+    "in": "query",
+    "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+    "schema": {
+     "example": "DE",
+     "type": "string"
+    }
+   },
+   {
+    "name": "language",
+    "required": false,
+    "in": "query",
+    "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+    "schema": {
+     "minLength": 2,
+     "maxLength": 2,
+     "example": "de",
+     "type": "string"
+    }
+   }
+  ],
+  "responses": {
+   "200": {
+    "description": "Returns an url to initiate the auth session",
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object",
+       "properties": {
+        "url": {
+         "type": "string",
+         "description": "URL to redirect the user after the authentication process",
+         "example": "https://crm.example.com/auth/session"
+        }
+       },
+       "required": [
+        "url"
+       ]
+      }
+     }
+    }
+   },
+   "400": {
+    "description": "The auth session URL could not be created",
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object",
+       "properties": {
+        "detail": {
+         "type": "string",
+         "example": "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179"
+        },
+        "title": {
+         "type": "string",
+         "example": "Integration exception"
+        },
+        "type": {
+         "type": "string",
+         "example": "Invalid Integration (MOCK)"
+        },
+        "integrationName": {
+         "type": "string",
+         "example": "MOCK"
+        }
+[0m
+[0m$ [0mcd /tmp/opencode && python3 - <<'EOF'
+import json
+s = json.load(open('spec.json'))
+for p, item in s['paths'].items():
+    for method, op in item.items():
+        sec = op.get('security', s.get('security','GLOBAL-NONE'))
+        ps = [ (pp['name'], pp.get('required', False), pp['in']) for pp in op.get('parameters',[]) ]
+        print(f"{method.upper():6} {p:45} sec={sec if sec!='NONE' else 'none'} params={ps}")
+EOF
+POST   /streaming.start                              sec=[{'oauth2': []}] params=[]
+GET    /contacts.list                                sec=[{'oauth2': []}] params=[('page', False, 'query'), ('limit', False, 'query'), ('pageToken', False, 'query'), ('scope', False, 'query')]
+GET    /contacts.get                                 sec=[{'oauth2': []}] params=[('integrationName', True, 'query'), ('contactId', True, 'query')]
+GET    /contacts.listByPhoneNumber                   sec=[{'oauth2': []}] params=[('phoneNumber', True, 'query')]
+GET    /contacts.listByPhoneNumbers                  sec=[{'oauth2': []}] params=[('phoneNumbers', True, 'query')]
+POST   /contacts.create                              sec=[{'oauth2': []}] params=[]
+POST   /contacts.update                              sec=[{'oauth2': []}] params=[]
+POST   /contacts.delete                              sec=[{'oauth2': []}] params=[]
+GET    /contacts.getPhoneNumberMap                   sec=[{'oauth2': []}] params=[('phoneNumbers', True, 'query')]
+GET    /contacts.listByIntegration                   sec=[{'oauth2': []}] params=[('integrationName', True, 'query'), ('timestamp', False, 'query'), ('offset', False, 'query'), ('limit', False, 'query'), ('pageToken', False, 'query')]
+GET    /contacts.search                              sec=[{'oauth2': []}] params=[('query', True, 'query'), ('scope', False, 'query'), ('debug', False, 'query')]
+GET    /entities.get                                 sec=[{'oauth2': []}] params=[('integrationName', True, 'query'), ('entityType', True, 'query'), ('entityId', True, 'query')]
+GET    /entities.listByContactId                     sec=[{'oauth2': []}] params=[('integrationName', True, 'query'), ('contactId', True, 'query')]
+POST   /users.integrations.create                    sec=[{'oauth2': []}] params=[]
+GET    /users.integrations.list                      sec=[{'oauth2': []}] params=[]
+POST   /users.integrations.delete                    sec=[{'oauth2': []}] params=[]
+GET    /users.integrations.getAuthSessionUrl         sec=[{'oauth2': []}] params=[('integrationName', True, 'query'), ('successUrl', True, 'query'), ('errorUrl', True, 'query'), ('domainModifier', False, 'query'), ('locale', False, 'query'), ('region', False, 'query'), ('language', False, 'query')]
+GET    /users.profiles.list                          sec=[{'oauth2': []}] params=[]
+GET    /oauth2/redirect                              sec=GLOBAL-NONE params=[]
+GET    /oauth2/callback                              sec=GLOBAL-NONE params=[('code', True, 'query'), ('accounts-server', False, 'query'), ('error', False, 'query')]
+POST   /call-logs.upsert                             sec=[{'oauth2': []}] params=[]
+GET    /call-logs.outcome.describe                   sec=[{'oauth2': []}] params=[('integrationName', True, 'query')]
+POST   /tasks.create                                 sec=[{'oauth2': []}] params=[]
+GET    /tasks.get                                    sec=[{'oauth2': []}] params=[('integrationName', True, 'query'), ('taskId', True, 'query')]
+GET    /tasks.type.describe                          sec=[{'oauth2': []}] params=[('integrationName', True, 'query')]
+POST   /call-log-drafts.edit                         sec=[{'oauth2': []}] params=[]
+[0m
+[0m$ [0mfor h in integration.live.sipgate.com admin.live.sipgate.net api-prod.live.sipgate.com platypus.sipgate.com; do
+  ip=$(getent ahosts "$h" 2>/dev/null | awk 'NR==1{print $1}')
+  echo "$h -> ${ip:-NXR}"
+done
+integration.live.sipgate.com -> NXR
+admin.live.sipgate.net -> 217.10.73.71
+api-prod.live.sipgate.com -> NXR
+platypus.sipgate.com -> NXR
+[0m
+[0m$ [0mfor h in integration.live.sipgate.com admin.live.sipgate.net; do
+  echo "== $h =="
+  curl -sS -o /dev/null -w "HTTP %{http_code} size=%{size_download}\n" --max-time 12 "https://$h/" 2>&1 | tail -1
+done
+== integration.live.sipgate.com ==
+HTTP 000 size=0
+== admin.live.sipgate.net ==
+HTTP 000 size=0
+[0m
+[0m$ [0mcd /tmp/opencode && grep -oE '"clientId"\s*:\s*"[^"]*"|client_id=[A-Za-z0-9._-]+|oauth2RedirectUrl[^,]*' swagger-ui-init.js | sort -u | head; echo ---; grep -oE 'sipgate-swagger-ui|platypus[a-z-]*' swagger-ui-init.js | sort -u
+"clientId": "platypus-swagger"
+---
+platypus-swagger
+[0m
+[0m$ [0mfor p in "/" "/swagger/swagger-ui.html" "/swagger-ui/index.html" "/v3/api-docs" "/openapi.json" "/swagger/index.html" "/health" "/error"; do
+  printf "%-28s " "$p"
+  curl -sS -o /dev/null -w "HTTP %{http_code} size=%{size_download}\n" --max-time 15 "https://integration.sipgate.com$p"
+  sleep 0.4
+done
+/                            HTTP 403 size=0
+/swagger/swagger-ui.html     HTTP 404 size=156
+/swagger-ui/index.html       HTTP 404 size=152
+/v3/api-docs                 HTTP 404 size=132
+/openapi.json                HTTP 404 size=134
+/swagger/index.html          HTTP 200 size=3510
+/health                      HTTP 404 size=122
+/error                       HTTP 404 size=120
+[0m
+[0m$ [0mcurl -sS --max-time 15 "https://integration.sipgate.com/swagger/index.html" -o /tmp/opencode/swagger-index.html -w "HTTP %{http_code} size=%{size_download}\n"
+HTTP 200 size=3510
+[0m
+[0m$ [0mcd /tmp/opencode && sed 's/></>\n</g' swagger-index.html | grep -iE "src=|href=|apiKey|firebase|AIza|client|token|oauth|redirect" | head -40
+<link rel="stylesheet" type="text/css" href="./swagger/swagger-ui.css" >
+  <link rel="icon" type="image/png" href="./swagger/favicon-32x32.png" sizes="32x32" />
+<link rel="icon" type="image/png" href="./swagger/favicon-16x16.png" sizes="16x16" />
+<script src="./swagger/swagger-ui-bundle.js"> </script>
+<script src="./swagger/swagger-ui-standalone-preset.js"> </script>
+<script src="./swagger/swagger-ui-init.js"> </script>
+        opts.oauth2RedirectUrl =
+          window.location.origin + '/swagger/oauth2-redirect.html';
+[0m
+STEP 1 — DELTA
+- [NEW] `integration.sipgate.com/swagger/index.html` → 200 (3.5KB): public swagger-ui widget while ALL API ops + `/swagger/oauth2-redirect.html` route land FB-JWT 403 — static assets un-gated, data/UI assets gated; oauth2RedirectUrl = same-origin `/swagger/oauth2-redirect.html` (family == api.sipgate.com/v2/doc REJECTED class).
+- [NEW] Spec fully parsed (386538b, `platypus-swagger`): implicit-only OAuth, authzUrl `https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth`, tokenUrl same realm, `scopes={}`, global security NONE; 26 ops, all but `/oauth2/*` declare `oauth2`.
+- [NEW] `/oauth2/callback` documents optional **`accounts-server`** backend-selector query param (spec-only, unprobed).
+- [NEW] `/users.integrations.getAuthSessionUrl` takes `successUrl`/`errorUrl`(format uri)/`domainModifier` and returns a constructed URL — redirect-construction surface behind gate.
+- [NEW] `/contacts.search` carries optional `debug` param; `/contacts.listByPhoneNumbers` + `/contacts.getPhoneNumberMap` = bulk-PII primitives.
+- [NEW] 400-error schema leaks internal Notion doc `https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179`.
+- [CHANGED] `admin.live.sipgate.net` → 217.10.73.71 but HTTP 000 (inert); `integration.live.sipgate.com` NXDOMAIN — no live integration twin outside apex.
+
+STEP 2 — PRIORITIZE
+[PRIO] *.integration.sipgate.cloud (94 hosts),7.35,surface(94)+biz(CRM PII)+tech(OAuth implicit+SSRF x-provider-url/key)/gate(nginx Basic 401)/cloud(GCP LB+Hetzner)/fresh(spec-extract cycle)
+[PRIO] integration.sipgate.com apex,6.60,surface(spec+metrics+swagger UI public)/biz(SSRF apiUrl+accounts-server+debug)/tech(Firebase-vs-Keycloak drift,OAuth implicit platypus-swagger)/gate(FB-JWT 403)/cloud(GCP)
+[PRIO] share1.sipgate.cloud,4.65,surface(1)/biz(phishing)/tech(dangling CNAME Hetzner)/gate(no gate once claimed)/cloud(Hetzner)/fresh(new)
+
+STEP 3 — HYPOTHESES
+[HYP] Per-vendor adapter SSRF via x-provider-url header injection
+class: SSRF
+asset: *.integration.sipgate.cloud (hubspot/zendesk/salesforce.integration — GCP LB 35.246.154.68)
+confidence: 50
+reasoning: nginx Basic 401 is the sole gate (OPTIONS preflight passes with ACAO:* + allow-headers x-provider-{locale,region,language,url,key,content-type}); x-provider-url/key headers do NOT bypass it; every spec/data path 401. App-layer SSRF reachable only with a valid Basic credential or apex-issued Firebase JWT. Keep pending authenticated session.
+evidence_needed: 200/204 on a vendor data path with provider-key; then vary x-provider-url → observe internal fetch (e.g., 169.254.169.254/metadata, hetzner internal).
+verify_steps: AUTH_HELPED — replay OPTIONS to confirm gate, then GET with Basic/JWT + x-provider-url=http://169.254.169.254/latest/meta-data/ and observe response delta vs benign url.
+impact: CRM contacts/call-logs PII + SSRF to cloud metadata (GCP/Hetzner) if provider-url unvalidated. HIGH.
+testability: AUTH_HELPED
+[HYP] Apex SSRF via users.integrations.create apiUrl + accounts-server selector
+class: SSRF
+asset: integration.sipgate.com POST /users.integrations.create; GET /oauth2/callback?accounts-server=
+confidence: 48
+reasoning: Spec extract finalizes `apiUrl` as free-form string (POST body, `key`+`integrationName` required); `/oauth2/callback` adds undocumented `accounts-server` backend-selector — both are attacker-influenced fetcher/URL inputs; both behind FB-JWT 403 (code-exchange itself returns 403). AUTH_HELPED only.
+evidence_needed: authentic session → mint FB JWT via real oauth2 callback; POST create with apiUrl → check outbound fetch; vary accounts-server on callback → observe backend selection.
+verify_steps: AUTH_HELPED — with session: (1) GET /oauth2/redirect (capture authz URL, client platypus-swagger), (2) complete implicit flow, (3) POST create {integrationName:"MOCK",key:"x",apiUrl:"http://169.254.169.254/"} → observe 204/400 delta and any outbound request (logs/metrics).
+impact: SSRF to cloud metadata / internal backend selection on the Platypus backend. HIGH if gate passed.
+testability: AUTH_HELPED
+[HYP] share1.sipgate.cloud dangling CNAME subdomain takeover
+class: MISCONFIG
+asset: share1.sipgate.cloud → CNAME nx38603.your-storageshare.de (NXDOMAIN)
+confidence: 45
+reasoning: public CT shows dangling CNAME to external Hetzner StorageShare; target NXDOMAIN; claimable if provider permits instance-name takeover; no CAA/security.txt confirmation yet.
+evidence_needed: verify your-storageshare.de name-claim flow + re-check CNAME stability; final registration HUMAN.
+verify_steps: PASSIVE dig + renew; then HUMAN claim attempt on Hetzner StorageShare.
+impact: full control of share1.sipgate.cloud → phishing/infra spoof. MEDIUM.
+testability: HUMAN_ONLY
+
+STEP 4 — SELF-CRITIQUE
+[PARKED] accounts-server selector: untestable unauthenticated (callback uniform 403); merges into apex SSRF/AUTH bundle.
+[PARKED] /swagger/oauth2-redirect.html family: same class as api.sipgate.com/v2/doc REJECTED (opener callback inert cross-origin); SWAGGER-UI interop only.
+[PARKED] Grafana CVE/default-creds (40): REJECTED class (brute/known-vuln w/o POC).
+[FINAL] 1. Per-vendor adapter SSRF x-provider-url (50, AUTH_HELPED); 2. Apex SSRF apiUrl/accounts-server (48, AUTH_HELPED); 3. share1 dangling CNAME takeover (45, HUMAN_ONLY).
+
+STEP 5 — NEXT ACTION
+[NEXT] PROBE: `GET https://integration.sipgate.com/swagger/oauth2-redirect.html` — confirm public reachability/byte-compare with api.sipgate.com/v2/doc mirror to close the apex static-surface map for the report (annotate any clientId/opener code differences). After this, passive on the integration surface is exhausted; remaining chains are AUTH_HELPED (1,2) / HUMAN (3).
+
+STEP 6 — LEARNING
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/swagger/index.html: swagger static assets (index.html, bundle, init) PUBLIC (200) while all 26 data ops + oauth2 routes are FB-JWT 403 — static/data gating split confirmed; oauth2RedirectUrl same-origin, same family as api.sipgate.com/v2/doc.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com spec: implicit-only OAuth for `platypus-swagger` (authzUrl login.sipgate.com sipgate-apps realm, scopes={}); `/users.integrations.create` apiUrl free-form (SSRF surface finalized); `/oauth2/callback` documents `accounts-server` selector; `/contacts.search` has `debug` param; bulk-PII primitives documented.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com spec: 400-error schema leaks internal Notion URL sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179.
+[LEARN] REJECTED OTHER @ admin.live.sipgate.net / integration.live.sipgate.com: admin.live resolves 217.10.73.71 HTTP 000 (inert); integration.live NXDOMAIN — no live third integration twin.
+
+STEP 7 — RISK
+[RISK] sipgate: **50** — Unchanged. This cycle moved the apex from "spec-gated unknown" to "fully mapped": public swagger UI + spec confirm every enum (oauth2 client `platypus-swagger`, apiUrl SSRF input, accounts-server selector, debug param, bulk-PII primitives) but every data/OAuth op remains FB-JWT 403 and static assets carry only REJECTED-class OAuth interop. Passive surface on the whole integration family (apex + 94 vendor hosts) is now exhausted: all real chains (vendor SSRF, apiUrl SSRF, callback mint) require an authenticated session (AUTH_HELPED) and share1 requires HUMAN claim. Standing AUTH_HELPED/HUMAN set unchanged: BOLA 50, vendor SSRF 50, apex SSRF 48, share1 45, S3 write 55. No standalone unauthenticated critical chain on any in-scope asset.
