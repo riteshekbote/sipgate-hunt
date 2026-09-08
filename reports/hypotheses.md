@@ -822,3 +822,11 @@
 - LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. rev
 - LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scop
 - LEARN: ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/accou
+
+## RANKED HYPOTHESES 2026-09-08 19:10:20 UTC
+- [50] *.integration.sipgate.cloud: Per-vendor adapter gate/SSRF — nginx Basic is the only gate; provider-key not a bypass (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: `GET https://integration.sipgate.com/swagger/swagger-ui-init.js` — extract full OAuth securityScheme (authorizationUrl/tokenUrl, `platypus-swagger` clien
+- LEARN: REJECTED SSRF @ *.integration.sipgate.cloud: OPTIONS preflight (204) + data GET (401) — nginx Basic 401 enforced before app; x-provider-url/x-provider-key heade
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: fb-jwt counter 56363 (LOWER than prior 80373) → per-replica counter (restart-reset), confirms scale/multi-insta
+- LEARN: REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 ga
+- LEARN: ACCEPTED INFO @ *.integration.sipgate.cloud breadth: hubspot/zendesk/salesforce deployed (nginx 401), pipeforce/zapier resolve to same LB 35.246.154.68 but conn

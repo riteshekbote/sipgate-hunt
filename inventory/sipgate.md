@@ -386,3 +386,10 @@ www.sipgate.de
 - CHANGED `app.dev.sipgate.com/assets/main-DFko0cRT.js` (5.65MB): zero Firebase/AIza/identitytoolkit refs — token source not in public SPA (KB 2026-09-08)
 - CHANGED `docs.sipgate.cloud` family → CNAME `sipgate.github.io` private GitHub Pages (302 GitHub auth) — sipgate-owned, NOT takeover (KB 2026-09-08)
 - CHANGED `dev.integration.sipgate.cloud` / `test.integration.sipgate.cloud` → 404 inert behind same LB; `integration.dev.sipgate.com` still 403 `ACAO:*` (KB 2026-09-08)
+
+## 2026-09-08 19:10:20 UTC
+- CHANGED *.integration.sipgate.cloud (94 hosts): per-vendor spec paths (/swagger/swagger-ui-init.js, /v3/api-docs, /swagger.json, /openapi.json) ALL 401 behind nginx Basic-auth — NO per-vendor spec reachable u
+- CHANGED *.integration.sipgate.cloud CORS: OPTIONS preflight → 204 (passes nginx gate) with `ACAO:*` + `ACAC:true` + allow-headers `x-provider-locale,region,language,url,key,content-type`; data GET with `x-pro
+- CHANGED vendor host breadth: hubspot/zendesk/salesforce.integration → nginx 401 (deployed); pipeforce/zapier.integration → resolve to same LB 35.246.154.68 but connection-reset (HTTP 000 ~0.3s) — per-hostname
+- CHANGED integration.sipgate.com/oauth2/callback + /oauth2/redirect: both return app-403 `Forbidden resource` (application/problem+json) even with fabricated `code`/`state` params → callback does NOT mint Fire
+- CHANGED integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests 56363` LOWER than prior 80373 → per-replica counters (scale/topology info, restart-reset), not a stable global count.
