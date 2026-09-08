@@ -2132,3 +2132,54 @@ testability: HUMAN_ONLY (for final claim; passive recon done)
 [LEARN] REJECTED AUTH @ dev.integration.sipgate.cloud + test.integration.sipgate.cloud: shared GCP LB but 404-inert hostname routing — no dev twin token source.
 [LEARN] ACCEPTED MISCONFIG @ integration.sipgate.com: `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external requests return app-403 — spec-vs-behavior drift; `users.integrations.create` accepts free-form `apiUrl` (SSRF surface) in docs.
 [RISK] sipgate: 55 — Large fresh surface (94-host per-vendor adapter tier with Basic-auth + x-provider-* SSRF inputs on GCP LB, live internet Grafana, dangling share1 CNAME, full .cloud internal topology in CT) but NO standalone exploit confirmed: every data path gated (nginx-basic on vendor tier, Firebase-JWT on apex), no Firebase token mint path in public bundles, no unprotected vendor instance. +2 vs prior 53 on surface/breadth; surviving high-impact chains unchanged (Platypus gate/SSRF 55-AUTH, /v2 BOLA 50-AUTH, S3-write 55-HUMAN).
+## 2026-09-08 15:21:11 UTC [target] (model bigpickle)
+[CHANGED] *.integration.sipgate.cloud (94 hosts): per-vendor spec paths (/swagger/swagger-ui-init.js, /v3/api-docs, /swagger.json, /openapi.json) ALL 401 behind nginx Basic-auth — NO per-vendor spec reachable unauthenticated; my prior spec-drift diff hypothesis not passively testable; gate uniform across every spec/resource path.
+[CHANGED] *.integration.sipgate.cloud CORS: OPTIONS preflight → 204 (passes nginx gate) with `ACAO:*` + `ACAC:true` + allow-headers `x-provider-locale,region,language,url,key,content-type`; data GET with `x-provider-url/x-provider-key` headers STILL 401 → provider-key passthrough does NOT bypass nginx gate (gate enforced before app handler).
+[CHANGED] vendor host breadth: hubspot/zendesk/salesforce.integration → nginx 401 (deployed); pipeforce/zapier.integration → resolve to same LB 35.246.154.68 but connection-reset (HTTP 000 ~0.3s) — per-hostname LB routing, some vendor adapters not deployed despite DNS.
+[CHANGED] integration.sipgate.com/oauth2/callback + /oauth2/redirect: both return app-403 `Forbidden resource` (application/problem+json) even with fabricated `code`/`state` params → callback does NOT mint Firebase session for anonymous/fabricated codes; whole apex surface (incl OAuth code-exchange) behind same 403 gate → Firebase-mint hypothesis deflated to AUTH_HELPED.
+[CHANGED] integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests 56363` LOWER than prior 80373 → per-replica counters (scale/topology info, restart-reset), not a stable global count.
+[PRIO] *.integration.sipgate.cloud (94 hosts),7.20,surface(94)+biz(CRM PII)+tech(SSRF headers x-provider-url)/gate(nginx Basic 401 uniform)/cloud(GCP LB 35.246.154.68)
+[PRIO] integration.sipgate.com apex,6.90,26-op API+Firebase drift/gate(FB-JWT 403 incl oauth2 callback)/cloud(GCP)
+[PRIO] grafana.sipgate.cloud,6.40,monitoring intel/login-gated/AWS LB
+[HYP] Per-vendor adapter gate/SSRF — nginx Basic is the only gate; provider-key not a bypass
+class: SSRF
+asset: *.integration.sipgate.cloud /users.integrations.create (94 hosts), apex apiUrl
+confidence: 50
+reasoning: Confirmed this cycle: ALL spec/data paths 401; OPTIONS preflight 204 passes nginx (CORS layer only); adding x-provider-url/key headers still 401 → gate at nginx, before app. The only path past nginx is a valid Basic credential (none found) or an apex-acquired Firebase JWT. `users.integrations.create apiUrl` free-form in spec remains the SSRF surface but is behind apex FB-JWT 403.
+evidence_needed: (a) Basic cred in public repo/bundle; (b) Firebase JWT via authenticated oauth2 callback (AUTH_HELPED); (c) 200/204 on any vendor data path.
+verify_steps: AUTH_HELPED — with an authenticated session, obtain Firebase JWT through the real oauth2/callback exchange, then test apex `users.integrations.create apiUrl` SSRF + vendor provider-url. Passive exhausted (uniform 401).
+impact: CRM contacts/call-logs PII across vendored integrations + SSRF to internal Hetzner/GCP if provider-url unvalidated. HIGH if gate passed.
+testability: AUTH_HELPED
+[HYP] Firebase-JWT session minted at oauth2 callback (weakened)
+class: AUTH
+asset: integration.sipgate.com/oauth2/callback
+confidence: 35
+reasoning: This cycle: /oauth2/callback + /oauth2/redirect return uniform app-403 even with fabricated code/state → the code-exchange is itself behind the FB-JWT 403 gate, so no anonymous mint. Only an authenticated session produces a real Keycloak code → callback → Firebase session. Down from 45.
+evidence_needed: real Keycloak authorization code for `platypus-swagger` with authenticated session → observe 302/set-cookie.
+verify_steps: AUTH_HELPED only.
+impact: if callback mints Firebase session without extra gate → full Platypus API Keycloak-less. HIGH but requires authenticated session anyway.
+testability: AUTH_HELPED
+[HYP] share1.sipgate.cloud dangling CNAME subdomain takeover (unchanged)
+class: MISCONFIG
+asset: share1.sipgate.cloud (CNAME nx38603.your-storageshare.de NXDOMAIN)
+confidence: 45
+reasoning: CT shows dangling CNAME to external Hetzner StorageShare; target NXDOMAIN; takeable if provider allows instance-name claim. Needs HUMAN claim validation.
+evidence_needed: confirm your-storageshare.de naming claimable; no CAA/security.txt.
+verify_steps: PASSIVE dig re-check + HEAD your-storageshare.de banner; registration = HUMAN.
+impact: control of share1.sipgate.cloud → phishing. MEDIUM.
+testability: HUMAN_ONLY (final claim)
+[PARKED] Firebase-JWT mint (conf 45→35): newly shown to be behind the SAME 403 gate (callback returns 403 for fabricated codes) — no anonymous mint; AUTH_HELPED only.
+[PARKED] Per-vendor spec-drift diff: all vendor spec paths 401; not passively reachable; merges into H1.
+[PARKED] Grafana CVE/default-creds (40): REJECTED class (brute/known-vuln w/o POC).
+[FINAL] 1. Per-vendor adapter gate/SSRF (50, AUTH_HELPED); 2. share1 dangling CNAME takeover (45, HUMAN_ONLY).
+[NEXT] PROBE: `GET https://integration.sipgate.com/swagger/swagger-ui-init.js` — extract full OAuth securityScheme (authorizationUrl/tokenUrl, `platypus-swagger` client Idp issuer) and the exact `users.integrations.create` apiUrl schema + any provider-* header enum, to finalize the apex SSRF-via-apiUrl request shape for the AUTH_HELPED session (read-only).
+[LEARN] REJECTED SSRF @ *.integration.sipgate.cloud: OPTIONS preflight (204) + data GET (401) — nginx Basic 401 enforced before app; x-provider-url/x-provider-key headers do NOT bypass nginx gate → provider-key header SSRF not reachable unauthenticated; requires creds.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: fb-jwt counter 56363 (LOWER than prior 80373) → per-replica counter (restart-reset), confirms scale/multi-instance topology, not a global stable count.
+[LEARN] REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 gate; no anonymous Firebase-mint; token-mint hypothesis deflated to AUTH_HELPED.
+[LEARN] ACCEPTED INFO @ *.integration.sipgate.cloud breadth: hubspot/zendesk/salesforce deployed (nginx 401), pipeforce/zapier resolve to same LB 35.246.154.68 but connection-reset (000) — per-hostname LB routing, some vendor adapters not deployed.
+[RISK] sipgate: 50 — Down from 55 and converging: this cycle empirically closed two of the three surviving fresh-surface chains (per-vendor spec drift unreachable; Firebase-mint-at-callback deflated to AUTH_HELPED because the callback is behind the same 403 gate). Live probes confirm uniform nginx-Basic 401 on the vendor tier (no provider-key bypass) and FB-JWT 403 on the apex (OAuth code-exchange included). Everything real now gates on an authenticated session (BOLA 50, Platypus/AUTH, vendor SSRF 50) or HUMAN sign-off (S3 write 55, share1 CNAME 45). Defense-in-depth standing set unchanged (CORS *, vendor CORS *+creds, dev SPA info-leak, team CSP local-origin, listable S3). No standalone unauthenticated critical chain confirmed.
+[HYP] Per-vendor adapter gate/SSRF — nginx Basic is the only gate; provider-key not a bypass
+[HYP] Firebase-JWT session minted at oauth2 callback (weakened, 45→35)
+[HYP] share1.sipgate.cloud dangling CNAME subdomain takeover (unchanged)
+[NEXT] PROBE: `GET https://integration.sipgate.com/swagger/swagger-ui-init.js` — extract full OAuth securityScheme (authorizationUrl/tokenUrl, `platypus-swagger` IDP issuer) and the exact `users.integrations.create` apiUrl schema + any provider-* enum to finalize the apex SSRF-via-apiUrl request shape for the AUTH_HELPED session.
+[RISK] sipgate: **50** — Down from 55. This cycle empirically closed two fresh-surface chains: the vendor per-vendor spec drift is unreachable (uniform nginx 401, no provider-key bypass) and the Firebase-mint-at-callback hypothesis deflated (callback is behind the same 403 gate). Every real path now gates on an authenticated session (BOLA 50/AUTH, vendor SSRF 50/AUTH, Platypus 50/AUTH) or HUMAN sign-off (S3 write 55, share1 CNAME 45). No standalone unauthenticated critical chain confirmed.

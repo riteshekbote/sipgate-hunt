@@ -1,4 +1,4 @@
-## 2026-09-08 11:34:28 UTC [target] (model nemotron3)
+## 2026-09-08 15:20:45 UTC [target] (model nemotron3)
 [NEW] `*.integration.sipgate.cloud` (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with `ACAO:*` CORS, exposing `x-provider-url`/`x-provider-key` SSRF inputs (KB 2026-09-08)
 [NEW] `grafana.sipgate.cloud` + `grafana.aws.sipgate.cloud`: LIVE Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, no anonymous read (KB 2026-09-08)
 [NEW] `share1.sipgate.cloud`: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN — subdomain-takeover candidate (KB 2026-09-08)
@@ -46,7 +46,6 @@ testability: PASSIVE
 [PARKED] Integration Platform OAuth Gate Bypass via Spec-Behavior Drift: confidence 60 but gate bypass is speculative; uniform 403 on all paths suggests strong edge auth; requires AUTH_HELPED for token acquisition; verify_steps only passively probe for non-403 responses
 [FINAL] 1. CRM Adapter Tier SSRF via x-provider-url Header Injection (confidence 70, PASSIVE) — 94-host fleet, uniform Basic-auth + ACAO:*, documented x-provider-* headers, cloud metadata reachable
 [FINAL] 2. Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement (confidence 75, PASSIVE) — highest confidence, concrete verify_steps, live rotating bundle with new hosts
-[FINAL] 3. Integration Platform OAuth Gate Bypass via Spec-Behavior Drift (confidence 60, PASSIVE) — spec-vs-behavior drift documented, high-value if bypassed
 [NEXT] PROBE: GET https://app.dev.sipgate.com/main-DFko0cRT.js — fetch current JS bundle, extract all hardcoded host:port pairs from source/chunks, DNS-resolve any new *.dev.sipgate.com / *.dev.sipgate.net / *.live.sipgate.net hosts not yet cataloged; read-only, ≤1 rps
 [LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapter tier uniformly behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct second gate tier (nginx) vs apex Firebase-JWT (GCP) — family-wide topology+gate disclosure
 [LEARN] ACCEPTED INFO @ sf6.integration CT namespace: 276 *.sipgate.cloud hostnames (146 influxdb monitoring, AWS/hetzner/GCP multicloud, k8s tool clusters, dependency-track, docs) — deep infrastructure topology disclosure via public CT
