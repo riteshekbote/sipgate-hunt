@@ -359,3 +359,14 @@ www.sipgate.de
 - CHANGED `app.dev.sipgate.com/assets/main-DFko0cRT.js` (5.65MB) has **zero** Firebase/AIza/identitytoolkit refs — token source not in public SPA
 - CHANGED `docs.sipgate.cloud` family → CNAME `sipgate.github.io` private GitHub Pages (302 GitHub auth) — sipgate-owned, NOT takeover
 - CHANGED `dev.integration.sipgate.cloud` / `test.integration.sipgate.cloud` → 404 inert behind same LB; `integration.dev.sipgate.com` still 403 ACAO* (TLS artifact earlier)
+
+## 2026-09-08 11:34:37 UTC
+- NEW `*.integration.sipgate.cloud` (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with `ACAO:*` CORS, exposing `x-provider-url`/`x-provider-key` SSRF inputs (KB 2026-09-08)
+- NEW `grafana.sipgate.cloud` + `grafana.aws.sipgate.cloud`: LIVE Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, no anonymous read (KB 2026-09-08)
+- NEW `share1.sipgate.cloud`: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN — subdomain-takeover candidate (KB 2026-09-08)
+- NEW CT `*.sipgate.cloud` enumeration (276 names): 146 `*.influxdb` monitoring (Hetzner 168.119.232.113, inert), AWS/GCP multicloud wildcards, k8s tool clusters, dependency-track, docs (KB 2026-09-08)
+- CHANGED `integration.sipgate.com/metrics`: `firebase_jwt_forbidden_requests 80373` (+574), `api_key_forbidden_requests 6`, `rate_limit_forbidden_requests 2500` — live Firebase-JWT validator confirmed (KB 2026
+- CHANGED `swagger-ui-init.js`: `.com`/`.cloud` byte-identical (386538b), zero firebase/apiKey/AIza — token source not in spec bundle (KB 2026-09-08)
+- CHANGED `app.dev.sipgate.com/assets/main-DFko0cRT.js` (5.65MB): zero Firebase/AIza/identitytoolkit refs — token source not in public SPA (KB 2026-09-08)
+- CHANGED `docs.sipgate.cloud` family → CNAME `sipgate.github.io` private GitHub Pages (302 GitHub auth) — sipgate-owned, NOT takeover (KB 2026-09-08)
+- CHANGED `dev.integration.sipgate.cloud` / `test.integration.sipgate.cloud` → 404 inert behind same LB; `integration.dev.sipgate.com` still 403 `ACAO:*` (KB 2026-09-08)

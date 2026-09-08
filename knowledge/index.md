@@ -220,3 +220,6 @@
 - 2026-09-08 ACCEPTED MISCONFIG @ share1.sipgate.cloud: dangling CNAME → external Hetzner StorageShare NXDOMAIN; takeover candidate (needs HUMAN claim validation).
 - 2026-09-08 REJECTED MISCONFIG @ docs.sipgate.cloud family: private GitHub Pages on sipgate-owned `sipgate.github.io` org — authenticated pages, not a public doc leak nor takeover.
 - 2026-09-08 REJECTED AUTH @ dev.integration.sipgate.cloud + test.integration.sipgate.cloud: shared GCP LB but 404-inert hostname routing — no dev twin token source.
+- 2026-09-08 ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapter tier uniformly behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct gate tier from apex Firebase-JWT — family-wide topology+gate disclosure.
+- 2026-09-08 ACCEPTED INFO @ sf6.integration CT namespace: 276 *.sipgate.cloud hostnames (146 influxdb monitoring, AWS/hetzner/GCP multicloud, k8s tool clusters, dependency-track, docs) — deep infrastructure topology via public CT.
+- 2026-09-08 ACCEPTED MISCONFIG @ integration.sipgate.com: `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external requests return app-403 — spec-vs-behavior drift; `users.integrations.create` accepts free-form `apiUrl` (SSRF surface) in docs.

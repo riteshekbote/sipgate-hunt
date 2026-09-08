@@ -1,57 +1,46 @@
-## 2026-09-08 06:02:29 UTC [target] (model bigpickle)
-[PRIO] *.integration.sipgate.cloud (94 hosts),7.65,high surface(94 hosts)+biz(CRM PII)+tech(provider adapter SSRF headers)
-[PRIO] integration.sipgate.com apex (Platypus FB-JWT gate),7.20,26-op API+Firebase drift unmatched
-[PRIO] grafana.sipgate.cloud,6.40,live monitoring UI internet-facing (login-gated)
-[PRIO] sipgate.cloud CT namespace,6.10,whole internal topology disclosed via CT
-[HYP] Per-vendor integration adapters accept provider-key header auth / SSRF via x-provider-url
-class: SSRF
-asset: *.integration.sipgate.cloud /users.integrations.create (94 hosts)
+## 2026-09-08 11:29:38 UTC [target] (model bigpickle)
+[PRIO] *.integration.sipgate.cloud (94 hosts),7.65,high surface(94)+biz(CRM PII)+tech(Provider-SSRF headers)/gate(Basic 401)/cloud(GCP LB)/fresh(last-09-08)
+[PRIO] integration.sipgate.com apex (Platypus),7.20,26-op API+Firebase-drift unmatched/surface(multi-path)/gate(FB-JWT 403)/cloud(GCP)
+[PRIO] grafana.sipgate.cloud,6.40,monitoring-intel internet-facing/login-gated/AWS LB
+[PRIO] sipgate.cloud CT namespace,6.10,276-host topology in CT (info backbone)
+[HYP] Per-vendor integration adapters: Basic-auth gate bypass via provider-key header passthrough or cred leak in public repos
+class: MISCONFIG
+asset: *.integration.sipgate.cloud (94 vendor hosts)
 confidence: 55
-reasoning: Per-vendor `*.integration.sipgate.cloud` tier is a distinct gate from apex — nginx Basic-auth 401 (WWW-Authenticate: Basic) on ALL paths incl /metrics and /swagger; CORS reflects `x-provider-locale/x-provider-region/x-provider-language/x-provider-url/x-provider-key`; apex spec documents `users.integrations.create apiUrl` free-form. Same code path family (Platypus NSC) serves both tiers. Any Basic-auth cred leak or provider-key reuse across the 94-host family → provider CRM PII via handler.
-evidence_needed: (a) Basic cred in any public repo/config (none found yet), (b) provider-key/url header pair passing the nginx gate, (c) any 200/204 on data path.
-verify_steps: read-only — (1) HEAD/GET `/api/health` and `/.well-known` on 5 more live vendor hosts to map exposure (done for hubspot: all 401); (2) WAF/nginx banner fingerprint on `hubspot/zendesk/salesforce.integration` for version skew; (3) OPTIONS to confirm CORS method/header set invariance; (4) passive grep of public sipgate GitHub repos (camel-temporary-target-number, lukebot) for `x-provider-key` or basic-auth strings. No credential guessing.
-impact: CRM contacts/call-logs PII across vendored integrations, SSRF to internal Hetzner/GCP services if x-provider-url unvalidated. HIGH if gate passed.
-testability: AUTH_HELPED (Basic-provider-key pair needed)
-[HYP] Firebase-JWT token is minted only at OAuth callback — no passive mint path
+reasoning: All 94 vendor hosts uniformly return nginx Basic-auth 401 with `ACAO:*` CORS and reflective `x-provider-url/x-provider-key` headers; apex spec documents `users.integrations.create apiUrl` free-form (SSRF surface); distinct gate tier from apex Firebase-JWT (two-gate architecture confirmed); no Basic-auth credential found in public repos yet but sipgate has extensive public GitHub org with demo/example patterns (prior .npmrc.dist leak class).
+evidence_needed: (a) Basic-auth credential in any sipgate public repo or JS bundle; (b) provider-key header value that passes the nginx gate; (c) any 200/204 on data path.
+verify_steps: PASSIVE — (1) HEAD `https://hubspot.integration.sipgate.com/swagger/swagger-ui-init.js` and `https://zendesk.integration.sipgate.com/swagger/swagger-ui-init.js` to diff auth schemes vs apex; (2) OPTIONS on 3 vendor hosts to record CORS method/header set invariance; (3) grep sipgate public GitHub repos for `x-provider-key` or `Basic` strings; all ≤1rps GET/HEAD only.
+impact: CRM contacts/call-logs PII across vendored integrations; SSRF to internal Hetzner/GCP if x-provider-url unvalidated. HIGH if gate passed.
+testability: AUTH_HELPED
+[HYP] Platypus Firebase-JWT session minted at OAuth callback without additional gate
 class: AUTH
 asset: integration.sipgate.com/oauth2/callback
 confidence: 45
-reasoning: /metrics proves live Firebase-JWT validator (firebase counter +574); /oauth2/callback + /oauth2/redirect declared no-security in spec but app-403 externally; swagger declares Keycloak sipgate-apps implicit client `platypus-swagger`; NO firebase config in swagger bundle or app.dev SPA bundle; per-vendor tier uses nginx Basic not Firebase → two-gate architecture confirmed; token exchange presumably code→Firebase session at callback (Keycloak-less direct auth to 26-op API unproven).
-evidence_needed: real Keycloak authorization code for `platypus-swagger` hitting /oauth2/callback → observe 302/set-cookie (requires logged session).
-verify_steps: AUTH_HELPED — with an authenticated browser session at login.sipgate.com, initiate swagger-ui authorize for `platypus-swagger` and capture the callback exchange; compare response vs anonymous 401/403.
-impact: if callback mints a Firebase session without additional gate → full Platypus API (contacts/call-logs/streaming) Keycloak-less. HIGH.
+reasoning: /metrics confirms live Firebase-JWT validator (counter 80373+); /oauth2/callback + /oauth2/redirect declared with NO security in spec yet all external requests return app-403; spec declares Keycloak `platypus-swagger` implicit client; no Firebase config in swagger bundle or app.dev SPA; two-gate architecture (apex=Firebase, vendor=tier=nginx Basic) means callback is likely the only token-mint path; callback exchange Keycloak code→Firebase session is the missing link.
+evidence_needed: A Keycloak authorization code for `platypus-swagger` hitting /oauth2/callback → observe 302/set-cookie (requires logged-in session).
+verify_steps: AUTH_HELPED — with authenticated browser session at login.sipgate.com, initiate swagger-ui authorize for `platypus-swagger`, capture the callback exchange, compare response vs anonymous 401/403.
+impact: If callback mints Firebase session without additional gate → full Platypus API (contacts/call-logs/streaming) without Keycloak. HIGH.
 testability: AUTH_HELPED
-[HYP] share1.sipgate.cloud dangling CNAME → subdomain takeover
+[HYP] share1.sipgate.cloud dangling CNAME subdomain takeover
 class: MISCONFIG
-asset: share1.sipgate.cloud (CNAME nx38603.your-storageshare.de NXDOMAIN)
+asset: share1.sipgate.cloud
 confidence: 45
-reasoning: CT shows `share1.sipgate.cloud` → `nx38603.your-storageshare.de`; dig +trace = direct CNAME, target has NO A/AAAA and HTTPS 000; target domain `your-storageshare.de` is Hetzner StorageShare (external SaaS, not sipgate-controlled); dangling external SaaS CNAME with dead target = takeable if provider allows instance-name claim; not yet validated (registration attempt = mutating).
-evidence_needed: confirm your-storageshare.de instance naming is user-claimable without payment of the original account; no CAA/security.txt on share1.
-verify_steps: PASSIVE — (1) `dig CNAME share1.sipgate.cloud` re-check for drift; (2) `dig any your-storageshare.de` for hostmaster/registrar; (3) HEAD `http://your-storageshare.de` for service banner. Registration test requires HUMAN sign-off (mutating).
-impact: full control of `share1.sipgate.cloud` → phishing/session cookie (sipgate.cloud supercookies?) if claimed. MEDIUM.
+reasoning: CT shows `share1.sipgate.cloud` → `nx38603.your-storageshare.de` (Hetzner StorageShare); target has NO A/AAAA and returns NXDOMAIN; dangling external SaaS CNAME with dead target = takeable if provider allows instance-name claim without original account payment.
+evidence_needed: Confirm your-storageshare.de instance naming is user-claimable; no CAA/security.txt on share1.
+verify_steps: PASSIVE — (1) `dig CNAME share1.sipgate.cloud` re-check; (2) `dig any your-storageshare.de` for hostmaster/registrar; (3) HEAD `http://your-storageshare.de` for service banner. Registration test = HUMAN sign-off required.
+impact: Full control of share1.sipgate.cloud → phishing/session cookie injection if sipgate.cloud carries cookies. MEDIUM.
 testability: HUMAN_ONLY (for final claim; passive recon done)
-[HYP] Grafana 11.5.1 internet-facing is a credential-target (login, admin brute)
-class: MISCONFIG
-asset: grafana.sipgate.cloud / grafana.aws.sipgate.cloud
-confidence: 40
-reasoning: 12.2.x/11.5.1 Grafana exposed on internet (both AWS and .cloud vhost → same LB 3.33.226.160); /api/health leaks version; /api/user, /api/org, /api/search all 401 → no anonymous mode; TF/K8s CT names confirm prod he01/GCP tooling; default admin creds or known Grafana CVE a target but all require active auth bypass or brute (both REJECTED/out-of-scope without POC).
-evidence_needed: known CVE reachable unauthenticated against 11.5.1 (none obvious passive), or a leaked Grafana password.
-verify_steps: PASSIVE — (1) GET /api/health (done, 11.5.1); (2) GET /api/dashboards/home, /api/frontend/settings already 401; (3) no further active testing (auth/brute = OUT_OF_SCOPE).
-impact: internal metrics dashboards/infra URLs + potentially alerting configs. MEDIUM if creds obtained; info-only now.
-testability: PASSIVE (info) → AUTH_HELPED for credential reuse
-[PARKED] Firebase-JWT continuity (conf 45→45): /metrics confirms validator live but no passive mint path; remains top AUTH_HELPED.
-[PARKED] integration.dev / integration.sipgate.dev: dev twin identical gate, no diff — no independent value left.
-[PARKED] Grafana CVE/default-creds: brute-force and known-vuln-without-POC = REJECTED class; kept as info.
-[PARKED] dependencytrack.prod.pub.gcp: NORESOLVE externally, not reachable — dropped.
-[PARKED] essensbot / learn-ml / loki / nauticat: health-only or 404/000 — dropped.
-[PARKED] docs.sipgate.cloud: private GH Pages on sipgate-owned org — not takeover.
-[FINAL] 1. Per-vendor adapter gate/SSRF (55, AUTH_HELPED); 2. Firebase-token callback mint (45, AUTH_HELPED); 3. share1 dangling CNAME takeover (45, HUMAN); 4. Grafana exposure info (40, PASSIVE).
-[NEXT] PROBE: `GET https://hubspot.integration.sipgate.cloud/swagger/swagger-ui-init.js` (live vendor host, read-only) + same on `zendesk.integration.sipgate.cloud` — diff against apex init.js for per-vendor spec drift (auth scheme, x-provider-* params, any Basic-cred hint); then `OPTIONS /contacts.list` on 3 vendor hosts to record CORS/header set; ≤1rps.
-[LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapter tier uniformly behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct second gate tier (nginx) vs apex Firebase-JWT (GCP) — family-wide topology+gate disclosure.
-[LEARN] ACCEPTED INFO @ sf6.integration CT namespace: 276 *.sipgate.cloud hostnames (146 influxdb monitoring, AWS/hetzner/GCP multicloud, k8s tool clusters, dependency-track, docs) — deep infrastructure topology disclosure via public CT.
+[PARKED] Firebase-JWT continuity (conf 45→45): /metrics confirms live validator but no passive mint path found in any public bundle; remains AUTH_HELPED — cannot progress without authenticated session.
+[PARKED] Grafana CVE/default-creds (conf 40): brute-force and known-vuln-without-POC = REJECTED class per program policy; info-only.
+[PARKED] integration.dev / integration.sipgate.dev: dev twin identical gate, no diff — no independent value.
+[FINAL] 1. Per-vendor adapter gate/SSRF (55, AUTH_HELPED); 2. Firebase-token callback mint (45, AUTH_HELPED); 3. share1 dangling CNAME takeover (45, HUMAN_ONLY).
+[NEXT] PROBE: `GET https://hubspot.integration.sipgate.cloud/swagger/swagger-ui-init.js` + same on `zendesk.integration.sipgate.cloud` — diff against apex `integration.sipgate.com` init.js for per-vendor spec drift (auth scheme, x-provider-* params, any Basic-cred hint); ≤1rps, read-only.
+[LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapter tier uniformly behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct gate tier from apex Firebase-JWT — family-wide topology+gate disclosure.
+[LEARN] ACCEPTED INFO @ sf6.integration CT namespace: 276 *.sipgate.cloud hostnames (146 influxdb monitoring, AWS/hetzner/GCP multicloud, k8s tool clusters, dependency-track, docs) — deep infrastructure topology via public CT.
 [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: public FB-JWT gate counters increment live (+574); confirms Firebase validator + auth-mechanism drift (spec Keycloak vs runtime Firebase).
 [LEARN] ACCEPTED MISCONFIG @ grafana.sipgate.cloud: live internet-facing Grafana 11.5.1 (version leaked via /api/health) on AWS LB; login-gated, no anonymous.
 [LEARN] ACCEPTED MISCONFIG @ share1.sipgate.cloud: dangling CNAME → external Hetzner StorageShare NXDOMAIN; takeover candidate (needs HUMAN claim validation).
 [LEARN] REJECTED MISCONFIG @ docs.sipgate.cloud family: private GitHub Pages on sipgate-owned `sipgate.github.io` org — authenticated pages, not a public doc leak nor takeover.
 [LEARN] REJECTED AUTH @ dev.integration.sipgate.cloud + test.integration.sipgate.cloud: shared GCP LB but 404-inert hostname routing — no dev twin token source.
-[RISK] sipgate: 55 — This cycle added a large fresh surface (94-host per-vendor adapter tier with Basic-auth + x-provider-* SSRF inputs on GCP LB, live internet Grafana, dangling share1 CNAME, and full .cloud internal topology in CT) but NO standalone exploit confirmed: every data path remains gated (nginx-basic on vendor tier, Firebase-JWT on apex), no Firebase token mint path in any public bundle, no unprotected vendor instance. +2 vs prior 53 on surface/breadth (new host families + confirmed metric leak + takeover candidate); surviving high-impact chains unchanged (Platypus gate/SSRF 55-AUTH, /v2 BOLA 50-AUTH, S3-write 55-HUMAN).
+[LEARN] ACCEPTED MISCONFIG @ integration.sipgate.com: `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external requests return app-403 — spec-vs-behavior drift; `users.integrations.create` accepts free-form `apiUrl` (SSRF surface) in docs.
+[RISK] sipgate: 55 — Large fresh surface (94-host per-vendor adapter tier with Basic-auth + x-provider-* SSRF inputs on GCP LB, live internet Grafana, dangling share1 CNAME, full .cloud internal topology in CT) but NO standalone exploit confirmed: every data path gated (nginx-basic on vendor tier, Firebase-JWT on apex), no Firebase token mint path in public bundles, no unprotected vendor instance. +2 vs prior 53 on surface/breadth; surviving high-impact chains unchanged (Platypus gate/SSRF 55-AUTH, /v2 BOLA 50-AUTH, S3-write 55-HUMAN).
