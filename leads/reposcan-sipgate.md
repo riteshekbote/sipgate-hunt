@@ -303,3 +303,5 @@ reasoning: The example Java client contains hardcoded placeholder credentials `u
 impact: LOW - Example code demonstrates insecure credential handling pattern
 verify_steps: Confirm this is only example code and not used in production; check for similar patterns in actual sipgate Java codebases
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-08 12:17:07 UTC
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
