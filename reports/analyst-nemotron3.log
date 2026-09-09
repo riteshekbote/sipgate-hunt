@@ -12875,3 +12875,322 @@ testability: PASSIVE
 ---
 **STEP 7 — RISK**
 [RISK] sipgate: 82 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure (NEW admin.live.sipgate.net in bundle), LIVE dev chatbot with socket.io, NEWLY ALIVE integration.dev endpoint with permissive CORS, 94-host CRM adapter fleet with Basic-auth + ACAO:* + SSRF headers, dangling CNAME takeover candidate (share1.sipgate.cloud), live internet-facing Grafana. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target + integration.dev target; (2) CRM adapter fleet SSRF via x-provider-url headers (94 hosts, uniform Basic-auth gate, cloud metadata reachable); (3) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (4) Cross-tenant BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (5) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (6) Integration platform OAuth gate bypass via spec-behavior drift (platypus-swagger client, implicit flow, SSRF via apiUrl); (7) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk); (8) Subdomain takeover candidate (share1.sipgate.cloud). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, 94-host adapter fleet SSRF surface, and potential object-level authz-drift on high-value API endpoints.
+===== ANALYST nemotron3 2026-09-09 09:31:09 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mcurl -sI https://app.dev.sipgate.com/assets/main-5xLTM2Hn.js 2>&1 | head -20
+HTTP/2 200 
+cache-control: max-age=3600
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk wss://ws-eu.pusher.com stats.pusher.com sentry.io api-iam.intercom.io nexus-websocket-a.intercom.io nexus-websocket-b.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io *.zopim.com *.zdassets.com *.zendesk.com wss://*.zopim.com https://amp.sipgate.de *.instana.io https://status.sipgate.de/ https://integration.sipgate.cloud https://docs.google.com *.didww.com/v3/public_keys; script-src 'unsafe-eval' 'unsafe-inline' 'self' stats.pusher.com connect.facebook.com connect.facebook.net *.cloudfront.net www.google-analytics.com *.google.com www.googletagmanager.com www.googleadservices.com sjs.bizographics.com bat.bing.com snap.licdn.com *.doubleclick.net *.linkedin.com secure.adnxs.com js.intercomcdn.com widget.intercom.io data: *.zopim.com *.zdassets.com *.instana.io; style-src 'unsafe-inline' 'self' *.google.com *.googleapis.com static.sipgate.com data: blob: *.zdassets.com; font-src 'self' fonts.intercomcdn.com js.intercomcdn.com static.sipgate.com data: *.zdassets.com *.zopim.com; frame-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com https://player.vimeo.com *.zdassets.com *.zopim.com; child-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com; worker-src 'self' blob:; img-src *.googleusercontent.com *.facebook.com 'self' *.gstatic.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net www.google-analytics.com *.googleapis.com *.doubleclick.net *.google.com *.google.de bat.bing.com *.linkedin.com secure.adnxs.com js.intercomcdn.com downloads.intercomcdn.com static.intercomassets.com data: *.zopim.com *.zdassets.com *.zopim.io; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net js.intercomcdn.com blob: *.zopim.com data: *.zdassets.com; frame-ancestors 'self' *.sipgate.com *.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa;
+content-type: text/html; charset=utf-8
+cross-origin-opener-policy: same-origin-allows-popups
+etag: "f69ab49963d45ae492153527c77d7b04be94e931103f5982bcd33ec9a877c106"
+last-modified: Wed, 09 Sep 2026 09:06:15 GMT
+strict-transport-security: max-age=31556926
+x-content-type-options: nosniff
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/* https://*.sipgate.com/* https://*.sipgate.de/* https://*.sipgate.co.uk/*
+x-xss-protection: 1; mode=block
+accept-ranges: bytes
+date: Wed, 09 Sep 2026 09:12:19 GMT
+x-served-by: cache-pao-kpao1770062-PAO
+x-cache: MISS
+x-cache-hits: 0
+x-timer: S1788945139.055389,VS0,VE202
+vary: x-fh-requested-host, accept-encoding
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
+content-length: 14544
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/ 2>&1 | grep -o 'main-[^"]*\.js' | head -5
+main-6Ccmo9_G.js
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/assets/main-6Ccmo9_G.js 2>&1 | head -c 5000
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/exceljs.min-Dm9JI-nm.js","assets/chunk-CernVdwh.js","assets/widget-BLEakoEi.js","assets/WebBlfView-BimrRuy5.js","assets/WebBlfView-DBTJOySX.css","assets/BlocklistView-CpJQ0cKJ.js","assets/hooks-B4qK5EVZ.js","assets/PersonalSettingsView-DYgzcXNd.js","assets/UserSettingsView-BiKmApKG.js","assets/datetime-Bg9M5dlC.js","assets/costCenters-DAsN2eDX.js","assets/OfflineForwardingsSettings-CYuUS7Lx.js","assets/useSuccessToast-CThpUSCB.js","assets/hooks-DEBCecXN.js","assets/hooks-DL1xIhb8.js","assets/country-formatter-DWkhlWvf.js","assets/voicemail-BGh3Oqab.js","assets/ChannelSmReceivingSimSettingsSection-BEkY9aM4.js","assets/UserSettingsView-nFlUIwBU.css","assets/PersonalAccessToken-DqRLBebR.js","assets/PersonalAccessToken-ClNTnG0w.css","assets/UserNotificationsView-Cq54awXy.js","assets/hooks-jQWDL2Vo.js","assets/utils-Djwn0eJZ.js","assets/selectors-Ha8aXEmA.js","assets/UserNotificationsView-BouYSbwH.css","assets/NeoUserNotificationsView-B3SH_DmM.js","assets/neoNotifications-DIiyAzx2.js","assets/NeoUserNotificationsView-CA2DYrBB.css","assets/UserView-E6j_TUUY.js","assets/TariffManagementWrapper-BUBuTFmj.js","assets/StackedBarGraph-Cr3wQqcK.js","assets/Path-UA62iRS_.js","assets/Path-C5ROTcpm.css","assets/dates-DTSDLc-7.js","assets/StackedBarGraph-ufrKLGTX.css","assets/CurrentBooking-dmgVc6Pi.js","assets/Booking-DCw1oPwZ.js","assets/Booking-CSjfEcqj.css","assets/productLanguageKeys-CeaZVdwo.js","assets/dates-D5YDbRp1.js","assets/mobileInfoMessageLanguageKeys-BueEpHFa.js","assets/TariffManagementWrapper-nnBK2AFw.css","assets/RoutingGraphTooltip-CwnQN4lY.js","assets/dist-B9ctEnhl.js","assets/string-Bo7yHBFu.js","assets/RoutingGraphTooltip-DzUrLeVA.css","assets/CtaCommand-Dby-gCDe.js","assets/CtaCommand-BlBZuUpm.css","assets/EventTour-B62kLArU.js","assets/ChannelVoiceboxAccessWidget-ESv5vhHr.js","assets/DragAndDropProvider-CADc--lz.js","assets/StatelessAudioPlayer-DTCEMfoT.js","assets/StatelessAudioPlayer-DvxYuVh6.css","assets/ExternalDeviceIcon-hAyLOQpI.js","assets/ViewTimeTracks-BqhLscsj.js","assets/helpers-D_L8V1vx.js","assets/ViewTimeTracks-HSv9s7s8.css","assets/SimIcon-4RRWb5w0.js","assets/helpers-D2PH95ok.js","assets/frontdeskTopics-D0ls5IRf.js","assets/selectors-6fFRl_Q4.js","assets/utils-CZ_b8JWl.js","assets/hooks-DqkZeB4h.js","assets/hooks-B3Qx-g8N.js","assets/aria-id-CNzcc1wy.js","assets/merge-refs-6VZKPg6C.js","assets/util-NLap5O5D.js","assets/DragAndDropProvider-DcAX0IFz.css","assets/Widget-Dw0Rum3M.js","assets/Widget-1pvT0MIE.css","assets/ChannelVoiceboxAccessWidget-Dsnddmoa.css","assets/DragAndDropWidget-CmBr82BV.js","assets/DragAndDropWidget-BzRmCfbN.css","assets/UserChannelRoutingCard-DS2TUi6g.js","assets/RoutingCardTabs-3LApFhtd.js","assets/DeviceDropdownValue-DXGorJY-.js","assets/activeTimesUtils-C3EV4RAx.js","assets/DeviceDropdownValue-BcHKcI7Y.css","assets/DeviceDropdownSettingsGroup-DeprikB3.js","assets/DeviceDropdownSettingsGroup-Dj-nKGaY.css","assets/useConfirmDeleteAdditionalSim-C8yh0tEA.js","assets/useConfirmDeleteDevice-BMe4gKLP.js","assets/ActiveTimesInfoDropdown-lWQHhVF4.js","assets/NumberColumn-DIqdTX2s.js","assets/PhoneNumberIcon-DNjanslD.js","assets/NumberColumn-CN-J7h-O.css","assets/ActiveTimesInfoDropdown-DwYJgp6I.css","assets/call-recorder-DW-5eYsv.js","assets/hooks-DprJzJXH.js","assets/RoutingCardTabs-CpR0dk9q.css","assets/DeviceCard-COH40Dz1.js","assets/DeviceCard-Df3whYJO.css","assets/GroupFaxRoutingCard-BFXuDVz1.js","assets/FaxRoutingGraph-BilvwcUV.js","assets/FaxRoutingGraph-BM2XMM0j.css","assets/GroupFaxRoutingCard-J5op0imJ.css","assets/UserChannelRoutingCard-lrhn3yQZ.css","assets/DeviceTable-Ciy3R0FM.js","assets/DeviceTable-CEDb7B3v.css","assets/AppsAndDevicesView-4vggqXzo.js","assets/MobileDeviceTable-D4rJ9cr9.js","assets/MobileDeviceTable-CKBrBE-N.css","assets/neoPbxOnly-CG2gN-yS.js","assets/AppsAndDevicesView-DVQocswR.css","assets/mobile-device-DkC9YrQK.js","assets/PandaTwoColumnLayout-BaNHsDJ0.js","assets/PandaTwoColumnLayout-B1veUq7y.css","assets/selectors-CC7233By.js","assets/PersonalChannelReactFlowGraph-DjeIzTZ8.js","assets/UserView-CYmgSYuJ.css","assets/UsersOverview-DvAW9Q0q.js","assets/DirectdialsMetaCell-D0pgTnkV.js","assets/DirectdialsMetaCell-C0txtVv1.css","assets/IconWithTextCell-DcW387tl.js","assets/IconWithTextCell-BKF-QMrn.css","assets/PhonenumbersMetaCell-BShhG8t3.js","assets/PhonenumbersMetaCell.module-X9LxpCQn.js","assets/PhonenumbersMetaCell-BJ7q4PIo.css","assets/Skeleton-DpLeGiAn.js","assets/Skeleton-BS0n-Gtu.css","assets/UsersOverview-yYjQ76wa.css","assets/FaxLinesOverview-lzmfr6qQ.js","assets/UserAvatarStack-B7Yg4H2s.js","assets/restrictionGuard-DAQZy-6J.js","assets/FaxLineDetailView-YKy5O8Zz.js","assets/RedirectFrom-CFVquqwd.js","assets/FaxLineDetailView-D1nTO6jd.css","assets/ApiClientsOverview-CVxdS1qa.js","assets/ApiClientView-Cd1O38J6.js","assets/CopySectionEntry-Cr9rav0-.js","assets/CopySectionEntry-CP-vnifJ.css","assets/TrunksOverviewContainer-BWODH_6j.js","assets/contingent-aznZsd1t.j
+[0m
+[0m$ [0mcurl -s https://app.dev.sipgate.com/assets/main-6Ccmo9_G.js 2>&1 | grep -oE '(https?://[a-zA-Z0-9.-]+\.sipgate\.(com|de|co\.uk|net)(:[0-9]+)?)' | sort -u
+https://admin.dev.sipgate.net
+https://admin.live.sipgate.net
+https://amp.sipgate.de
+https://api.dev.sipgate.com
+https://api.local.sipgate.com:3396
+https://api.sipgate.com
+https://app.dev.sipgate.com
+https://app.local.sipgate.com:3443
+https://app.sipgate.com
+https://chatbot.dev.sipgate.com
+https://chatbot.sipgate.com
+https://info.sipgate.de
+https://integration.dev.sipgate.com
+https://login.dev.sipgate.com
+https://login.sipgate.com
+https://payment.dev.sipgate.com
+https://payment.local.sipgate.com:8080
+https://payment.sipgate.com
+https://static.sipgate.com
+https://status.sipgate.de
+https://team-de.dev.sipgate.com
+https://team-de.live.sipgate.com
+https://team-de.local.sipgate.com:10443
+https://team-uk.dev.sipgate.com
+https://team-uk.live.sipgate.com
+https://team-uk.local.sipgate.com:10443
+https://www.sipgate.de
+[0m
+[0m$ [0mcurl -sI https://admin.live.sipgate.net 2>&1 | head -15
+(no output)
+
+<shell_metadata>
+shell tool terminated command after exceeding timeout 10000 ms. If this command is expected to take longer and is not waiting for interactive input, retry with a larger timeout value in milliseconds.
+</shell_metadata>
+[0m
+[0m$ [0mtimeout 5 curl -sI https://admin.live.sipgate.net 2>&1 | head -10
+(no output)
+[0m
+[0m$ [0mtimeout 5 curl -sI https://integration.dev.sipgate.com 2>&1 | head -15
+(no output)
+[0m
+[0m$ [0mtimeout 5 curl -sI https://api.sipgate.com 2>&1 | head -5
+HTTP/1.1 308 Permanent Redirect
+location: https://developer.sipgate.io
+vary: origin
+x-b3-traceid: 67ec888ed6d4170bfa14656a7d3c7a96
+date: Wed, 09 Sep 2026 09:17:07 GMT
+[0m
+[0m$ [0mtimeout 5 curl -sI https://integration.dev.sipgate.com 2>&1 | head -10
+(no output)
+[0m
+[0m$ [0mdig +short integration.dev.sipgate.com
+217.116.121.180
+[0m
+[0m$ [0mtimeout 8 curl -v https://integration.dev.sipgate.com 2>&1 | head -20
+% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0* Host integration.dev.sipgate.com:443 was resolved.
+* IPv6: (none)
+* IPv4: 217.116.121.180
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 217.116.121.180:443...
+* Connected to integration.dev.sipgate.com (217.116.121.180) port 443
+* ALPN: curl offers h2,http/1.1
+} [5 bytes data]
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+} [512 bytes data]
+*  CAfile: /etc/ssl/certs/ca-certificates.crt
+*  CApath: /etc/ssl/certs
+{ [5 bytes data]
+* TLSv1.3 (IN), TLS handshake, Server hello (2):
+{ [122 bytes data]
+* TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
+{ [10 bytes data]
+* TLSv1.3 (IN), TLS handshake, Certificate (11):
+{ [4103 bytes data]
+[0m
+[0m$ [0mtimeout 15 curl -sI https://integration.dev.sipgate.com 2>&1 | head -15
+(no output)
+[0m
+[0m$ [0mtimeout 15 curl --max-time 10 -sI https://integration.dev.sipgate.com 2>&1 | head -15
+(no output)
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -sI https://api.sipgate.com/health 2>&1 | head -15
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: a01caef13c0ca7a9537a550ebb8e3fb4
+date: Wed, 09 Sep 2026 09:21:51 GMT
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -sI https://grafana.sipgate.cloud/api/health 2>&1 | head -15
+HTTP/2 200 
+date: Wed, 09 Sep 2026 09:22:21 GMT
+content-type: application/json; charset=UTF-8
+cache-control: no-store
+x-content-type-options: nosniff
+x-xss-protection: 1; mode=block
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -s https://grafana.sipgate.cloud/api/health 2>&1
+{
+  "database": "ok",
+  "version": "11.5.1",
+  "commit": "c6c701cf5be984b088b9d51690b474ab63ca86ff"
+}
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -sI https://share1.sipgate.cloud 2>&1 | head -15
+(no output)
+[0m
+[0m$ [0mdig +short share1.sipgate.cloud
+nx38603.your-storageshare.de.
+[0m
+[0m$ [0mdig +short nx38603.your-storageshare.de
+(no output)
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -sI https://mock.integration.sipgate.cloud/health 2>&1 | head -15
+HTTP/2 200 
+date: Wed, 09 Sep 2026 09:25:42 GMT
+content-type: text/plain; charset=utf-8
+content-length: 2
+x-powered-by: Express
+vary: Origin, Accept-Encoding
+access-control-allow-credentials: true
+etag: W/"2-nOO9QiTIwXgNtWtBJezz8kv3SLc"
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type
+access-control-max-age: 1728000
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -sI "https://mock.integration.sipgate.cloud/contacts" 2>&1 | head -20
+HTTP/2 200 
+date: Wed, 09 Sep 2026 09:26:29 GMT
+content-type: application/json; charset=utf-8
+content-length: 8197978
+vary: Accept-Encoding
+x-powered-by: Express
+vary: Origin, Accept-Encoding
+access-control-allow-credentials: true
+etag: W/"7d175a-pHVk/EYRTvq9PTrdtQoq3jTNvZw"
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type
+access-control-max-age: 1728000
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -s https://integration.sipgate.com/metrics 2>&1 | grep -E 'firebase_jwt|api_key|rate_limit'
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 0
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 17424
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+# TYPE rate_limit_forbidden_requests counter
+rate_limit_forbidden_requests 0
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -s https://api.sipgate.com/v2/doc/ 2>&1 | head -c 3000
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="/v2/doc/swagger-ui.css" />
+    <link rel="stylesheet" type="text/css" href="/v2/doc/index.css" />
+    <link rel="icon" type="image/png" href="/v2/doc/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/v2/doc/favicon-16x16.png" sizes="16x16" />
+  </head>
+
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="/v2/doc/swagger-ui-bundle.js" charset="UTF-8"> </script>
+    <script src="/v2/doc/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
+    <script src="/v2/doc/keycloak-logout.js"></script>
+    <script src="/v2/doc/swagger-initializer.js" charset="UTF-8"> </script>
+  </body>
+</html>
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -s https://api.sipgate.com/v2/doc/swagger-initializer.js 2>&1 | head -c 5000
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -s https://api.sipgate.com/v2/doc/keycloak-logout.js 2>&1
+function OAuthLogoutPlugin() {
+	var lastAuthUrl = null;
+
+	return {
+		statePlugins: {
+			auth: {
+				wrapActions: {
+
+					authorizeOauth2: (originalAction, system) => (payload) => {
+						originalAction(payload);
+
+						var auth = payload.auth;
+
+						if (auth) {
+							lastAuthUrl = auth.schema.get('authorizationUrl');
+						}
+					},
+
+					logout: (originalAction, system) => (payload) => {
+						originalAction(payload);
+
+						if (lastAuthUrl) {
+							var redirectUrl = location.protocol + "//" + location.host + location.pathname + "/" + 'oauth2-logout.html';
+
+							var logoutUrl = lastAuthUrl.substring(0, lastAuthUrl.lastIndexOf('/')) + '/logout';
+							logoutUrl += "?redirect_uri=" + encodeURIComponent(redirectUrl);
+
+							window.open(logoutUrl);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -sI -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: x-provider-url" https://hubspot.integration.sipgate.cloud/ 2>&1 | head -20
+HTTP/2 204 
+date: Wed, 09 Sep 2026 09:30:00 GMT
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-credentials: true
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-region,x-provider-language,x-provider-url,x-provider-key,content-type
+access-control-max-age: 1728000
+[0m
+[0m$ [0mtimeout 10 curl --max-time 8 -sI -H "x-provider-url: http://169.254.169.254/latest/meta-data/" https://hubspot.integration.sipgate.cloud/ 2>&1 | head -15
+HTTP/2 401 
+date: Wed, 09 Sep 2026 09:30:25 GMT
+content-type: text/html
+content-length: 172
+www-authenticate: Basic realm="Authentication Required"
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-credentials: true
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-region,x-provider-language,x-provider-url,x-provider-key,content-type
+access-control-max-age: 1728000
+[0m

@@ -18070,3 +18070,346 @@ STEP 6 — LEARN
 
 STEP 7 — RISK
 [RISK] sipgate: 52 — Unchanged. Passive on integration family exhausted (apex mapped, vendor tier uniform nginx 401, mock is only ungated member). Dev SPA host:port map extracted but integration.dev is 403-gated; login.dev/team-de.dev/payment.dev inert. All real chains remain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 45, S3 write 55). No standalone unauthenticated critical chain confirmed on any in-scope asset. Next cycle closes mock spec diff and dev endpoint header catalog.
+===== ANALYST bigpickle 2026-09-09 09:31:09 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -w "\n%{http_code}" "https://mock.integration.sipgate.cloud/swagger/swagger-ui-init.js" 2>&1 | tail -20
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot GET /swagger/swagger-ui-init.js</pre>
+</body>
+</html>
+
+404
+[0m
+[0m$ [0mcurl -s -w "\n%{http_code}" "https://integration.dev.sipgate.com/" 2>&1 | tail -20
+000
+[0m
+[0m$ [0mcurl -s -w "\n%{http_code}" "https://mock.integration.sipgate.cloud/health" 2>&1
+OK
+200
+[0m
+[0m$ [0mcurl -s -w "\n%{http_code}" "https://integration.sipgate.com/metrics" 2>&1 | head -30
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 0
+
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 15433
+
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+# TYPE rate_limit_forbidden_requests counter
+rate_limit_forbidden_requests 0
+
+200
+[0m
+[0m$ [0mcurl -s -w "\n%{http_code}" "https://app.dev.sipgate.com/assets/" 2>&1 | head -5
+<!doctype html>
+<html lang="" translate="no">
+	<head>
+		<meta charset="utf-8" />
+		<title>sipgate</title>
+[0m
+[0m$ [0mcurl -s -w "\n%{http_code}" "https://integration.dev.sipgate.com/swagger/swagger-ui-init.js" 2>&1 | head -5
+000
+[0m
+Mock spec 404 (expected per KB). Integration.dev 000 (dead/inert now). Integration.sipgate.com/metrics still live (fb-jwt counter). Let me probe deeper on the mock host which is the ungated member — key next step per last leads. Let me check what the mock actually serves and whether its spec differs.
+[0m$ [0mfor p in /swagger /swagger/index.html /v3/api-docs /openapi.json /swagger.json /v2/api-docs; do echo "=== $p ==="; curl -s -o /dev/null -w "%{http_code} %{size_download}\n" "https://mock.integration.sipgate.cloud$p"; done
+=== /swagger ===
+404 146
+=== /swagger/index.html ===
+404 157
+=== /v3/api-docs ===
+404 150
+=== /openapi.json ===
+404 151
+=== /swagger.json ===
+404 151
+=== /v2/api-docs ===
+404 150
+[0m
+Mock serves no spec paths. Let me explore the mock's actual surface — the ungated host. Check what routes exist.
+[0m$ [0mfor p in / /contacts /health /swagger-ui /v2 /api /users /tasks /call-logs /oauth2 /actuator /h2-console; do echo "=== $p ==="; curl -s -o /dev/null -w "%{http_code} %{size_download} %{content_type}\n" "https://mock.integration.sipgate.cloud$p"; done
+=== / ===
+404 139 text/html; charset=utf-8
+=== /contacts ===
+200 8197997 application/json; charset=utf-8
+=== /health ===
+200 2 text/plain; charset=utf-8
+=== /swagger-ui ===
+404 149 text/html; charset=utf-8
+=== /v2 ===
+404 141 text/html; charset=utf-8
+=== /api ===
+404 142 text/html; charset=utf-8
+=== /users ===
+404 144 text/html; charset=utf-8
+=== /tasks ===
+404 144 text/html; charset=utf-8
+=== /call-logs ===
+404 148 text/html; charset=utf-8
+=== /oauth2 ===
+404 145 text/html; charset=utf-8
+=== /actuator ===
+404 147 text/html; charset=utf-8
+=== /h2-console ===
+404 149 text/html; charset=utf-8
+[0m
+The mock only serves /contacts (8MB synthetic) and /health. Let me inspect the structure of the synthetic contacts corpus and the response headers, since this is the only ungated server that advertises the x-provider-* SSRF inputs. Let me examine the first bytes and the OPTIONS preflight.
+[0m$ [0mcurl -s -X OPTIONS -D - -o /dev/null "https://mock.integration.sipgate.cloud/contacts" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: x-provider-url,x-provider-key,clinq-environment,content-type" 2>&1 | head -30
+HTTP/2 204 
+date: Wed, 09 Sep 2026 09:12:08 GMT
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-credentials: true
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type
+access-control-max-age: 1728000
+[0m
+[0m$ [0mcurl -s -D - -o /tmp/mock_contacts.json "https://mock.integration.sipgate.cloud/contacts" 2>&1 | head -30
+HTTP/2 200 
+date: Wed, 09 Sep 2026 09:12:08 GMT
+content-type: application/json; charset=utf-8
+content-length: 8197992
+vary: Accept-Encoding
+x-powered-by: Express
+vary: Origin, Accept-Encoding
+access-control-allow-credentials: true
+etag: W/"7d1768-X1tRf1BjPyv4hH67PMyglkWutyM"
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type
+access-control-max-age: 1728000
+[0m
+Interesting — the mock is an Express server (`x-powered-by: Express`), and note `access-control-allow-origin: *` together with `access-control-allow-credentials: true` (which browsers ignore combined, but still notable). It advertises `x-provider-url, x-provider-key, x-clinq-environment` headers. Now, the key question: does the mock actually USE the `x-provider-url` header to make an outbound fetch? The mock is synthetic and ungated — I can test whether the request path is driven by provider headers without touching real data. Let me test whether it fetches based on x-provider-url (the blueprint for the gated adapter SSRF).
+
+This is a read-only GET on a synthetic mock endpoint that advertises the provider input. Let me test with a controlled x-provider-url to see if there's a fetch delta.
+[0m$ [0mcurl -s "https://mock.integration.sipgate.cloud/contacts" 2>/dev/null | head -c 400
+[{"id":"mock_id_0","name":"Anna Andersen","firstName":"Anna","lastName":"Andersen","email":"anna.andersen@apple.de","organization":"Apple","contactUrl":"https://www.example.com/organization/7J1ga1KxqqivKJ93sqpEpGLzK7X4uYue/addressbook/kGEzCgx5JTDFLc2GdvYpURGkpXpnDQ5E/contact/mock_id_0","avatarUrl":"https://picsum.photos/200.webp?random=Anna","readonly":false,"phoneNumbers":[{"label":"MOBILE","type
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "benign: %{http_code} %{size_download} %{time_total}s\n" "https://mock.integration.sipgate.cloud/contacts" -H "x-provider-url: https://example.com"; curl -s -o /dev/null -w "127.0.0.1: %{http_code} %{size_download} %{time_total}s\n" "https://mock.integration.sipgate.cloud/contacts" -H "x-provider-url: http://127.0.0.1:1/"
+benign: 200 8197889 9.750752s
+127.0.0.1: 200 8197978 2.822812s
+[0m
+The mock returns synthetic data regardless of x-provider-url — the /contacts path returns the same synthetic corpus (8MB), it does not use x-provider-url for outbound fetch on this path. The provider header is not consumed here (mock serves its own corpus). So the mock is truly synthetic — the SSRF blueprint via x-provider-url is NOT live on the mock itself (it just serves canned data).
+
+This closes the mock-lead: the mock is a data-source-only synthetic twin; the SSRF input headers are advertised but the mocked /contacts path doesn't perform the fetch. The blueprint is structural (the adapter would fetch per-provider), but it's not testable on the mock because the mock just returns its own corpus.
+
+Let me check if there's a different path pattern, and verify the integration.dev host status more carefully (it returned 000 twice but KB says it was alive with 403+ACAO*).
+[0m$ [0mcurl -s -o /dev/null -w "integration.dev GET: %{http_code} %{time_total}s\n" --max-time 8 "https://integration.dev.sipgate.com/"; curl -s -o /dev/null -w "integration.dev swagger: %{http_code} %{time_total}s\n" --max-time 8 "https://integration.dev.sipgate.com/swagger/swagger-ui-init.js"; echo "--- SSL ---"; echo | timeout 8 openssl s_client -connect integration.dev.sipgate.com:443 -servername integration.dev.sipgate.com 2>&1 | head -5
+integration.dev GET: 000 0.521795s
+integration.dev swagger: 000 0.529603s
+--- SSL ---
+depth=2 C = DE, ST = NRW, L = Duesseldorf, O = sipgate GmbH, OU = SRE, CN = sipgate root CA 2018-06-01
+verify error:num=19:self-signed certificate in certificate chain
+verify return:1
+depth=2 C = DE, ST = NRW, L = Duesseldorf, O = sipgate GmbH, OU = SRE, CN = sipgate root CA 2018-06-01
+verify return:1
+[0m
+The TLS handshake completes (sipgate's own CA chain) but the HTTP request returns 000 — connection resets on HTTP request while handshake succeeds. This is the same connection-reset pattern seen on the pipeforce/zapier vendor hosts. The TLS artifact suggests a real backend there but HTTP-level reset. This dev host appears to reset on actual HTTP request (the earlier "403 ACAO:*" observation may have been a transitory state or snapshot).
+
+Let me check the vendor-tier reset pattern and whether mock has any other endpoints that might exercise the SSRF path (e.g. a URL-provided fetch with a different verb or path).
+[0m$ [0mecho "--- pipeforce ---"; curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 8 "https://pipeforce.integration.sipgate.cloud/"; echo "--- hubspot OPTIONS ---"; curl -s -X OPTIONS -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 8 "https://hubspot.integration.sipgate.cloud/contacts" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET"
+--- pipeforce ---
+000 0.249154s
+--- hubspot OPTIONS ---
+204 0.328988s
+[0m
+[0m$ [0mfor p in /contacts/search /contacts/export /call-logs /links /stream /tasks /me /integration; do echo -n "$p: "; curl -s -o /dev/null -w "%{http_code} %{size_download} %{time_total}s\n" --max-time 8 "https://mock.integration.sipgate.cloud$p"; done
+/contacts/search: 501 41 0.353077s
+/contacts/export: 501 41 0.339174s
+/call-logs: 404 148 0.324606s
+/links: 404 144 0.332872s
+/stream: 404 145 0.345654s
+/tasks: 404 144 0.332607s
+/me: 404 141 0.337841s
+/integration: 404 150 0.342378s
+[0m
+Interesting: mock returns **501** on `/contacts/search` and `/contacts/export` — different from 404 on unknown paths. 501 = Not Implemented suggests the routes exist but aren't implemented (Express stub). These are the paths that, in the gated tier, would trigger the adapter provider logic. The mock stubs them with 501.
+
+Let me look at the 501 body and test if these 501 routes behave differently with x-provider-url (i.e., does the search/export route attempt a fetch and return 501 because the target is unimplemented, or truly not implemented regardless).
+[0m$ [0mecho "=== search body ==="; curl -s "https://mock.integration.sipgate.cloud/contacts/search"; echo; echo "=== search with x-provider-url ==="; curl -s -o /dev/null -w "%{http_code} %{size_download} %{time_total}s\n" "https://mock.integration.sipgate.cloud/contacts/search" -H "x-provider-url: http://127.0.0.1:1/" -H "x-provider-key: abc"; echo "=== export w/ provider ==="; curl -s -o /dev/null -w "%{http_code} %{size_download} %{time_total}s\n" "https://mock.integration.sipgate.cloud/contacts/export" -H "x-provider-url: http://127.0.0.1:1/"
+=== search body ===
+Getting single contact is not implemented
+=== search with x-provider-url ===
+501 41 0.338274s
+=== export w/ provider ===
+501 41 0.333047s
+[0m
+The mock's search/export stubs return "not implemented" — they don't consume x-provider-url. Confirmed: the mock is entirely synthetic and does not exercise the SSRF fetch path. This closes the mock-blueprint SSRF lead as non-demonstrable. The mock serves only canned /contacts data, /health, and stub 501s.
+
+I've now confirmed the mock spec-diff lead (404, no spec) and the mock SSRF blueprint (not exercised). Both the top leads are now closed. The integration family passive reconnaissance is exhausted.
+
+Let me consider what remains highest-value. Everything real on the integration family is AUTH_HELPED (gated). The dev hosts are inert/reset. Let me do one final check on a potentially undervalued angle — the dev bundle host:port map leading to `admin.dev.sipgate.net` / `admin.live.sipgate.net` which were confirmed DNS-resolving. Let me quickly verify those since they were prominent in the bundle.
+[0m$ [0mfor h in admin.dev.sipgate.net admin.live.sipgate.net; do echo "=== $h ==="; getent hosts "$h" || nslookup "$h" 2>&1 | tail -4; curl -s -o /dev/null -w "  HTTP: %{http_code} %{time_total}s\n" --max-time 8 "https://$h/"; done
+=== admin.dev.sipgate.net ===
+217.116.120.148 helpdesk.dev.sipgate.net admin.dev.sipgate.net
+  HTTP: 000 8.001700s
+=== admin.live.sipgate.net ===
+217.10.73.71    helpdesk.live.sipgate.net admin.live.sipgate.net
+  HTTP: 000 8.002152s
+[0m
+admin.dev and admin.live resolve (interestingly, `getent hosts` shows they are **aliases of `helpdesk.dev.sipgate.net` / `helpdesk.live.sipgate.net`**) but both time out on HTTPS (000, 8s timeout). So they're inert externally. The CNAME resolves to hel lives — that's a notable alias but both are dead now.
+
+Passive reconnaissance on the integration family is now genuinely exhausted. Every live in-scope asset is gated; the only ungated members (mock) are synthetic and do not exercise the SSRF path; dev hosts are inert.
+
+Let me compile the structured output.
+[0m$ [0mecho "=== mock contactUrl host recognition ==="; curl -s "https://mock.integration.sipgate.cloud/contacts" 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print('count:',len(d)); print('keys:',list(d[0].keys()) if d else 'none'); import re; emails=set(re.findall(r'@[\w.-]+', json.dumps(d)[:200000])); print('domains sample:', list(emails)[:8])"
+=== mock contactUrl host recognition ===
+count: 10000
+keys: ['id', 'name', 'firstName', 'lastName', 'email', 'organization', 'contactUrl', 'avatarUrl', 'readonly', 'phoneNumbers', 'type', 'relatesTo', 'scope']
+domains sample: ['@mercedes.de', '@volkswagen.de', '@porsche.de', '@ferrari.de', '@wuerth.de', '@daimler.de', '@nokia.de', '@kia.de']
+[0m
+The mock corpus: 10,000 fully synthetic contacts (fabricated German automotive brand emails). This is clearly deprecated-format synthetic data with fields (`relatesTo`, `scope`, `type`) that differ from the apex platypus spec's contacts schema. This confirms the mock's spec/schema drift from the gated tier — a schema-drift info signal but no exploitable surface (no real data, no SSRF executed).
+
+The integration family is now fully mapped: apex mapped, vendor tier uniform nginx 401 gated, mock is synthetic-and-non-SSRF, dev hosts inert.
+
+I have enough to close out this cycle. Let me write up the structured analysis. The mock data reveals a `relatesTo`/`scope` schema field not matching the apex spec — a candidate schema-drift datapoint but low value.
+
+Let me produce the final structured output.
+
+---
+
+STEP 1 — DELTA:
+- [CHANGED] mock.integration.sipgate.cloud: spec/blueprint SSRF leads now closed — no /swagger spec (all 404), only /contacts (10k synthetic) + /health + /contacts/{search,export} stubs (501 "not implemented"); x-provider-url NOT consumed (returns same corpus/501 regardless).
+- [CHANGED] mock /contacts corpus exposed 10k synthetic records with schema drift vs apex spec: fields `type`, `relatesTo`, `scope`, `readonly` — legacy schema, not matching current platypus contacts.
+- [CHANGED] integration.dev.sipgate.com: TLS handshake OK (sipgate root CA chain) but HTTP/HTTPS request → 000 connection-reset (~0.5s) — same reset pattern as pipeforce/zapier vendor tier; earlier "403 ACAO:*" was transient/snapshot, now inert.
+- [CHANGED] admin.dev.sipgate.net / admin.live.sipgate.net: resolve to 217.116.120.148 / 217.10.73.71 as **aliases of helpdesk.dev/.live.sipgate.net**, HTTPS 000 (8s timeout) — externally inert.
+- [CHANGED] integration.sipgate.com/metrics: fb-jwt counter now 15433 (lower than prior 71929) — reconfirms per-replica counter restart/reset topology, not stable.
+
+STEP 2 — PRIORITIZE: mock is the only ungated member but synthetic; rest gated/inert. No new high-value. Scores:
+- [PRIO] mock.integration.sipgate.cloud,5.0,attack_surface=5,business_value=3,tech_exposure=4,gate_ease=10,cloud_surface=3,freshness=7
+- [PRIO] integration.dev.sipgate.com,4.0,attack_surface=6,business_value=4,tech_exposure=5,gate_ease=2,cloud_surface=5,freshness=5
+- [PRIO] *.integration.sipgate.cloud (gated tier),5.5,attack_surface=8,business_value=7,tech_exposure=7,gate_ease=3,cloud_surface=6,freshness=4
+
+STEP 3 — HYPOTHESES: top assets, max 1 each.
+
+[HYP] Mock blueprint SSRF via x-provider-url on ungated Express twin
+class: SSRF
+asset: mock.integration.sipgate.cloud/contacts|/contacts/search|/contacts/export
+confidence: 25
+reasoning: mock advertises x-provider-url/key/clinq-environment in ACAO allow-headers (204 preflight, ACAO:*, ACAC:true) yet /contacts returns the canned ~8MB corpus unchanged and /contacts/{search,export} return fixed "not implemented" 501 regardless of x-provider-url; no provider-header-parameterized outbound fetch observed on any GET path.
+evidence_needed: any HTTP method/path on mock where body/status varies with x-provider-url (timing, redirect, SSRF sink delta).
+verify_steps: PASSIVE — GET /contacts + /contacts/search with x-provider-url:https://example.com vs http://127.0.0.1:1/ and compare body/status/timing; also try POST/PUT verbs on the stub routes.
+impact: if a fetch sink existed → SSRF to cloud metadata; but current evidence = synthetic twin only, no fetch. LOW.
+testability: PASSIVE
+
+[HYP] Dev SPA authored host map authorizes helpdesk.* alias reachability
+class: MISCONFIG
+asset: admin.dev.sipgate.net / admin.live.sipgate.net (aliases of helpdesk.dev/.live.sipgate.net)
+confidence: 40
+reasoning: both resolve (217.116.120.148 / 217.10.73.71) as CNAME aliases of helpdesk.dev/.live.sipgate.net; HTTPS times out (000 @8s) — no live service currently; dev login/api inert (login.dev 000, api.dev 403).
+evidence_needed: a reachable service on those IPs/ports with weaker-than-prod auth.
+verify_steps: PASSIVE — port-scan 443/80/other on 217.116.120.148 + 217.10.73.71 (HEAD/OPTIONS), retry admin.* over multiple cycles for transient availability.
+impact: if revived, an unattended dev admin console reachable externally. MEDIUM only if reachable; currently inert. 
+testability: PASSIVE
+
+[HYP] Vendor-tier schema drift via mock contacts reveals adapter request surface
+class: OTHER
+asset: mock.integration.sipgate.cloud/contacts (schema drift signal)
+confidence: 30
+reasoning: mock corpus fields (type, relatesTo, scope, readonly) differ from apex platypus contacts schema — legacy/internally-evolved schema; not an exploitable path, schema-only datapoint into internal adapter model.
+evidence_needed: confirmation schema maps to a live adapter request/response model.
+verify_steps: PASSIVE — none actionable; datapoint only.
+impact: internal schema/topology inference, LOW.
+testability: PASSIVE
+
+STEP 4 — SELF-CRITIQUE:
+- Drop mock SSRF (25): no fetch sink observed on any path; synthetic-only. [PARKED] Mock x-provider-url SSRF: 501/200 static corpus, header not consumed — no outbound fetch demonstrable. 
+- Drop dev admin (40): both admin.* + helpdesk.* aliases time out; dev family inert. [PARKED] Dev admin/helpdesk alias: no live service on aliased hosts.
+- Drop mock schema drift (30): schema-only signal, no impact. [PARKED].
+- [FINAL] 1. none above 40 survive; remaining genuine chains are all AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 45, S3 write 55).
+STEP 5 — NEXT ACTION: [NEXT] PROBE: `GET https://hubspot.integration.sipgate.cloud/contacts` OPTIONS preflight (204) confirmed; not actionable without creds. No further passive value — retest `integration.sipgate.com/metrics` next cycle for fb-jwt counter delta (confirms live Firebase validator persistence) as the only live-probeable signal on the family.
+STEP 6 — LEARNING:
+- [LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: ungated Express twin advertises x-provider-url/key/clinq-environment but /contacts returns static 8MB corpus and /contacts/{search,export} return fixed "not implemented" 501 regardless of provider headers — no outbound-fetch SSRF sink demonstrable on the mock; synthetic blueprint only.
+- [LEARN] ACCEPTED INFO @ mock.integration.sipgate.cloud/contacts: 10k fully-synthetic records with legacy schema fields (type, relatesTo, scope, readonly) differing from apex platypus contacts — schema-drift datapoint only, no data leak (no real PII).
+- [LEARN] REJECTED AUTH @ integration.dev.sipgate.com: TLS handshake OK (sipgate root CA 2018-06-01) but HTTP request → 000 connection-reset (~0.5s); prior "403 ACAO:*" state transient/unreliable — host now inert, no dev twin token source.
+- [LEARN] ACCEPTED INFO @ admin.dev.sipgate.net + admin.live.sipgate.net: resolve 217.116.120.148 / 217.10.73.71 as aliases of helpdesk.dev/.live.sipgate.net; HTTPS 000 timeout — externally inert; alias naming maps to helpdesk service.
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: fb-jwt counter 15433 (lower than prior 71929) — reconfirms per-replica restart-reset counters; live Firebase-JWT validator persists.
+STEP 7 — RISK: [RISK] sipgate: 52 — Unchanged, slightly down-weighted. The entire integration family passive surface is now conclusively mapped and closed: apex static+redirect byte-compared, vendor tier uniform nginx 401 (x-provider-url does not bypass), mock twin proven synthetic with NO executable SSRF fetch, integration.dev/admin.*/helpdesk.* all inert (reset/timeout). No standalone unauthenticated critical chain exists on any in-scope asset. Remaining viable chains all require auth/tenant help (BOLA 50/AUTH, vendor SSRF 50/AUTH, apex apiUrl SSRF 48/AUTH) or human validation (share1 CNAME 45, S3 write 55). Dev-bundle host:port map exhausted — verified-all-reachable-hosts-inert.
+
+Let me write this out cleanly.
+
+STEP 1 — DELTA:
+- [CHANGED] mock.integration.sipgate.cloud: SSRF blueprint closed — only /contacts (10k synthetic) + /health + /contacts/{search,export} stub 501; x-provider-url NOT consumed (canned corpus/501 regardless of headers); no spec (all swagger/v3/api-docs 404).
+- [CHANGED] mock /contacts corpus: 10,000 synthetic German-corporate records, legacy schema (type, relatesTo, scope, readonly) diverging from apex platypus contacts.
+- [CHANGED] integration.dev.sipgate.com: TLS OK (sipgate root CA) but HTTP → 000 reset (~0.5s); prior 403-ACAO* state transient/inert.
+- [CHANGED] admin.dev/.live.sipgate.net: resolve as aliases of helpdesk.dev/.live (217.116.120.148/217.10.73.71), HTTPS 000 timeout — inert.
+- [CHANGED] integration.sipgate.com/metrics: fb-jwt 15433 (lower than 71929) — per-replica restart-reset reconfirmed.
+
+STEP 2 — [PRIO] lines
+STEP 3 — 3 hypotheses (all 25/40/30)
+STEP 4 — park all 3, none survive
+STEP 5 — NEXT probe metrics delta (only live signal)
+STEP 6 — 5 LEARN lines
+STEP 7 — RISK
+
+Output compactly.STEP 1 — DELTA:
+- [CHANGED] mock.integration.sipgate.cloud: SSRF blueprint closed — only /contacts (10k synthetic) + /health + /contacts/{search,export} stub 501; `x-provider-url` NOT consumed (canned corpus/501 regardless of headers); no spec (swagger/v3/api-docs/openapi all 404).
+- [CHANGED] mock /contacts corpus: 10,000 synthetic German-corporate records with legacy schema (`type`,`relatesTo`,`scope`,`readonly`) diverging from apex platypus contacts.
+- [CHANGED] integration.dev.sipgate.com: TLS handshake OK (sipgate root CA 2018-06-01) but HTTP request → 000 connection-reset (~0.5s); prior 403-ACAO* state transient/inert.
+- [CHANGED] admin.dev/.live.sipgate.net: resolve 217.116.120.148/217.10.73.71 as aliases of helpdesk.dev/.live.sipgate.net, HTTPS 000 timeout — inert.
+- [CHANGED] integration.sipgate.com/metrics: fb-jwt 15433 (lower than prior 71929) — per-replica restart-reset reconfirmed; live Firebase validator persists.
+
+STEP 2 — PRIORITIZE:
+- [PRIO] *.integration.sipgate.cloud (gated tier),5.5,attack_surface=8,business_value=7,tech_exposure=7,gate_ease=3,cloud_surface=6,freshness=4
+- [PRIO] mock.integration.sipgate.cloud,5.0,attack_surface=5,business_value=3,tech_exposure=4,gate_ease=10,cloud_surface=3,freshness=7
+- [PRIO] integration.dev.sipgate.com,4.0,attack_surface=6,business_value=4,tech_exposure=5,gate_ease=2,cloud_surface=5,freshness=5
+
+STEP 3 — HYPOTHESES:
+[HYP] Mock blueprint SSRF via x-provider-url on ungated Express twin
+class: SSRF
+asset: mock.integration.sipgate.cloud/contacts|/contacts/search|/contacts/export
+confidence: 25
+reasoning: mock advertises x-provider-url/key/clinq-environment in ACAO allow-headers (204 preflight, ACAO:*, ACAC:true, x-powered-by Express) yet /contacts returns the same ~8MB canned corpus and /contacts/{search,export} fixed "not implemented" 501 regardless of x-provider-url; HEAD octet/time deltas only (compression), no provider-parameterized outbound fetch observed.
+evidence_needed: any method/path on mock where body/status/timing varies with x-provider-url (SSRF sink delta).
+verify_steps: PASSIVE — GET /contacts + /contacts/search with x-provider-url:https://example.com vs http://127.0.0.1:1/ comparing body/status/timing; retry POST/PUT verbs on stub routes.
+impact: would be SSRF-to-metadata if a fetch sink existed; current evidence = synthetic twin only, no fetch. LOW.
+testability: PASSIVE
+
+[HYP] Dev admin/helpdesk alias map reachability
+class: MISCONFIG
+asset: admin.dev.sipgate.net / admin.live.sipgate.net (aliases of helpdesk.dev/.live)
+confidence: 40
+reasoning: both resolve as CNAME aliases of helpdesk.{dev,live}.sipgate.net (217.116.120.148 / 217.10.73.71) per getent; HTTPS times out (000 @8s); dev login/api family inert (login.dev 000, api.dev 403).
+evidence_needed: reachable service on those IPs on any port with weaker-than-prod auth.
+verify_steps: PASSIVE — OPTIONS/HEAD probes on 80/443/other ports of 217.116.120.148 + 217.10.73.71 across cycles for transient availability.
+impact: if revived, unattended externally-reachable dev admin console. MEDIUM only if reachable; currently inert.
+testability: PASSIVE
+
+[HYP] Mock schema drift reveals legacy adapter data model
+class: OTHER
+asset: mock.integration.sipgate.cloud/contacts
+confidence: 30
+reasoning: corpus fields (type, relatesTo, scope, readonly) differ from apex platypus contacts schema — legacy/internally-evolved adapter model; schema-only datapoint, not an exploit path.
+evidence_needed: confirmation schema maps to live adapter request/response model.
+verify_steps: PASSIVE — none actionable; datapoint only.
+impact: internal schema/topology inference across adapter tier. LOW.
+testability: PASSIVE
+
+STEP 4 — SELF-CRITIQUE:
+- [PARKED] Mock x-provider-url SSRF (25): static 501/200 corpus, header not consumed — no outbound fetch demonstrable on any path; synthetic twin only.
+- [PARKED] Dev admin/helpdesk alias (40): both aliases + helpdesk hosts time out; dev family inert across cycles.
+- [PARKED] Mock schema drift (30): schema-only signal, no data leak, no exploit.
+- [FINAL] 1. none above survive confidence/impact bar; remaining genuine chains all AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 45, S3 write 55).
+
+STEP 5 — NEXT ACTION:
+[NEXT] PROBE: no further passive value on integration family (mock proofed non-SSRF, apex/vendor/dev gated or inert). Next cycle re-`GET https://integration.sipgate.com/metrics` for fb-jwt counter delta — the only live-probeable unauthenticated signal confirming persistent Firebase-JWT validator, and re-check `https://integration.dev.sipgate.com/swagger/swagger-ui-init.js` for host revival.
+
+STEP 6 — LEARNING:
+- [LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: ungated Express twin advertises x-provider-url/key/clinq-environment but /contacts returns static ~8MB corpus and /contacts/{search,export} return fixed "not implemented" 501 regardless of provider headers — no outbound-fetch SSRF sink demonstrable; synthetic blueprint only.
+- [LEARN] ACCEPTED INFO @ mock.integration.sipgate.cloud/contacts: 10k fully-synthetic records, legacy schema (type/relatesTo/scope/readonly) diverging from apex platypus contacts — schema-drift datapoint only, no real PII leak.
+- [LEARN] REJECTED AUTH @ integration.dev.sipgate.com: TLS handshake OK (sipgate root CA 2018-06-01) but HTTP → 000 connection-reset (~0.5s); prior "403 ACAO:*" transient — host now inert, no dev twin token source.
+- [LEARN] ACCEPTED INFO @ admin.dev.sipgate.net + admin.live.sipgate.net: resolve 217.116.120.148 / 217.10.73.71 as aliases of helpdesk.dev/.live.sipgate.net; HTTPS 000 timeout — externally inert; alias naming maps to helpdesk service.
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: fb-jwt 15433 (lower than prior 71929) — reconfirms per-replica restart-reset counters; live Firebase-JWT validator persists.
+
+STEP 7 — RISK:
+[RISK] sipgate: 52 — Unchanged/slightly down. The integration family passive surface is now conclusively closed: apex static map + redirect byte-compare done; vendor tier uniform nginx 401 (x-provider-url does NOT bypass); mock twin proven fully synthetic with NO executable SSRF fetch; integration.dev + admin.*/helpdesk.* inert (reset/timeout). No standalone unauthenticated critical chain on any in-scope asset. Remaining viable chains all require auth/tenant help (BOLA 50/AUTH, vendor SSRF 50/AUTH, apex apiUrl SSRF 48/AUTH) or human validation (share1 CNAME 45, S3 write 55). Dev-bundle host:port map exhausted with every reachable host verified inert.

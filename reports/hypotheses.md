@@ -901,3 +901,7 @@
 - LEARN: REJECTED SSRF @ *.integration.sipgate.cloud: OPTIONS preflight (204) + data GET (401) — nginx Basic 401 enforced before app; x-provider-url/x-provider-key heade
 - LEARN: REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 ga
 - LEARN: ACCEPTED INFO @ *.integration.sipgate.cloud breadth: hubspot/zendesk/salesforce deployed (nginx 401), pipeforce/zapier resolve to same LB 35.246.154.68 but conn
+
+## RANKED HYPOTHESES 2026-09-09 09:31:09 UTC
+- [25] mock.integration.sipgate.cloud/contacts|/contacts/search|/contacts/export: Mock blueprint SSRF via x-provider-url on ungated Express twin (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: no further passive value on integration family (mock proofed non-SSRF, apex/vendor/dev gated or inert). Next cycle re-`GET https://integration.sipgate.co

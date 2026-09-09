@@ -2341,3 +2341,60 @@ testability: PASSIVE
 [LEARN] REJECTED AUTH @ *.integration.sipgate.cloud vendor tier: nginx Basic 401 sole gate; OPTIONS 204 passes gate but data GET still 401; x-provider-url does NOT bypass; requires creds.
 [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: per-replica counters (56363 < prior 80373); confirms scale/multi-instance; live Firebase-JWT validator.
 [RISK] sipgate: 52 — Unchanged. Passive on integration family exhausted (apex mapped, vendor tier uniform nginx 401, mock is only ungated member). Dev SPA host:port map extracted but integration.dev is 403-gated; login.dev/team-de.dev/payment.dev inert. All real chains remain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 45, S3 write 55). No standalone unauthenticated critical chain confirmed on any in-scope asset. Next cycle closes mock spec diff and dev endpoint header catalog.
+## 2026-09-09 09:15:09 UTC [target] (model bigpickle)
+[HYP] Mock blueprint SSRF via x-provider-url on ungated Express twin
+class: SSRF
+asset: mock.integration.sipgate.cloud/contacts|/contacts/search|/contacts/export
+confidence: 25
+reasoning: mock advertises x-provider-url/key/clinq-environment in ACAO allow-headers (204 preflight, ACAO:*, ACAC:true) yet /contacts returns the canned ~8MB corpus unchanged and /contacts/{search,export} return fixed "not implemented" 501 regardless of x-provider-url; no provider-header-parameterized outbound fetch observed on any GET path.
+evidence_needed: any HTTP method/path on mock where body/status varies with x-provider-url (timing, redirect, SSRF sink delta).
+verify_steps: PASSIVE — GET /contacts + /contacts/search with x-provider-url:https://example.com vs http://127.0.0.1:1/ and compare body/status/timing; also try POST/PUT verbs on the stub routes.
+impact: if a fetch sink existed → SSRF to cloud metadata; but current evidence = synthetic twin only, no fetch. LOW.
+testability: PASSIVE
+[HYP] Dev SPA authored host map authorizes helpdesk.* alias reachability
+class: MISCONFIG
+asset: admin.dev.sipgate.net / admin.live.sipgate.net (aliases of helpdesk.dev/.live.sipgate.net)
+confidence: 40
+reasoning: both resolve (217.116.120.148 / 217.10.73.71) as CNAME aliases of helpdesk.dev/.live.sipgate.net; HTTPS times out (000 @8s) — no live service currently; dev login/api inert (login.dev 000, api.dev 403).
+evidence_needed: a reachable service on those IPs/ports with weaker-than-prod auth.
+verify_steps: PASSIVE — port-scan 443/80/other on 217.116.120.148 + 217.10.73.71 (HEAD/OPTIONS), retry admin.* over multiple cycles for transient availability.
+impact: if revived, an unattended dev admin console reachable externally. MEDIUM only if reachable; currently inert. 
+testability: PASSIVE
+[HYP] Vendor-tier schema drift via mock contacts reveals adapter request surface
+class: OTHER
+asset: mock.integration.sipgate.cloud/contacts (schema drift signal)
+confidence: 30
+reasoning: mock corpus fields (type, relatesTo, scope, readonly) differ from apex platypus contacts schema — legacy/internally-evolved schema; not an exploitable path, schema-only datapoint into internal adapter model.
+evidence_needed: confirmation schema maps to a live adapter request/response model.
+verify_steps: PASSIVE — none actionable; datapoint only.
+impact: internal schema/topology inference, LOW.
+testability: PASSIVE
+[HYP] Mock blueprint SSRF via x-provider-url on ungated Express twin
+class: SSRF
+asset: mock.integration.sipgate.cloud/contacts|/contacts/search|/contacts/export
+confidence: 25
+reasoning: mock advertises x-provider-url/key/clinq-environment in ACAO allow-headers (204 preflight, ACAO:*, ACAC:true, x-powered-by Express) yet /contacts returns the same ~8MB canned corpus and /contacts/{search,export} fixed "not implemented" 501 regardless of x-provider-url; HEAD octet/time deltas only (compression), no provider-parameterized outbound fetch observed.
+evidence_needed: any method/path on mock where body/status/timing varies with x-provider-url (SSRF sink delta).
+verify_steps: PASSIVE — GET /contacts + /contacts/search with x-provider-url:https://example.com vs http://127.0.0.1:1/ comparing body/status/timing; retry POST/PUT verbs on stub routes.
+impact: would be SSRF-to-metadata if a fetch sink existed; current evidence = synthetic twin only, no fetch. LOW.
+testability: PASSIVE
+[HYP] Dev admin/helpdesk alias map reachability
+class: MISCONFIG
+asset: admin.dev.sipgate.net / admin.live.sipgate.net (aliases of helpdesk.dev/.live)
+confidence: 40
+reasoning: both resolve as CNAME aliases of helpdesk.{dev,live}.sipgate.net (217.116.120.148 / 217.10.73.71) per getent; HTTPS times out (000 @8s); dev login/api family inert (login.dev 000, api.dev 403).
+evidence_needed: reachable service on those IPs on any port with weaker-than-prod auth.
+verify_steps: PASSIVE — OPTIONS/HEAD probes on 80/443/other ports of 217.116.120.148 + 217.10.73.71 across cycles for transient availability.
+impact: if revived, unattended externally-reachable dev admin console. MEDIUM only if reachable; currently inert.
+testability: PASSIVE
+[HYP] Mock schema drift reveals legacy adapter data model
+class: OTHER
+asset: mock.integration.sipgate.cloud/contacts
+confidence: 30
+reasoning: corpus fields (type, relatesTo, scope, readonly) differ from apex platypus contacts schema — legacy/internally-evolved adapter model; schema-only datapoint, not an exploit path.
+evidence_needed: confirmation schema maps to live adapter request/response model.
+verify_steps: PASSIVE — none actionable; datapoint only.
+impact: internal schema/topology inference across adapter tier. LOW.
+testability: PASSIVE
+[NEXT] PROBE: no further passive value on integration family (mock proofed non-SSRF, apex/vendor/dev gated or inert). Next cycle re-`GET https://integration.sipgate.com/metrics` for fb-jwt counter delta — the only live-probeable unauthenticated signal confirming persistent Firebase-JWT validator, and re-check `https://integration.dev.sipgate.com/swagger/swagger-ui-init.js` for host revival.
+[RISK] sipgate: 52 — Unchanged/slightly down. The integration family passive surface is now conclusively closed: apex static map + redirect byte-compare done; vendor tier uniform nginx 401 (x-provider-url does NOT bypass); mock twin proven fully synthetic with NO executable SSRF fetch; integration.dev + admin.*/helpdesk.* inert (reset/timeout). No standalone unauthenticated critical chain on any in-scope asset. Remaining viable chains all require auth/tenant help (BOLA 50/AUTH, vendor SSRF 50/AUTH, apex apiUrl SSRF 48/AUTH) or human validation (share1 CNAME 45, S3 write 55). Dev-bundle host:port map exhausted with every reachable host verified inert.

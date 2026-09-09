@@ -418,3 +418,5 @@ www.sipgate.de
 - CHANGED `integration.sipgate.com/metrics` `firebase_jwt_forbidden_requests` 71929 (+12,871 vs prior 59,058) — live Firebase-JWT validator confirmed, per-replica counter incrementing
 - CHANGED `*.integration.sipgate.cloud` (hubspot.integration) — OPTIONS preflight 204 with `ACAO:*` + `ACAC:true` + `allow-headers: x-provider-url,x-provider-key`; data GET with `x-provider-url` header → 401 ng
 - CHANGED `mock.integration.sipgate.cloud` — 404 on `/swagger/swagger-ui-init.js` but OPTIONS returns permissive CORS with `x-provider-*` headers allowed (distinct from gated siblings)
+
+## 2026-09-09 09:31:09 UTC
