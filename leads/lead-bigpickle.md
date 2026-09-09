@@ -2300,3 +2300,44 @@ impact: SSRF to cloud metadata / internal backend selection. HIGH if gate passed
 testability: AUTH_HELPED
 [NEXT] PROBE: `GET https://mock.integration.sipgate.cloud/swagger/swagger-ui-init.js` (spec may differ from gated siblings on a route not on the 8MB path) — if 200, diff platform scope against apex platypus spec for drifted securityScheme.
 [RISK] sipgate: **50** — Unchanged. Passive on the whole integration family is now genuinely exhausted (apex static map + redirect byte-compare closed; vendor tier uniform nginx 401; only ungated member is the synthetic-data mock twin — info/topology value, blueprint for the standing AUTH_HELPED SSRF bundle). All real chains remain gated: BOLA 50/AUTH, vendor SSRF 50/AUTH, apex apiUrl SSRF 48/AUTH, mock blueprint 55 (info), share1 CNAME 45/HUMAN, S3 write 55/HUMAN. No standalone unauthenticated critical chain confirmed on any in-scope asset.
+## 2026-09-09 04:28:15 UTC [target] (model bigpickle)
+[PRIO] app.dev.sipgate.com,7.5,attack_surface=9,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=6
+[PRIO] mock.integration.sipgate.cloud,6.0,attack_surface=7,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=5,freshness=7
+[PRIO] *.integration.sipgate.cloud (gated tier),5.5,attack_surface=8,business_value=7,tech_exposure=7,gate_ease=3,cloud_surface=6,freshness=4
+[HYP] Dev SPA bundle extracts reveal internal host:port map enabling targeted SSRF against live dev backend
+class: SSRF
+asset: app.dev.sipgate.com/main-5xLTM2Hn.js
+confidence: 72
+reasoning: JS bundle hardcodes api.local.sipgate.com:3396, payment.local:8080, team-de.local:10443, admin.dev.sipgate.net, integration.dev.sipgate.com — all resolve to sipgate-owned 217.116.x.x / 217.10.x.x; bundle contains 4 generic apiKey refs (analytics); zero Firebase/AIza refs; integration.dev.sipgate.com confirmed alive with HTTPS 403 + ACAO:*. If any dev endpoint is reachable with weaker auth than prod, the host:port map enables targeted SSRF staging.
+evidence_needed: DNS-resolve all hardcoded hosts, confirm alive/dead, then GET each on its advertised port to map response surfaces.
+verify_steps: PASSIVE — dig + curl each host:port pair; compare response surfaces against prod equivalents; no auth-bypass attempted.
+impact: Infrastructure info disclosure + potential SSRF staging if dev backends respond. MEDIUM if dev endpoints inert; HIGH if any respond with weaker auth.
+testability: PASSIVE
+[HYP] Ungated mock adapter twin reveals gated adapter tier's internal fetcher pipeline via spec diff
+class: MISCONFIG
+asset: mock.integration.sipgate.cloud/swagger/swagger-ui-init.js
+confidence: 58
+reasoning: mock.integration.sipgate.cloud is only *.integration.sipgate.cloud host without nginx Basic 401; /health 200 "OK" + /contacts 200 ~8MB synthetic corpus public; ACAO:*; allow-headers advertise x-provider-url/key/clinq-environment; 26-op spec may differ from gated siblings. If mock serves spec, diff against apex platypus spec for drifted securityScheme or undocumented paths.
+evidence_needed: GET /swagger/swagger-ui-init.js from mock; byte-compare with apex integration.sipgate.com; extract any new securitySchemes or paths.
+verify_steps: PASSIVE — GET https://mock.integration.sipgate.cloud/swagger/swagger-ui-init.js; if 200, compare against integration.sipgate.com/swagger/swagger-ui-init.js (386538b); diff new/changed operations.
+impact: Blueprint for gated tier's full request surface; no data leak if synthetic; topology disclosure. LOW-MEDIUM.
+testability: PASSIVE
+[HYP] Dev SPA host:port map reveals live dev integration endpoint with ACAO:* CORS
+class: MISCONFIG
+asset: app.dev.sipgate.com main bundle hardcoded hosts
+confidence: 68
+reasoning: bundle hardcodes integration.dev.sipgate.com which responds HTTPS 403 + ACAO:*. This endpoint is in production JS bundle, meaning any user of the dev SPA could interact with it. ACAO:* + 403 suggests Firebase-JWT gate but weaker than prod; may leak headers or accept malformed tokens.
+evidence_needed: Confirm integration.dev.sipgate.com response headers, check for server/version leakage, test OPTIONS preflight behavior.
+verify_steps: PASSIVE — GET/HEAD https://integration.dev.sipgate.com/ + OPTIONS with evil origin; catalog response headers and body.
+impact: Dev endpoint with weaker auth than prod; potential token bypass or info leakage. MEDIUM.
+testability: PASSIVE
+[FINAL] 1. Dev SPA bundle SSRF (72) — verified alive hosts, concrete next steps; PASSIVE
+[FINAL] 2. mock spec diff (58) — spec may differ, blueprint value; PASSIVE
+[FINAL] 3. dev integration endpoint (68) — already confirmed alive with ACAO:*; PASSIVE
+[PARKED] Per-vendor adapter SSRF (50): REJECTED class per KB — nginx Basic 401 enforced before app; x-provider-url does NOT bypass gate; requires creds; already tested and rejected.
+[NEXT] PROBE: `GET https://mock.integration.sipgate.cloud/swagger/swagger-ui-init.js` — confirm public reachability, byte-compare against apex platypus spec (386538b); if 200, diff new/changed operations and securitySchemes. Then `GET https://integration.dev.sipgate.com/` HEAD — catalog full response headers for version/server leakage.
+[LEARN] ACCEPTED INFO @ mock.integration.sipgate.cloud: only ungated *.integration.sipgate.cloud host; /health 200 + /contacts 200 ~8MB synthetic corpus; ACAO:*; x-provider-url/key/clinq-environment advertised in allow-headers; 26-op spec may differ from gated siblings.
+[LEARN] ACCEPTED INFO @ app.dev.sipgate.com bundle: 13+ hardcoded internal host:port pairs; integration.dev.sipgate.com confirmed alive with HTTPS 403 + ACAO:*; 4 generic apiKey refs (analytics); zero Firebase/AIza refs.
+[LEARN] REJECTED AUTH @ *.integration.sipgate.cloud vendor tier: nginx Basic 401 sole gate; OPTIONS 204 passes gate but data GET still 401; x-provider-url does NOT bypass; requires creds.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: per-replica counters (56363 < prior 80373); confirms scale/multi-instance; live Firebase-JWT validator.
+[RISK] sipgate: 52 — Unchanged. Passive on integration family exhausted (apex mapped, vendor tier uniform nginx 401, mock is only ungated member). Dev SPA host:port map extracted but integration.dev is 403-gated; login.dev/team-de.dev/payment.dev inert. All real chains remain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 45, S3 write 55). No standalone unauthenticated critical chain confirmed on any in-scope asset. Next cycle closes mock spec diff and dev endpoint header catalog.
