@@ -420,3 +420,11 @@ www.sipgate.de
 - CHANGED `mock.integration.sipgate.cloud` — 404 on `/swagger/swagger-ui-init.js` but OPTIONS returns permissive CORS with `x-provider-*` headers allowed (distinct from gated siblings)
 
 ## 2026-09-09 09:31:09 UTC
+
+## 2026-09-09 13:50:39 UTC
+- NEW `mock.integration.sipgate.cloud` — ungated Express twin (only *.integration.sipgate.cloud host without nginx Basic-auth); `/health` 200, `/contacts` 200 (~8MB synthetic corpus), `/contacts/search`, `/
+- CHANGED `integration.sipgate.com/metrics` — `firebase_jwt_forbidden_requests` 71929 (+12,871 vs prior 59,058); live Firebase-JWT validator confirmed, per-replica counter incrementing
+- CHANGED `*.integration.sipgate.cloud` (hubspot.integration) — OPTIONS preflight 204 with `ACAO:*` + `ACAC:true` + `allow-headers: x-provider-url,x-provider-key`; data GET with `x-provider-url` header → 401 ng
+- CHANGED `app.dev.sipgate.com` — JS bundle rotated to `main-5xLTM2Hn.js` (2026-09-08); 13+ hardcoded internal host:port pairs including `admin.live.sipgate.net` (prod subdomain), `api.local.sipgate.com:3396`, 
+- CHANGED `grafana.sipgate.cloud` — live Grafana 11.5.1 confirmed via `/api/health` (version leak); login-gated, no anonymous access
+- CHANGED `share1.sipgate.cloud` — dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed; subdomain-takeover candidate (needs HUMAN claim validation)

@@ -905,3 +905,27 @@
 ## RANKED HYPOTHESES 2026-09-09 09:31:09 UTC
 - [25] mock.integration.sipgate.cloud/contacts|/contacts/search|/contacts/export: Mock blueprint SSRF via x-provider-url on ungated Express twin (from art/lead_bigpickle.txt)
 - NEXT(hypotheses-bigpickle.txt): PROBE: no further passive value on integration family (mock proofed non-SSRF, apex/vendor/dev gated or inert). Next cycle re-`GET https://integration.sipgate.co
+
+## RANKED HYPOTHESES 2026-09-09 13:50:39 UTC
+- [80] app.dev.sipgate.com: Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement (from art/lead_nemotron3.txt)
+- [40] admin.dev.sipgate.net: Dev admin/helpdesk alias map reachability (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: OPTIONS/HEAD on 80/443 of 217.116.120.148 (admin.dev.sipgate.net / helpdesk.dev.sipgate.net) and 217.10.73.71 (admin.live.sipgate.net / helpdesk.live.sip
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://app.dev.sipgate.com/assets/main-5xLTM2Hn.js — fetch current JS bundle, extract all hardcoded host:port pairs from source/chunks, DNS-resolve 
+- LEARN: REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed on any method/path; x-provider-url header does not parameterize ou
+- LEARN: REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 ga
+- LEARN: ACCEPTED INFO @ mock.integration.sipgate.cloud: only ungated *.integration.sipgate.cloud host; /health 200 + /contacts 200 ~8MB synthetic corpus; ACAO:*; x-prov
+- LEARN: ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapter tier uniformly behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provi
+- LEARN: ACCEPTED INFO @ sf6.integration CT namespace: 276 *.sipgate.cloud hostnames (146 influxdb monitoring, AWS/hetzner/GCP multicloud, k8s tool clusters, dependency-
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: public FB-JWT gate counters increment live (+12,871); confirms Firebase validator + auth-mechanism drift (spec 
+- LEARN: ACCEPTED MISCONFIG @ grafana.sipgate.cloud: live internet-facing Grafana 11.5.1 (version leaked via /api/health) on AWS LB; login-gated, no anonymous
+- LEARN: ACCEPTED MISCONFIG @ share1.sipgate.cloud: dangling CNAME → external Hetzner StorageShare NXDOMAIN; takeover candidate (needs HUMAN claim validation)
+- LEARN: REJECTED MISCONFIG @ docs.sipgate.cloud family: private GitHub Pages on sipgate-owned `sipgate.github.io` org — authenticated pages, not a public doc leak nor t
+- LEARN: REJECTED AUTH @ dev.integration.sipgate.cloud + test.integration.sipgate.cloud: shared GCP LB but 404-inert hostname routing — no dev twin token source
+- LEARN: REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is 
+- LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reac
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. rev
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scop
+- LEARN: ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/accou
+- LEARN: REJECTED SSRF @ *.integration.sipgate.cloud: OPTIONS preflight (204) + data GET (401) — nginx Basic 401 enforced before app; x-provider-url/x-provider-key heade
+- LEARN: REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 ga
+- LEARN: ACCEPTED INFO @ *.integration.sipgate.cloud breadth: hubspot/zendesk/salesforce deployed (nginx 401), pipeforce/zapier resolve to same LB 35.246.154.68 but conn

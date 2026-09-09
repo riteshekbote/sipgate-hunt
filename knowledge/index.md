@@ -252,3 +252,5 @@
 - 2026-09-09 REJECTED AUTH @ *.integration.sipgate.cloud vendor tier: nginx Basic 401 sole gate; OPTIONS 204 passes gate but data GET still 401; x-provider-url does NOT bypass; requires creds.
 - 2026-09-09 ACCEPTED INFO @ integration.sipgate.com/metrics: per-replica counters (56363 < prior 80373); confirms scale/multi-instance; live Firebase-JWT validator.
 - 2026-09-09 ACCEPTED INFO @ integration.sipgate.com/metrics: public FB-JWT gate counters increment live (+12,871); confirms Firebase validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+- 2026-09-09 REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed on any method/path; x-provider-url header does not parameterize outbound requests.
+- 2026-09-09 REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 gate; no anonymous Firebase-mint.
