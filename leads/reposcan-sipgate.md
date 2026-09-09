@@ -385,3 +385,5 @@ reasoning: playbookLog() executes: cur.execute("INSERT INTO playbook_log (host_p
 impact: LOW — MySQLdb typically still parameterizes the value correctly even with a string, but the code is technically incorrect and may behave unexpectedly.
 verify_steps: 1) Test with a hostPattern containing SQL metacharacters. 2) Verify MySQLdb version handles string-vs-tuple correctly. 3) Check if the bug was fixed in later commits.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-09 17:28:25 UTC
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
