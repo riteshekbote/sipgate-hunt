@@ -17571,3 +17571,442 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: **50** — Unchanged. This cycle moved the apex from "spec-gated unknown" to "fully mapped": public swagger UI + spec confirm every enum (oauth2 client `platypus-swagger`, apiUrl SSRF input, accounts-server selector, debug param, bulk-PII primitives) but every data/OAuth op remains FB-JWT 403 and static assets carry only REJECTED-class OAuth interop. Passive surface on the whole integration family (apex + 94 vendor hosts) is now exhausted: all real chains (vendor SSRF, apiUrl SSRF, callback mint) require an authenticated session (AUTH_HELPED) and share1 requires HUMAN claim. Standing AUTH_HELPED/HUMAN set unchanged: BOLA 50, vendor SSRF 50, apex SSRF 48, share1 45, S3 write 55. No standalone unauthenticated critical chain on any in-scope asset.
+===== ANALYST bigpickle 2026-09-09 00:02:49 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -D /tmp/opencode/redir-hdr.txt -o /tmp/opencode/redir-body.txt "https://integration.sipgate.com/swagger/oauth2-redirect.html"; head -30 /tmp/opencode/redir-hdr.txt; echo "=== BODY HEAD ==="; head -c 1500 /tmp/opencode/redir-body.txt
+HTTP/1.1 200 OK
+accept-ranges: bytes
+access-control-allow-origin: *
+cache-control: public, max-age=0
+content-type: text/html; charset=utf-8
+date: Tue, 08 Sep 2026 23:57:33 GMT
+etag: W/"66-1a07c326a90"
+last-modified: Mon, 07 Sep 2026 14:07:54 GMT
+transfer-encoding: chunked
+
+=== BODY HEAD ===
+<!doctype html>
+<html lang="en-US">
+<body>
+<script src="oauth2-redirect.js"></script>
+</body>
+</html>
+[0m
+[0m$ [0mcurl -s -o /tmp/opencode/redir-oom.html -w "HTTP %{http_code} | size %{size_download} | type %{content_type}\n" "https://integration.sipgate.com/swagger/oauth2-redirect.html" 2>&1; echo "---"; curl -s -o /tmp/opencode/redir-api.html -w "HTTP %{http_code} | size %{size_download} | type %{content_type}\n" "https://api.sipgate.com/v2/doc/oauth2-redirect.html" 2>&1
+HTTP 200 | size 102 | type text/html; charset=utf-8
+---
+HTTP 200 | size 2690 | type text/html; charset=utf-8
+[0m
+[0m$ [0mprintf '%s\n' "=== integration.sipgate.com/swagger/oauth2-redirect.js ==="; cat /tmp/opencode/redir-int.js 2>/dev/null; printf '%s\n' "=== api.sipgate.com/v2/doc/oauth2-redirect.js ==="; cat /tmp/opencode/redir-api.js 2>/dev/null
+=== integration.sipgate.com/swagger/oauth2-redirect.js ===
+"use strict";function run(){var e,r,t,a=window.opener.swaggerUIRedirectOauth2,o=a.state,n=a.redirectUrl;if((t=(r=/code|token|error/.test(window.location.hash)?window.location.hash.substring(1).replace("?","&"):location.search.substring(1)).split("&")).forEach((function(e,r,t){t[r]='"'+e.replace("=",'":"')+'"'})),e=(r=r?JSON.parse("{"+t.join()+"}",(function(e,r){return""===e?r:decodeURIComponent(r)})):{}).state===o,"accessCode"!==a.auth.schema.get("flow")&&"authorizationCode"!==a.auth.schema.get("flow")&&"authorization_code"!==a.auth.schema.get("flow")||a.auth.code)a.callback({auth:a.auth,token:r,isValid:e,redirectUrl:n});else if(e||a.errCb({authId:a.auth.name,source:"auth",level:"warning",message:"Authorization may be unsafe, passed state was changed in server Passed state wasn't returned from auth server"}),r.code)delete a.state,a.auth.code=r.code,a.callback({auth:a.auth,redirectUrl:n});else{let e;r.error&&(e="["+r.error+"]: "+(r.error_description?r.error_description+". ":"no accessCode received from the server. ")+(r.error_uri?"More info: "+r.error_uri:"")),a.errCb({authId:a.auth.name,source:"auth",level:"error",message:e||"[Authorization failed]: no accessCode received from the server"})}window.close()}"loading"!==document.readyState?run():document.addEventListener("DOMContentLoaded",(function(){run()}));=== api.sipgate.com/v2/doc/oauth2-redirect.js ===
+[0m
+[0m$ [0mcurl -s -w "\nHTTP %{http_code} | %{size_download}B\n" "https://integration.sipgate.com/swagger/oauth2-redirect.js" -o /tmp/opencode/redir-int.js; curl -s -w "\nHTTP %{http_code} | %{size_download}B\n" "https://api.sipgate.com/v2/doc/oauth2-redirect.js" -o /tmp/opencode/redir-api.js; echo "=== DIFF (integration vs api) ==="; diff /tmp/opencode/redir-int.js /tmp/opencode/redir-api.js && echo "IDENTICAL"
+HTTP 200 | 1329B
+
+HTTP 200 | 24B
+=== DIFF (integration vs api) ===
+1c1
+< "use strict";function run(){var e,r,t,a=window.opener.swaggerUIRedirectOauth2,o=a.state,n=a.redirectUrl;if((t=(r=/code|token|error/.test(window.location.hash)?window.location.hash.substring(1).replace("?","&"):location.search.substring(1)).split("&")).forEach((function(e,r,t){t[r]='"'+e.replace("=",'":"')+'"'})),e=(r=r?JSON.parse("{"+t.join()+"}",(function(e,r){return""===e?r:decodeURIComponent(r)})):{}).state===o,"accessCode"!==a.auth.schema.get("flow")&&"authorizationCode"!==a.auth.schema.get("flow")&&"authorization_code"!==a.auth.schema.get("flow")||a.auth.code)a.callback({auth:a.auth,token:r,isValid:e,redirectUrl:n});else if(e||a.errCb({authId:a.auth.name,source:"auth",level:"warning",message:"Authorization may be unsafe, passed state was changed in server Passed state wasn't returned from auth server"}),r.code)delete a.state,a.auth.code=r.code,a.callback({auth:a.auth,redirectUrl:n});else{let e;r.error&&(e="["+r.error+"]: "+(r.error_description?r.error_description+". ":"no accessCode received from the server. ")+(r.error_uri?"More info: "+r.error_uri:"")),a.errCb({authId:a.auth.name,source:"auth",level:"error",message:e||"[Authorization failed]: no accessCode received from the server"})}window.close()}"loading"!==document.readyState?run():document.addEventListener("DOMContentLoaded",(function(){run()}));
+\ No newline at end of file
+---
+> <!-- Smoketest - OK -->
+[0m
+[0m$ [0mhead -c 700 /tmp/opencode/redir-oom.html; echo; echo "=== api.html ==="; head -c 1200 /tmp/opencode/redir-api-html.txt 2>/dev/null || curl -s "https://api.sipgate.com/v2/doc/oauth2-redirect.html" | head -c 1200
+<!doctype html>
+<html lang="en-US">
+<body>
+<script src="oauth2-redirect.js"></script>
+</body>
+</html>
+
+=== api.html ===
+<!doctype html>
+<html lang="en-US">
+<head>
+    <title>Swagger UI: OAuth2 Redirect</title>
+</head>
+<body>
+<script>
+    'use strict';
+    function run () {
+        var oauth2 = window.opener.swaggerUIRedirectOauth2;
+        var sentState = oauth2.state;
+        var redirectUrl = oauth2.redirectUrl;
+        var isValid, qp, arr;
+
+        if (/code|token|error/.test(window.location.hash)) {
+            qp = window.location.hash.substring(1);
+        } else {
+            qp = location.search.substring(1);
+        }
+
+        arr = qp.split("&");
+        arr.forEach(function (v,i,_arr) { _arr[i] = '"' + v.replace('=', '":"') + '"';});
+        qp = qp ? JSON.parse('{' + arr.join() + '}',
+                function (key, value) {
+                    return key === "" ? value : decodeURIComponent(value);
+                }
+        ) : {};
+
+        isValid = qp.state === sentState;
+
+        if ((
+          oauth2.auth.schema.get("flow") === "accessCode" ||
+          oauth2.auth.schema.get("flow") === "authorizationCode" ||
+          oauth2.auth.schema.get("flow") === "authorization_code"
+        ) && !oauth2.auth.code) {
+            if (!isValid) {
+                oauth2.errCb({
+[0m
+[0m$ [0mecho "=== share1 CNAME ==="; dig +short share1.sipgate.cloud CNAME; dig +short share1.sipgate.cloud; echo "=== target NXDOMAIN check ==="; dig +short nx38603.your-storageshare.de; echo "=== metrics counter ==="; curl -s --max-time 15 "https://integration.sipgate.com/metrics" | grep -E "firebase_jwt_forbidden_requests|api_key_forbidden_requests|rate_limit_forbidden" | head -5
+=== share1 CNAME ===
+nx38603.your-storageshare.de.
+nx38603.your-storageshare.de.
+=== target NXDOMAIN check ===
+=== metrics counter ===
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 21
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+[0m
+[0m$ [0mecho "=== grafana health ==="; curl -s --max-time 10 "https://grafana.sipgate.cloud/api/health" -o /tmp/opencode/ghealth.txt -w "%{http_code}\n"; head -c 400 /tmp/opencode/ghealth.txt; echo; echo "=== swagger-ui init still public 200? ==="; curl -s -o /dev/null -w "%{http_code} %{size_download}B\n" "https://integration.sipgate.com/swagger/swagger-ui-init.js"
+=== grafana health ===
+200
+{
+  "database": "ok",
+  "version": "11.5.1",
+  "commit": "c6c701cf5be984b088b9d51690b474ab63ca86ff"
+}
+=== swagger-ui init still public 200? ===
+200 386538B
+[0m
+[0m$ [0mcurl -s --max-time 15 "https://integration.sipgate.com/metrics" | grep -aA1 -E "^firebase_jwt_forbidden_requests|^rate_limit_forbidden_requests"
+firebase_jwt_forbidden_requests 70108
+
+--
+rate_limit_forbidden_requests 1163
+[0m
+[0m$ [0mcurl -s --max-time 20 "https://crt.sh/?q=%25.sipgate.cloud&output=json" -o /tmp/opencode/ct.json; python3 -c "
+import json
+try:
+    d=json.load(open('/tmp/opencode/ct.json'))
+except Exception as e:
+    print('parse fail', e); raise SystemExit
+names=set()
+for e in d:
+    for n in (e.get('name_value','') or '').split('\n'):
+        names.add(n.strip().lstrip('*.'))
+print('total unique:', len(names))
+low=[n for n in names if any(k in n.lower() for k in ('dependency','track','oss','sbom','defect','supply','archiv','doc','wiki','kb','nexus','jira','crq','jenkins','gitlab','harbor'))]
+for n in sorted(low): print(n)
+"
+total unique: 275
+bearmetal.docs.sipgate.cloud
+db-etl-archive01-mysql-live.influxdb.sipgate.cloud
+db-jira-mysql-dev.influxdb.sipgate.cloud
+db-jira-mysql-live.influxdb.sipgate.cloud
+dependency-track.prod.pub.gcp.sipgate.cloud
+dependencytrack.dev.sipgate.cloud
+dependencytrack.prod.sipgate.cloud
+dependencytrack.sipgate.cloud
+docs.sipgate.cloud
+hi-iti.docs.sipgate.cloud
+iti-service-crossdc-db-dev.influxdb.sipgate.cloud
+iti-service-crossdc-db-live.influxdb.sipgate.cloud
+nautilus.docs.sipgate.cloud
+quickbooks.integration.sipgate.cloud
+tech-docusaurus.docs.sipgate.cloud
+tech.docs.sipgate.cloud
+telco.docs.sipgate.cloud
+youtrack-slackbot.dev.gcp.sipgate.cloud
+[0m
+[0m$ [0mfor h in dependencytrack.sipgate.cloud dependencytrack.prod.sipgate.cloud dependencytrack.dev.sipgate.cloud dependency-track.prod.pub.gcp.sipgate.cloud; do
+  echo "=== $h ==="
+  curl -s -o /tmp/opencode/dt-$h.txt -w "root: %{http_code} %{size_download}B ct=%{content_type}\n" --max-time 10 "https://$h/" 
+  curl -s --max-time 10 "https://$h/api/version" | head -c 120; echo
+done
+=== dependencytrack.sipgate.cloud ===
+root: 000 0B ct=
+
+=== dependencytrack.prod.sipgate.cloud ===
+root: 000 0B ct=
+
+=== dependencytrack.dev.sipgate.cloud ===
+root: 000 0B ct=
+
+=== dependency-track.prod.pub.gcp.sipgate.cloud ===
+root: 000 0B ct=
+[0m
+[0m$ [0mfor h in dependencytrack.sipgate.cloud dependencytrack.prod.sipgate.cloud dependencytrack.dev.sipgate.cloud dependency-track.prod.pub.gcp.sipgate.cloud quickbooks.integration.sipgate.cloud; do
+  echo "=== $h ==="; dig +short "$h" | head -3
+done
+=== dependencytrack.sipgate.cloud ===
+=== dependencytrack.prod.sipgate.cloud ===
+=== dependencytrack.dev.sipgate.cloud ===
+=== dependency-track.prod.pub.gcp.sipgate.cloud ===
+=== quickbooks.integration.sipgate.cloud ===
+35.246.154.68
+[0m
+[0m$ [0mecho "=== quickbooks gate ==="; curl -s -o /dev/null -w "GET: %{http_code}\n" --max-time 10 "https://quickbooks.integration.sipgate.cloud/swagger/swagger-ui-init.js"; curl -s -o /dev/null -w "OPTIONS: %{http_code}\n" -X OPTIONS --max-time 10 -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: x-provider-key,x-provider-url" "https://quickbooks.integration.sipgate.cloud/swagger/swagger-ui-init.js"
+=== quickbooks gate ===
+GET: 000
+OPTIONS: 000
+[0m
+[0m$ [0mpython3 -c "
+import json
+d=json.load(open('/tmp/opencode/ct.json'))
+names=set()
+for e in d:
+    for n in (e.get('name_value','') or '').split('\n'):
+        names.add(n.strip().lstrip('*.'))
+vendors=sorted(n for n in names if n.endswith('.integration.sipgate.cloud'))
+print('integration.sipgate.cloud hosts in CT:', len(vendors))
+print(', '.join(vendors))
+"
+integration.sipgate.cloud hosts in CT: 94
+actaport.integration.sipgate.cloud, activecampaign.integration.sipgate.cloud, agilecrm.integration.sipgate.cloud, apollo.integration.sipgate.cloud, apptivo.integration.sipgate.cloud, attio.integration.sipgate.cloud, bitrix24.integration.sipgate.cloud, brevo.integration.sipgate.cloud, central-station-crm.integration.sipgate.cloud, centralplanner.integration.sipgate.cloud, cituro.integration.sipgate.cloud, civicrm.integration.sipgate.cloud, close.integration.sipgate.cloud, closecrm.integration.sipgate.cloud, contactplus.integration.sipgate.cloud, copper.integration.sipgate.cloud, crmnow.integration.sipgate.cloud, daylite.integration.sipgate.cloud, dev-activecampaign.integration.sipgate.cloud, dev-bitrix24.integration.sipgate.cloud, dev-central-station-crm.integration.sipgate.cloud, dev-close.integration.sipgate.cloud, dev-easybill.integration.sipgate.cloud, dev-moco.integration.sipgate.cloud, dev-odoo.integration.sipgate.cloud, dev-propstack.integration.sipgate.cloud, dev-sevdesk.integration.sipgate.cloud, dev-weclapp.integration.sipgate.cloud, dev-zammad.integration.sipgate.cloud, dev-zendesk.integration.sipgate.cloud, dev-zohodesk.integration.sipgate.cloud, dev.freshsales.integration.sipgate.cloud, dev.integration.sipgate.cloud, easybill.integration.sipgate.cloud, espocrm.integration.sipgate.cloud, fincrm.integration.sipgate.cloud, flowfact.integration.sipgate.cloud, freshchat.integration.sipgate.cloud, freshdesk.integration.sipgate.cloud, freshsales.integration.sipgate.cloud, freshservice.integration.sipgate.cloud, google.integration.sipgate.cloud, groupoffice.integration.sipgate.cloud, hellohq.integration.sipgate.cloud, helpscout.integration.sipgate.cloud, hero.integration.sipgate.cloud, hubspot.integration.sipgate.cloud, intercom.integration.sipgate.cloud, inwendo.integration.sipgate.cloud, kommo.integration.sipgate.cloud, legacy-mock.integration.sipgate.cloud, lexoffice.integration.sipgate.cloud, microsoftdynamics.integration.sipgate.cloud, mock.integration.sipgate.cloud, moco.integration.sipgate.cloud, monday.integration.sipgate.cloud, msdynamics.integration.sipgate.cloud, nextcloud.integration.sipgate.cloud, ninox.integration.sipgate.cloud, odoo.integration.sipgate.cloud, orgamax.integration.sipgate.cloud, outlook.integration.sipgate.cloud, papierkram.integration.sipgate.cloud, pipedrive.integration.sipgate.cloud, prometheus.integration.sipgate.cloud, propstack.integration.sipgate.cloud, quickbooks.integration.sipgate.cloud, reallysimplesystems.integration.sipgate.cloud, recruitcrm.integration.sipgate.cloud, rentman.integration.sipgate.cloud, salesforce.integration.sipgate.cloud, scopevisio.integration.sipgate.cloud, sevdesk.integration.sipgate.cloud, shopify.integration.sipgate.cloud, shopware.integration.sipgate.cloud, sipgate.integration.sipgate.cloud, slack.integration.sipgate.cloud, smartwe.integration.sipgate.cloud, solarwinds-servicedesk.integration.sipgate.cloud, suitecrm.integration.sipgate.cloud, superchat.integration.sipgate.cloud, superoffice.integration.sipgate.cloud, teamgrid.integration.sipgate.cloud, teamleader.integration.sipgate.cloud, test.integration.sipgate.cloud, vtiger.integration.sipgate.cloud, weclapp.integration.sipgate.cloud, wiso-meinbuero.integration.sipgate.cloud, xentral.integration.sipgate.cloud, zammad.integration.sipgate.cloud, zapier.integration.sipgate.cloud, zendesk.integration.sipgate.cloud, zoho.integration.sipgate.cloud, zohodesk.integration.sipgate.cloud
+[0m
+[0m$ [0mfor h in prometheus.integration.sipgate.cloud mock.integration.sipgate.cloud dev-odoo.integration.sipgate.cloud sipgate.integration.sipgate.cloud; do
+  echo "=== $h ==="
+  curl -s -o /dev/null -w "root: %{http_code}\n" --max-time 8 "https://$h/" 2>&1
+  curl -s -o /dev/null -w "metrics: %{http_code}\n" --max-time 8 "https://$h/metrics" 2>&1
+done
+=== prometheus.integration.sipgate.cloud ===
+root: 000
+metrics: 000
+=== mock.integration.sipgate.cloud ===
+root: 404
+metrics: 404
+=== dev-odoo.integration.sipgate.cloud ===
+root: 000
+metrics: 000
+=== sipgate.integration.sipgate.cloud ===
+root: 000
+metrics: 000
+[0m
+[0m$ [0mfor p in /swagger/swagger-ui-init.js /v3/api-docs /swagger.json /openapi.json /api-docs /health /v1/health /actuator/health /metrics/prometheus; do
+  code=$(curl -s -o /tmp/opencode/mock.txt -w "%{http_code}" --max-time 8 "https://mock.integration.sipgate.cloud$p" 2>&1)
+  echo "$code  $p  ($(wc -c < /tmp/opencode/mock.txt)B)"
+done
+404  /swagger/swagger-ui-init.js  (165B)
+404  /v3/api-docs  (150B)
+404  /swagger.json  (151B)
+404  /openapi.json  (151B)
+404  /api-docs  (147B)
+200  /health  (2B)
+404  /v1/health  (148B)
+404  /actuator/health  (154B)
+404  /metrics/prometheus  (157B)
+[0m
+[0m$ [0mecho "=== /health ==="; curl -s -D - --max-time 8 "https://mock.integration.sipgate.cloud/health" | head -20
+echo; echo "=== / (404 body) ==="; curl -s --max-time 8 "https://mock.integration.sipgate.cloud/" 
+echo; echo "=== /openapi.json (404 body) ==="; curl -s --max-time 8 "https://mock.integration.sipgate.cloud/openapi.json"
+=== /health ===
+HTTP/2 200 
+date: Tue, 08 Sep 2026 23:58:48 GMT
+content-type: text/plain; charset=utf-8
+content-length: 2
+x-powered-by: Express
+vary: Origin, Accept-Encoding
+access-control-allow-credentials: true
+etag: W/"2-nOO9QiTIwXgNtWtBJezz8kv3SLc"
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type
+access-control-max-age: 1728000
+
+OK
+=== / (404 body) ===
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot GET /</pre>
+</body>
+</html>
+
+=== /openapi.json (404 body) ===
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot GET /openapi.json</pre>
+</body>
+</html>
+[0m
+[0m$ [0mfor p in /status /ping /info /v1 /v2 /chat /session /oauth2 /users /contacts /api /api/v1 /health/live /health/ready /; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 6 "https://mock.integration.sipgate.cloud$p")
+  printf "%s  %s\n" "$code" "$p"
+done
+404  /status
+404  /ping
+404  /info
+404  /v1
+404  /v2
+404  /chat
+404  /session
+404  /oauth2
+404  /users
+000  /contacts
+404  /api
+404  /api/v1
+404  /health/live
+404  /health/ready
+404  /
+[0m
+[0m$ [0mecho "=== OPTIONS /contacts ==="; curl -s -D - -o /dev/null --max-time 8 -X OPTIONS -H "Origin: https://test.example" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: x-provider-url,x-provider-key,x-clinq-environment" "https://mock.integration.sipgate.cloud/contacts" | head -15
+echo "=== GET /contacts x3 timing ==="
+for i in 1 2 3; do curl -s -o /dev/null -w "run$i: %{http_code} %{time_total}s\n" --max-time 12 "https://mock.integration.sipgate.cloud/contacts"; done
+=== OPTIONS /contacts ===
+HTTP/2 204 
+date: Tue, 08 Sep 2026 23:59:09 GMT
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-credentials: true
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type
+access-control-max-age: 1728000
+
+=== GET /contacts x3 timing ===
+run1: 200 2.762687s
+run2: 200 2.069779s
+run3: 200 2.208982s
+[0m
+[0m$ [0mecho "=== GET /contacts body ==="; curl -s --max-time 15 -w "\n[%{http_code} %{time_total}s]\n" "https://mock.integration.sipgate.cloud/contacts"
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_0837674b6001AtmhlnkJMR3sdi
+
+
+[200 11.987042s]
+[0m
+[0m$ [0mwc -c /home/runner/.local/share/opencode/tool-output/tool_0837674b6001AtmhlnkJMR3sdi; head -c 3000 /home/runner/.local/share/opencode/tool-output/tool_0837674b6001AtmhlnkJMR3sdi
+8197934 /home/runner/.local/share/opencode/tool-output/tool_0837674b6001AtmhlnkJMR3sdi
+=== GET /contacts body ===
+[{"id":"mock_id_0","name":"Anna Andersen","firstName":"Anna","lastName":"Andersen","email":"anna.andersen@apple.de","organization":"Apple","contactUrl":"https://www.example.com/organization/7J1ga1KxqqivKJ93sqpEpGLzK7X4uYue/addressbook/kGEzCgx5JTDFLc2GdvYpURGkpXpnDQ5E/contact/mock_id_0","avatarUrl":"https://picsum.photos/200.webp?random=Anna","readonly":false,"phoneNumbers":[{"label":"MOBILE","type":"STANDARD","e164":"+493023125000","localized":"030 23125000","phoneNumber":"+493023125000"},{"label":"HOME","type":"STANDARD","e164":"+493023125000","localized":"030 23125000","phoneNumber":"+493023125000"},{"label":"WORK","type":"STANDARD","e164":"+493023125000","localized":"030 23125000","phoneNumber":"+493023125000"}],"type":"contacts","relatesTo":[],"scope":"SHARED"},{"id":"mock_id_1","name":"Bernd Bauer","firstName":"Bernd","lastName":"Bauer","email":"bernd.bauer@bosch.de","organization":"Bosch","contactUrl":"https://www.example.com/organization/7J1ga1KxqqivKJ93sqpEpGLzK7X4uYue/addressbook/kGEzCgx5JTDFLc2GdvYpURGkpXpnDQ5E/contact/mock_id_1","avatarUrl":"https://picsum.photos/200.webp?random=Bernd","readonly":false,"phoneNumbers":[{"label":"MOBILE","type":"STANDARD","e164":"+493023125001","localized":"030 23125001","phoneNumber":"+493023125001"},{"label":"HOME","type":"STANDARD","e164":"+493023125001","localized":"030 23125001","phoneNumber":"+493023125001"},{"label":"WORK","type":"STANDARD","e164":"+493023125001","localized":"030 23125001","phoneNumber":"+493023125001"}],"type":"contacts","relatesTo":[{"id":"deal_352","type":"deals","source":"MOCK"}],"scope":"SHARED"},{"id":"mock_id_2","name":"Carla Cohen","firstName":"Carla","lastName":"Cohen","email":"carla.cohen@cisco.de","organization":"Cisco","contactUrl":"https://www.example.com/organization/7J1ga1KxqqivKJ93sqpEpGLzK7X4uYue/addressbook/kGEzCgx5JTDFLc2GdvYpURGkpXpnDQ5E/contact/mock_id_2","avatarUrl":"https://picsum.photos/200.webp?random=Carla","readonly":false,"phoneNumbers":[{"label":"MOBILE","type":"STANDARD","e164":"+493023125002","localized":"030 23125002","phoneNumber":"+493023125002"},{"label":"HOME","type":"STANDARD","e164":"+493023125002","localized":"030 23125002","phoneNumber":"+493023125002"},{"label":"WORK","type":"STANDARD","e164":"+493023125002","localized":"030 23125002","phoneNumber":"+493023125002"}],"type":"contacts","relatesTo":[{"id":"deal_959","type":"deals","source":"MOCK"}],"scope":"SHARED"},{"id":"mock_id_3","name":"David Dresdner","firstName":"David","lastName":"Dresdner","email":"david.dresdner@daimler.de","organization":"Daimler","contactUrl":"https://www.example.com/organization/7J1ga1KxqqivKJ93sqpEpGLzK7X4uYue/addressbook/kGEzCgx5JTDFLc2GdvYpURGkpXpnDQ5E/contact/mock_id_3","avatarUrl":"https://picsum.photos/200.webp?random=David","readonly":false,"phoneNumbers":[{"label":"MOBILE","type":"STANDARD","e164":"+493023125003","localized":"030 23125003","phoneNumber":"+493023125003"},{"label":"HOME","type":"STANDARD","e164":"+493023125003","lo
+[0m
+[0m$ [0mfor p in /deals /tasks /call-logs /account /users/me /user /webhooks /stream /auth /login /info /version /healthz /graphql /v1/contacts /v2/contacts /addressbooks /organizations /sipgate/calls /sipgate/contacts; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" -I --max-time 8 --request HEAD "https://mock.integration.sipgate.cloud$p")
+  printf "%s  %s\n" "$code" "$p"
+done
+404  /deals
+404  /tasks
+404  /call-logs
+404  /account
+404  /users/me
+404  /user
+404  /webhooks
+404  /stream
+404  /auth
+404  /login
+404  /info
+404  /version
+404  /healthz
+404  /graphql
+404  /v1/contacts
+404  /v2/contacts
+404  /addressbooks
+404  /organizations
+404  /sipgate/calls
+404  /sipgate/contacts
+[0m
+[0m$ [0mfor h in legacy-mock.integration.sipgate.cloud mock.integration.sipgate.cloud; do
+  echo "=== $h ==="
+  curl -s -o /dev/null -w "root %{http_code}\n" --max-time 8 "https://$h/"
+  curl -s -o /dev/null -w "health %{http_code}\n" --max-time 8 "https://$h/health"
+  curl -s -o /dev/null -W "contacts-head %{http_code}\n" -I --max-time 10 --request HEAD "https://$h/contacts"
+done
+=== legacy-mock.integration.sipgate.cloud ===
+root 000
+health 000
+curl: option -W: is unknown
+curl: try 'curl --help' or 'curl --manual' for more information
+=== mock.integration.sipgate.cloud ===
+root 404
+health 200
+curl: option -W: is unknown
+curl: try 'curl --help' or 'curl --manual' for more information
+[0m
+[0m$ [0mecho "B1: x-provider-url=127.0.0.1:1"; curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 15 -H "x-provider-url: http://127.0.0.1:1/" "https://mock.integration.sipgate.cloud/contacts"; echo "B2: x-provider-url=same-origin health"; curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 15 -H "x-provider-url: http://mock.integration.sipgate.cloud/health" "https://mock.integration.sipgate.cloud/contacts"; echo "B3: baseline (no header)"; curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 15 "https://mock.integration.sipgate.cloud/contacts"
+B1: x-provider-url=127.0.0.1:1
+200 13.338394s
+B2: x-provider-url=same-origin health
+200 2.711213s
+B3: baseline (no header)
+200 2.298029s
+[0m
+[0m$ [0mfor q in "?limit=1" "?count=1" "?size=1"; do code=$(curl -s -o /tmp/opencode/mockq.txt -w "%{http_code}" --max-time 10 "https://mock.integration.sipgate.cloud/contacts$q"); echo "$code bytes=$(wc -c < /tmp/opencode/mockq.txt) q=$q"; done
+200 bytes=8197997 q=?limit=1
+200 bytes=8197947 q=?count=1
+200 bytes=8197947 q=?size=1
+[0m
+## STEP 1 — DELTA
+- NEW `mock.integration.sipgate.cloud`: live mock twin of the CLINQ/Platypus adapter tier — Express app (`x-powered-by: Express`), `/health` 200 "OK", `/contacts` 200 ~8MB synthetic corpus (`mock_id_*`, `.example.com`, picsum). **The only one of the 95 *.integration.sipgate.cloud hosts reachable WITHOUT the nginx Basic-401 gate** (404s are app-level `Cannot GET` HTML, no `WWW-Authenticate: Basic`). CORS `ACAO:*` + `ACAC:true` + `allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type` — advertises the exact SSRF-familiar request surface the gated tier keeps behind auth.
+- NEW `integration.sipgate.com/swagger/oauth2-redirect.{html,js}` (both 200, ACAO:*): html 102B loads `oauth2-redirect.js` (1329B = full stock swagger-ui handler, unconditional `window.opener.swaggerUIRedirectOauth2` + `window.close()`) vs api.sipgate.com/v2/doc/oauth2-redirect.js = 24B `Smoketest - OK` placeholder (inline pretty variant). Same REJECTED class as KB api.v2/doc, packaging differs.
+- CHANGED `integration.sipgate.com/metrics`: `firebase_jwt_forbidden_requests 70108` (+1050/2h), `api_key_forbidden_requests 21` (was 6), `rate_limit_forbidden_requests 1163` (was 2500, per-replica reset) — validator live, replica churn.
+- CHANGED CT re-enum (275 unique): `dependencytrack.{sipgate,prod,dev}.sipgate.cloud` + `dependency-track.prod.pub.gcp` all NXDOMAIN (inert, CT-historical); `quickbooks.integration.sipgate.cloud` resolves to LB 35.246.154.68 but HTTP 000 (not deployed); `share1.sipgate.cloud` CNAME→`nx38603.your-storageshare.de` still NXDOMAIN; grafana 11.5.1 `/api/health` stable.
+
+## STEP 2 — PRIORITIZE
+- [PRIO] mock.integration.sipgate.cloud,5.95,surface(2 routes)/biz(adapter API blueprint+topology)/tech(Express, x-provider-url/key + x-clinq-environment headers, ungated tier twin)/gate(10: NO auth)/cloud(GCP LB)/fresh(new)
+- [PRIO] *.integration.sipgate.cloud (94),7.10,surface(94)/biz(CRM PII)/tech(SSRF x-provider-url/key)/gate(nginx Basic 401)/cloud(GCP)/fresh(stable)
+- [PRIO] integration.sipgate.com apex,6.00,surface(spec+metrics+swagger UI public)/biz(SSRF apiUrl+accounts-server)/tech(Firebase-vs-Keycloak drift, oauth2-redirect mapped)/gate(FB-JWT 403)/cloud(GCP)/fresh(stable)
+- [PRIO] share1.sipgate.cloud,5.10,surface(1)/biz(phishing)/tech(dangling CNAME Hetzner)/gate(9 once claimed)/cloud(Hetzner)/fresh(stable)
+
+## STEP 3 — HYPOTHESES
+[HYP] Ungated mock adapter twin exposes the gated adapter tier's full request surface cross-origin
+class: MISCONFIG
+asset: mock.integration.sipgate.cloud (/health, /contacts)
+confidence: 55
+reasoning: only *.integration.sipgate.cloud host without nginx Basic 401; /health 200 "OK" + /contacts 200 ~8MB synthetic corpus public (no auth, ACAO:*); allow-headers advertise x-provider-url/x-provider-key/x-clinq-environment (clinq-bridge-sipgate org already in KB); 404s are Express `Cannot GET`, confirming app-level routing with no edge gate; 24 sibling adapter hosts (hubspot/zendesk/salesforce) sit behind nginx 401.
+evidence_needed: confirm no /contacts delta with x-provider-url variations (SSRF on mock = blueprint for gated tier); determine if corpus is static generated (mock_*) — verified synthetic now.
+verify_steps: done — HEAD/GET /contacts+impactless URI variants; timing dominated by ~8MB generation (2.3–13.3s), no fetch delta observable; query params ignore (limit/count/size → same bytes).
+impact: adapter API surface + authz-gap topology disclosure (a per-hostname gate was missed on `mock`), blueprint for AUTH_HELPED SSRF staging on gated siblings; synthetic data only. LOW-MEDIUM.
+testability: PASSIVE
+[HYP] Per-vendor adapter SSRF via x-provider-url header injection
+class: SSRF
+asset: *.integration.sipgate.cloud (hubspot/zendesk/salesforce.integration — GCP LB 35.246.154.68)
+confidence: 50
+reasoning: nginx Basic 401 sole gate (OPTIONS 204 [ACAO:* + allow-headers x-provider-url/key]); headers do NOT bypass; every spec/data path 401. App-layer SSRF reachable only with valid Basic cred or apex Firebase JWT. Ungated `mock` twin now proves the same headers drive the adapter request path.
+evidence_needed: 200/204 on vendor data path with provider-key; then x-provider-url → internal fetch delta.
+verify_steps: AUTH_HELPED — OPTIONS recon, then GET with Basic/JWT + `x-provider-url=http://127.0.0.1:1/` vs benign, compare.
+impact: CRM contacts/call-logs PII + SSRF to cloud metadata if unvalidated. HIGH.
+testability: AUTH_HELPED
+[HYP] Apex SSRF via users.integrations.create apiUrl + accounts-server selector
+class: SSRF
+asset: integration.sipgate.com POST /users.integrations.create; GET /oauth2/callback?accounts-server=
+confidence: 48
+reasoning: spec finalizes `apiUrl` free-form (required `key`+`integrationName`); undocumented `accounts-server` backend-selector on oauth2/callback; both attacker-influenced fetcher inputs; both behind FB-JWT 403 (callback uniform 403 incl fabricated code/state).
+evidence_needed: authentic session → FB JWT → POST create w/ apiUrl → observe outbound fetch; vary accounts-server on callback.
+verify_steps: AUTH_HELPED — with session: /oauth2/redirect → implicit flow → POST create {integrationName:"X",key:"y",apiUrl:"http://127.0.0.1:1/"} → 204/400 delta + metrics counter movement.
+impact: SSRF to cloud metadata / internal backend selection. HIGH if gate passed.
+testability: AUTH_HELPED
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] integration./swagger/oauth2-redirect.js token-theft: stock swagger-ui handler, unconditional `window.opener` read → cross-origin SecurityError, same REJECTED class as api.v2/doc (KB 2026-09-06/07). Only same-origin-XSS amplifier.
+- [PARKED] dependencytrack*.sipgate.cloud (4 names): all NXDOMAIN — CT-historical, inert. No live DT supply-chain surface.
+- [PARKED] quickbooks/legacy-mock.integration + dev-* twins: DNS→LB but HTTP 000 (not deployed); mock SSRF-via-timing: 2.3/2.7/13.3s spread within generation noise — fetch not demonstrated, conf ≤40 on SSRF specifically.
+- [FINAL] 1. mock ungated adapter surface/blueprint (55, PASSIVE); 2. per-vendor adapter SSRF x-provider-url (50, AUTH_HELPED); 3. apex SSRF apiUrl/accounts-server (48, AUTH_HELPED); 4. share1 dangling CNAME (45, HUMAN_ONLY). Grafana known-vuln (40) = REJECTED class.
+
+## STEP 5 — NEXT ACTION
+[NEXT] PROBE: `GET https://mock.integration.sipgate.cloud/swagger/swagger-ui-init.js` (spec may differ from gated siblings on a route not on the 8MB path) — if 200, diff platform scope against apex platypus spec for drifted securityScheme.
+
+## STEP 6 — LEARNING
+- [LEARN] ACCEPTED MISCONFIG @ mock.integration.sipgate.cloud: ungated Express mock twin (only *.integration.sipgate.cloud host w/o nginx Basic) — public /health + /contacts (8MB synthetic corpus, mock_id_*, .example.com), ACAO:* + ACAC:true + allow-headers x-provider-{locale,url,key},x-clinq-environment; exposes gated tier's adapter request surface + per-hostname gate miss. Synthetic-only, no real PII.
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com/swagger/oauth2-redirect.html: html/js public (200, ACAO:*), full stock swagger-ui oauth2 redirect handler; api.v2/doc redirect.js is a 24B Smoketest placeholder — same handler class, different packaging; inert cross-origin (REJECTED class).
+- [LEARN] REJECTED OTHER @ dependencytrack.{sipgate,prod,dev}.sipgate.cloud + dependency-track.prod.pub.gcp.sipgate.cloud: all NXDOMAIN — CT-historical names, no live dependency-track surface.
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt 70108 (+1050/2h), api_key_forbidden 21, rate_limit_forbidden 1163 (reset per replica) — validator live + churn.
+- [LEARN] REJECTED OTHER @ mock.integration.sipgate.cloud SSRF: x-provider-url variants (127.0.0.1:1 / same-origin / none) → 200, 2.3–13.3s spread within 8MB generation noise — no server-side fetch signal; params (limit/count/size) ignored.
+
+## STEP 7 — RISK
+[RISK] sipgate: **50** — Unchanged. Passive on the whole integration family is now genuinely exhausted (apex static map + redirect byte-compare closed; vendor tier uniform nginx 401; only ungated member is the synthetic-data mock twin — info/topology value, blueprint for the standing AUTH_HELPED SSRF bundle). All real chains remain gated: BOLA 50/AUTH, vendor SSRF 50/AUTH, apex apiUrl SSRF 48/AUTH, mock blueprint 55 (info), share1 CNAME 45/HUMAN, S3 write 55/HUMAN. No standalone unauthenticated critical chain confirmed on any in-scope asset.

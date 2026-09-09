@@ -855,3 +855,24 @@
 - LEARN: REJECTED SSRF @ *.integration.sipgate.cloud: OPTIONS preflight (204) + data GET (401) — nginx Basic 401 enforced before app; x-provider-url/x-provider-key heade
 - LEARN: REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 ga
 - LEARN: ACCEPTED INFO @ *.integration.sipgate.cloud breadth: hubspot/zendesk/salesforce deployed (nginx 401), pipeforce/zapier resolve to same LB 35.246.154.68 but conn
+
+## RANKED HYPOTHESES 2026-09-09 00:02:49 UTC
+- [75] app.dev.sipgate.com: Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement (from art/lead_nemotron3.txt)
+- [55] mock.integration.sipgate.cloud: Ungated mock adapter twin exposes the gated adapter tier's full request surface cross-origin (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: `GET https://mock.integration.sipgate.cloud/swagger/swagger-ui-init.js` (spec may differ from gated siblings on a route not on the 8MB path) — if 200, di
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://app.dev.sipgate.com/assets/main-5xLTM2Hn.js — fetch current JS bundle, extract all hardcoded host:port pairs from source/chunks, DNS-resolve 
+- LEARN: ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapter tier uniformly behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provi
+- LEARN: ACCEPTED INFO @ sf6.integration CT namespace: 276 *.sipgate.cloud hostnames (146 influxdb monitoring, AWS/hetzner/GCP multicloud, k8s tool clusters, dependency-
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: public FB-JWT gate counters increment live (+12,685); confirms Firebase validator + auth-mechanism drift (spec 
+- LEARN: ACCEPTED MISCONFIG @ grafana.sipgate.cloud: live internet-facing Grafana 11.5.1 (version leaked via /api/health) on AWS LB; login-gated, no anonymous
+- LEARN: ACCEPTED MISCONFIG @ share1.sipgate.cloud: dangling CNAME → external Hetzner StorageShare NXDOMAIN; takeover candidate (needs HUMAN claim validation)
+- LEARN: REJECTED MISCONFIG @ docs.sipgate.cloud family: private GitHub Pages on sipgate-owned `sipgate.github.io` org — authenticated pages, not a public doc leak nor t
+- LEARN: REJECTED AUTH @ dev.integration.sipgate.cloud + test.integration.sipgate.cloud: shared GCP LB but 404-inert hostname routing — no dev twin token source
+- LEARN: REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is 
+- LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reac
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. rev
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scop
+- LEARN: ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/accou
+- LEARN: REJECTED SSRF @ *.integration.sipgate.cloud: OPTIONS preflight (204) + data GET (401) — nginx Basic 401 enforced before app; x-provider-url/x-provider-key heade
+- LEARN: REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 ga
+- LEARN: ACCEPTED INFO @ *.integration.sipgate.cloud breadth: hubspot/zendesk/salesforce deployed (nginx 401), pipeforce/zapier resolve to same LB 35.246.154.68 but conn

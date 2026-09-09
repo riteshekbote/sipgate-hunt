@@ -402,3 +402,12 @@ www.sipgate.de
 - CHANGED `*.integration.sipgate.cloud` (hubspot.integration) — OPTIONS preflight 204 with `ACAO:*` + `ACAC:true` + `allow-headers: x-provider-url,x-provider-key`; data GET with `x-provider-url` header → 401 ng
 - CHANGED `integration.sipgate.com/swagger/swagger-ui-init.js` — embedded spec confirms `/oauth2/redirect` + `/oauth2/callback` with NO security requirement; `users.integrations.create` accepts free-form `apiUr
 - CHANGED `app.dev.sipgate.com` bundle contains 4 generic `apiKey` refs (analytics libs), zero Firebase/AIza/identitytoolkit — token source not in public SPA
+
+## 2026-09-09 00:02:49 UTC
+- NEW `app.dev.sipgate.com` JS bundle rotated to `main-5xLTM2Hn.js` — 13+ new hardcoded internal hosts extracted: `admin.live.sipgate.net`, `api.local.sipgate.com:3396`, `app.local.sipgate.com:3443`, `payme
+- NEW `share1.sipgate.cloud` dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed — subdomain-takeover candidate
+- NEW `grafana.sipgate.cloud` live Grafana 11.5.1 confirmed via `/api/health` — login-gated, no anonymous
+- CHANGED `integration.sipgate.com/metrics` `firebase_jwt_forbidden_requests` 69058 (+12,685 vs prior 56,363) — live Firebase-JWT validator confirmed, per-replica counter
+- CHANGED `*.integration.sipgate.cloud` (hubspot.integration) — OPTIONS preflight 204 with `ACAO:*` + `ACAC:true` + `allow-headers: x-provider-url,x-provider-key`; data GET with `x-provider-url` header → 401 ng
+- CHANGED `integration.sipgate.com/swagger/swagger-ui-init.js` — embedded spec confirms `/oauth2/redirect` + `/oauth2/callback` with NO security requirement; `users.integrations.create` accepts free-form `apiUr
+- CHANGED `app.dev.sipgate.com` bundle contains 4 generic `apiKey` refs (analytics libs), zero Firebase/AIza/identitytoolkit — token source not in public SPA

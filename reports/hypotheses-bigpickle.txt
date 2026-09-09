@@ -1,41 +1,30 @@
-## 2026-09-08 21:45:55 UTC [target] (model bigpickle)
-[PRIO] *.integration.sipgate.cloud (94 hosts),7.35,surface(94)+biz(CRM PII)+tech(OAuth implicit+SSRF x-provider-url/key)/gate(nginx Basic 401)/cloud(GCP LB+Hetzner)/fresh(spec-extract cycle)
-[PRIO] integration.sipgate.com apex,6.60,surface(spec+metrics+swagger UI public)/biz(SSRF apiUrl+accounts-server+debug)/tech(Firebase-vs-Keycloak drift,OAuth implicit platypus-swagger)/gate(FB-JWT 403)/cloud(GCP)
-[PRIO] share1.sipgate.cloud,4.65,surface(1)/biz(phishing)/tech(dangling CNAME Hetzner)/gate(no gate once claimed)/cloud(Hetzner)/fresh(new)
+## 2026-09-09 00:02:26 UTC [target] (model bigpickle)
+[HYP] Ungated mock adapter twin exposes the gated adapter tier's full request surface cross-origin
+class: MISCONFIG
+asset: mock.integration.sipgate.cloud (/health, /contacts)
+confidence: 55
+reasoning: only *.integration.sipgate.cloud host without nginx Basic 401; /health 200 "OK" + /contacts 200 ~8MB synthetic corpus public (no auth, ACAO:*); allow-headers advertise x-provider-url/x-provider-key/x-clinq-environment (clinq-bridge-sipgate org already in KB); 404s are Express `Cannot GET`, confirming app-level routing with no edge gate; 24 sibling adapter hosts (hubspot/zendesk/salesforce) sit behind nginx 401.
+evidence_needed: confirm no /contacts delta with x-provider-url variations (SSRF on mock = blueprint for gated tier); determine if corpus is static generated (mock_*) — verified synthetic now.
+verify_steps: done — HEAD/GET /contacts+impactless URI variants; timing dominated by ~8MB generation (2.3–13.3s), no fetch delta observable; query params ignore (limit/count/size → same bytes).
+impact: adapter API surface + authz-gap topology disclosure (a per-hostname gate was missed on `mock`), blueprint for AUTH_HELPED SSRF staging on gated siblings; synthetic data only. LOW-MEDIUM.
+testability: PASSIVE
 [HYP] Per-vendor adapter SSRF via x-provider-url header injection
 class: SSRF
 asset: *.integration.sipgate.cloud (hubspot/zendesk/salesforce.integration — GCP LB 35.246.154.68)
 confidence: 50
-reasoning: nginx Basic 401 is the sole gate (OPTIONS preflight passes with ACAO:* + allow-headers x-provider-{locale,region,language,url,key,content-type}); x-provider-url/key headers do NOT bypass it; every spec/data path 401. App-layer SSRF reachable only with a valid Basic credential or apex-issued Firebase JWT. Keep pending authenticated session.
-evidence_needed: 200/204 on a vendor data path with provider-key; then vary x-provider-url → observe internal fetch (e.g., 169.254.169.254/metadata, hetzner internal).
-verify_steps: AUTH_HELPED — replay OPTIONS to confirm gate, then GET with Basic/JWT + x-provider-url=http://169.254.169.254/latest/meta-data/ and observe response delta vs benign url.
-impact: CRM contacts/call-logs PII + SSRF to cloud metadata (GCP/Hetzner) if provider-url unvalidated. HIGH.
+reasoning: nginx Basic 401 sole gate (OPTIONS 204 [ACAO:* + allow-headers x-provider-url/key]); headers do NOT bypass; every spec/data path 401. App-layer SSRF reachable only with valid Basic cred or apex Firebase JWT. Ungated `mock` twin now proves the same headers drive the adapter request path.
+evidence_needed: 200/204 on vendor data path with provider-key; then x-provider-url → internal fetch delta.
+verify_steps: AUTH_HELPED — OPTIONS recon, then GET with Basic/JWT + `x-provider-url=http://127.0.0.1:1/` vs benign, compare.
+impact: CRM contacts/call-logs PII + SSRF to cloud metadata if unvalidated. HIGH.
 testability: AUTH_HELPED
 [HYP] Apex SSRF via users.integrations.create apiUrl + accounts-server selector
 class: SSRF
 asset: integration.sipgate.com POST /users.integrations.create; GET /oauth2/callback?accounts-server=
 confidence: 48
-reasoning: Spec extract finalizes `apiUrl` as free-form string (POST body, `key`+`integrationName` required); `/oauth2/callback` adds undocumented `accounts-server` backend-selector — both are attacker-influenced fetcher/URL inputs; both behind FB-JWT 403 (code-exchange itself returns 403). AUTH_HELPED only.
-evidence_needed: authentic session → mint FB JWT via real oauth2 callback; POST create with apiUrl → check outbound fetch; vary accounts-server on callback → observe backend selection.
-verify_steps: AUTH_HELPED — with session: (1) GET /oauth2/redirect (capture authz URL, client platypus-swagger), (2) complete implicit flow, (3) POST create {integrationName:"MOCK",key:"x",apiUrl:"http://169.254.169.254/"} → observe 204/400 delta and any outbound request (logs/metrics).
-impact: SSRF to cloud metadata / internal backend selection on the Platypus backend. HIGH if gate passed.
+reasoning: spec finalizes `apiUrl` free-form (required `key`+`integrationName`); undocumented `accounts-server` backend-selector on oauth2/callback; both attacker-influenced fetcher inputs; both behind FB-JWT 403 (callback uniform 403 incl fabricated code/state).
+evidence_needed: authentic session → FB JWT → POST create w/ apiUrl → observe outbound fetch; vary accounts-server on callback.
+verify_steps: AUTH_HELPED — with session: /oauth2/redirect → implicit flow → POST create {integrationName:"X",key:"y",apiUrl:"http://127.0.0.1:1/"} → 204/400 delta + metrics counter movement.
+impact: SSRF to cloud metadata / internal backend selection. HIGH if gate passed.
 testability: AUTH_HELPED
-[HYP] share1.sipgate.cloud dangling CNAME subdomain takeover
-class: MISCONFIG
-asset: share1.sipgate.cloud → CNAME nx38603.your-storageshare.de (NXDOMAIN)
-confidence: 45
-reasoning: public CT shows dangling CNAME to external Hetzner StorageShare; target NXDOMAIN; claimable if provider permits instance-name takeover; no CAA/security.txt confirmation yet.
-evidence_needed: verify your-storageshare.de name-claim flow + re-check CNAME stability; final registration HUMAN.
-verify_steps: PASSIVE dig + renew; then HUMAN claim attempt on Hetzner StorageShare.
-impact: full control of share1.sipgate.cloud → phishing/infra spoof. MEDIUM.
-testability: HUMAN_ONLY
-[PARKED] accounts-server selector: untestable unauthenticated (callback uniform 403); merges into apex SSRF/AUTH bundle.
-[PARKED] /swagger/oauth2-redirect.html family: same class as api.sipgate.com/v2/doc REJECTED (opener callback inert cross-origin); SWAGGER-UI interop only.
-[PARKED] Grafana CVE/default-creds (40): REJECTED class (brute/known-vuln w/o POC).
-[FINAL] 1. Per-vendor adapter SSRF x-provider-url (50, AUTH_HELPED); 2. Apex SSRF apiUrl/accounts-server (48, AUTH_HELPED); 3. share1 dangling CNAME takeover (45, HUMAN_ONLY).
-[NEXT] PROBE: `GET https://integration.sipgate.com/swagger/oauth2-redirect.html` — confirm public reachability/byte-compare with api.sipgate.com/v2/doc mirror to close the apex static-surface map for the report (annotate any clientId/opener code differences). After this, passive on the integration surface is exhausted; remaining chains are AUTH_HELPED (1,2) / HUMAN (3).
-[LEARN] ACCEPTED INFO @ integration.sipgate.com/swagger/index.html: swagger static assets (index.html, bundle, init) PUBLIC (200) while all 26 data ops + oauth2 routes are FB-JWT 403 — static/data gating split confirmed; oauth2RedirectUrl same-origin, same family as api.sipgate.com/v2/doc.
-[LEARN] ACCEPTED INFO @ integration.sipgate.com spec: implicit-only OAuth for `platypus-swagger` (authzUrl login.sipgate.com sipgate-apps realm, scopes={}); `/users.integrations.create` apiUrl free-form (SSRF surface finalized); `/oauth2/callback` documents `accounts-server` selector; `/contacts.search` has `debug` param; bulk-PII primitives documented.
-[LEARN] ACCEPTED INFO @ integration.sipgate.com spec: 400-error schema leaks internal Notion URL sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179.
-[LEARN] REJECTED OTHER @ admin.live.sipgate.net / integration.live.sipgate.com: admin.live resolves 217.10.73.71 HTTP 000 (inert); integration.live NXDOMAIN — no live third integration twin.
-[RISK] sipgate: **50** — Unchanged. This cycle moved the apex from "spec-gated unknown" to "fully mapped": public swagger UI + spec confirm every enum (oauth2 client `platypus-swagger`, apiUrl SSRF input, accounts-server selector, debug param, bulk-PII primitives) but every data/OAuth op remains FB-JWT 403 and static assets carry only REJECTED-class OAuth interop. Passive surface on the whole integration family (apex + 94 vendor hosts) is now exhausted: all real chains (vendor SSRF, apiUrl SSRF, callback mint) require an authenticated session (AUTH_HELPED) and share1 requires HUMAN claim. Standing AUTH_HELPED/HUMAN set unchanged: BOLA 50, vendor SSRF 50, apex SSRF 48, share1 45, S3 write 55. No standalone unauthenticated critical chain on any in-scope asset.
+[NEXT] PROBE: `GET https://mock.integration.sipgate.cloud/swagger/swagger-ui-init.js` (spec may differ from gated siblings on a route not on the 8MB path) — if 200, diff platform scope against apex platypus spec for drifted securityScheme.
+[RISK] sipgate: **50** — Unchanged. Passive on the whole integration family is now genuinely exhausted (apex static map + redirect byte-compare closed; vendor tier uniform nginx 401; only ungated member is the synthetic-data mock twin — info/topology value, blueprint for the standing AUTH_HELPED SSRF bundle). All real chains remain gated: BOLA 50/AUTH, vendor SSRF 50/AUTH, apex apiUrl SSRF 48/AUTH, mock blueprint 55 (info), share1 CNAME 45/HUMAN, S3 write 55/HUMAN. No standalone unauthenticated critical chain confirmed on any in-scope asset.
