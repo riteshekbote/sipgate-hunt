@@ -14,3 +14,13 @@
 
 - 1 lead(s) marked VALID at 2026-09-09 11:38:09 UTC
   - | **share1.sipgate.cloud dangling CNAME** | **VALID** | Novel subdomain takeover candidate. CNAME → `nx38603.your-storageshare.de` → NXDOMAIN. Provable via `dig`. In-scope (sipgate.cloud). CVSS 6.5 ME
+
+- 8 lead(s) marked VALID at 2026-09-09 23:32:58 UTC
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - | Kong Command Injection | **VALID** | 9.8 | P0 |
+  - | Subdomain Takeover | **VALID** | 6.5 | P1 |
+  - | Mock Integration Ungated | **VALID** | 5.3 | P1 |
+  - | API CORS Reflection | **VALID** | 7.5 | P0 |
