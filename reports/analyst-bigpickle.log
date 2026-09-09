@@ -18473,3 +18473,74 @@ testability: PASSIVE
 
 ### STEP 7 — RISK
 [RISK] sipgate: 52 — Unchanged. Passive testing on integration family exhausted (apex mapped, vendor tier uniform nginx 401, mock proven synthetic). Dev SPA host:port map extracted but integration.dev is 403-gated; login.dev/team-de.dev/payment.dev inert. All real chains remain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 45, S3 write 55). No standalone unauthenticated critical chain confirmed on any in-scope asset. Next cycle probes dev admin/helpdesk alias map for transient availability.
+===== ANALYST bigpickle 2026-09-09 17:48:05 UTC =====
+[0m
+> build · big-pickle
+[0m
+## Step 1 — DELTA
+
+NO_DELTA since last analysis (2026-09-09 13:50:39 UTC). No new KB entries, no new probes, no surface changes observed. Pending next probe cycle.
+
+---
+
+## Step 2 — PRIORITIZE
+
+[PRIO] app.dev.sipgate.com,6.75,attack_surface=7,business_value=6,tech_exposure=6,gate_ease=8,cloud_surface=6,freshness=9
+[PRIO] mock.integration.sipgate.cloud,6.35,attack_surface=6,business_value=5,tech_exposure=5,gate_ease=9,cloud_surface=7,freshness=8
+[PRIO] integration.sipgate.com,6.25,attack_surface=6,business_value=8,tech_exposure=7,gate_ease=2,cloud_surface=6,freshness=8
+
+---
+
+## Step 3 — HYPOTHESES
+
+[HYP] Dev admin/helpdesk alias map reachability
+class: MISCONFIG
+asset: admin.dev.sipgate.net / admin.live.sipgate.net (CNAME aliases of helpdesk.dev/.live.sipgate.net)
+confidence: 40
+reasoning: both resolve as CNAME aliases of helpdesk.{dev,live}.sipgate.net (217.116.120.148 / 217.10.73.71) per getent; HTTPS times out (000 @8s); dev login/api family historically inert but integration.dev recently came alive (403+ACAO*); pattern of transient dev revival observed on this asset family.
+evidence_needed: any reachable HTTP/S service on 217.116.120.148 or 217.10.73.71 with weaker-than-prod auth (e.g. no SSO, direct login).
+verify_steps: PASSIVE — OPTIONS/HEAD probes on ports 80/443 of 217.116.120.148 + 217.10.73.71 each cycle; check for transient availability or service changes.
+impact: if revived, unattended externally-reachable dev admin console — potential user/tenant data exposure or lateral movement. MEDIUM only if reachable; currently inert.
+testability: PASSIVE
+
+[HYP] Mock schema drift reveals legacy adapter data model
+class: OTHER
+asset: mock.integration.sipgate.cloud/contacts
+confidence: 30
+reasoning: corpus fields (type, relatesTo, scope, readonly) differ from apex platypus contacts schema — legacy/internally-evolved adapter model; schema-only datapoint, not an exploit path.
+evidence_needed: confirmation that mock schema maps to a live adapter request/response model.
+verify_steps: PASSIVE — none actionable; datapoint only.
+impact: internal schema/topology inference across adapter tier. LOW.
+testability: PASSIVE
+
+---
+
+## Step 4 — SELF-CRITIQUE
+
+[PARKED] Mock blueprint SSRF via x-provider-url: confidence 25 < 40, proven non-SSRF — mock is fully synthetic (no fetch sink on any method/path), x-provider-url header does not parameterize outbound requests.
+
+[PARKED] Vendor-tier schema drift: confidence 30 < 40, not actionable (schema-only datapoint, no exploit path).
+
+[FINAL] Dev admin/helpdesk alias map reachability: confidence 40 ≥ 40, PASSIVE testable, MEDIUM impact if reachable — sole survivor.
+
+---
+
+## Step 5 — NEXT ACTION
+
+[NEXT] PROBE: `curl -sSI -m 8 https://admin.dev.sipgate.net` + `curl -sSI -m 8 https://helpdesk.dev.sipgate.net` + same for `.live.` variants on ports 80/443 — check for transient availability or service changes from last 000 state.
+
+---
+
+## Step 6 — LEARNING
+
+[LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed on any method/path; x-provider-url header does not parameterize outbound requests.
+
+[LEARN] REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 gate; no anonymous Firebase-mint.
+
+[LEARN] ACCEPTED INFO @ mock.integration.sipgate.cloud: only ungated *.integration.sipgate.cloud host; /health 200 + /contacts 200 ~8MB synthetic corpus; ACAO:*; x-provider-url/key/clinq-environment advertised in allow-headers; 26-op spec may differ from gated siblings.
+
+---
+
+## Step 7 — RISK
+
+[RISK] sipgate: 52 — Unchanged. Integration family passive surface conclusively closed: apex mapped, vendor tier uniform nginx 401, mock proven synthetic with no executable SSRF. Dev SPA host:port map extracted; integration.dev is 403-gated; login.dev/team-de.dev/payment.dev inert. All viable chains remain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 takeover 45, S3 write 55). Dev admin/helpdesk alias map is sole active passive probe — currently inert but monitored for transient revival.

@@ -428,3 +428,11 @@ www.sipgate.de
 - CHANGED `app.dev.sipgate.com` — JS bundle rotated to `main-5xLTM2Hn.js` (2026-09-08); 13+ hardcoded internal host:port pairs including `admin.live.sipgate.net` (prod subdomain), `api.local.sipgate.com:3396`, 
 - CHANGED `grafana.sipgate.cloud` — live Grafana 11.5.1 confirmed via `/api/health` (version leak); login-gated, no anonymous access
 - CHANGED `share1.sipgate.cloud` — dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed; subdomain-takeover candidate (needs HUMAN claim validation)
+
+## 2026-09-09 17:48:05 UTC
+- NEW `mock.integration.sipgate.cloud` — ungated Express twin (only *.integration.sipgate.cloud host without nginx Basic-auth); `/health` 200, `/contacts` 200 (~8MB synthetic corpus), `/contacts/search`, `/
+- CHANGED `app.dev.sipgate.com` — JS bundle rotated to `main-CYk1JfU_.js` (2026-09-09 15:40:25 GMT); 18 hardcoded internal host:port pairs extracted including NEW `admin.live.sipgate.net` (prod subdomain), `api
+- CHANGED `integration.sipgate.com/metrics` — `firebase_jwt_forbidden_requests` 70373 (per-replica counter, down from prior 71929 confirming restart-reset); live Firebase-JWT validator confirmed
+- CHANGED `share1.sipgate.cloud` — dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed; subdomain-takeover candidate (needs HUMAN claim validation)
+- CHANGED `grafana.sipgate.cloud` — live Grafana 11.5.1 confirmed via `/api/health` (version leak); login-gated, no anonymous access
+- CHANGED `*.integration.sipgate.cloud` (94 hosts) — per-vendor CRM adapters uniformly behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct second gate tier (nginx) v
