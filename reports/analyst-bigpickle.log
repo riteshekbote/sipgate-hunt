@@ -19247,3 +19247,156 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: 48 — Down from 52. Passive unauthenticated surface now exhaustively mapped across api/v2 (edge-401 uniform), integration apex (FB-JWT 403), vendor tier (nginx Basic 401), mock+essensbot (synthetic/inert), dev SPA (static info-leak, no Firebase/AIza token source), admin/helpdesk aliases (inert 3+ days). Every high-value chain remains AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (S3 write 55, share1 45); remaining unauthenticated upside is transient dev revival only.
+===== ANALYST bigpickle 2026-09-09 23:16:23 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sS -m 8 -o /dev/null -w "HTTP %{http_code} %{remote_ip} %{time_total}s\n" "https://app.dev.sipgate.com/" 2>&1; curl -sS -m 8 "https://app.dev.sipgate.com/" 2>&1 | grep -oE 'assets/main-[A-Za-z0-9_-]+\.js' | head -5
+HTTP 200 199.36.158.100 0.687541s
+assets/main-CYk1JfU_.js
+[0m
+[0m$ [0mfor h in admin.dev.sipgate.net helpdesk.dev.sipgate.net admin.live.sipgate.net helpdesk.live.sipgate.net team-uk.dev.sipgate.com; do echo "=== $h ==="; curl -sS -m 8 -o /dev/null -w "HTTP %{http_code} %{remote_ip} %{time_total}s\n" "https://$h/" 2>&1; done
+=== admin.dev.sipgate.net ===
+curl: (28) Connection timed out after 8001 milliseconds
+HTTP 000  8.001975s
+=== helpdesk.dev.sipgate.net ===
+curl: (28) Connection timed out after 8002 milliseconds
+HTTP 000  8.002654s
+=== admin.live.sipgate.net ===
+curl: (28) Connection timed out after 8001 milliseconds
+HTTP 000  8.001386s
+=== helpdesk.live.sipgate.net ===
+curl: (28) Connection timed out after 8002 milliseconds
+HTTP 000  8.002091s
+=== team-uk.dev.sipgate.com ===
+curl: (28) Connection timed out after 8002 milliseconds
+HTTP 000  8.002305s
+[0m
+[0m$ [0mcurl -sS -m 8 "https://integration.sipgate.com/metrics" 2>&1 | grep -E "firebase_jwt_forbidden|api_key_forbidden|rate_limit_forbidden" | head -5; echo "---swagger---"; curl -sS -m 8 -o /dev/null -w "HTTP %{http_code}\n" "https://integration.sipgate.com/swagger/index.html" 2>&1; echo "---mock---"; curl -sS -m 8 -o /dev/null -w "HTTP %{http_code} %{time_total}s\n" "https://mock.integration.sipgate.cloud/health" 2>&1
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 0
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+---swagger---
+HTTP 200
+---mock---
+HTTP 200 0.532632s
+[0m
+[0m$ [0mcurl -sS -m 8 "https://integration.sipgate.com/metrics" 2>&1 | grep -E "^(firebase_jwt_forbidden_requests|api_key_forbidden_requests|rate_limit_forbidden_requests) " | head -5
+api_key_forbidden_requests 0
+firebase_jwt_forbidden_requests 4116
+rate_limit_forbidden_requests 306
+[0m
+[0m$ [0mcurl -sS -m 8 -o /dev/null -w "bundle.map HTTP %{http_code}\n" "https://integration.sipgate.com/swagger/swagger-ui-bundle.js.map" 2>&1; curl -sS -m 8 -o /dev/null -w "index.html HTTP %{http_code}\n" "https://integration.sipgate.com/swagger/swagger-ui-init.js" 2>&1; curl -sS -m 8 -o /dev/null -w "init.map HTTP %{http_code}\n" "https://integration.sipgate.com/swagger/swagger-ui-init.js.map" 2>&1; curl -sS -m 8 -o /dev/null -w "dev-srcmap HTTP %{http_code}\n" "https://integration.dev.sipgate.com/swagger/swagger-ui-init.js.map" 2>&1
+bundle.map HTTP 200
+index.html HTTP 200
+init.map HTTP 404
+curl: (60) SSL certificate problem: self-signed certificate in certificate chain
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
+dev-srcmap HTTP 000
+[0m
+Sourcemap is public on prod integration. Pulling it — potential source disclosure of the platypus service.
+[0m$ [0mcurl -sS -m 20 "https://integration.sipgate.com/swagger/swagger-ui-bundle.js.map" -o /tmp/opencode/platypus.map 2>&1; ls -la /tmp/opencode/platypus.map; head -c 300 /tmp/opencode/platypus.map
+-rw-r--r-- 1 runner runner 1920878 Sep  9 23:07 /tmp/opencode/platypus.map
+{"version":3,"file":"swagger-ui-bundle.js","mappings":";CAAA,SAAUA,iCAAiCC,EAAMC,GAC1B,iBAAZC,SAA0C,iBAAXC,OACxCA,OAAOD,QAAUD,IACQ,mBAAXG,QAAyBA,OAAOC,IAC9CD,OAAO,GAAIH,GACe,iBAAZC,QACdA,QAAyB,gBAAID,IAE7BD,EAAsB,gBAAIC,GAC3B,CATD,CASGK,MAAM,cCRLC,EADAC,gCCCJC,OAAOC,eAAeR,EAAS,aAAc,CAAES,OAAO,IACtDT
+[0m
+[0m$ [0mgrep -oE '"sources":\[[^]]*\]' /tmp/opencode/platypus.map | head -c 2000; echo; echo "=== firebase/clientId/secret refs ==="; grep -oE '(AIza[0-9A-Za-z_-]{35}|clientSecret|client_id|firebase|platypus|apiUrl|oauth2RedirectUrl)' /tmp/opencode/platypus.map | sort | uniq -c | sort -rn | head -20
+"sources":["webpack://SwaggerUIBundle/webpack/universalModuleDefinition","webpack://SwaggerUIBundle/webpack/runtime/create fake namespace object","webpack://SwaggerUIBundle/./node_modules/@braintree/sanitize-url/dist/constants.js","webpack://SwaggerUIBundle/./node_modules/@braintree/sanitize-url/dist/index.js","webpack://SwaggerUIBundle/./node_modules/base64-js/index.js","webpack://SwaggerUIBundle/./node_modules/buffer/index.js","webpack://SwaggerUIBundle/./node_modules/call-bind/callBound.js","webpack://SwaggerUIBundle/./node_modules/call-bind/index.js","webpack://SwaggerUIBundle/./node_modules/cookie/index.js","webpack://SwaggerUIBundle/./node_modules/copy-to-clipboard/index.js","webpack://SwaggerUIBundle/./node_modules/css.escape/css.escape.js","webpack://SwaggerUIBundle/./node_modules/deep-extend/lib/deep-extend.js","webpack://SwaggerUIBundle/./node_modules/deepmerge/dist/cjs.js","webpack://SwaggerUIBundle/./node_modules/define-data-property/index.js","webpack://SwaggerUIBundle/./node_modules/dompurify/dist/purify.js","webpack://SwaggerUIBundle/./node_modules/drange/lib/index.js","webpack://SwaggerUIBundle/./node_modules/es-define-property/index.js","webpack://SwaggerUIBundle/./node_modules/es-errors/eval.js","webpack://SwaggerUIBundle/./node_modules/es-errors/index.js","webpack://SwaggerUIBundle/./node_modules/es-errors/range.js","webpack://SwaggerUIBundle/./node_modules/es-errors/ref.js","webpack://SwaggerUIBundle/./node_modules/es-errors/syntax.js","webpack://SwaggerUIBundle/./node_modules/es-errors/type.js","webpack://SwaggerUIBundle/./node_modules/es-errors/uri.js","webpack://SwaggerUIBundle/./node_modules/events/events.js","webpack://SwaggerUIBundle/./node_modules/fault/index.js","webpack://SwaggerUIBundle/./node_modules/format/format.js","webpack://SwaggerUIBundle/./node_modules/function-bind/implementation.js","webpack://SwaggerUIBundle/./node_modules/function-bind/index.js","webpack://SwaggerUIBundle/./node_modules/get-intrinsic/index.js","webpack://Swa
+=== firebase/clientId/secret refs ===
+      1 oauth2RedirectUrl
+      1 client_id
+      1 clientSecret
+[0m
+[0m$ [0mgrep -oE 'swagger-ui-[0-9.]+' /tmp/opencode/platypus.map | sort -u; grep -oE 'webpack://[^"/]+' /tmp/opencode/platypus.map | sort -u; echo "=== context around clientSecret ==="; grep -oE '.{80}clientSecret.{120}' /tmp/opencode/platypus.map | head -3
+webpack://SwaggerUIBundle
+=== context around clientSecret ===
+PersistOption","authorizeOauth2","authorizePassword","passwordType","clientId","clientSecret","grant_type","scope","scopes","headers","setClientIdAndSecret","client_id","client_secret","Authorization","authorizeR
+[0m
+[0m$ [0mcurl -sk -m 8 -o /dev/null -w "dev-twin HTTP %{http_code} %{remote_ip}\n" "https://integration.dev.sipgate.com/" 2>&1; curl -sk -m 8 -o /dev/null -w "dev-twin-init HTTP %{http_code}\n" "https://integration.dev.sipgate.com/swagger/swagger-ui-init.js" 2>&1
+dev-twin HTTP 403 217.116.121.180
+dev-twin-init HTTP 200
+[0m
+One more passive datapoint — the leaked internal Notion URL from the integration spec schema.
+[0m$ [0mcurl -sS -m 10 -o /dev/null -w "notion HTTP %{http_code} len=%{size_download}\n" "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179" 2>&1; curl -sS -m 10 "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179" 2>&1 | grep -oiE '(This page|only available|request access|private|hidden|In Private|password)' | head -3
+notion HTTP 200 len=20035
+hidden
+hidden
+hidden
+[0m
+All probes complete. Synthesizing.
+
+## STEP 1 — DELTA
+- NO_DELTA `admin.dev/.live.sipgate.net` + `helpdesk.*` + `team-uk.dev.sipgate.com`: all HTTP 000 timeout — 5th consecutive inert cycle
+- NO_DELTA `app.dev.sipgate.com` bundle: still `main-CYk1JfU_.js` (no rotation since 2026-09-09)
+- CHANGED `integration.sipgate.com/metrics`: `firebase_jwt_forbidden_requests 4116` (live +1748 vs prior 2368)
+- NEW `integration.sipgate.com/swagger/swagger-ui-bundle.js.map` → 200 public sourcemap (1.9MB, stock `webpack://SwaggerUIBundle`, zero app-source/firebase/secret content; `init.js.map` 404)
+- CHANGED `integration.dev.sipgate.com`: now presents self-signed cert (handshake fails); `swagger-ui-init.js` 200 via `-k`, root stays 403
+- NEW `sipgatede.notion.site/Integration-...`: HTTP 200 but content-marked-hidden → private, not publicly shared
+
+## STEP 2 — PRIORITIZE
+```
+[PRIO] app.dev.sipgate.com,6.25,attack_surface=6,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=6,freshness=5
+[PRIO] mock.integration.sipgate.cloud,6.25,attack_surface=6,business_value=5,tech_exposure=5,gate_ease=9,cloud_surface=7,freshness=7
+[PRIO] integration.sipgate.com,6.15,attack_surface=6,business_value=8,tech_exposure=7,gate_ease=2,cloud_surface=6,freshness=7
+[PRIO] admin.dev.sipgate.net,4.80,attack_surface=3,business_value=5,tech_exposure=4,gate_ease=8,cloud_surface=4,freshness=6
+```
+
+## STEP 3 — HYPOTHESES
+```
+[HYP] Dev helpdesk/admin transient revival
+class: MISCONFIG
+asset: admin.dev.sipgate.net / admin.live.sipgate.net (helpdesk CNAME aliases 217.116.120.148 / 217.10.73.71)
+confidence: 20
+reasoning: both resolve per getent; ports 80+443 TCP-timeout for 5 consecutive cycles; prod SPA bundle opens these as helpdesk ExternalLinks; sister host integration.dev revived 2026-09-06 but this alias pair has not.
+evidence_needed: any reachable HTTP service on those IPs with weaker-than-prod auth.
+verify_steps: PASSIVE — per-cycle HEAD/OPTIONS on 80/443 both hosts (hostname+IP forms); 200/40x + server banner flips hypothesis.
+impact: unattended externally-reachable dev/live helpdesk admin console. MEDIUM only if reachable; currently inert.
+testability: PASSIVE
+[HYP] Integration static tree exposes additional ungated swagger artifacts
+class: MISCONFIG
+asset: integration.sipgate.com/swagger/*
+confidence: 30
+reasoning: swagger-ui-bundle.js.map 200, index.html+bundle 200, while all 26 data ops FB-JWT 403; static/data gating split confirmed; init.js.map 404 tested today.
+evidence_needed: another sourcemap/spec/artifact that embeds config, client ids, or internal hosts.
+verify_steps: PASSIVE — HEAD/GET on /swagger/*.map, /swagger.json, *.js sibling names; diff spec static vs runtime.
+impact: config/topology disclosure via static layer. LOW.
+testability: PASSIVE
+[HYP] Dev integration twin infra-change signals redeploy with changed gate
+class: OTHER
+asset: integration.dev.sipgate.com
+confidence: 25
+reasoning: cert flipped to self-signed this cycle (was 403 ACAO* handshake OK 2026-09-09); root still 403, init.js 200 via -k; redeploy/traffic-shift in progress.
+evidence_needed: gate change on dev twin (release of 403, new cert, new host).
+verify_steps: PASSIVE — per-cycle root + /health + /swagger/swagger-ui-init.js status; watch cert issuer change.
+impact: weaker dev gate would open documented apiUrl SSRF + 26-op surface. MEDIUM only if gate drops.
+testability: PASSIVE
+```
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] Dev admin/helpdesk revival: 20 < 40, 5 cycles inert.
+- [PARKED] Integration static tree: 30 < 40, only stock-library artifact found, no config/secrets, init.map 404.
+- [PARKED] Dev twin infra-change: 25 < 40, evidence is only a cert-state datapoint, no gate change observed.
+- [FINAL] None ≥ 40. Passive unauthenticated surface for the sipgate family is exhausted; every remaining chain is AUTH_HELPED or HUMAN.
+
+## STEP 5 — NEXT ACTION
+```
+[NEXT] PROBE: per-cycle monitoring — `curl -sSI -m 8 https://admin.live.sipgate.net/` + `https://admin.dev.sipgate.net/` (80/443) AND `curl -s https://app.dev.sipgate.com/ | grep -oE 'assets/main-[A-Za-z0-9_-]+\.js'`; any alive host or bundle rotation introduces the only currently-plausible new surface.
+```
+
+## STEP 6 — LEARNING
+```
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/swagger: swagger-ui-bundle.js.map public (1.9MB) — stock SwaggerUIBundle webpack sourcemap, node_modules/library sources only, zero platypus app-code/firebase/client secrets; init.js.map 404.
+[LEARN] ACCEPTED INFO @ sipgatede.notion.site: spec-embedded Notion integration page returns HTTP 200 but content hidden (not publicly shared) — no data disclosure from leaked internal URL.
+[LEARN] CHANGED @ integration.dev.sipgate.com: self-signed cert now (handshake fails without -k); swagger-ui-init.js 200, root 403 — dev-twin redeploy signal, gate unchanged.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: fb_jwt counter 4116 (+1748) — live validator, per-replica restart-reset reconfirmed.
+```
+
+## STEP 7 — RISK
+```
+[RISK] sipgate: 47 — Unchanged. Surface exhaustively mapped: api/v2 uniform edge-401, integration apex FB-JWT 403 (live counters), vendor tier nginx 401, mock synthetic, dev SPA static info-leak only, admin/helpdesk aliases inert 5 cycles, prod swagger sourcemap stock-only, leaked Notion gated. Every remaining high-value chain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 45, S3 55). Unauthenticated upside reduced to transient dev revival or bundle rotation introducing new live refs.
+```

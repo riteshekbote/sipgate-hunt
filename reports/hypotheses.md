@@ -972,3 +972,11 @@
 - LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
 - LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in produ
 - LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to pr
+
+## RANKED HYPOTHESES 2026-09-09 23:16:23 UTC
+- [20] admin.dev.sipgate.net: Dev helpdesk/admin transient revival (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: per-cycle monitoring — `curl -sSI -m 8 https://admin.live.sipgate.net/` + `https://admin.dev.sipgate.net/` (80/443) AND `curl -s https://app.dev.sipgate.
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/swagger: swagger-ui-bundle.js.map public (1.9MB) — stock SwaggerUIBundle webpack sourcemap, node_modules/library sources
+- LEARN: ACCEPTED INFO @ sipgatede.notion.site: spec-embedded Notion integration page returns HTTP 200 but content hidden (not publicly shared) — no data disclosure from
+- LEARN: CHANGED @ integration.dev.sipgate.com: self-signed cert now (handshake fails without -k); swagger-ui-init.js 200, root 403 — dev-twin redeploy signal, gate unch
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: fb_jwt counter 4116 (+1748) — live validator, per-replica restart-reset reconfirmed.

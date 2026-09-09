@@ -450,3 +450,5 @@ www.sipgate.de
 - CHANGED `api.sipgate.com/v2/*` — arbitrary-origin CORS reflection with credentials persistent (evil.com reflected + ACAC:true + x-b3-traceid leak)
 - CHANGED `team-uk.live.sipgate.com` CSP `frame-ancestors` includes `app.local.sipgate.com:3443` + `SERVERID=team-web02` — family-wide with team-de.live
 - CHANGED `chatbot.dev.sipgate.com` live (nginx/1.24.0, GCP) — polling & WS transport both reject arbitrary Origin (400, Vary:Origin, no ACAO)
+
+## 2026-09-09 23:16:23 UTC

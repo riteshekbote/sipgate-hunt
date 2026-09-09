@@ -266,3 +266,7 @@
 - 2026-09-09 ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
 - 2026-09-09 ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation
 - 2026-09-09 REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+- 2026-09-09 ACCEPTED INFO @ integration.sipgate.com/swagger: swagger-ui-bundle.js.map public (1.9MB) — stock SwaggerUIBundle webpack sourcemap, node_modules/library sources only, zero platypus app-code/firebase/client secrets; init.js.map 404.
+- 2026-09-09 ACCEPTED INFO @ sipgatede.notion.site: spec-embedded Notion integration page returns HTTP 200 but content hidden (not publicly shared) — no data disclosure from leaked internal URL.
+- 2026-09-09 CHANGED @ integration.dev.sipgate.com: self-signed cert now (handshake fails without -k); swagger-ui-init.js 200, root 403 — dev-twin redeploy signal, gate unchanged.
+- 2026-09-09 ACCEPTED INFO @ integration.sipgate.com/metrics: fb_jwt counter 4116 (+1748) — live validator, per-replica restart-reset reconfirmed.
