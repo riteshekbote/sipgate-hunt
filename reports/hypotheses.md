@@ -954,3 +954,21 @@
 - LEARN: REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 ga
 - LEARN: ACCEPTED INFO @ *.integration.sipgate.cloud breadth: hubspot/zendesk/salesforce deployed (nginx 401), pipeforce/zapier resolve to same LB 35.246.154.68 but conn
 - LEARN: REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed on any method/path; x-provider-url header does not parameterize ou
+
+## RANKED HYPOTHESES 2026-09-09 21:01:31 UTC
+- [85] app.dev.sipgate.com: Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References (from art/lead_nemotron3.txt)
+- [35] admin.dev.sipgate.net: Dev admin/helpdesk transient revival (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: per-cycle (next session) — `curl -sSI -m 8 https://admin.live.sipgate.net` + `https://admin.dev.sipgate.net` (both 80/443) AND `curl -s https://app.dev.s
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://app.dev.sipgate.com/assets/main-CYk1JfU_.js — fetch current JS bundle, extract all hardcoded host:port pairs from source/chunks, DNS-resolve 
+- LEARN: ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA on Fastly CDN with production JS bundle, 18 hardcoded internal host:port pairs including NEW prod subdoma
+- LEARN: ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} 
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 2368 (per-replica counter, restart-reset confirmed); live Firebase-JWT validato
+- LEARN: ACCEPTED MISCONFIG @ grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB, login-gated, no anonymous
+- LEARN: ACCEPTED MISCONFIG @ share1.sipgate.cloud: dangling CNAME → Hetzner StorageShare NXDOMAIN; takeover candidate (needs HUMAN claim validation)
+- LEARN: ACCEPTED INFO @ mock.integration.sipgate.cloud: only ungated *.integration.sipgate.cloud host; /contacts 200 ~8MB synthetic; ACAO:* + ACAC:true + allow-headers 
+- LEARN: REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+- LEARN: REJECTED SSRF @ *.integration.sipgate.cloud: nginx Basic-auth 401 enforced before app; x-provider-url/x-provider-key headers do NOT bypass nginx gate
+- LEARN: ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in produ
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to pr

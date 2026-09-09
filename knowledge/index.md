@@ -254,3 +254,15 @@
 - 2026-09-09 ACCEPTED INFO @ integration.sipgate.com/metrics: public FB-JWT gate counters increment live (+12,871); confirms Firebase validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
 - 2026-09-09 REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed on any method/path; x-provider-url header does not parameterize outbound requests.
 - 2026-09-09 REJECTED AUTH @ integration.sipgate.com/oauth2/callback + /oauth2/redirect: uniform app-403 even with fabricated code/state → code-exchange behind FB-JWT 403 gate; no anonymous Firebase-mint.
+- 2026-09-09 ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA on Fastly CDN with production JS bundle, 18 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net/admin.dev.sipgate.net — infrastructure info disclosure
+- 2026-09-09 ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct gate tier from apex Firebase-JWT
+- 2026-09-09 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 2368 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+- 2026-09-09 ACCEPTED MISCONFIG @ grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB, login-gated, no anonymous
+- 2026-09-09 ACCEPTED MISCONFIG @ share1.sipgate.cloud: dangling CNAME → Hetzner StorageShare NXDOMAIN; takeover candidate (needs HUMAN claim validation)
+- 2026-09-09 ACCEPTED INFO @ mock.integration.sipgate.cloud: only ungated *.integration.sipgate.cloud host; /contacts 200 ~8MB synthetic; ACAO:* + ACAC:true + allow-headers x-provider-*; x-provider-url does NOT parameterize fetch
+- 2026-09-09 REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+- 2026-09-09 REJECTED SSRF @ *.integration.sipgate.cloud: nginx Basic-auth 401 enforced before app; x-provider-url/x-provider-key headers do NOT bypass nginx gate
+- 2026-09-09 ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+- 2026-09-09 ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
+- 2026-09-09 ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation
+- 2026-09-09 REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class

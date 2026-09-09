@@ -436,3 +436,17 @@ www.sipgate.de
 - CHANGED `share1.sipgate.cloud` — dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed; subdomain-takeover candidate (needs HUMAN claim validation)
 - CHANGED `grafana.sipgate.cloud` — live Grafana 11.5.1 confirmed via `/api/health` (version leak); login-gated, no anonymous access
 - CHANGED `*.integration.sipgate.cloud` (94 hosts) — per-vendor CRM adapters uniformly behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct second gate tier (nginx) v
+
+## 2026-09-09 21:01:31 UTC
+- NEW `admin.dev.sipgate.net` → `helpdesk.dev.sipgate.net` (217.116.120.148) — NEW prod-subdomain alias in dev JS bundle, HTTP 000 (timeout)
+- NEW `admin.live.sipgate.net` → `helpdesk.live.sipgate.net` (217.10.73.71) — NEW prod subdomain in dev JS bundle, HTTP 000 (timeout)
+- NEW `team-uk.dev.sipgate.com` (217.116.121.65) — NEW dev host in bundle, HTTP 000 (timeout)
+- CHANGED `app.dev.sipgate.com` bundle rotated to `main-CYk1JfU_.js` (2026-09-09 15:40:25 GMT) — 18 hardcoded internal host:port pairs including 2 NEW prod subdomains
+- CHANGED `integration.sipgate.com/metrics` `firebase_jwt_forbidden_requests` 2368 (down from 70373) — per-replica counter confirms restart-reset, live Firebase-JWT validator
+- CHANGED `share1.sipgate.cloud` CNAME → `nx38603.your-storageshare.de` → NXDOMAIN confirmed — subdomain-takeover candidate
+- CHANGED `grafana.sipgate.cloud` live Grafana 11.5.1 confirmed via `/api/health` — login-gated, no anonymous
+- CHANGED `mock.integration.sipgate.cloud` ungated Express twin — `/contacts` 200 (~8MB synthetic), ACAO:* + ACAC:true + `allow-headers: x-provider-url,x-provider-key` — x-provider-url does NOT parameterize fet
+- CHANGED `*.integration.sipgate.cloud` (94 hosts) — uniform nginx Basic-auth 401 gate + ACAO:* CORS preflight allowing `x-provider-url,x-provider-key` — data GET 401, header does not bypass nginx
+- CHANGED `api.sipgate.com/v2/*` — arbitrary-origin CORS reflection with credentials persistent (evil.com reflected + ACAC:true + x-b3-traceid leak)
+- CHANGED `team-uk.live.sipgate.com` CSP `frame-ancestors` includes `app.local.sipgate.com:3443` + `SERVERID=team-web02` — family-wide with team-de.live
+- CHANGED `chatbot.dev.sipgate.com` live (nginx/1.24.0, GCP) — polling & WS transport both reject arbitrary Origin (400, Vary:Origin, no ACAO)

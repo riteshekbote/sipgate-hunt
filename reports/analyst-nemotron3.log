@@ -13816,3 +13816,917 @@ testability: PASSIVE
 ### STEP 7 — RISK
 
 [RISK] sipgate: 82 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins (wss://*.sipgate.*), multi-tenant dashboards, public dev SPA with full internal topology disclosure (NEW admin.live.sipgate.net in bundle), LIVE dev chatbot with socket.io, NEWLY ALIVE integration.dev endpoint with permissive CORS, 94-host CRM adapter fleet with Basic-auth + ACAO:* + SSRF headers, UNGATED mock.integration.sipgate.cloud twin exposing x-provider-* headers (SSRF non-functional), dangling CNAME takeover candidate (share1.sipgate.cloud), live internet-facing Grafana. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + LIVE chatbot.dev target + integration.dev target; (2) CRM adapter fleet SSRF via x-provider-url headers (94 hosts gated + 1 ungated mock twin, cloud metadata reachable if header parsed); (3) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (4) Cross-tenant BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (5) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (6) Integration platform OAuth gate bypass via spec-behavior drift (platypus-swagger client, implicit flow, SSRF via apiUrl); (7) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk); (8) Subdomain takeover candidate (share1.sipgate.cloud). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, 94-host adapter fleet SSRF surface + ungated mock twin, and potential object-level authz-drift on high-value API endpoints.
+===== ANALYST nemotron3 2026-09-09 21:01:31 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mdate -u +"%Y-%m-%d %H:%M:%S UTC"
+2026-09-09 20:46:36 UTC
+[0m
+[0m$ [0mcurl -sSI -m 10 https://app.dev.sipgate.com/assets/main-CYk1JfU_.js 2>&1 | head -20
+HTTP/2 200 
+cache-control: max-age=3600
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk wss://ws-eu.pusher.com stats.pusher.com sentry.io api-iam.intercom.io nexus-websocket-a.intercom.io nexus-websocket-b.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io *.zopim.com *.zdassets.com *.zendesk.com wss://*.zopim.com https://amp.sipgate.de *.instana.io https://status.sipgate.de/ https://integration.sipgate.cloud https://docs.google.com *.didww.com/v3/public_keys; script-src 'unsafe-eval' 'unsafe-inline' 'self' stats.pusher.com connect.facebook.com connect.facebook.net *.cloudfront.net www.google-analytics.com *.google.com www.googletagmanager.com www.googleadservices.com sjs.bizographics.com bat.bing.com snap.licdn.com *.doubleclick.net *.linkedin.com secure.adnxs.com js.intercomcdn.com widget.intercom.io data: *.zopim.com *.zdassets.com *.instana.io; style-src 'unsafe-inline' 'self' *.google.com *.googleapis.com static.sipgate.com data: blob: *.zdassets.com; font-src 'self' fonts.intercomcdn.com js.intercomcdn.com static.sipgate.com data: *.zdassets.com *.zopim.com; frame-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com https://player.vimeo.com *.zdassets.com *.zopim.com; child-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com; worker-src 'self' blob:; img-src *.googleusercontent.com *.facebook.com 'self' *.gstatic.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net www.google-analytics.com *.googleapis.com *.doubleclick.net *.google.com *.google.de bat.bing.com *.linkedin.com secure.adnxs.com js.intercomcdn.com downloads.intercomcdn.com static.intercomassets.com data: *.zopim.com *.zdassets.com *.zopim.io; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net js.intercomcdn.com blob: *.zopim.com data: *.zdassets.com; frame-ancestors 'self' *.sipgate.com *.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa;
+content-type: text/javascript; charset=utf-8
+cross-origin-opener-policy: same-origin-allows-popups
+etag: "983b81da10856a5b4017a135fd899e171e2da6197dbd3b79417b2bc6a1ee5209"
+last-modified: Wed, 09 Sep 2026 15:40:25 GMT
+strict-transport-security: max-age=31556926
+x-content-type-options: nosniff
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/* https://*.sipgate.com/* https://*.sipgate.de/* https://*.sipgate.co.uk/*
+x-xss-protection: 1; mode=block
+accept-ranges: bytes
+date: Wed, 09 Sep 2026 20:47:14 GMT
+x-served-by: cache-pao-kpao1770048-PAO
+x-cache: MISS
+x-cache-hits: 0
+x-timer: S1788986834.769064,VS0,VE647
+vary: x-fh-requested-host, accept-encoding
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
+content-length: 5643684
+[0m
+[0m$ [0mcurl -s -m 30 https://app.dev.sipgate.com/assets/main-CYk1JfU_.js | strings | grep -Eo '(https?://)?[a-zA-Z0-9.-]+\.sipgate\.(com|de|net|co\.uk|cloud)(:[0-9]{1,5})?' | sort -u | head -50
+.api.dev.sipgate.com
+.api.local.sipgate.com
+.api.sipgate.com
+app.dev.sipgate.com
+app.sipgate.com
+https://admin.dev.sipgate.net
+https://admin.live.sipgate.net
+https://amp.sipgate.de
+https://api.dev.sipgate.com
+https://api.local.sipgate.com:3396
+https://api.sipgate.com
+https://app.dev.sipgate.com
+https://app.local.sipgate.com:3443
+https://app.sipgate.com
+https://chatbot.dev.sipgate.com
+https://chatbot.sipgate.com
+https://info.sipgate.de
+https://integration.dev.sipgate.com
+https://integration.sipgate.cloud
+https://login.dev.sipgate.com
+https://login.sipgate.com
+https://payment.dev.sipgate.com
+https://payment.local.sipgate.com:8080
+https://payment.sipgate.com
+https://static.sipgate.com
+https://status.sipgate.de
+https://team-de.dev.sipgate.com
+https://team-de.live.sipgate.com
+https://team-de.local.sipgate.com:10443
+https://team-uk.dev.sipgate.com
+https://team-uk.live.sipgate.com
+https://team-uk.local.sipgate.com:10443
+https://www.sipgate.de
+[0m
+[0m$ [0mfor h in admin.dev.sipgate.net admin.live.sipgate.net integration.dev.sipgate.com team-uk.dev.sipgate.com team-uk.local.sipgate.com payment.local.sipgate.com api.local.sipgate.com app.local.sipgate.com team-de.local.sipgate.com; do echo "=== $h ==="; dig +short $h A; done
+=== admin.dev.sipgate.net ===
+helpdesk.dev.sipgate.net.
+217.116.120.148
+=== admin.live.sipgate.net ===
+helpdesk.live.sipgate.net.
+217.10.73.71
+=== integration.dev.sipgate.com ===
+217.116.121.180
+=== team-uk.dev.sipgate.com ===
+217.116.121.65
+=== team-uk.local.sipgate.com ===
+127.0.0.1
+=== payment.local.sipgate.com ===
+127.0.0.1
+=== api.local.sipgate.com ===
+127.0.0.1
+=== app.local.sipgate.com ===
+127.0.0.1
+=== team-de.local.sipgate.com ===
+127.0.0.1
+[0m
+[0m$ [0mcurl -sSI -m 10 https://admin.dev.sipgate.net 2>&1 | head -15
+curl: (28) Connection timed out after 10001 milliseconds
+[0m
+[0m$ [0mcurl -sSI -m 10 http://admin.dev.sipgate.net 2>&1 | head -15
+curl: (28) Connection timed out after 10001 milliseconds
+[0m
+[0m$ [0mcurl -sSI -m 10 https://admin.live.sipgate.net 2>&1 | head -15
+curl: (28) Connection timed out after 10001 milliseconds
+[0m
+[0m$ [0mcurl -sSI -m 10 https://team-uk.dev.sipgate.com 2>&1 | head -15
+curl: (28) Connection timed out after 10002 milliseconds
+[0m
+[0m$ [0mcurl -sSI -m 10 https://integration.dev.sipgate.com 2>&1 | head -20
+curl: (60) SSL certificate problem: self-signed certificate in certificate chain
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
+[0m
+[0m$ [0mcurl -k -sSI -m 10 https://integration.dev.sipgate.com 2>&1 | head -20
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+date: Wed, 09 Sep 2026 20:49:39 GMT
+[0m
+[0m$ [0mcurl -sSI -m 10 https://mock.integration.sipgate.cloud/contacts 2>&1 | head -20
+HTTP/2 200 
+date: Wed, 09 Sep 2026 20:49:53 GMT
+content-type: application/json; charset=utf-8
+content-length: 8197958
+vary: Accept-Encoding
+x-powered-by: Express
+vary: Origin, Accept-Encoding
+access-control-allow-credentials: true
+etag: W/"7d1746-dWNabePaCmtLyolDCSY4EMFTN1c"
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type
+access-control-max-age: 1728000
+[0m
+[0m$ [0mcurl -s -m 10 -H "x-provider-url: http://169.254.169.254/latest/meta-data/" https://mock.integration.sipgate.cloud/contacts 2>&1 | head -c 500
+[{"id":"mock_id_0","name":"Anna Andersen","firstName":"Anna","lastName":"Andersen","email":"anna.andersen@apple.de","organization":"Apple","contactUrl":"https://www.example.com/organization/7J1ga1KxqqivKJ93sqpEpGLzK7X4uYue/addressbook/kGEzCgx5JTDFLc2GdvYpURGkpXpnDQ5E/contact/mock_id_0","avatarUrl":"https://picsum.photos/200.webp?random=Anna","readonly":false,"phoneNumbers":[{"label":"MOBILE","type":"STANDARD","e164":"+493023125000","localized":"030 23125000","phoneNumber":"+493023125000"},{"labe
+[0m
+[0m$ [0mcurl -k -sSI -X OPTIONS -H "Origin: https://evil.com" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: x-provider-url" https://hubspot.integration.sipgate.cloud/contacts 2>&1 | head -20
+HTTP/2 204 
+date: Wed, 09 Sep 2026 20:50:19 GMT
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-credentials: true
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-region,x-provider-language,x-provider-url,x-provider-key,content-type
+access-control-max-age: 1728000
+[0m
+[0m$ [0mcurl -k -sSI -H "x-provider-url: http://169.254.169.254/latest/meta-data/" https://hubspot.integration.sipgate.cloud/contacts 2>&1 | head -15
+HTTP/2 401 
+date: Wed, 09 Sep 2026 20:50:53 GMT
+content-type: text/html
+content-length: 172
+www-authenticate: Basic realm="Authentication Required"
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-credentials: true
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-region,x-provider-language,x-provider-url,x-provider-key,content-type
+access-control-max-age: 1728000
+[0m
+[0m$ [0mcurl -s -m 10 https://integration.sipgate.com/metrics 2>&1 | grep -E 'firebase|api_key|rate_limit'
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 0
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 2368
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+# TYPE rate_limit_forbidden_requests counter
+rate_limit_forbidden_requests 0
+[0m
+[0m$ [0mdig +short share1.sipgate.cloud CNAME
+nx38603.your-storageshare.de.
+[0m
+[0m$ [0mdig +short nx38603.your-storageshare.de A
+(no output)
+[0m
+[0m$ [0mcurl -sSI -m 10 https://grafana.sipgate.cloud/api/health 2>&1 | head -15
+HTTP/2 200 
+date: Wed, 09 Sep 2026 20:51:46 GMT
+content-type: application/json; charset=UTF-8
+cache-control: no-store
+x-content-type-options: nosniff
+x-xss-protection: 1; mode=block
+[0m
+[0m$ [0mcurl -s -m 10 https://grafana.sipgate.cloud/api/health 2>&1
+{
+  "database": "ok",
+  "version": "11.5.1",
+  "commit": "c6c701cf5be984b088b9d51690b474ab63ca86ff"
+}
+[0m
+[0m$ [0mcurl -s -m 10 "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?list-type=2" 2>&1 | head -c 1000
+<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>sipgate-desktop-app</Name><Prefix></Prefix><KeyCount>439</KeyCount><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>app-web-1.0.0.dmg</Key><LastModified>2020-05-04T06:27:43.000Z</LastModified><ETag>&quot;ed25e2812e3d30c8b416067321007f70-15&quot;</ETag><Size>76223734</Size><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>app-web-1.0.0.dmg.blockmap</Key><LastModified>2020-05-04T06:27:43.000Z</LastModified><ETag>&quot;29f293410a41d0ddf210474933a12d3e&quot;</ETag><Size>79517</Size><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>app-web-1.0.0.zip</Key><LastModified>2020-05-04T06:28:04.000Z</LastModified><ETag>&quot;6b6b55804cdf8bfe3af656b6001d2b51-15&quot;</ETag><Size>73743961</Size><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>app-web-1.0.1.dmg</Key><LastModified>2020-05-06T13:17:15.000Z</LastModified><ETag>&quot;7
+[0m
+[0m$ [0mcurl -sSI -H "Origin: https://evil.com" -m 10 https://api.sipgate.com/v2/contacts 2>&1 | head -20
+HTTP/1.1 401 Unauthorized
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.com
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+vary: origin
+x-b3-traceid: 36c58b06e1e2363bfa3046210903990a
+date: Wed, 09 Sep 2026 20:52:23 GMT
+[0m
+[0m$ [0mcurl -sSI -H "Origin: https://evil.com" -m 10 https://api.sipgate.com/health 2>&1 | head -15
+HTTP/1.1 404 Not Found
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.com
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+vary: origin
+x-b3-traceid: cd3445ac57f1a1cc4ddca3291548ee96
+date: Wed, 09 Sep 2026 20:52:28 GMT
+[0m
+[0m$ [0mcurl -sSI -m 10 https://chatbot.dev.sipgate.com 2>&1 | head -15
+HTTP/2 200 
+server: nginx/1.24.0
+date: Wed, 09 Sep 2026 20:52:38 GMT
+content-type: text/html
+content-length: 3399
+last-modified: Tue, 18 Aug 2026 15:52:48 GMT
+etag: "6a847fd0-d47"
+x-robots-tag: noindex, nofollow, noarchive, nosnippet
+accept-ranges: bytes
+via: 1.1 google
+alt-svc: h3=":443"; ma=2592000
+[0m
+[0m$ [0mcurl -sSI -H "Origin: https://evil.com" -m 10 https://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=polling 2>&1 | head -15
+HTTP/2 400 
+vary: Origin
+content-type: application/json
+date: Wed, 09 Sep 2026 20:52:42 GMT
+via: 1.1 google
+alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+[0m
+[0m$ [0mcurl -sSI -H "Origin: https://evil.com" -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" -m 10 https://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket 2>&1 | head -15
+HTTP/2 400 
+vary: Origin
+content-type: application/json
+date: Wed, 09 Sep 2026 20:52:47 GMT
+via: 1.1 google
+alt-svc: h3=":443"; ma=2592000
+[0m
+[0m$ [0mcurl -sSI -m 10 https://team-uk.live.sipgate.com 2>&1 | head -20
+HTTP/1.1 302 Found
+date: Wed, 09 Sep 2026 20:53:13 GMT
+server: Apache
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk *.google-analytics.com stats.g.doubleclick.net bat.bing.com; script-src 'unsafe-eval' 'unsafe-inline' 'self' data: accounts.google.com apis.google.com *.google-analytics.com www.googletagmanager.com bat.bing.com consentmanager.mgr.consensu.org cdn.consentmanager.net a.delivery.consentmanager.net www.sipgate.de app.sipgate.com cdn.consentmanager.mgr.consensu.org; style-src 'unsafe-inline' 'self' static.sipgate.com data: blob: cdn.consentmanager.mgr.consensu.org; font-src 'self' static.sipgate.com www.sipgateteam.de www.sipgate.de data:; frame-src accounts.google.com *.sipgate.com *.sipgate.de *.sipgate.co.uk; frame-ancestors 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk app.local.sipgate.com:3443 *.googletagmanager.com; child-src *.sipgate.com *.sipgate.de *.sipgate.co.uk; img-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net data: www.google-analytics.com bat.bing.com consentmanager.mgr.consensu.org cdn.consentmanager.mgr.consensu.org a.delivery.consentmanager.net www.google.com/ads/ www.google.de/ads/ www.googletagmanager.com; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net blob:
+x-frame-options: SAMEORIGIN
+set-cookie: PHPSESSID=055cb2c9fdj8lcs39l1skq0phc; path=/; secure; HttpOnly; SameSite=Strict
+expires: Thu, 19 Nov 1981 08:52:00 GMT
+cache-control: no-store, no-cache, must-revalidate
+pragma: no-cache
+location: https://login.sipgate.com/?redirect=https%3A%2F%2Fteam-uk.live.sipgate.com%2Fauthenticate%2F%3Fredirect%3D%252F
+access-control-allow-credentials: true
+access-control-allow-headers: Accept-Encoding
+access-control-expose-headers: Accept-Encoding
+p3p: CP="This is not a P3P policy!"
+content-type: text/html; charset=utf-8
+set-cookie: SERVERID=team-web02; path=/; HttpOnly; Secure
+[0m
+[0m$ [0mcurl -sSI -m 10 https://team-de.live.sipgate.com 2>&1 | grep -E 'content-security-policy|SERVERID'
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk *.google-analytics.com stats.g.doubleclick.net bat.bing.com; script-src 'unsafe-eval' 'unsafe-inline' 'self' data: accounts.google.com apis.google.com *.google-analytics.com www.googletagmanager.com bat.bing.com consentmanager.mgr.consensu.org cdn.consentmanager.net a.delivery.consentmanager.net www.sipgate.de app.sipgate.com cdn.consentmanager.mgr.consensu.org; style-src 'unsafe-inline' 'self' static.sipgate.com data: blob: cdn.consentmanager.mgr.consensu.org; font-src 'self' static.sipgate.com www.sipgateteam.de www.sipgate.de data:; frame-src accounts.google.com *.sipgate.com *.sipgate.de *.sipgate.co.uk; frame-ancestors 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk app.local.sipgate.com:3443 *.googletagmanager.com; child-src *.sipgate.com *.sipgate.de *.sipgate.co.uk; img-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net data: www.google-analytics.com bat.bing.com consentmanager.mgr.consensu.org cdn.consentmanager.mgr.consensu.org a.delivery.consentmanager.net www.google.com/ads/ www.google.de/ads/ www.googletagmanager.com; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net blob:
+set-cookie: SERVERID=team-web01; path=/; HttpOnly; Secure
+[0m
+[0m$ [0mcurl -s -m 10 https://api.sipgate.com/v2/doc/ 2>&1 | head -50
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="/v2/doc/swagger-ui.css" />
+    <link rel="stylesheet" type="text/css" href="/v2/doc/index.css" />
+    <link rel="icon" type="image/png" href="/v2/doc/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/v2/doc/favicon-16x16.png" sizes="16x16" />
+  </head>
+
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="/v2/doc/swagger-ui-bundle.js" charset="UTF-8"> </script>
+    <script src="/v2/doc/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
+    <script src="/v2/doc/keycloak-logout.js"></script>
+    <script src="/v2/doc/swagger-initializer.js" charset="UTF-8"> </script>
+  </body>
+</html>
+[0m
+[0m$ [0mcurl -s -m 10 https://api.sipgate.com/v2/doc/swagger-initializer.js 2>&1 | head -100
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+[0m
+[0m$ [0mcurl -s -m 10 https://api.sipgate.com/v2/doc/oauth2-redirect.html 2>&1 | head -50
+<!doctype html>
+<html lang="en-US">
+<head>
+    <title>Swagger UI: OAuth2 Redirect</title>
+</head>
+<body>
+<script>
+    'use strict';
+    function run () {
+        var oauth2 = window.opener.swaggerUIRedirectOauth2;
+        var sentState = oauth2.state;
+        var redirectUrl = oauth2.redirectUrl;
+        var isValid, qp, arr;
+
+        if (/code|token|error/.test(window.location.hash)) {
+            qp = window.location.hash.substring(1);
+        } else {
+            qp = location.search.substring(1);
+        }
+
+        arr = qp.split("&");
+        arr.forEach(function (v,i,_arr) { _arr[i] = '"' + v.replace('=', '":"') + '"';});
+        qp = qp ? JSON.parse('{' + arr.join() + '}',
+                function (key, value) {
+                    return key === "" ? value : decodeURIComponent(value);
+                }
+        ) : {};
+
+        isValid = qp.state === sentState;
+
+        if ((
+          oauth2.auth.schema.get("flow") === "accessCode" ||
+          oauth2.auth.schema.get("flow") === "authorizationCode" ||
+          oauth2.auth.schema.get("flow") === "authorization_code"
+        ) && !oauth2.auth.code) {
+            if (!isValid) {
+                oauth2.errCb({
+                    authId: oauth2.auth.name,
+                    source: "auth",
+                    level: "warning",
+                    message: "Authorization may be unsafe, passed state was changed in server Passed state wasn't returned from auth server"
+                });
+            }
+
+            if (qp.code) {
+                delete oauth2.state;
+                oauth2.auth.code = qp.code;
+                oauth2.callback({auth: oauth2.auth, redirectUrl: redirectUrl});
+            } else {
+                let oauthErrorMsg;
+[0m
+[0m$ [0mcurl -s -m 10 https://integration.sipgate.com/swagger/swagger-ui-init.js 2>&1 | head -150
+window.onload = function() {
+  // Build a system
+  let url = window.location.search.match(/url=([^&]+)/);
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    url = window.location.origin;
+  }
+  let options = {
+  "swaggerDoc": {
+    "openapi": "3.0.3",
+    "info": {
+      "title": "Platypus",
+      "description": "Platform for integration Purposes",
+      "version": "0.0.1",
+      "contact": {}
+    },
+    "servers": [],
+    "paths": {
+      "/streaming.start": {
+        "post": {
+          "operationId": "StreamingController_start",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": "Streaming start job created"
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Start streaming for all connected integrations of a user",
+          "tags": [
+            "streaming"
+          ]
+        }
+      },
+      "/contacts.list": {
+        "get": {
+          "operationId": "ContactController_list",
+          "parameters": [
+            {
+              "name": "page",
+              "required": false,
+              "in": "query",
+              "deprecated": true,
+              "description": "Use pageToken instead",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": false,
+              "in": "query",
+              "description": "Maximum number of contacts to return",
+              "schema": {
+                "example": 10000,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageToken",
+              "required": false,
+              "in": "query",
+              "description": "Token for the next page of results",
+              "schema": {
+                "format": "base64",
+                "type": "string"
+              }
+            },
+            {
+              "name": "scope",
+              "required": false,
+              "in": "query",
+              "description": "The scope to search in all | team (sipgate account members) | contacts)",
+              "schema": {
+                "example": "team",
+                "type": "string",
+                "enum": [
+                  "all",
+                  "team",
+                  "contacts"
+                ]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The active contact objects and ids of deleted contacts along with the next pagination cursor.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "description": "List of contacts",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "ID of the contact",
+                              "example": "123456"
+                            },
+                            "source": {
+                              "type": "string",
+                              "description": "Source of the contact",
+                              "example": "HUBSPOT"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Full name of the contact, should be used if integration uses combined first and last name",
+                              "example": "Hans Wurst",
+                              "nullable": true
+                            },
+                            "firstName": {
+                              "type": "string",
+                              "description": "First name of the contact, should be used if integration uses separate first and last name",
+                              "example": "Hans",
+                              "nullable": true
+                            },
+                            "lastName": {
+                              "type": "string",
+                              "description": "Last name of the contact, should be used if integration uses separate first and last name",
+                              "example": "Wurst",
+                              "nullable": true
+                            },
+                            "email": {
+                              "type": "string",
+                              "description": "Email address of the contact",
+                              "example": "test@test.de ",
+                              "nullable": true
+                            },
+                            "organization": {
+                              "type": "string",
+                              "description": "Organization of the contact",
+                              "example": "Wurst GmbH",
+                              "nullable": true
+                            },
+                            "type": {
+                              "enum": [
+                                "contacts",
+                                "deals",
+                                "companies",
+                                "tickets",
+[0m
+[0m$ [0mcurl -s -m 10 https://integration.sipgate.com/swagger/swagger-ui-init.js 2>&1 | grep -A 30 'oauth2.redirect\|oauth2.callback\|users.integrations.create'
+"/users.integrations.create": {
+        "post": {
+          "operationId": "UserController_createIntegration",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "integrationName": {
+                      "type": "string",
+                      "description": "Name of the integration",
+                      "example": "HUBSPOT"
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "Key of the integration, must be an existing integration profile key",
+                      "example": "some-key"
+                    },
+                    "apiUrl": {
+                      "type": "string",
+                      "description": "Api URL of the integration",
+                      "example": "https://api.example.com"
+                    },
+                    "locale": {
+                      "type": "string",
+                      "description": "Locale of the integration",
+                      "example": "de-DE",
+                      "deprecated": true
+--
+      "/oauth2/redirect": {
+        "get": {
+          "operationId": "OAuthController_getAuthSessionRedirect[1]",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "tags": [
+            "OAuth"
+          ]
+        }
+      },
+      "/oauth2/callback": {
+        "get": {
+          "operationId": "OAuthController_handleCallback[1]",
+          "parameters": [
+            {
+              "name": "code",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "accounts-server",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "error",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+[0m
+[0m$ [0mcurl -s -m 10 https://integration.sipgate.com/swagger/swagger-ui-init.js 2>&1 | grep -B 5 -A 15 '"security"' | head -80
+"responses": {
+            "204": {
+              "description": "Streaming start job created"
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Start streaming for all connected integrations of a user",
+          "tags": [
+            "streaming"
+          ]
+        }
+      },
+      "/contacts.list": {
+        "get": {
+          "operationId": "ContactController_list",
+          "parameters": [
+            {
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Get contact pages from an integration. Optionally filtered by timestamp.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.get": {
+        "get": {
+          "operationId": "ContactController_get",
+          "parameters": [
+            {
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Get a contact by id from the given integration. The contact will be retrieved from the Database.",
+          "tags": [
+            "contacts"
+          ]
+        }
+      },
+      "/contacts.listByPhoneNumber": {
+        "get": {
+          "operationId": "ContactController_listByPhoneNumber",
+          "parameters": [
+            {
+--
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "List contacts that have a matching phoneNumber.e164 field. The contact will be retrieved from the database.",
+          "tags": [
+            "contacts"
+          ]
+[0m
+[0m$ [0mcurl -s -m 10 https://integration.sipgate.com/swagger/swagger-ui-init.js 2>&1 | python3 -c "
+import sys, json, re
+content = sys.stdin.read()
+# Extract the swaggerDoc JSON
+match = re.search(r'\"swaggerDoc\":\s*(\{.*\})\s*\}\s*\}\s*;', content, re.DOTALL)
+if match:
+    import json
+    doc = json.loads(match.group(1))
+    for path, methods in doc.get('paths', {}).items():
+        for method, spec in methods.items():
+            sec = spec.get('security')
+            if sec is None or sec == []:
+                print(f'{method.upper()} {path}: security={sec}')
+"
+Traceback (most recent call last):
+  File "<string>", line 8, in <module>
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 340, in decode
+    raise JSONDecodeError("Extra data", s, end)
+json.decoder.JSONDecodeError: Extra data: line 10089 column 4 (char 385393)
+[0m
+[0m$ [0mcurl -s -m 10 https://integration.sipgate.com/swagger/swagger-ui-init.js 2>&1 | grep -A 20 '"/oauth2/redirect"' | head -25
+"/oauth2/redirect": {
+        "get": {
+          "operationId": "OAuthController_getAuthSessionRedirect[1]",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "tags": [
+            "OAuth"
+          ]
+        }
+      },
+      "/oauth2/callback": {
+        "get": {
+          "operationId": "OAuthController_handleCallback[1]",
+          "parameters": [
+            {
+              "name": "code",
+              "required": true,
+[0m
+[0m$ [0mcurl -sSI -m 10 https://integration.sipgate.com/oauth2/redirect 2>&1 | head -10
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 131
+content-type: application/problem+json; charset=utf-8
+date: Wed, 09 Sep 2026 20:55:51 GMT
+[0m
+[0m$ [0mcurl -sSI -m 10 "https://integration.sipgate.com/oauth2/callback?code=test&state=test" 2>&1 | head -10
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 152
+content-type: application/problem+json; charset=utf-8
+date: Wed, 09 Sep 2026 20:56:14 GMT
+[0m
+[0m$ [0mcurl -sSI -m 10 "https://login.sipgate.com/realms/sipgate-apps/protocol/openid-connect/auth?client_id=sipgate-app-web&response_type=token&redirect_uri=https%3A%2F%2Fapp.sipgate.com%2Fimplicit-auth-redirect%3Fredirect%3D%2F" 2>&1 | head -15
+HTTP/1.1 200 OK
+date: Wed, 09 Sep 2026 20:56:24 GMT
+server: Apache
+content-security-policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://*.google.com fonts.googleapis.com fast.fonts.net; script-src 'self' 'unsafe-inline' https://*.googletagmanager.com https://*.google.com https://connect.facebook.net https://www.google-analytics.com https://www.gstatic.com https://static.sipgate.com; frame-src 'self' https://*.sipgate.com https://www.google.com;child-src 'self' https://*.sipgate.com; font-src 'self' fonts.gstatic.com https://static.sipgate.com data:; connect-src 'self' https://*.sipgate.com; img-src 'self' https://static.sipgate.com data: https://*.gstatic.com https://www.google-analytics.com https://www.facebook.com https://stats.g.doubleclick.net https://*.google.com https://*.google.de;frame-ancestors 'self' https://*.satellite.me https://*.satellite.me:3000 https://*.sipgate.com https://*.sipgate.com:3000 https://*.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa https://hubspot-cti.sipgate.cloud https://*.hubspot.com
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/*
+last-modified: Thu, 11 Jun 2026 05:12:30 GMT
+accept-ranges: bytes
+content-length: 517
+cache-control: max-age=0
+expires: Wed, 09 Sep 2026 20:56:24 GMT
+vary: Accept-Encoding
+x-xss-protection: 1; mode=block
+x-content-type-options: nosniff
+access-control-allow-credentials: true
+access-control-allow-headers: Accept-Encoding
+[0m
+[0m$ [0mcurl -s -m 10 "https://login.sipgate.com/realms/third-party/.well-known/openid-configuration" 2>&1 | head -100
+<!doctype html>
+<html lang="de">
+<head>
+	<meta charset="utf-8">
+	<title>sipgate login</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex">
+	<meta data-smoketest="Smoketest - OK">
+	<meta http-equiv="refresh" content="0; url=/">
+</head>
+<body>
+	<p>Diese Seite ist umgezogen. Sie werden weitergeleitet &hellip;</p>
+	<p>This page has moved. You are being redirected &hellip;</p>
+	<p><a href="/">Weiter zum Login / Continue to login</a></p>
+</body>
+</html>
+[0m
+[0m$ [0mcurl -s -m 10 "https://login.sipgate.com/realms/third-party/.well-known/openid-configuration" -H "Accept: application/json" 2>&1 | head -100
+<!doctype html>
+<html lang="de">
+<head>
+	<meta charset="utf-8">
+	<title>sipgate login</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex">
+	<meta data-smoketest="Smoketest - OK">
+	<meta http-equiv="refresh" content="0; url=/">
+</head>
+<body>
+	<p>Diese Seite ist umgezogen. Sie werden weitergeleitet &hellip;</p>
+	<p>This page has moved. You are being redirected &hellip;</p>
+	<p><a href="/">Weiter zum Login / Continue to login</a></p>
+</body>
+</html>
+[0m
+[0m$ [0mcurl -s -m 10 "https://api.sipgate.com/realms/third-party/.well-known/openid-configuration" -H "Accept: application/json" 2>&1 | head -100
+<html><body><h1>Resource not found</h1></body></html>
+[0m
+[0m$ [0mcurl -s -m 10 "https://api.sipgate.com/.well-known/openid-configuration" -H "Accept: application/json" 2>&1 | head -100
+<html><body><h1>Resource not found</h1></body></html>
+[0m
+[0m$ [0mcurl -s -m 10 "https://login.sipgate.com/auth/realms/third-party/.well-known/openid-configuration" -H "Accept: application/json" 2>&1 | head -150
+{"issuer":"https://login.sipgate.com/auth/realms/third-party","authorization_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/auth","token_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/token","introspection_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/token/introspect","userinfo_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/userinfo","end_session_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/logout","frontchannel_logout_session_supported":true,"frontchannel_logout_supported":true,"jwks_uri":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/certs","check_session_iframe":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/login-status-iframe.html","grant_types_supported":["authorization_code","implicit","refresh_token","password","client_credentials","urn:ietf:params:oauth:grant-type:device_code","urn:openid:params:grant-type:ciba"],"acr_values_supported":["0","1"],"response_types_supported":["code","none","id_token","token","id_token token","code id_token","code token","code id_token token"],"subject_types_supported":["public","pairwise"],"id_token_signing_alg_values_supported":["PS384","ES384","RS384","HS256","HS512","ES256","RS256","HS384","ES512","PS256","PS512","RS512"],"id_token_encryption_alg_values_supported":["RSA-OAEP","RSA-OAEP-256","RSA1_5"],"id_token_encryption_enc_values_supported":["A256GCM","A192GCM","A128GCM","A128CBC-HS256","A192CBC-HS384","A256CBC-HS512"],"userinfo_signing_alg_values_supported":["PS384","ES384","RS384","HS256","HS512","ES256","RS256","HS384","ES512","PS256","PS512","RS512","none"],"userinfo_encryption_alg_values_supported":["RSA-OAEP","RSA-OAEP-256","RSA1_5"],"userinfo_encryption_enc_values_supported":["A256GCM","A192GCM","A128GCM","A128CBC-HS256","A192CBC-HS384","A256CBC-HS512"],"request_object_signing_alg_values_supported":["PS384","ES384","RS384","HS256","HS512","ES256","RS256","HS384","ES512","PS256","PS512","RS512","none"],"request_object_encryption_alg_values_supported":["RSA-OAEP","RSA-OAEP-256","RSA1_5"],"request_object_encryption_enc_values_supported":["A256GCM","A192GCM","A128GCM","A128CBC-HS256","A192CBC-HS384","A256CBC-HS512"],"response_modes_supported":["query","fragment","form_post","query.jwt","fragment.jwt","form_post.jwt","jwt"],"registration_endpoint":"https://login.sipgate.com/auth/realms/third-party/clients-registrations/openid-connect","token_endpoint_auth_methods_supported":["private_key_jwt","client_secret_basic","client_secret_post","tls_client_auth","client_secret_jwt"],"token_endpoint_auth_signing_alg_values_supported":["PS384","ES384","RS384","HS256","HS512","ES256","RS256","HS384","ES512","PS256","PS512","RS512"],"introspection_endpoint_auth_methods_supported":["private_key_jwt","client_secret_basic","client_secret_post","tls_client_auth","client_secret_jwt"],"introspection_endpoint_auth_signing_alg_values_supported":["PS384","ES384","RS384","HS256","HS512","ES256","RS256","HS384","ES512","PS256","PS512","RS512"],"authorization_signing_alg_values_supported":["PS384","ES384","RS384","HS256","HS512","ES256","RS256","HS384","ES512","PS256","PS512","RS512"],"authorization_encryption_alg_values_supported":["RSA-OAEP","RSA-OAEP-256","RSA1_5"],"authorization_encryption_enc_values_supported":["A256GCM","A192GCM","A128GCM","A128CBC-HS256","A192CBC-HS384","A256CBC-HS512"],"claims_supported":["aud","sub","iss","auth_time","name","given_name","family_name","preferred_username","email","acr"],"claim_types_supported":["normal"],"claims_parameter_supported":true,"scopes_supported":["openid","sessions:fax:write","channels:write","groups:forwardings:read","sessions:calls:write","notifications:read","devices:forwardings:write","sim:card:order:write","phonelines:read","groups:users:read","greetings:read","channels:events:recordings:write","callrestrictions:write","callrestrictions:read","numbers:write","phonelines:write","greetings:write","cx:management:write","account:read","devices:tariffannouncement:write","phonelines:parallelforwardings:read","cx:statistics:read","ivrs:write","settings:sipgateio:read","groups:write","authorization:oauth:clients:write","sms:callerid:write","phonelines:devices:read","products:read","phones:read","groups:voicemails:read","devices:callerid:read","sms:callerid:read","faxlines:read","notifications:write","events:write","users:busyonbusy:write","contacts:write","trunks:write","all","phonelines:sipgateio:log:read","settings:sipgateio:write","internal","profile","roles","phonelines:blockanonymous:write","addresses:read","history:write","voicemails:read","sms:write","phonelines:voicemails:greetings:write","devices:localprefix:write","rtcm:read","devices:tariffannouncement:read","user:notification:write","web-origins","acds:write","groups:forwardings:write","phonelines:blockanonymous:read","phonelines:devices:write","sms:read","sessions:write","address","faxlines:numbers:read","labels:write","phonelines:voicemails:read","phonelines:parallelforwardings:write","trunk:read","simcards:order:write","frontdesk:statistics:write","phonelines:forwardings:write","microsoftteams:fqdn:read","phonelines:voicemails:greetings:read","addresses:write","authorization:oauth2:clients:read","user:notification:read","audiofiles:read","featurescope","payment:methods:read","labels:read","settings:read","devices:singlerowdisplay:read","settings:write","devices:callerid:write","devices:contingents:read","groups:read","authorization:oauth2:clients:write","appbookings:write","users:read","phonelines:voicemails:write","acr","tacs:read","log:webhooks:read","phonelines:busyonbusy:read","rtcm:write","blacklist:write","autorecording:greeting:read","push_device:register","third-party","devices:sim:read","users:role:write","phone","blacklist:read","cx:statistics:write","contacts:read","audiofiles:write","faxlines:write","conferencerooms:write","openid","channels:events:read","groups:faxlines:read","microsoftteams:fqdn:write","users:defaultdevice:write","contracts:read","devices:singlerowdisplay:write","authorization:oauth:clients:read","devices:sim:write","conferencerooms:read","history:read","channels:read","acds:statistics:read","devices:sims:orders:write","devices:localprefix:read","channels:events:recordings:read","users:presence:dnd:write","devices:forwardings:read","autorecording:greeting:write","appbookings:read","sessions:sms:write","channel:logins:read","phonelines:busyonbusy:write","users:write","devices:read","devices:contingents:write","offline_access","contracts:write","ivrs:read","portings:write","acds:read","frontdesk:write","frontdesk:statistics:read","balance:read","channels:events:write","numbers:read","phonelines:sipgateio:read","groups:devices:write","microprofile-jwt","events:read","contracts:crm:read","email","account:write","payment:methods:write","groups:numbers:read","cx:management:read","phones:write","phonelines:sipgateio:write","phonelines:forwardings:read","portings:read","voicemails:write","phonelines:numbers:read","frontdesk:read","acds:statistics:write","channel:logins:write","devices:write"],"request_parameter_supported":true,"request_uri_parameter_supported":true,"require_request_uri_registration":true,"code_challenge_methods_supported":["plain","S256"],"tls_client_certificate_bound_access_tokens":true,"revocation_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/revoke","revocation_endpoint_auth_methods_supported":["private_key_jwt","client_secret_basic","client_secret_post","tls_client_auth","client_secret_jwt"],"revocation_endpoint_auth_signing_alg_values_supported":["PS384","ES384","RS384","HS256","HS512","ES256","RS256","HS384","ES512","PS256","PS512","RS512"],"backchannel_logout_supported":true,"backchannel_logout_session_supported":true,"device_authorization_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/auth/device","backchannel_token_delivery_modes_supported":["poll","ping"],"backchannel_authentication_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/ext/ciba/auth","backchannel_authentication_request_signing_alg_values_supported":["PS384","ES384","RS384","ES256","RS256","ES512","PS256","PS512","RS512"],"require_pushed_authorization_requests":false,"pushed_authorization_request_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/ext/par/request","mtls_endpoint_aliases":{"token_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/token","revocation_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/revoke","introspection_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/token/introspect","device_authorization_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/auth/device","registration_endpoint":"https://login.sipgate.com/auth/realms/third-party/clients-registrations/openid-connect","userinfo_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/userinfo","pushed_authorization_request_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/ext/par/request","backchannel_authentication_endpoint":"https://login.sipgate.com/auth/realms/third-party/protocol/openid-connect/ext/ciba/auth"}}
+[0m
+Now I have sufficient current surface data. Let me run the 8 steps.
+
+---
+
+**STEP 1 — DELTA**
+[NEW] `admin.dev.sipgate.net` → `helpdesk.dev.sipgate.net` (217.116.120.148) — NEW prod-subdomain alias in dev JS bundle, HTTP 000 (timeout)
+[NEW] `admin.live.sipgate.net` → `helpdesk.live.sipgate.net` (217.10.73.71) — NEW prod subdomain in dev JS bundle, HTTP 000 (timeout)
+[NEW] `team-uk.dev.sipgate.com` (217.116.121.65) — NEW dev host in bundle, HTTP 000 (timeout)
+[CHANGED] `app.dev.sipgate.com` bundle rotated to `main-CYk1JfU_.js` (2026-09-09 15:40:25 GMT) — 18 hardcoded internal host:port pairs including 2 NEW prod subdomains
+[CHANGED] `integration.sipgate.com/metrics` `firebase_jwt_forbidden_requests` 2368 (down from 70373) — per-replica counter confirms restart-reset, live Firebase-JWT validator
+[CHANGED] `share1.sipgate.cloud` CNAME → `nx38603.your-storageshare.de` → NXDOMAIN confirmed — subdomain-takeover candidate
+[CHANGED] `grafana.sipgate.cloud` live Grafana 11.5.1 confirmed via `/api/health` — login-gated, no anonymous
+[CHANGED] `mock.integration.sipgate.cloud` ungated Express twin — `/contacts` 200 (~8MB synthetic), ACAO:* + ACAC:true + `allow-headers: x-provider-url,x-provider-key` — x-provider-url does NOT parameterize fetch (static mock returned)
+[CHANGED] `*.integration.sipgate.cloud` (94 hosts) — uniform nginx Basic-auth 401 gate + ACAO:* CORS preflight allowing `x-provider-url,x-provider-key` — data GET 401, header does not bypass nginx
+[CHANGED] `api.sipgate.com/v2/*` — arbitrary-origin CORS reflection with credentials persistent (evil.com reflected + ACAC:true + x-b3-traceid leak)
+[CHANGED] `team-uk.live.sipgate.com` CSP `frame-ancestors` includes `app.local.sipgate.com:3443` + `SERVERID=team-web02` — family-wide with team-de.live
+[CHANGED] `chatbot.dev.sipgate.com` live (nginx/1.24.0, GCP) — polling & WS transport both reject arbitrary Origin (400, Vary:Origin, no ACAO)
+[NO_DELTA] `login.sipgate.com` OIDC implicit flow (sipgate-apps realm), third-party realm (extreme scopes, HS256/PKCE-plain/DCR gated), `api.sipgate.com/v2/doc` swagger-ui implicit client `sipgate-swagger-ui`
+[NO_DELTA] `sipgate-desktop-app.s3.eu-central-1.amazonaws.com` publicly listable (439 keys, stale 2024-06-11, versioning disabled, write untested)
+
+---
+
+**STEP 2 — PRIORITIZE**
+[PRIO] app.dev.sipgate.com,8.85,attack_surface=10,business_value=7,tech_exposure=10,gate_ease=10,cloud_surface=8,freshness=10
+[PRIO] *.integration.sipgate.cloud (94 hosts),8.35,attack_surface=9,business_value=7,tech_exposure=9,gate_ease=8,cloud_surface=9,freshness=9
+[PRIO] integration.sipgate.com,8.25,attack_surface=9,business_value=9,tech_exposure=9,gate_ease=3,cloud_surface=9,freshness=10
+[PRIO] login.sipgate.com,8.75,attack_surface=8,business_value=10,tech_exposure=9,gate_ease=10,cloud_surface=7,freshness=7
+[PRIO] api.sipgate.com/v2,7.90,attack_surface=9,business_value=10,tech_exposure=8,gate_ease=3,cloud_surface=8,freshness=7
+[PRIO] admin.dev.sipgate.net / admin.live.sipgate.net,7.20,attack_surface=7,business_value=8,tech_exposure=8,gate_ease=10,cloud_surface=6,freshness=10
+[PRIO] grafana.sipgate.cloud,6.95,attack_surface=6,business_value=6,tech_exposure=7,gate_ease=5,cloud_surface=8,freshness=10
+[PRIO] share1.sipgate.cloud,7.30,attack_surface=6,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=8,freshness=10
+[PRIO] mock.integration.sipgate.cloud,6.80,attack_surface=6,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
+[PRIO] team-uk.live.sipgate.com / team-de.live.sipgate.com,6.40,attack_surface=5,business_value=6,tech_exposure=7,gate_ease=5,cloud_surface=7,freshness=8
+
+---
+
+**STEP 3 — HYPOTHESES**
+
+[HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References
+class: SSRF
+asset: app.dev.sipgate.com
+confidence: 85
+reasoning: Live dev SPA on Fastly CDN serves production-identical JS bundle (main-CYk1JfU_.js, 5.65MB) with 18 hardcoded internal host:port pairs including NEW prod subdomains `admin.live.sipgate.net` (→ helpdesk.live.sipgate.net, 217.10.73.71) and `admin.dev.sipgate.net` (→ helpdesk.dev.sipgate.net, 217.116.120.148); multiple `.local` hosts resolve to 127.0.0.1 confirming internal-only references; bundle rotates frequently (freshness=10); no IP restriction on dev SPA; internal ports 3396, 3443, 8080, 10443 exposed in config
+evidence_needed: HTTP response from newly extracted prod subdomains (admin.live.sipgate.net, admin.dev.sipgate.net) showing live services on non-standard ports; proof of SSRF via dev SPA proxy/chaining or XSS on dev SPA to pivot to internal hosts; DNS resolution showing RFC1918 IPs for any `.local` hosts
+verify_steps: GET https://app.dev.sipgate.com/assets/main-CYk1JfU_.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve all *.dev.sipgate.net, *.live.sipgate.net, *.dev.sipgate.com hosts; probe discovered hosts for HTTP responses on ports 80/443/3396/3443/8080/10443 (read-only, ≤1 rps); test for SSRF via any proxy/chaining endpoints in dev SPA
+impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, team-uk.local, integration.dev, admin.live, helpdesk.live); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface + prod subdomain exposure in dev bundle)
+testability: PASSIVE
+
+[HYP] Integration Platform OAuth Gate Bypass via Spec-Behavior Drift + SSRF via apiUrl
+class: AUTH
+asset: integration.sipgate.com
+confidence: 70
+reasoning: Embedded OpenAPI spec declares `/oauth2/redirect` and `/oauth2/callback` with NO security requirement (absent security array), yet all 26 documented data paths return uniform 403 "Forbidden resource" externally; OAuth2 implicit flow uses login.sipgate.com realm `sipgate-apps` with client `platypus-swagger`; spec-vs-behavior drift suggests gate may be IP-allowlisted, token-gated (Firebase JWT confirmed via /metrics), or mTLS — bypass unknown; `users.integrations.create` accepts free-form `apiUrl` parameter without validation (SSRF surface); swagger static assets PUBLIC (200) while all data ops are 403-gated; live Firebase-JWT validator confirmed via `/metrics` (per-replica counter 2368)
+evidence_needed: Identification of condition that satisfies the gate (valid bearer token from login.sipgate.com, source IP allowlist, mTLS cert, or header) enabling access to `/contacts.list`, `/call-logs.create`, `/users.integrations.create` (SSRF via apiUrl to 169.254.169.254 or internal services)
+verify_steps: GET https://integration.sipgate.com/swagger/swagger-ui-init.js — confirm spec security annotations for oauth2 endpoints vs data paths; GET /oauth2/redirect, /oauth2/callback, /contacts.list, /users.integrations.list with various headers (Origin, X-Forwarded-For, Authorization: Bearer dummy, Firebase-style JWT) — flag any non-403/401/404 (read-only, ≤1 rps); test /users.integrations.create with apiUrl=http://169.254.169.254/latest/meta-data/ if gate bypassed
+impact: If gate bypassed: full CRM contact access, call-log manipulation, task creation, integration registration with attacker-controlled apiUrl (SSRF to cloud metadata 169.254.169.254 or internal services); severity CRITICAL if bypass confirmed
+testability: PASSIVE
+
+[HYP] CRM Adapter Fleet SSRF via x-provider-url Header (Gated + Ungated Twins)
+class: SSRF
+asset: *.integration.sipgate.cloud (94 hosts + mock.integration.sipgate.cloud)
+confidence: 55
+reasoning: 94 per-vendor CRM adapters uniformly behind nginx Basic-auth 401 with ACAO:* CORS preflight allowing `x-provider-url,x-provider-key` headers; mock.integration.sipgate.cloud is ungated twin (no nginx) exposing `/contacts`, `/contacts/search`, `/contacts/export` (200, ~8MB synthetic) with identical CORS headers; documented `x-provider-url`/`x-provider-key` accepted in preflight; empirical test shows x-provider-url does NOT parameterize outbound fetch on mock (returns static mock corpus regardless); gated siblings enforce nginx 401 before app — header does not bypass gate; potential for header-driven SSRF to cloud metadata (169.254.169.254) or internal service mesh IF nginx gate bypassed or credentials obtained
+evidence_needed: Response differential when sending `x-provider-url: http://169.254.169.254/latest/meta-data/` to gated hosts with valid Basic auth credentials (requires AUTH_HELPED); or discovery of nginx misconfiguration allowing gate bypass; or proof that x-provider-url IS parsed by app layer behind nginx on gated hosts
+verify_steps: OPTIONS https://hubspot.integration.sipgate.cloud/contacts — confirm `allow-headers: x-provider-url,x-provider-key`; GET https://hubspot.integration.sipgate.cloud/contacts with header `x-provider-url: http://169.254.169.254/latest/meta-data/` — observe 401 (read-only, ≤1 rps); repeat for mock.integration.sipgate.cloud (already tested, negative); enumerate all 94 hosts via CT for deployed vs connection-reset variants
+impact: SSRF from GCP-hosted adapter fleet to cloud metadata (169.254.169.254), internal k8s API, or vendor webhook hijacking; severity HIGH (94-host fleet + ungated mock twin) — but currently NOT functional per testing without creds/gate bypass
+testability: AUTH_HELPED
+
+---
+
+**STEP 4 — SELF-CRITIQUE**
+[PARKED] CRM Adapter Fleet SSRF via x-provider-url Header: confidence 55 but empirical testing confirms x-provider-url header does NOT parameterize outbound fetch on mock twin; gated siblings enforce nginx Basic-auth 401 before app; no nginx bypass found; requires AUTH_HELPED for credentialed testing — below actionable threshold for passive-only workflow
+[FINAL] 1. Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References (confidence 85, PASSIVE) — highest confidence, concrete verify_steps, live rotating bundle with NEW prod subdomains in dev config
+[FINAL] 2. Integration Platform OAuth Gate Bypass via Spec-Behavior Drift + SSRF via apiUrl (confidence 70, PASSIVE) — spec-behavior drift documented, SSRF via apiUrl parameter, live Firebase-JWT gate with per-replica metrics; passive probes viable for gate mapping
+
+---
+
+**STEP 5 — NEXT ACTION**
+[NEXT] PROBE: GET https://app.dev.sipgate.com/assets/main-CYk1JfU_.js — fetch current JS bundle, extract all hardcoded host:port pairs from source/chunks, DNS-resolve any new *.dev.sipgate.net / *.live.sipgate.net / *.dev.sipgate.com hosts not yet cataloged; probe discovered hosts for HTTP responses on 80/443/3396/3443/8080/10443 (read-only, ≤1 rps)
+
+---
+
+**STEP 6 — LEARNING**
+[LEARN] ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA on Fastly CDN with production JS bundle, 18 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net/admin.dev.sipgate.net — infrastructure info disclosure
+[LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct gate tier from apex Firebase-JWT
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 2368 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+[LEARN] ACCEPTED MISCONFIG @ grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB, login-gated, no anonymous
+[LEARN] ACCEPTED MISCONFIG @ share1.sipgate.cloud: dangling CNAME → Hetzner StorageShare NXDOMAIN; takeover candidate (needs HUMAN claim validation)
+[LEARN] ACCEPTED INFO @ mock.integration.sipgate.cloud: only ungated *.integration.sipgate.cloud host; /contacts 200 ~8MB synthetic; ACAO:* + ACAC:true + allow-headers x-provider-*; x-provider-url does NOT parameterize fetch
+[LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+[LEARN] REJECTED SSRF @ *.integration.sipgate.cloud: nginx Basic-auth 401 enforced before app; x-provider-url/x-provider-key headers do NOT bypass nginx gate
+[LEARN] ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation
+[LEARN] REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+
+---
+
+**STEP 7 — RISK**
+[RISK] sipgate: 82 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins, multi-tenant dashboards, public dev SPA with full internal topology disclosure (NEW prod subdomains admin.live/dev in bundle), LIVE dev chatbot with socket.io, NEWLY ALIVE integration.dev endpoint with permissive CORS, 94-host CRM adapter fleet with Basic-auth + ACAO:* + SSRF headers, UNGATED mock.integration.sipgate.cloud twin exposing x-provider-* headers (SSRF non-functional), dangling CNAME takeover candidate (share1.sipgate.cloud), live internet-facing Grafana. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + prod subdomain references; (2) CRM adapter fleet SSRF via x-provider-url headers (94 hosts gated + 1 ungated mock twin); (3) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (4) Cross-tenant BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (5) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (6) Integration platform OAuth gate bypass via spec-behavior drift (platypus-swagger client, implicit flow, SSRF via apiUrl); (7) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk); (8) Subdomain takeover candidate (share1.sipgate.cloud). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, 94-host adapter fleet SSRF surface + ungated mock twin, and potential object-level authz-drift on high-value API endpoints.
