@@ -11,3 +11,6 @@
   - | 3 | Dev SPA internal infrastructure disclosure | **VALID** | 5.3 | Already in KB |
   - | 5 | GitHub Redis IP + GCP project | **VALID** | 5.3 | Chain-dependent (needs SSRF) |
   - | 6 | Radau CORS + hardcoded secrets | **VALID** | 4.3–7.5 | Deployment unconfirmed |
+
+- 1 lead(s) marked VALID at 2026-09-09 11:38:09 UTC
+  - | **share1.sipgate.cloud dangling CNAME** | **VALID** | Novel subdomain takeover candidate. CNAME → `nx38603.your-storageshare.de` → NXDOMAIN. Provable via `dig`. In-scope (sipgate.cloud). CVSS 6.5 ME
