@@ -1,1 +1,19 @@
-## 2026-09-10 21:13:48 UTC [target] (model bigpickle)
+## 2026-09-10 23:16:48 UTC [target] (model bigpickle)
+[HYP] Swagger implicit client + api/v2 CORS-credential reflection as same-origin-XSS→session-theft chain
+class: AUTH
+asset: api.sipgate.com/v2/doc/* + api.sipgate.com/v2/*
+confidence: 55
+reasoning: Two independently-ACCEPTED facts persist: (a) /v2/* reflects any Origin with ACAC:true + exposes sensitive headers; (b) /v2/doc/ (200, no X-Frame-Options, no CSP frame-ancestors) runs swagger-ui 5.x with implicit-only client `sipgate-swagger-ui` carrying extreme scopes (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account rw). Frameable docs page + credential-CORS + extreme-scope implicit client = chain components all co-located on one origin; only the XSS trigger is missing.
+evidence_needed: A reflectable/attacker-influenced input into swagger-ui DOM or JS on api.sipgate.com (fragment/query/configUrl/url param); prior Chromium tests already REJECTED cross-origin opener read on oauth2-redirect.html.
+verify_steps: GET https://api.sipgate.com/v2/doc/ (200, frameable confirmed); GET https://api.sipgate.com/v2/doc/swagger-initializer.js — inspect for configUrl/url parameterization; OPTIONS https://api.sipgate.com/v2/contacts with Origin: evil.example (ACAO:evil + ACAC:true confirmed); GET https://api.sipgate.com/v2/doc/oauth2-redirect.html (200).
+impact: If an XSS input ever lands on api.sipgate.com → implicit-flow token exfiltration via CORS→ATO/cross-tenant PII. HIGH severity, chain-dependent, requires authenticated victim.
+testability: PASSIVE
+[HYP] OAuth2 /oauth2/{redirect,callback} spec-claims-NO-security vs runtime FB-JWT 403 masks a mint path
+class: MISCONFIG
+asset: integration.sipgate.com/oauth2/{redirect,callback}
+confidence: 42
+reasoning: Spec declares both ops with NO security requirement yet all external GET/POST → uniform app-403 (application/problem+json); metrics (public) show live firebase_jwt_forbidden_requests. Drift is real but gated; fabricated code/state returns 403, debunking anonymous code-exchange (KB REJECTED).
+evidence_needed: Any request shape that reaches the app vs. the 403 gate (e.g., different Host, trailing slash, query-only variations), or a valid dev-scope Firebase token.
+verify_steps: GET/POST https://integration.sipgate.com/oauth2/redirect and /oauth2/callback?code=x&state=y (both 403, reconfirmed); OPTIONS preflight (ACAO:* w/o creds); no live path observed.
+impact: Credential-mint → 26-op integration API (contacts/call-logs/tasks/streaming). CRITICAL but AUTH_HELPED.
+testability: AUTH_HELPED
