@@ -14735,3 +14735,163 @@ testability: AUTH_HELPED
 > build · nemotron-3-ultra-free
 [0m
 [91m[1mError: [0mError from provider (Console): Upstream request failed: [404] Provider returned error
+===== ANALYST nemotron3 2026-09-10 01:13:06 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/
+total 364
+drwxr-xr-x 12 runner runner   4096 Sep 10 01:10 .
+drwxr-xr-x  3 runner runner   4096 Sep 10 01:10 ..
+drwxr-xr-x  7 runner runner   4096 Sep 10 01:10 .git
+drwxr-xr-x  3 runner runner   4096 Sep 10 01:10 .github
+-rw-r--r--  1 runner runner   1755 Sep 10 01:10 README.md
+-rw-r--r--  1 runner runner     43 Sep 10 01:10 analyst-out.txt
+-rw-r--r--  1 runner runner 142827 Sep 10 01:10 analyst-prompt.txt
+-rw-r--r--  1 runner runner 139010 Sep 10 01:10 ctx.txt
+drwxr-xr-x  2 runner runner   4096 Sep 10 01:10 inventory
+drwxr-xr-x  2 runner runner   4096 Sep 10 01:10 knowledge
+drwxr-xr-x  2 runner runner   4096 Sep 10 01:10 leads
+-rw-r--r--  1 runner runner   1450 Sep 10 01:10 probe-results.md
+drwxr-xr-x  2 runner runner   4096 Sep 10 01:10 recon-notes
+drwxr-xr-x  2 runner runner   4096 Sep 10 01:10 reports
+drwxr-xr-x  2 runner runner   4096 Sep 10 01:10 reposcan-raw
+-rw-r--r--  1 runner runner   3230 Sep 10 01:10 scope.yml
+drwxr-xr-x  2 runner runner   4096 Sep 10 01:10 scripts
+-rw-r--r--  1 runner runner     33 Sep 10 01:10 state_bigpickle.json
+-rw-r--r--  1 runner runner     33 Sep 10 01:10 state_laguna.json
+-rw-r--r--  1 runner runner     33 Sep 10 01:10 state_ling3.json
+-rw-r--r--  1 runner runner     33 Sep 10 01:10 state_longcat.json
+-rw-r--r--  1 runner runner     33 Sep 10 01:10 state_mimo.json
+-rw-r--r--  1 runner runner     33 Sep 10 01:10 state_nemotron3.json
+drwxr-xr-x  2 runner runner   4096 Sep 10 01:10 triage
+[0m
+[0m→ [0mRead scope.yml
+[0m→ [0mRead inventory/sipgate.md
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/knowledge/
+total 68
+drwxr-xr-x  2 runner runner  4096 Sep 10 01:10 .
+drwxr-xr-x 12 runner runner  4096 Sep 10 01:10 ..
+-rw-r--r--  1 runner runner 60421 Sep 10 01:10 index.md
+[0m
+[0m→ [0mRead knowledge/index.md
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/leads/
+total 896
+drwxr-xr-x  2 runner runner   4096 Sep 10 01:10 .
+drwxr-xr-x 12 runner runner   4096 Sep 10 01:10 ..
+-rw-r--r--  1 runner runner 368997 Sep 10 01:10 lead-bigpickle.md
+-rw-r--r--  1 runner runner   2295 Sep 10 01:10 lead-laguna.md
+-rw-r--r--  1 runner runner   2250 Sep 10 01:10 lead-ling3.md
+-rw-r--r--  1 runner runner   2340 Sep 10 01:10 lead-longcat.md
+-rw-r--r--  1 runner runner     18 Sep 10 01:10 lead-mimo.md
+-rw-r--r--  1 runner runner 469761 Sep 10 01:10 lead-nemotron3.md
+-rw-r--r--  1 runner runner  46341 Sep 10 01:10 reposcan-sipgate.md
+[0m
+[0m→ [0mRead leads/lead-nemotron3.md[90m [limit=200, offset=0][0m
+[0m→ [0mRead probe-results.md
+Now I have a comprehensive view. Let me generate the structured analysis following the 8-step process.
+
+---
+
+### STEP 1 — DELTA
+
+[NEW] `admin.dev.sipgate.net` → `helpdesk.dev.sipgate.net` (217.116.120.148) — prod-subdomain alias in dev JS bundle, HTTP 000 (timeout)
+[NEW] `admin.live.sipgate.net` → `helpdesk.live.sipgate.net` (217.10.73.71) — prod subdomain in dev JS bundle, HTTP 000 (timeout)
+[NEW] `team-uk.dev.sipgate.com` (217.116.121.65) — dev host in bundle, HTTP 000 (timeout)
+[CHANGED] `app.dev.sipgate.com` bundle rotated to `main-CYk1JfU_.js` — 18 hardcoded internal host:port pairs including 2 NEW prod subdomains
+[CHANGED] `integration.sipgate.com/metrics` `firebase_jwt_forbidden_requests` 2368 (down from 70373) — per-replica counter confirms restart-reset, live Firebase-JWT validator
+[CHANGED] `share1.sipgate.cloud` CNAME → `nx38603.your-storageshare.de` → NXDOMAIN confirmed — subdomain-takeover candidate
+[CHANGED] `grafana.sipgate.cloud` live Grafana 11.5.1 confirmed via `/api/health` — login-gated, no anonymous
+[CHANGED] `mock.integration.sipgate.cloud` ungated Express twin — `/contacts` 200 (~8MB synthetic), ACAO:* + ACAC:true + `allow-headers: x-provider-url,x-provider-key` — x-provider-url does NOT parameterize fetch
+[CHANGED] `*.integration.sipgate.cloud` (94 hosts) — uniform nginx Basic-auth 401 gate + ACAO:* CORS preflight allowing `x-provider-url,x-provider-key` — data GET 401, header does not bypass nginx
+[CHANGED] `api.sipgate.com/v2/*` — arbitrary-origin CORS reflection with credentials persistent (evil.com reflected + ACAC:true + x-b3-traceid leak)
+[CHANGED] `team-uk.live.sipgate.com` CSP `frame-ancestors` includes `app.local.sipgate.com:3443` + `SERVERID=team-web02` — family-wide with team-de.live
+[CHANGED] `chatbot.dev.sipgate.com` live (nginx/1.24.0, GCP) — polling & WS transport both reject arbitrary Origin (400, Vary:Origin, no ACAO)
+
+---
+
+### STEP 2 — PRIORITIZE
+
+[PRIO] app.dev.sipgate.com,8.85,attack_surface=10,business_value=7,tech_exposure=10,gate_ease=10,cloud_surface=8,freshness=10
+[PRIO] integration.sipgate.com,8.25,attack_surface=9,business_value=9,tech_exposure=9,gate_ease=3,cloud_surface=9,freshness=10
+[PRIO] *.integration.sipgate.cloud (94 hosts),8.35,attack_surface=9,business_value=7,tech_exposure=9,gate_ease=8,cloud_surface=9,freshness=9
+[PRIO] login.sipgate.com,8.75,attack_surface=8,business_value=10,tech_exposure=9,gate_ease=10,cloud_surface=7,freshness=7
+[PRIO] api.sipgate.com/v2,7.90,attack_surface=9,business_value=10,tech_exposure=8,gate_ease=3,cloud_surface=8,freshness=7
+[PRIO] admin.live.sipgate.net / admin.dev.sipgate.net,7.20,attack_surface=7,business_value=8,tech_exposure=8,gate_ease=10,cloud_surface=6,freshness=10
+[PRIO] share1.sipgate.cloud,7.30,attack_surface=6,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=8,freshness=10
+[PRIO] grafana.sipgate.cloud,6.95,attack_surface=6,business_value=6,tech_exposure=7,gate_ease=5,cloud_surface=8,freshness=10
+[PRIO] team-uk.live.sipgate.com / team-de.live.sipgate.com,6.40,attack_surface=5,business_value=6,tech_exposure=7,gate_ease=5,cloud_surface=7,freshness=8
+[PRIO] mock.integration.sipgate.cloud,6.80,attack_surface=6,business_value=6,tech_exposure=8,gate_ease=10,cloud_surface=7,freshness=9
+
+---
+
+### STEP 3 — HYPOTHESES
+
+[HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References
+class: SSRF
+asset: app.dev.sipgate.com
+confidence: 85
+reasoning: Live dev SPA on Fastly CDN serves production-identical JS bundle (main-CYk1JfU_.js, 5.65MB) with 18 hardcoded internal host:port pairs including NEW prod subdomains `admin.live.sipgate.net` (→ helpdesk.live.sipgate.net, 217.10.73.71) and `admin.dev.sipgate.net` (→ helpdesk.dev.sipgate.net, 217.116.120.148); multiple `.local` hosts resolve to 127.0.0.1 confirming internal-only references; bundle rotates frequently (freshness=10); no IP restriction on dev SPA; internal ports 3396, 3443, 8080, 10443 exposed in config
+evidence_needed: HTTP response from newly extracted prod subdomains (admin.live.sipgate.net, admin.dev.sipgate.net) showing live services on non-standard ports; proof of SSRF via dev SPA proxy/chaining or XSS on dev SPA to pivot to internal hosts; DNS resolution showing RFC1918 IPs for any `.local` hosts
+verify_steps: GET https://app.dev.sipgate.com/assets/main-CYk1JfU_.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve all *.dev.sipgate.net, *.live.sipgate.net, *.dev.sipgate.com hosts; probe discovered hosts for HTTP responses on ports 80/443/3396/3443/8080/10443 (read-only, ≤1 rps); test for SSRF via any proxy/chaining endpoints in dev SPA
+impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, team-uk.local, integration.dev, admin.live, helpdesk.live); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface + prod subdomain exposure in dev bundle)
+testability: PASSIVE
+
+[HYP] Integration Platform OAuth Gate Bypass via Spec-Behavior Drift + SSRF via apiUrl
+class: AUTH
+asset: integration.sipgate.com
+confidence: 70
+reasoning: Embedded OpenAPI spec declares `/oauth2/redirect` and `/oauth2/callback` with NO security requirement (absent security array), yet all 26 documented data paths return uniform 403 "Forbidden resource" externally; OAuth2 implicit flow uses login.sipgate.com realm `sipgate-apps` with client `platypus-swagger`; spec-vs-behavior drift suggests gate may be IP-allowlisted, token-gated (Firebase JWT confirmed via /metrics), or mTLS — bypass unknown; `users.integrations.create` accepts free-form `apiUrl` parameter without validation (SSRF surface); swagger static assets PUBLIC (200) while all data ops are 403-gated; live Firebase-JWT validator confirmed via `/metrics` (per-replica counter 2368)
+evidence_needed: Identification of condition that satisfies the gate (valid bearer token from login.sipgate.com, source IP allowlist, mTLS cert, or header) enabling access to `/contacts.list`, `/call-logs.create`, `/users.integrations.create` (SSRF via apiUrl to 169.254.169.254 or internal services)
+verify_steps: GET https://integration.sipgate.com/swagger/swagger-ui-init.js — confirm spec security annotations for oauth2 endpoints vs data paths; GET /oauth2/redirect, /oauth2/callback, /contacts.list, /users.integrations.list with various headers (Origin, X-Forwarded-For, Authorization: Bearer dummy, Firebase-style JWT) — flag any non-403/401/404 (read-only, ≤1 rps); test /users.integrations.create with apiUrl=http://169.254.169.254/latest/meta-data/ if gate bypassed
+impact: If gate bypassed: full CRM contact access, call-log manipulation, task creation, integration registration with attacker-controlled apiUrl (SSRF to cloud metadata 169.254.169.254 or internal services); severity CRITICAL if bypass confirmed
+testability: PASSIVE
+
+[HYP] CRM Adapter Fleet SSRF via x-provider-url Header (Gated + Ungated Twins)
+class: SSRF
+asset: *.integration.sipgate.cloud (94 hosts + mock.integration.sipgate.cloud)
+confidence: 55
+reasoning: 94 per-vendor CRM adapters uniformly behind nginx Basic-auth 401 with ACAO:* CORS preflight allowing `x-provider-url,x-provider-key` headers; mock.integration.sipgate.cloud is ungated twin (no nginx) exposing `/contacts`, `/contacts/search`, `/contacts/export` (200, ~8MB synthetic) with identical CORS headers; documented `x-provider-url`/`x-provider-key` accepted in preflight; empirical test shows x-provider-url does NOT parameterize outbound fetch on mock (returns static mock corpus regardless); gated siblings enforce nginx 401 before app — header does not bypass gate; potential for header-driven SSRF to cloud metadata (169.254.169.254) or internal service mesh IF nginx gate bypassed or credentials obtained
+evidence_needed: Response differential when sending `x-provider-url: http://169.254.169.254/latest/meta-data/` to gated hosts with valid Basic auth credentials (requires AUTH_HELPED); or discovery of nginx misconfiguration allowing gate bypass; or proof that x-provider-url IS parsed by app layer behind nginx on gated hosts
+verify_steps: OPTIONS https://hubspot.integration.sipgate.cloud/contacts — confirm `allow-headers: x-provider-url,x-provider-key`; GET https://hubspot.integration.sipgate.cloud/contacts with header `x-provider-url: http://169.254.169.254/latest/meta-data/` — observe 401 (read-only, ≤1 rps); repeat for mock.integration.sipgate.cloud (already tested, negative); enumerate all 94 hosts via CT for deployed vs connection-reset variants
+impact: SSRF from GCP-hosted adapter fleet to cloud metadata (169.254.169.254), internal k8s API, or vendor webhook hijacking; severity HIGH (94-host fleet + ungated mock twin) — but currently NOT functional per testing without creds/gate bypass
+testability: AUTH_HELPED
+
+---
+
+### STEP 4 — SELF-CRITIQUE
+
+[PARKED] CRM Adapter Fleet SSRF via x-provider-url Header: confidence 55 but empirical testing confirms x-provider-url header does NOT parameterize outbound fetch on mock twin; gated siblings enforce nginx Basic-auth 401 before app; no nginx bypass found; requires AUTH_HELPED for credentialed testing — below actionable threshold for passive-only workflow
+[FINAL] 1. Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References (confidence 85, PASSIVE) — highest confidence, concrete verify_steps, live rotating bundle with NEW prod subdomains in dev config
+[FINAL] 2. Integration Platform OAuth Gate Bypass via Spec-Behavior Drift + SSRF via apiUrl (confidence 70, PASSIVE) — spec-behavior drift documented, SSRF via apiUrl parameter, live Firebase-JWT gate with per-replica metrics; passive probes viable for gate mapping
+
+---
+
+### STEP 5 — NEXT ACTION
+
+[NEXT] PROBE: GET https://app.dev.sipgate.com/assets/main-CYk1JfU_.js — fetch current JS bundle, extract all hardcoded host:port pairs from source/chunks, DNS-resolve any new *.dev.sipgate.net / *.live.sipgate.net / *.dev.sipgate.com hosts not yet cataloged; probe discovered hosts for HTTP responses on 80/443/3396/3443/8080/10443 (read-only, ≤1 rps)
+
+---
+
+### STEP 6 — LEARNING
+
+[LEARN] ACCEPTED MISCONFIG @ app.dev.sipgate.com: live dev SPA on Fastly CDN with production JS bundle, 18 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net/admin.dev.sipgate.net — infrastructure info disclosure
+[LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct gate tier from apex Firebase-JWT
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 2368 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+[LEARN] ACCEPTED MISCONFIG @ grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB, login-gated, no anonymous
+[LEARN] ACCEPTED MISCONFIG @ share1.sipgate.cloud: dangling CNAME → Hetzner StorageShare NXDOMAIN; takeover candidate (needs HUMAN claim validation)
+[LEARN] ACCEPTED INFO @ mock.integration.sipgate.cloud: only ungated *.integration.sipgate.cloud host; /contacts 200 ~8MB synthetic; ACAO:* + ACAC:true + allow-headers x-provider-*; x-provider-url does NOT parameterize fetch
+[LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+[LEARN] REJECTED SSRF @ *.integration.sipgate.cloud: nginx Basic-auth 401 enforced before app; x-provider-url/x-provider-key headers do NOT bypass nginx gate
+[LEARN] ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation
+[LEARN] REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+
+---
+
+### STEP 7 — RISK
+
+[RISK] sipgate: 82 — High-value VoIP/SaaS with OIDC implicit flow (token-in-fragment), arbitrary-origin CORS with credentials on API v2, permissive CSP wildcard WS origins, multi-tenant dashboards, public dev SPA with full internal topology disclosure (NEW prod subdomains admin.live/dev in bundle), LIVE dev chatbot with socket.io, NEWLY ALIVE integration.dev endpoint with permissive CORS, 94-host CRM adapter fleet with Basic-auth + ACAO:* + SSRF headers, UNGATED mock.integration.sipgate.cloud twin exposing x-provider-* headers (SSRF non-functional), dangling CNAME takeover candidate (share1.sipgate.cloud), live internet-facing Grafana. Primary risks: (1) Dev SPA infrastructure exposure (app.dev.sipgate.com) enabling targeted SSRF/lateral movement via internal host/port disclosure + prod subdomain references; (2) CRM adapter fleet SSRF via x-provider-url headers (94 hosts gated + 1 ungated mock twin); (3) S3 bucket write access (sipgate-desktop-app.s3) enabling supply-chain compromise of desktop softphone — CRITICAL if write permitted; (4) Cross-tenant BOLA on multi-tenant /v2 endpoints with authenticated tenant pairs — authz uniformly enforced at edge but object-level tenant isolation untested; (5) Arbitrary-origin CORS with credentials on api.sipgate.com/v2/* enables cross-origin data exfiltration if paired with token source (XSS on app.sipgate.com or leaked bearer); (6) Integration platform OAuth gate bypass via spec-behavior drift (platypus-swagger client, implicit flow, SSRF via apiUrl); (7) Team portal CSP misconfiguration exposing local dev origin (team-de + team-uk); (8) Subdomain takeover candidate (share1.sipgate.cloud). Third-party realm well-hardened. No confirmed live standalone exploit this cycle; risk concentrated on chain-dependent CORS gap, public-code infoleaks, S3 write permission unknown, 94-host adapter fleet SSRF surface + ungated mock twin, and potential object-level authz-drift on high-value API endpoints.

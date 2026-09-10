@@ -19400,3 +19400,139 @@ testability: PASSIVE
 ```
 [RISK] sipgate: 47 — Unchanged. Surface exhaustively mapped: api/v2 uniform edge-401, integration apex FB-JWT 403 (live counters), vendor tier nginx 401, mock synthetic, dev SPA static info-leak only, admin/helpdesk aliases inert 5 cycles, prod swagger sourcemap stock-only, leaked Notion gated. Every remaining high-value chain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 45, S3 55). Unauthenticated upside reduced to transient dev revival or bundle rotation introducing new live refs.
 ```
+===== ANALYST bigpickle 2026-09-10 01:13:06 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sS -m 8 https://app.dev.sipgate.com/ | grep -oE 'assets/main-[A-Za-z0-9_-]+\.js'
+assets/main-CYk1JfU_.js
+[0m
+[0m$ [0mcurl -sS -o /dev/null -w "admin.live 80: %{http_code} %{time_total}s\n" -m 8 http://admin.live.sipgate.net/ ; curl -sS -o /dev/null -w "admin.live 443: %{http_code} %{time_total}s\n" -m 8 https://admin.live.sipgate.net/ ; curl -sS -o /dev/null -w "admin.dev 80: %{http_code} %{time_total}s\n" -m 8 http://admin.dev.sipgate.net/ ; curl -sS -o /dev/null -w "admin.dev 443: %{http_code} %{time_total}s\n" -m 8 https://admin.dev.sipgate.net/
+curl: (28) Connection timed out after 8001 milliseconds
+admin.live 80: 000 8.002010s
+curl: (28) Connection timed out after 8001 milliseconds
+admin.live 443: 000 8.001744s
+curl: (28) Connection timed out after 8000 milliseconds
+admin.dev 80: 000 8.000208s
+curl: (28) Connection timed out after 8002 milliseconds
+admin.dev 443: 000 8.002787s
+[0m
+[0m$ [0mecho "== mock health =="; curl -s -m 8 https://mock.integration.sipgate.cloud/health ; echo; echo "== essensbot =="; curl -s -m 8 https://essensbot.sipgate.cloud/health ; echo; echo "== grafana =="; curl -s -o /dev/null -w "%{http_code}\n" -m 8 https://grafana.sipgate.cloud/api/health
+== mock health ==
+OK
+== essensbot ==
+{"status":"up"}
+== grafana ==
+200
+[0m
+[0m$ [0mecho "== integration.dev root =="; curl -sk -o /dev/null -w "%{http_code} cert=%{ssl_verify_result}\n" -m 8 https://integration.dev.sipgate.com/ ; echo "== init.js =="; curl -sk -o /dev/null -w "%{http_code}\n" -m 8 https://integration.dev.sipgate.com/swagger/swagger-ui-init.js ; echo "== metrics =="; curl -sk -m 8 https://integration.sipgate.com/metrics | grep -E "firebase_jwt_forbidden_requests|^http" | head -5
+== integration.dev root ==
+403 cert=19
+== init.js ==
+200
+== metrics ==
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 4986
+[0m
+[0m$ [0mfor p in /metrics /health /swagger.json /openapi.json /v3/api-docs; do printf "dev%-30s " "$p"; curl -sk -o /dev/null -w "%{http_code} %{content_type}\n" -m 6 "https://integration.dev.sipgate.com$p"; done
+dev/metrics                       200 text/plain; version=0.0.4; charset=utf-8
+dev/health                        404 application/problem+json; charset=utf-8
+dev/swagger.json                  404 application/problem+json; charset=utf-8
+dev/openapi.json                  404 application/problem+json; charset=utf-8
+dev/v3/api-docs                   404 application/problem+json; charset=utf-8
+[0m
+[0m$ [0mfor p in /health /healthz /metrics /swagger.json /openapi.json /v3/api-docs /swagger/oauth2-redirect.html /swagger/swagger.json /swagger/api-docs /actuator/health; do printf "%-40s " "$p"; curl -sk -o /dev/null -w "%{http_code} %{content_type}\n" -m 6 "https://integration.sipgate.com$p"; done
+/health                                  404 application/problem+json; charset=utf-8
+/healthz                                 404 application/problem+json; charset=utf-8
+/metrics                                 200 text/plain; version=0.0.4; charset=utf-8
+/swagger.json                            404 application/problem+json; charset=utf-8
+/openapi.json                            404 application/problem+json; charset=utf-8
+/v3/api-docs                             404 application/problem+json; charset=utf-8
+/swagger/oauth2-redirect.html            200 text/html; charset=utf-8
+/swagger/swagger.json                    404 application/problem+json; charset=utf-8
+/swagger/api-docs                        404 application/problem+json; charset=utf-8
+/actuator/health                         404 application/problem+json; charset=utf-8
+[0m
+[0m$ [0mecho "== dev metrics fb_jwt =="; curl -sk -m 6 https://integration.dev.sipgate.com/metrics | grep -E "firebase_jwt|api_key|rate_limit" | head -6; echo "== prod oauth2-redirect head =="; curl -sk -m 6 https://integration.sipgate.com/swagger/oauth2-redirect.html | head -30
+== dev metrics fb_jwt ==
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 2
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 0
+== prod oauth2-redirect head ==
+<!doctype html>
+<html lang="en-US">
+<body>
+<script src="oauth2-redirect.js"></script>
+</body>
+</html>
+[0m
+[0m$ [0mecho "== prod metric families =="; curl -sk -m 6 https://integration.sipgate.com/metrics | grep -E "^# HELP" | sort -u; echo "== dev metric families =="; curl -sk -m 6 https://integration.dev.sipgate.com/metrics | grep -E "^# HELP" | sort -u
+== prod metric families ==
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+== dev metric families ==
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+[0m
+All probes complete. Structured output:
+
+## STEP 1 — DELTA
+- [NEW] `integration.dev.sipgate.com/metrics` — public Prometheus endpoint, byte-identical 3-family middleware stack to prod (`firebase_jwt_forbidden_requests`, `api_key_forbidden_requests`, `rate_limit_forbidden_requests`); dev counters live at fb_jwt=0 / api_key=2 → dev twin runs the **same Firebase-JWT/API-key/rate-limit gate** as prod, not a lighter middleware (per-cycle sentinel cycle).
+- [NEW] `integration.sipgate.com/swagger/oauth2-redirect.html` — 200 stock Swagger redirect page (`oauth2-redirect.js` sibling), static layer; same inert class as REJECTED api.sipgate.com/v2/doc variant.
+- NO_DELTA: admin.live/dev.sipgate.net still HTTP 000 both ports (6th consecutive cycle); app.dev bundle unchanged (`main-CYk1JfU_.js`); essensbot/mock/grafana stable; integration.dev cert still self-signed (root 403 / init.js 200).
+
+## STEP 2 — PRIORITIZE
+- [PRIO] app.dev.sipgate.com,6.25,attack_surface=6,business_value=5,tech_exposure=6,gate_ease=10,cloud_surface=6,freshness=5
+- [PRIO] integration.sipgate.com,6.15,attack_surface=6,business_value=8,tech_exposure=7,gate_ease=2,cloud_surface=6,freshness=7
+- [PRIO] integration.dev.sipgate.com,5.20,attack_surface=5,business_value=5,tech_exposure=6,gate_ease=4,cloud_surface=6,freshness=7
+- [PRIO] mock.integration.sipgate.cloud,5.90,attack_surface=5,business_value=5,tech_exposure=5,gate_ease=9,cloud_surface=7,freshness=6
+
+## STEP 3 — HYPOTHESES
+[HYP] Integration static swagger tree hides gating-split artifacts beyond sourcemaps
+class: MISCONFIG
+asset: integration.sipgate.com/swagger/*
+confidence: 20
+reasoning: index.html, bundle(js+map), init.js, oauth2-redirect.html all public 200 while 26 data ops are FB-JWT 403; static/data gating split confirmed; only bundle.js.map audited (stock). oauth2-redirect.js + oauth2-redirect.html are the OAuth fragment receiver for the platypus-swagger implicit client.
+evidence_needed: any static sibling serving appraisal conditions, client secret, or internal hosts.
+verify_steps: PASSIVE — GET /swagger/oauth2-redirect.js + /swagger/*.map sibling names + /swagger/favicon*; diff static vs runtime spec.
+impact: config/topology disclosure via static layer; token at risk only if receiver forwards fragment off-origin (prior class REJECTED on api.sipgate.com). LOW.
+testability: PASSIVE
+[HYP] Dev twin gate drift on redeploy
+class: AUTH
+asset: integration.dev.sipgate.com
+confidence: 10
+reasoning: cert flipped self-signed 2026-09-09 (redeploy signal), root 403, /metrics public with code-identical middleware incl live fb_jwt=0/api_key=2 counters — gate stack demonstrably present on dev twin.
+evidence_needed: release of 403 on any of 26 ops without valid token.
+verify_steps: PASSIVE — per-cycle root + /health + init.js status + dev metrics counter movement; watch cert issuer.
+impact: open documented apiUrl SSRF + 26-op surface. MEDIUM only if gate drops; current evidence near-zero.
+testability: PASSIVE
+[HYP] Dev/live helpdesk admin transient revival
+class: MISCONFIG
+asset: admin.live.sipgate.net / admin.dev.sipgate.net (helpdesk CNAME aliases 217.10.73.71 / 217.116.120.148)
+confidence: 15
+reasoning: both resolve; 80/443 TCP-timeout for 6 consecutive cycles; prod SPA bundle opens them as helpdesk ExternalLinks; sister host integration.dev revived 2026-09-06, alias pair has not.
+evidence_needed: any reachable HTTP service with weaker-than-prod auth.
+verify_steps: PASSIVE — per-cycle HEAD/OPTIONS on 80/443 both hosts (hostname+IP forms).
+impact: unattended externally-reachable dev/live helpdesk admin console. MEDIUM only if reachable; currently inert.
+testability: PASSIVE
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] Dev twin weaker auth gate: deflated from 25→10 — public /metrics proves code-identical FB-JWT/API-key/rate-limit middleware live on dev twin (fb_jwt=0, api_key=2). Gate absence ruled out; only redeploy-driven drift remains, hence monitor-only.
+- [PARKED] Admin/helpdesk revival: 6 inert cycles, passive-only residual value; kept as sentinel probe, not a hypothesis to act on.
+- [FINAL] survivors (all PASSIVE, low confidence): swagger static sibling audit (was partially done — oauth2-redirect.js + .map sibling names untested), admin sentinel. No AUTH_HELPED/HUMAN expense justified this cycle.
+
+## STEP 5 — NEXT ACTION
+[NEXT] PROBE: per-cycle sentinel (1 rps) — `curl -sSI -m 8 https://admin.live.sipgate.net/` + `https://admin.dev.sipgate.net/` (80/443) AND `curl -s https://app.dev.sipgate.com/ | grep -oE 'assets/main-[A-Za-z0-9_-]+\.js'` AND `curl -sk https://integration.dev.sipgate.com/metrics | grep firebase_jwt` — any flips on hosts/bundle/counter signal the only plausible new surface.
+
+## STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ integration.dev.sipgate.com/metrics: public Prometheus with identical auth-middleware families to prod (fb_jwt=0, api_key=2, rate_limit) — dev twin runs code-identical Firebase-JWT/API-key/rate-limit gate; residual "dev weaker gate" hypothesis deflated to ~0.
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com/swagger/oauth2-redirect.html: stock Swagger 5.x redirect receiver (sibling oauth2-redirect.js), same inert cross-origin class as REJECTED api.sipgate.com/v2/doc/oauth2-redirect.html.
+
+## STEP 7 — RISK
+[RISK] sipgate: 46 — Down 1. Dev-twin hypothesis further deflated (code-identical gate middleware now proven via public metrics); admin alias pair inert 6 cycles; bundle static; all high-value chains remain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (S3 write 55, share1 45). Unauthenticated upside is now transient-dev-revival and swagger static-layer sibling audit only; both passive and low-value.

@@ -2535,3 +2535,33 @@ testability: PASSIVE
 [LEARN] CHANGED @ integration.dev.sipgate.com: self-signed cert now (handshake fails without -k); swagger-ui-init.js 200, root 403 — dev-twin redeploy signal, gate unchanged.
 [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: fb_jwt counter 4116 (+1748) — live validator, per-replica restart-reset reconfirmed.
 [RISK] sipgate: 47 — Unchanged. Surface exhaustively mapped: api/v2 uniform edge-401, integration apex FB-JWT 403 (live counters), vendor tier nginx 401, mock synthetic, dev SPA static info-leak only, admin/helpdesk aliases inert 5 cycles, prod swagger sourcemap stock-only, leaked Notion gated. Every remaining high-value chain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (share1 45, S3 55). Unauthenticated upside reduced to transient dev revival or bundle rotation introducing new live refs.
+## 2026-09-10 01:12:58 UTC [target] (model bigpickle)
+[HYP] Integration static swagger tree hides gating-split artifacts beyond sourcemaps
+class: MISCONFIG
+asset: integration.sipgate.com/swagger/*
+confidence: 20
+reasoning: index.html, bundle(js+map), init.js, oauth2-redirect.html all public 200 while 26 data ops are FB-JWT 403; static/data gating split confirmed; only bundle.js.map audited (stock). oauth2-redirect.js + oauth2-redirect.html are the OAuth fragment receiver for the platypus-swagger implicit client.
+evidence_needed: any static sibling serving appraisal conditions, client secret, or internal hosts.
+verify_steps: PASSIVE — GET /swagger/oauth2-redirect.js + /swagger/*.map sibling names + /swagger/favicon*; diff static vs runtime spec.
+impact: config/topology disclosure via static layer; token at risk only if receiver forwards fragment off-origin (prior class REJECTED on api.sipgate.com). LOW.
+testability: PASSIVE
+[HYP] Dev twin gate drift on redeploy
+class: AUTH
+asset: integration.dev.sipgate.com
+confidence: 10
+reasoning: cert flipped self-signed 2026-09-09 (redeploy signal), root 403, /metrics public with code-identical middleware incl live fb_jwt=0/api_key=2 counters — gate stack demonstrably present on dev twin.
+evidence_needed: release of 403 on any of 26 ops without valid token.
+verify_steps: PASSIVE — per-cycle root + /health + init.js status + dev metrics counter movement; watch cert issuer.
+impact: open documented apiUrl SSRF + 26-op surface. MEDIUM only if gate drops; current evidence near-zero.
+testability: PASSIVE
+[HYP] Dev/live helpdesk admin transient revival
+class: MISCONFIG
+asset: admin.live.sipgate.net / admin.dev.sipgate.net (helpdesk CNAME aliases 217.10.73.71 / 217.116.120.148)
+confidence: 15
+reasoning: both resolve; 80/443 TCP-timeout for 6 consecutive cycles; prod SPA bundle opens them as helpdesk ExternalLinks; sister host integration.dev revived 2026-09-06, alias pair has not.
+evidence_needed: any reachable HTTP service with weaker-than-prod auth.
+verify_steps: PASSIVE — per-cycle HEAD/OPTIONS on 80/443 both hosts (hostname+IP forms).
+impact: unattended externally-reachable dev/live helpdesk admin console. MEDIUM only if reachable; currently inert.
+testability: PASSIVE
+[NEXT] PROBE: per-cycle sentinel (1 rps) — `curl -sSI -m 8 https://admin.live.sipgate.net/` + `https://admin.dev.sipgate.net/` (80/443) AND `curl -s https://app.dev.sipgate.com/ | grep -oE 'assets/main-[A-Za-z0-9_-]+\.js'` AND `curl -sk https://integration.dev.sipgate.com/metrics | grep firebase_jwt` — any flips on hosts/bundle/counter signal the only plausible new surface.
+[RISK] sipgate: 46 — Down 1. Dev-twin hypothesis further deflated (code-identical gate middleware now proven via public metrics); admin alias pair inert 6 cycles; bundle static; all high-value chains remain AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (S3 write 55, share1 45). Unauthenticated upside is now transient-dev-revival and swagger static-layer sibling audit only; both passive and low-value.
