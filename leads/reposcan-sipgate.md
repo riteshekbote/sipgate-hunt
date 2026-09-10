@@ -505,3 +505,5 @@ reasoning: `CLIENT_ID: 36bc4ebf413cf06b` hardcoded in plaintext. `CLIENT_SECRET`
 impact: LOW — Reveals registered Pipedrive OAuth client identity.
 verify_steps: 1) Verify client ID is registered in Pipedrive's developer portal.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-10 05:12:38 UTC
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
