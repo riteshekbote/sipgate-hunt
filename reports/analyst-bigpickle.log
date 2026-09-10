@@ -20277,3 +20277,85 @@ impact: Unattended helpdesk admin console, MEDIUM only if reachable.
 ## STEP 7 — RISK
 
 [RISK] sipgate: 44 — Surface exhaustively mapped over 9 days. Two strong accepted findings (CORS credential reflection on api/v2 + swagger implicit client with extreme scopes) form a credible same-origin XSS → session-theft chain, but exploitation requires victim to visit attacker page while authenticated. No unauthenticated RCE, SSRF, or data exfiltration confirmed. Every remaining high-value chain is AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (S3 write 55, share1 takeover 45). New bundle rotation introduced 4 new .de hosts (amp, info, status, static) — all inert/standard infra, no security value. Unauthenticated upside reduced to monitoring for dev bundle rotation or transient host revival — both passive, low-probability, and low-value if triggered. Strategic recommendation: report accepted findings as-is; the CORS+swagger chain is the strongest reportable finding.
+===== ANALYST bigpickle 2026-09-10 15:11:49 UTC =====
+[0m
+> build · big-pickle
+[0m
+**STEP 1 — DELTA**
+
+NO_DELTA — No new KB entries since 2026-09-10 11:51:37 UTC; inventory and findings stable. Prior-cycle sentinel (admin.live/dev, bundle rotation, integration.dev metrics) unchanged.
+
+---
+
+**STEP 2 — PRIORITIZE**
+
+[PRIO] api.sipgate.com (CORS+swagger chain), 7.30, a=10 b=10 t=8 g=2 c=2 f=8 — arbitrary CORS+credentials reflection + swagger implicit client with extreme scopes = strongest same-origin XSS→session-theft chain
+[PRIO] integration.sipgate.com, 6.50, a=7 b=8 t=7 g=3 c=3 f=5 — 26-op spec with OAuth2 endpoints declared NO-security yet 403-gated; SSRF via apiUrl in spec; auth-mechanism drift (spec Keycloak vs runtime Firebase)
+[PRIO] *.integration.sipgate.cloud, 6.30, a=7 b=7 t=7 g=5 c=3 f=6 — 94 vendor adapters behind nginx Basic-auth, ACAO:* preflight, SSRF inputs
+[PRIO] mock.integration.sipgate.cloud, 6.25, a=5 b=6 t=6 g=9 c=3 f=7 — only ungated host, synthetic contacts corpus, ACAO:*+ACAC:true
+[PRIO] app.dev.sipgate.com, 5.80, a=9 b=5 t=4 g=8 c=2 f=5 — dev SPA with 18+ hardcoded hosts but no live auth bypass surface; passive monitoring only
+
+---
+
+**STEP 3 — HYPOTHESES**
+
+[HYP] Swagger implicit client same-origin XSS amplifier chains with api.sipgate.com CORS credential reflection to achieve session theft
+class: AUTH
+asset: api.sipgate.com/v2/doc/* + api.sipgate.com/v2/*
+confidence: 55
+reasoning: Swagger-ui 5.x serves implicit-only third-party client `sipgate-swagger-ui` with extreme scopes (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write). Concurrently, api.sipgate.com/v2/* reflects arbitrary Origin with credentials (ACAC:true). If an attacker can achieve same-origin XSS on api.sipgate.com (e.g., via swagger-ui DOM injection or a reflected parameter), the CORS misconfiguration allows credential-bearing cross-origin reads. The swagger implicit client's fixed redirect_uri and nonce-random flow means an XSS on api.sipgate.com could trigger the implicit flow and exfiltrate the token. The two accepted findings (KB ACCEPTED MISCONFIG api.sipgate.com/v2/* CORS + KB ACCEPTED INFO swagger implicit client) are independent but chainable.
+evidence_needed: (1) Confirm swagger-ui DOM XSS surface (e.g., URL fragment/hash injection into swagger-ui config); (2) confirm api.sipgate.com/v2/* reflects Cookie/Authorization on cross-origin read with ACAC:true; (3) identify any reflectable input on api.sipgate.com that could host a swagger-ui redirect payload.
+verify_steps: GET https://api.sipgate.com/v2/doc/ — inspect DOM for reflectable params (configUrl, url, deepLinking); OPTIONS https://api.sipgate.com/v2/contacts with Origin: evil.com — confirm ACAC:true in preflight response; GET https://api.sipgate.com/v2/doc/oauth2-redirect.html — confirm no X-Frame-Options or frame-ancestors CSP.
+impact: Session token theft via same-origin XSS → ATO (HIGH severity) but requires victim to visit attacker page while authenticated; chain-dependent.
+testability: PASSIVE
+[HYP] Integration platform OAuth2 redirect/callback spec-vs-behavior drift masks ungated mint path behind Firebase-JWT 403 gate
+class: MISCONFIG
+asset: integration.sipgate.com/oauth2/{redirect,callback}
+confidence: 42
+reasoning: The embedded OpenAPI spec declares /oauth2/redirect and /oauth2/callback with NO security requirement, yet all external requests return app-403 "Forbidden resource" (application/problem+json). The metrics endpoint is public and shows live firebase_jwt_forbidden_requests counters incrementing, confirming Firebase-JWT is the runtime gate (not Keycloak as spec claims). The drift suggests either (a) the endpoints were once ungated and recently gated, or (b) the 403 is a default Firebase-JWT rejection that could be bypassed with a valid Firebase token. The SSRF surface via users.integrations.create (accepts free-form apiUrl) compounds if OAuth2 callback can be reached.
+evidence_needed: (1) Confirm /oauth2/redirect returns identical 403 with and without Authorization header; (2) check if /oauth2/callback responds differently to POST vs GET; (3) verify if the 403 response body leaks any Firebase project ID or config.
+verify_steps: GET/POST https://integration.sipgate.com/oauth2/redirect — confirm 403 with no auth header; GET/POST https://integration.sipgate.com/oauth2/callback?code=test&state=test — confirm 403; OPTIONS https://integration.sipgate.com/oauth2/redirect — check if preflight passes (ACAO:* likely).
+impact: If bypassed, OAuth2 code exchange could mint Firebase tokens granting access to 26-op integration API (contacts, call-logs, tasks, streaming) — CRITICAL but requires AUTH_HELPED.
+testability: AUTH_HELPED
+[HYP] Mock integration endpoint serves as SSRF canary if x-provider-url header is accepted by a non-synthetic backend path
+class: SSRF
+asset: mock.integration.sipgate.cloud
+confidence: 35
+reasoning: mock.integration.sipgate.cloud is the only ungated *.integration.sipgate.cloud host. It returns 200 on /contacts with ~8MB synthetic corpus and ACAO:*+ACAC:true with allow-headers including x-provider-url. Prior KB REJECTED SSRF confirmed x-provider-url does NOT parameterize outbound fetch on /contacts. However, the host may have additional undocumented endpoints (the 26-op spec from sibling .com hosts may apply) where x-provider-url IS consumed. The mock host may be a test twin that accepts the header on specific paths (e.g., /proxy, /forward, /webhook) that haven't been enumerated.
+evidence_needed: (1) GET https://mock.integration.sipgate.com/swagger.json or /openapi.json — enumerate available paths; (2) GET https://mock.integration.sipgate.cloud/v3/api-docs — check for spec; (3) probe /proxy, /forward, /webhook, /fetch paths.
+verify_steps: GET https://mock.integration.sipgate.cloud/swagger.json; GET https://mock.integration.sipgate.cloud/v3/api-docs; GET https://mock.integration.sipgate.cloud/openapi.json; HEAD https://mock.integration.sipgate.cloud/robots.txt.
+impact: If any path accepts x-provider-url and performs server-side fetch, SSRF to cloud metadata (169.254.169.254) or internal services — CRITICAL but confidence low (proven synthetic on tested paths).
+testability: PASSIVE
+
+---
+
+**STEP 4 — SELF-CRITIQUE**
+
+[PARKED] Mock integration SSRF canary: confidence 35 < 40 threshold. Prior REJECTED SSRF confirms x-provider-url does not parameterize fetch on /contacts. Additional undocumented paths possible but no evidence of their existence. Requires PROBE to enumerate spec.
+[FINAL] Survivors ranked:
+1. Swagger implicit client + CORS credential reflection chain (55) — strongest reportable finding per RISK assessment
+2. Integration OAuth2 spec-vs-behavior drift (42) — AUTH_HELPED, needs credential acquisition
+3. Mock integration SSRF canary (35) — PARKED below threshold
+
+---
+
+**STEP 5 — NEXT ACTION**
+
+[NEXT] PROBE: GET https://mock.integration.sipgate.cloud/swagger.json — check if OpenAPI spec is served ungated; if 200 with endpoint list, enumerate paths for x-provider-url consumption beyond /contacts. This was the planned next step from prior cycle.
+
+---
+
+**STEP 6 — LEARNING**
+
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth gap, chain-dependent for full exploitation.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as same-origin-XSS amplifier.
+[LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests.
+[LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS; distinct gate tier from apex Firebase-JWT.
+[LEARN] ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes — high-value target but requires credential acquisition (AUTH_HELPED).
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2: all tested paths return 401 empty-body unauth; uniform edge auth; no authz-drift/BOLA unauthenticated (per KB).
+
+---
+
+**STEP 7 — RISK**
+
+[RISK] sipgate: 44 — Surface exhaustively mapped over 9 days. Two strong accepted findings (CORS credential reflection on api/v2 + swagger implicit client with extreme scopes) form a credible same-origin XSS→session-theft chain, but exploitation requires victim to visit attacker page while authenticated. No unauthenticated RCE, SSRF, or data exfiltration confirmed. Every remaining high-value chain is AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (S3 write 55, share1 takeover 45). Unauthenticated upside reduced to monitoring for dev bundle rotation or transient host revival — both passive, low-probability, and low-value if triggered. Strategic recommendation: report accepted findings as-is; the CORS+swagger chain is the strongest reportable finding.

@@ -481,3 +481,5 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + `x-b3-traceid` leak)
 - CHANGED login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
 - CHANGED chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, GCP) — both WS and polling transports reject arbitrary Origin (400, Vary:Origin, no ACAO); identical to prod REJECT class
+
+## 2026-09-10 15:11:49 UTC
