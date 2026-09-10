@@ -1,39 +1,32 @@
-## 2026-09-10 06:07:08 UTC [target] (model bigpickle)
+## 2026-09-10 11:38:36 UTC [target] (model bigpickle)
 [PRIO] app.dev.sipgate.com, 7.95, a=9 b=8 t=9 g=8 c=2 f=7 — dev SPA bundle rotates frequently, exposes 18+ internal hosts, no gate
 [PRIO] api.sipgate.com (CORS+swagger+OIDC), 7.30, a=10 b=10 t=8 g=2 c=2 f=8 — arbitrary CORS+credentials reflection + swagger XSS amplifier, but 401-gated data ops
 [PRIO] *.integration.sipgate.cloud, 6.30, a=7 b=7 t=7 g=5 c=3 f=6 — 94 vendor adapters behind nginx Basic-auth, ACAO:* preflight exposes SSRF inputs
-[PRIO] mock.integration.sipgate.cloud, 6.25, a=5 b=6 t=6 g=9 c=3 f=7 — only ungated host, synthetic contacts corpus, x-provider-url advertised
-[PRIO] chatbot.dev.sipgate.com, 5.75, a=6 b=5 t=7 g=6 c=2 f=8 — live dev chatbot socket.io, contradicts "dev inert", but polling+WS both origin-aware
-[HYP] Mock integration x-provider-url as unauthenticated fetch sink
-class: SSRF
-asset: mock.integration.sipgate.cloud
-confidence: 30
-reasoning: Only ungated host in *.integration.sipgate.cloud fleet; /contacts returns 200 ~8MB synthetic; ACAO:* + ACAC:true + allow-headers x-provider-url,x-provider-key advertised; prior KB concluded "no fetch sink observed" but that was via HEAD/OPTIONS timing — actual GET with x-provider-url=https://httpbin.org/ip on data path not confirmed. Mock likely proxies to a real integration backend for CRM adapter testing.
-evidence_needed: (1) GET https://mock.integration.sipgate.cloud/contacts/search with x-provider-url header reflecting httpbin IP; (2) timing diff with/without x-provider-url; (3) Via/X-Powered-By response header indicators.
-verify_steps: GET https://mock.integration.sipgate.cloud/contacts?x-provider-url=https://httpbin.org/ip + compare to GET without header; HEAD on /health + check response time variance; GET /swagger.json or /openapi.json ungated.
-impact: Unauthenticated SSRF pivot into internal CRM backend, though likely synthetic; SSRF to cloud metadata (169.254.169.254) if backend is GCP.
-testability: PASSIVE
+[PRIO] mock.integration.sipgate.cloud, 6.25, a=5 b=6 t=6 g=9 c=3 f=7 — only ungated host, synthetic contacts corpus
+[PRIO] integration.sipgate.cloud, 5.00, a=5 b=7 t=6 g=3 c=2 f=4 — K8s ingress same app as .com, identical spec, identical 403 gate
 [HYP] Dev SPA bundle rotation introduces new live host with weaker gate
 class: MISCONFIG
 asset: app.dev.sipgate.com
 confidence: 25
-reasoning: Bundle rotated 3x in 4 days (DFko0cRT → 5xLTM2Hn → CYk1JfU_); each rotation adds 2-5 new hardcoded host:port pairs; admin.live/dev.sipgate.net pair inert 6 cycles but sister integration.dev revived after dormancy; next bundle could introduce a currently-dead host that revives.
-evidence_needed: (1) Detect next bundle rotation via HEAD on current main-CYk1JfU_.js hash; (2) extract new host:port pairs; (3) DNS-resolve and probe.
-verify_steps: GET https://app.dev.sipgate.com/ | grep -oE 'assets/main-[A-Za-z0-9_-]+\.js'; diff against current CYk1JfU_; HEAD new bundle for size delta.
+reasoning: Bundle rotated to main-DjZyRRMB.js (3rd rotation in 5 days); each rotation adds 2-5 new hardcoded host:port pairs; admin.live/dev.sipgate.net pair inert 7 cycles but integration.dev revived after dormancy; next bundle could introduce a currently-dead host that revives.
+evidence_needed: (1) Detect next bundle rotation; (2) extract new host:port pairs; (3) DNS-resolve and probe.
+verify_steps: GET https://app.dev.sipgate.com/ | grep -oE 'assets/main-[A-Za-z0-9_-]+\.js'; diff against current DjZyRRMB; HEAD new bundle for size delta.
 impact: New live dev endpoint with weaker auth than prod; extends attack surface for future AUTH_HELPED testing.
-testability: PASSIVE
-[HYP] Admin/helpdesk aliases transient revival after 6 cycles
+[HYP] Admin/helpdesk aliases transient revival after 7 cycles
 class: MISCONFIG
 asset: admin.live.sipgate.net / admin.dev.sipgate.net
 confidence: 15
-reasoning: Both resolve to sipgate-owned IPs (217.10.73.71 / 217.116.120.148); 80/443 TCP-timeout 6 consecutive cycles; prod SPA bundle opens them as helpdesk ExternalLinks; integration.dev revived after dormancy — pattern exists but no evidence of imminent revival.
+reasoning: Both resolve to sipgate-owned IPs; 80/443 TCP-timeout 7 consecutive cycles; prod SPA bundle opens them as helpdesk ExternalLinks; integration.dev revived after dormancy — pattern exists but no evidence of imminent revival.
 evidence_needed: Any HTTP response on port 80/443.
 verify_steps: HEAD/OPTIONS https://admin.live.sipgate.net/ and https://admin.dev.sipgate.net/ per cycle.
 impact: Unattended helpdesk admin console, MEDIUM only if reachable.
-testability: PASSIVE
-[NEXT] PASSIVE: GET https://mock.integration.sipgate.cloud/swagger.json — check if OpenAPI spec is served ungated; if 200 with endpoint list, this provides enumeration for the integration surface and may reveal undocumented paths.
-[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth gap, chain-dependent for full exploitation.
-[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 — family-wide info disclosure.
-[LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests.
-[LEARN] ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes — high-value target but requires credential acquisition (AUTH_HELPED).
-[RISK] sipgate: 45 — Surface exhaustively mapped over 8 days. Two strong accepted findings (CORS credential reflection on api/v2 + swagger implicit client with extreme scopes) form a credible same-origin XSS → session-theft chain, but exploitation requires victim to visit attacker page while authenticated. No unauthenticated RCE, SSRF, or data exfiltration confirmed. Every remaining high-value chain is AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (S3 write 55, share1 takeover 45). Unauthenticated upside reduced to monitoring for dev bundle rotation or transient host revival — both passive, low-probability, and low-value if triggered. Strategic recommendation: report accepted findings as-is; the CORS+swagger chain is the strongest reportable finding.
+[PARKED] Dev SPA bundle rotation introduces new live host: confidence 25 < 40 threshold. Bundle rotates frequently but hosts have been inert for 7 cycles. Passive monitoring only.
+[PARKED] Admin/helpdesk aliases transient revival: confidence 15 < 40. No HTTP response in 7 cycles. Pattern exists but probability very low.
+[FINAL] No actionable hypotheses survive the confidence threshold. All high-value chains remain AUTH_HELPED or HUMAN.
+[NEXT] PASSIVE: Per-cycle sentinel — `curl -sSI -m 8 https://admin.live.sipgate.net/` + `https://admin.dev.sipgate.net/` (80/443) AND `curl -s https://app.dev.sipgate.com/ | grep -oE 'assets/main-[A-Za-z0-9_-]+\.js'` AND `curl -sk https://integration.dev.sipgate.com/metrics | grep firebase_jwt` — monitor for bundle rotation, host revival, or dev twin gate changes.
+[LEARN] ACCEPTED MISCONFIG @ amp.sipgate.de: LIVE Cloudflare analytics endpoint (204, ACAO:*, Express, svid session tokens) — analytics/beacon infra, not a security finding; IP tracking disabled in bundle config.
+[LEARN] ACCEPTED INFO @ status.sipgate.de: Atlassian Statuspage with public API (4 components, no internal infra names) — public status page, not a security finding.
+[LEARN] REJECTED OTHER @ integration.sipgate.cloud: K8s ingress serves identical Swagger UI (386538b) as .com; app-level 403 on data paths; same Platypus backend, no gate differential vs .com.
+[LEARN] ACCEPTED INFO @ static.sipgate.com: Apache static assets host; CSP frame-ancestors family-wide; references sipgate-desktop-app S3 bucket (already ACCEPTED).
+[LEARN] ACCEPTED INFO @ info.sipgate.de: Dead HubSpot page (404 predicted at edge, Cloudflare Workers) — no data disclosure.
+[RISK] sipgate: 44 — Surface exhaustively mapped over 9 days. Two strong accepted findings (CORS credential reflection on api/v2 + swagger implicit client with extreme scopes) form a credible same-origin XSS → session-theft chain, but exploitation requires victim to visit attacker page while authenticated. No unauthenticated RCE, SSRF, or data exfiltration confirmed. Every remaining high-value chain is AUTH_HELPED (BOLA 50, vendor SSRF 50, apex apiUrl SSRF 48) or HUMAN (S3 write 55, share1 takeover 45). New bundle rotation introduced 4 new .de hosts (amp, info, status, static) — all inert/standard infra, no security value. Unauthenticated upside reduced to monitoring for dev bundle rotation or transient host revival — both passive, low-probability, and low-value if triggered. Strategic recommendation: report accepted findings as-is; the CORS+swagger chain is the strongest reportable finding.

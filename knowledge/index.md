@@ -288,3 +288,16 @@
 - 2026-09-10 ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes — high-value target but requires credential acquisition (AUTH_HELPED).
 - 2026-09-10 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 10839 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
 - 2026-09-10 ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stale since 2024-06-11); ACL/policy reads denied; write path NOT tested (HUMAN sign-off required)
+- 2026-09-10 ACCEPTED MISCONFIG @ amp.sipgate.de: LIVE Cloudflare analytics endpoint (204, ACAO:*, Express, svid session tokens) — analytics/beacon infra, not a security finding; IP tracking disabled in bundle config.
+- 2026-09-10 ACCEPTED INFO @ status.sipgate.de: Atlassian Statuspage with public API (4 components, no internal infra names) — public status page, not a security finding.
+- 2026-09-10 REJECTED OTHER @ integration.sipgate.cloud: K8s ingress serves identical Swagger UI (386538b) as .com; app-level 403 on data paths; same Platypus backend, no gate differential vs .com.
+- 2026-09-10 ACCEPTED INFO @ static.sipgate.com: Apache static assets host; CSP frame-ancestors family-wide; references sipgate-desktop-app S3 bucket (already ACCEPTED).
+- 2026-09-10 ACCEPTED INFO @ info.sipgate.de: Dead HubSpot page (404 predicted at edge, Cloudflare Workers) — no data disclosure.
+- 2026-09-10 REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, token persists to localStorage before navigation — fragment never forwarded off-origin (per KB, consistent across cycles)
+- 2026-09-10 REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reachable flawed verifier (per KB)
+- 2026-09-10 REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live credential exposure (per KB)
+- 2026-09-10 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
+- 2026-09-10 REJECTED AUTH @ api.sipgate.com/v2: all tested paths return 401 empty-body unauth; uniform edge auth; no authz-drift/BOLA unauthenticated (per KB)
+- 2026-09-10 REJECTED OTHER @ api.sipgate.com/v2/translations/{language}: arbitrary language values incl URL-encoded traversal return same 200 English dict (whitelist-with-fallback) → no LFI/traversal (per KB)
+- 2026-09-10 REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
+- 2026-09-10 REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy

@@ -468,3 +468,16 @@ www.sipgate.de
 - CHANGED `chatbot.dev.sipgate.com` live (nginx/1.24.0, GCP) — polling & WS transport both reject arbitrary Origin (400, Vary:Origin, no ACAO)
 
 ## 2026-09-10 06:23:40 UTC
+
+## 2026-09-10 11:51:37 UTC
+- NEW app.dev.sipgate.com JS bundle rotated to `main-PqF61JxF.js` (5.65MB) — 18 hardcoded internal host:port pairs including NEW prod subdomains `admin.live.sipgate.net` (CNAME → helpdesk.live.sipgate.net, 
+- NEW integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 10839 (per-replica counter, restart-reset confirmed) — live Firebase JWT validator, auth-mechanism drift (spec Keycloak vs runtime Fi
+- CHANGED *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters uniformly behind nginx Basic-auth 401 + ACAO:* CORS preflight allowing `x-provider-url,x-provider-key`; OPTIONS 204 passes gate, data GE
+- CHANGED mock.integration.sipgate.cloud: ungated Express twin, `/contacts` 200 (~8MB synthetic), ACAO:* + ACAC:true + `allow-headers: x-provider-*` — empirical test confirms `x-provider-url` does NOT parameter
+- CHANGED grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via `/api/health`
+- CHANGED share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN — subdomain-takeover candidate (needs HUMAN claim validation)
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP `frame-ancestors` includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web02/team-web03
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested (H
+- CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + `x-b3-traceid` leak)
+- CHANGED login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+- CHANGED chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, GCP) — both WS and polling transports reject arbitrary Origin (400, Vary:Origin, no ACAO); identical to prod REJECT class
