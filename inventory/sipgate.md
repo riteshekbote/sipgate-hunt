@@ -483,3 +483,5 @@ www.sipgate.de
 - CHANGED chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, GCP) — both WS and polling transports reject arbitrary Origin (400, Vary:Origin, no ACAO); identical to prod REJECT class
 
 ## 2026-09-10 15:11:49 UTC
+
+## 2026-09-10 18:54:27 UTC
