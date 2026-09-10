@@ -20386,3 +20386,138 @@ I'll analyze the provided security research context for sipgate GmbH's infrastru
 - Validate S3 bucket write permissions (requires human authorization)
 
 **Note**: This analysis is based solely on the provided research data. No active testing was performed.
+===== ANALYST bigpickle 2026-09-10 21:17:27 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -m 10 https://app.dev.sipgate.com/ | grep -oE 'assets/main-[A-Za-z0-9_-]+\.js' | head -3; echo "---metrics---"; curl -sk -m 10 https://integration.dev.sipgate.com/metrics 2>&1 | grep -i firebase | head -3; echo "---mock-spec---"; curl -s -m 10 -o /dev/null -w "swagger.json:%{http_code}\n" https://mock.integration.sipgate.cloud/swagger.json; curl -s -m 10 -o /dev/null -w "openapi.json:%{http_code}\n" https://mock.integration.sipgate.cloud/openapi.json; curl -s -m 10 -o /dev/null -w "v3api:%{http_code}\n" https://mock.integration.sipgate.cloud/v3/api-docs; curl -s -m 10 -o /dev/null -w "health:%{http_code}\n" https://mock.integration.sipgate.cloud/health
+assets/main-D_WMxc4R.js
+---metrics---
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 1
+---mock-spec---
+swagger.json:404
+openapi.json:404
+v3api:404
+health:200
+[0m
+[0m$ [0mcurl -sSI -m 8 https://admin.live.sipgate.net/ 2>&1 | head -5; echo "---DEV---"; curl -sSI -m 8 https://admin.dev.sipgate.net/ 2>&1 | head -5; echo "---DEV2---"; curl -sSI -m 8 https://helpdesk.live.sipgate.net/ 2>&1 | head -5
+curl: (28) Connection timed out after 8002 milliseconds
+---DEV---
+curl: (28) Connection timed out after 8001 milliseconds
+---DEV2---
+curl: (28) Connection timed out after 8002 milliseconds
+[0m
+[0m$ [0mcurl -s -m 15 https://app.dev.sipgate.com/assets/main-D_WMxc4R.js -o /tmp/opencode/main.js 2>&1; wc -c /tmp/opencode/main.js; echo "---hosts---"; grep -oE 'https?://[a-zA-Z0-9_.\-]+(:[0-9]+)?' /tmp/opencode/main.js | sort -u | grep -iE 'sipgate|localhost|\.local|\.dev|\.live|\.net' | sort -u
+5644609 /tmp/opencode/main.js
+---hosts---
+http://localhost
+https://admin.dev.sipgate.net
+https://admin.live.sipgate.net
+https://amp.sipgate.de
+https://api.dev.sipgate.com
+https://api.local.sipgate.com:3396
+https://api.sipgate.com
+https://app.dev.sipgate.com
+https://app.local.sipgate.com:3443
+https://app.sipgate.com
+https://chatbot.dev.sipgate.com
+https://chatbot.sipgate.com
+https://info.sipgate.de
+https://integration.dev.sipgate.com
+https://integration.sipgate.cloud
+https://login.dev.sipgate.com
+https://login.sipgate.com
+https://payment.dev.sipgate.com
+https://payment.local.sipgate.com:8080
+https://payment.sipgate.com
+https://static.sipgate.com
+https://status.sipgate.de
+https://team-de.dev.sipgate.com
+https://team-de.live.sipgate.com
+https://team-de.local.sipgate.com:10443
+https://team-uk.dev.sipgate.com
+https://team-uk.live.sipgate.com
+https://team-uk.local.sipgate.com:10443
+https://www.docs.developers.amplitude.com
+https://www.sipgate.de
+[0m
+[0m$ [0mecho "---metrics-prod---"; curl -s -m 10 https://integration.sipgate.com/metrics 2>&1 | grep -iE 'firebase_jwt_forbidden|api_key' | head -3; echo "---api-cors---"; curl -s -m 10 -D- -o /dev/null -H "Origin: https://evil.example" https://api.sipgate.com/v2/contacts 2>&1 | grep -iE '^(HTTP|access-control|vary|x-b3)' ; echo "---doc---"; curl -s -m 10 -o /dev/null -w "doc:%{http_code}\n" https://api.sipgate.com/v2/doc/
+---metrics-prod---
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 5
+---api-cors---
+HTTP/1.1 401 Unauthorized
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,X-Sipgate-Command
+vary: origin
+x-b3-traceid: 8585233d088fd190c1399070120eebfd
+---doc---
+doc:200
+[0m
+[0m$ [0mcurl -sk -m 10 https://integration.dev.sipgate.com/metrics 2>&1 | grep -E '^(#|firebase|api_key|rate_limit|http_)' | head -20; echo "---dev-spec---"; curl -sk -m 10 -o /dev/null -w "swagger-ui-init:%{http_code}\n" https://integration.dev.sipgate.com/swagger/swagger-ui-init.js; curl -sk -m 10 -o /dev/null -w "v3api:%{http_code}\n" https://integration.dev.sipgate.com/v3/api-docs
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 2
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 1
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+# TYPE rate_limit_forbidden_requests counter
+rate_limit_forbidden_requests 0
+---dev-spec---
+swagger-ui-init:200
+v3api:404
+[0m
+**STEP 1 — DELTA**
+- [NEW] app.dev.sipgate.com bundle rotated → `main-D_WMxc4R.js` (5.64MB); host set now includes `integration.sipgate.cloud` (apex .cloud) — first observed in SPA bundle; all others unchanged (admin.live/.dev, helpdesk.live still TCP-timeout, 8 cycles).
+- [CHANGED] integration.dev.sipgate.com/metrics: now **200 public** (was 403) — identical Prometheus counter family to prod (firebase_jwt_forbidden=1, api_key_forbidden=2, rate_limit=0, near-zero → fresh replica); dev twin gate differential partially closes.
+- [CHANGED] mock.integration.sipgate.cloud: swagger.json/openapi.json/v3/api-docs all **404** — no ungated spec surface; canary remains deflated (matches KB REJECT).
+- [NO_CHANGE] api.sipgate.com/v2/contacts still reflects arbitrary Origin + ACAC:true + x-b3-traceid (401); /v2/doc/ 200.
+
+**STEP 2 — PRIORITIZE**
+- [PRIO] api.sipgate.com (CORS+swagger chain), 7.3, a=10 b=10 t=8 g=2 c=2 f=8
+- [PRIO] integration.sipgate.com (:26-op spec, oauth2 drift, apiUrl SSRF), 6.5, a=7 b=8 t=7 g=3 c=3 f=5
+- [PRIO] *.integration.sipgate.cloud (94 vendor adapters, nginx gate), 6.3, a=7 b=7 t=7 g=5 c=3 f=6
+- [PRIO] integration.dev.sipgate.com (metrics now public, gate drift), 5.4, a=5 b=6 t=6 g=7 c=2 f=4
+- [PRIO] mock.integration.sipgate.cloud (ungated synthetic twin), 5.9, a=5 b=6 t=6 g=9 c=3 f=5
+
+**STEP 3 — HYPOTHESES**
+- [HYP] Swagger UI configUrl/url parameter reflection on api.sipgate.com/v2/doc enables same-origin DOM sink → chains with accepted credential-CORS to token theft
+- class: XSS
+- asset: api.sipgate.com/v2/doc/?configUrl=
+- confidence: 50
+- reasoning: swagger-ui 5.x implicit-only `sipgate-swagger-ui` client holds extreme scopes; CORS on /v2/* reflects arbitrary Origin with ACAC:true (reconfirmed 401 + ACAO:+expose-headers). Swagger-UI accepts `configUrl`/`url`/`deepLinking` via URL — if echoed into DOM without sanitize a same-origin XSS on api.sipgate.com is reachable, and then the implicit fragment token + credential-CORS are exfiltratable. Prior KB confirmed opener-callback is cross-origin-inert; same-origin sink would change that.
+- evidence_needed: (1) does /v2/doc/ render/execute config}attacker-controlled spec (2) any reflected/unsanitized param into DOM (3) absence of frame-busting/XFO on doc page.
+- verify_steps: GET https://api.sipgate.com/v2/doc/?configUrl=https://evil.invalid/spec.json → observe if page fetches attacker URL (watch 401/error trace) ; GET /v2/doc/ with `url=`/`deepLinking=true%3B` and diff DOM; OPTIONS/GET fetch /v2/doc/ index.html headers for XFO/CSP frame-ancestors.
+- impact: same-origin XSS on api.sipgate.com → trigger implicit flow → steal token (client side) + read arbitrary credentialed /v2 calls via reflected CORS → full tenant ATO; HIGH but requires victim interaction.
+- testability: PASSIVE
+- [HYP] Dev-twin metrics/gate differential allows spec-vs-runtime cross-validation to locate an ungated platypus op
+- class: MISCONFIG
+- asset: integration.dev.sipgate.com
+- confidence: 40
+- reasoning: .dev twin now serves both /metrics (200) and /swagger/swagger-ui-init.js (200) while all 26 data ops stay app-403; prod identical. Gate is Firebase-JWT (spec falsely claims Keycloak); counters near-zero prove fresh replica and identical authz code. Any op whose 403 arises from a different condition would show distinct counter; current counts show no such split.
+- evidence_needed: per-op counter differential (firebase_jwt vs api_key vs rate_limit); currently flat.
+- verify_steps: GET https://integration.dev.sipgate.com/metrics twice over 2 cycles, diff counters; GET each of 26 ops (dummy Bearer) vs dev, confirm uniform 403.
+- impact: reveals a gate-bypass op if present; otherwise an ack that drift is uniform — LOW.
+- testability: PASSIVE
+
+**STEP 4 — SELF-CRITIQUE**
+- [PARKED] Mock twin spec canary: probe returned 404 on all 3 spec paths — deflated, no new sink evidence (drop).
+- [PARKED] admin.live/admin.dev/helpdesk revival: inert 8 cycles, TCP only — passive sentinel retains.
+- [PARKED] integration.dev metrics differential: counter set identical to prod, no split — info only.
+- [FINAL] api.sipgate.com swagger configUrl XSS-canary (50) — only survivor ≥40 threshold; CORS+explicit client reconfirmed this cycle.
+
+**STEP 5 — NEXT ACTION**
+- [NEXT] PROBE: `curl -s -m 10 -D- https://api.sipgate.com/v2/doc/?configUrl=https://id.example-verify.invalid/evil.json -o /tmp/opencode/doc.html` + diff with plain `/v2/doc/` for any attacker-URL fetch/reflect; then check doc HTML headers for X-Frame-Options/CSP.
+
+**STEP 6 — LEARNING**
+- [LEARN] ACCEPTED INFO @ integration.dev.sipgate.com: /metrics now 200 public (was 403) — mirrors prod Prometheus family, counters near-zero (fresh replica); dev/prod authz code identical, gate-drift uniform not exploitable.
+- [LEARN] REJECTED OTHER @ mock.integration.sipgate.cloud: swagger.json/openapi.json/v3/api-docs all 404 — no ungated spec surface to enumerate; synthetic-twin is single-path canary only.
+- [LEARN] ACCEPTED INFO @ app.dev.sipgate.com bundle main-D_WMxc4R.js: host set first-timers include `integration.sipgate.cloud` (already CT-known, same-Swagger-UI REJECT class); no new live host.
+
+**STEP 7 — RISK**
+- [RISK] sipgate: 44 — No material delta; surface stable for a 10th cycle. Strongest reportable item remains the accepted chain (arbitrary-Origin CORS+credentials on api/v2 × implicit swagger client with extreme scopes) as defense-in-depth/XSS-amplifier, plus listable S3 bucket; both HUMAN-sign-off/chain-dependent. All deeper chains (BOLA, vendor SSRF, apiUrl SSRF, Firebase gate) remain AUTH_HELPED. Unauthenticated upside unchanged: monitor dev bundle rotation, admin/helpdesk revival, dev-twin gate changes.
