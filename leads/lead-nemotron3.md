@@ -2945,3 +2945,4 @@ testability: PASSIVE
 [CHANGED] sipgate-desktop-app.s3.eu-central-1.amazonaws.com — publicly listable S3 bucket (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested
 [CHANGED] api.sipgate.com/v2/* — arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + x-b3-traceid leak)
 [CHANGED] login.sipgate.com third-party realm — live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+## 2026-09-11 06:27:30 UTC [target] (model nemotron3)
