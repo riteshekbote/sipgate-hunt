@@ -305,3 +305,9 @@
 - 2026-09-10 ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS; distinct gate tier from apex Firebase-JWT.
 - 2026-09-10 REJECTED AUTH @ api.sipgate.com/v2: all tested paths return 401 empty-body unauth; uniform edge auth; no authz-drift/BOLA unauthenticated (per KB).
 - 2026-09-10 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 93107 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+- 2026-09-11 ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth gap, chain-dependent for full exploitation.
+- 2026-09-11 ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as same-origin-XSS amplifier.
+- 2026-09-11 REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests.
+- 2026-09-11 ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS; distinct gate tier from apex Firebase-JWT.
+- 2026-09-11 ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes — high-value target but requires credential acquisition (AUTH_HELPED).
+- 2026-09-11 REJECTED AUTH @ api.sipgate.com/v2: all tested paths return 401 empty-body unauth; uniform edge auth; no authz-drift/BOLA unauthenticated (per KB).

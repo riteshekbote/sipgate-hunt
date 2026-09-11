@@ -1141,3 +1141,13 @@
 - LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
 - LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as 
+
+## RANKED HYPOTHESES 2026-09-11 01:17:13 UTC
+- [55] api.sipgate.com/v2/doc/*: Swagger implicit client same-origin XSS amplifier chains with api.sipgate.com CORS credential reflection to achieve session theft (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: GET https://mock.integration.sipgate.cloud/swagger.json — check if OpenAPI spec is served ungated; if 200 with endpoint list, enumerate paths for x-provi
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth g
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as 
+- LEARN: REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests.
+- LEARN: ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS; distinct gate tier from apex 
+- LEARN: ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes — high-value target but requires credential acquisition (AUTH_HELPED).
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2: all tested paths return 401 empty-body unauth; uniform edge auth; no authz-drift/BOLA unauthenticated (per KB).

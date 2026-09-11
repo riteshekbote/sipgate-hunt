@@ -499,3 +499,15 @@ www.sipgate.de
 - CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com — publicly listable S3 bucket (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested
 - CHANGED api.sipgate.com/v2/* — arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + `x-b3-traceid` leak)
 - CHANGED login.sipgate.com third-party realm — live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+
+## 2026-09-11 01:17:13 UTC
+- NEW app.dev.sipgate.com bundle rotated to main-D_WMxc4R.js (5.65MB) with 18 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10
+- NEW integration.sipgate.com/metrics firebase_jwt_forbidden_requests 93107 (+82,268 vs prior 10,839) — live Firebase-JWT validator confirmed, per-replica counter incrementing (restart-reset behavior)
+- CHANGED *.integration.sipgate.cloud (94 hosts) — uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url,x-provider-key; data GET 401, header does not bypass nginx gate
+- CHANGED mock.integration.sipgate.cloud — ungated Express twin, /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — empirical test confirms x-provider-url does NOT parameterize f
+- CHANGED grafana.sipgate.cloud — live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via /api/health
+- CHANGED share1.sipgate.cloud — dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN confirmed; subdomain-takeover candidate
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com — CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web02/team-web03)
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com — publicly listable S3 bucket (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested
+- CHANGED api.sipgate.com/v2/* — arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + x-b3-traceid leak)
+- CHANGED login.sipgate.com third-party realm — live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
