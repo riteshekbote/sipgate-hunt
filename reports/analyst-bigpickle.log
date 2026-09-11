@@ -21830,3 +21830,63 @@ testability: PASSIVE
 
 ### STEP 7 — RISK
 [RISK] sipgate: 47 — Surface mapping comprehensive; new authz-drift anomaly (oauth2/clients/{clientId} 500-on-UUID) is the strongest unauthenticated divergence found in 9 days; string-ID probing is the immediate next step to determine if any registered client ID yields 200 metadata. CORS credential reflection on /v2/* and swagger ?url= chain remain reportable as defense-in-depth + phishing surface. All other high-value paths stay AUTH_HELPED. Recommend reporting: (1) CORS-credential reflection on /v2 endpoints, (2) swagger-ui ?url= spec-forward + implicit OAuth chain, (3) oauth2/clients authz-drift as authz-consistency finding.
+===== ANALYST bigpickle 2026-09-11 18:41:46 UTC =====
+[0m
+> build · big-pickle
+[0m
+**STEP 1 — DELTA**
+[CHANGED] api.sipgate.com/v2/authorization/oauth2/clients/{clientId}: 500 on UUID confirms app-plane reach, string validators distinct — authz-drift anomaly (KB 2026-09-11)
+[NEW] api.sipgate.com/v2/doc/oauth2-redirect.html: ACAO:* + ACAC:true confirmed — CORS credential reflection on swagger redirect (KB 2026-09-11)
+[CHANGED] mock.integration.sipgate.cloud: /swagger.json 404 — ungated twin has no spec endpoint (KB 2026-09-11)
+
+**STEP 2 — PRIORITIZE**
+[PRIO] api.sipgate.com/v2/authorization/oauth2/clients/{clientId},6.9,authz-drift+high-value-scope+app-plane-reach
+[PRIO] api.sipgate.com/v2/doc/*,6.6,public-oauth-client+spec-forward+frameable
+[PRIO] api.sipgate.com/v2/*,5.45,cors-credential-reflection
+
+**STEP 3 — HYPOTHESES**
+[HYP] String client-ID variants on /v2/authorization/oauth2/clients/{id} may bypass UUID-500 validator
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}
+confidence: 48
+reasoning: GET /clients→401; GET /clients/{uuid}→500 (app-plane miss-throw); GET /clients/sipgate-swagger-ui→400 (string validator). Known client IDs from other realms (sipgate-app-web from OIDC flow, platypus-swagger from integration spec) may be registered in third-party realm and handled differently. The 500 pattern confirms edge-auth NOT applied — only app-plane validator runs.
+evidence_needed: Response codes for sipgate-app-web, platypus-swagger, and sipgate-app on this endpoint
+verify_steps: GET https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app-web; GET https://api.sipgate.com/v2/authorization/oauth2/clients/platypus-swagger; GET https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app (all PASSIVE, no auth)
+impact: If 200, unauthenticated read of per-client OAuth metadata (name, scopes, redirect URIs, GDPR URLs) in highest-scope OIDC realm; MEDIUM standalone, HIGH as authz-drift proof
+testability: PASSIVE
+
+[HYP] Swagger-ui bundle version extraction for spec-render XSS audit
+class: XSS
+asset: api.sipgate.com/v2/doc/swagger-ui-bundle.js
+confidence: 30
+reasoning: swagger-ui 5.x live; ?url= makes SwaggerUIBundle fetch attacker-controlled spec from api.sipgate.com origin (confirmed: decodeURIComponent, no host check); doc page frameable (no XFO/CSP frame-ancestors). If exact bundle version has known spec-render XSS CVE (markdown injection via description field, schema $ref abuse, x-example HTML injection), chained with frameable doc + implicit sipgate-swagger-ui OAuth client + CORS credential reflection = token theft on api.sipgate.com origin. Low confidence because 5.x XSS CVEs are version-specific.
+evidence_needed: exact swagger-ui version string from bundle source; CVE database check
+verify_steps: GET https://api.sipgate.com/v2/doc/swagger-ui-bundle.js → search for version string (PASSIVE, ~1MB file)
+impact: XSS on api.sipgate.com → session theft via CORS + implicit OAuth; CRITICAL if found, but very low probability
+testability: PASSIVE
+
+[HYP] Additional unauthenticated 200-path enumeration on /v2/ beyond known health/translations/doc
+class: MISCONFIG
+asset: api.sipgate.com/v2/{path}
+confidence: 35
+reasoning: Known unauthenticated 200 paths: /health, /translations/{language} (whitelist), /doc/* (swagger-ui). Spec has 144 paths; only ~25 tested for auth. Potential untested paths like /v2/status, /v2/info, /v2/config, /v2/version, /v2/openapi.json might return 200 if health/config endpoints bypass edge-auth middleware.
+evidence_needed: 200 responses on any new /v2/ path without auth
+verify_steps: GET https://api.sipgate.com/v2/status; GET https://api.sipgate.com/v2/info; GET https://api.sipgate.com/v2/config; GET https://api.sipgate.com/v2/version; GET https://api.sipgate.com/v2/openapi.json (all PASSIVE)
+impact: If any return 200 with data, info disclosure or misconfigured endpoint; LOW-MEDIUM
+testability: PASSIVE
+
+**STEP 4 — SELF-CRITIQUE**
+[PARKED] Swagger-ui bundle version extraction: confidence 30 < 40 threshold; requires HUMAN browser for full ?url= chain; passive version check alone is informational only. Park until string-ID probes complete.
+[PARKED] Unauthenticated 200-path enumeration: confidence 35 < 40 threshold; highly speculative. Park.
+[FINAL] String client-ID variants: confidence 48; PASSIVE; directly extends confirmed authz-drift finding; 3 concrete probes with clear pass/fail criteria.
+
+**STEP 5 — NEXT ACTION**
+[NEXT] PROBE: GET https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app-web and GET https://api.sipgate.com/v2/authorization/oauth2/clients/platypus-swagger — check if known client IDs from other realms bypass the string-id→400 validator and return 200 metadata
+
+**STEP 6 — LEARNING**
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: CORS reflection on oauth2-redirect.html is real (ACAO: evil.com + ACAC:true) but Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin — same class as app.sipgate.com implicit-auth-redirect REJECT.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as same-origin-XSS amplifier — re-confirmed this cycle.
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2: all tested paths return 401 empty-body unauth; uniform edge auth; no authz-drift/BOLA unauthenticated — except oauth2/clients/{clientId} subtree (500 on UUID = app-plane reach, confirmed).
+
+**STEP 7 — RISK**
+[RISK] sipgate: 47 — Surface mapping comprehensive; new authz-drift anomaly (oauth2/clients/{clientId} 500-on-UUID) is strongest unauthenticated divergence found in 9 days; string-ID probing immediate next step. CORS credential reflection on /v2/* and swagger ?url= chain remain reportable as defense-in-depth + phishing surface. All other high-value paths stay AUTH_HELPED.
