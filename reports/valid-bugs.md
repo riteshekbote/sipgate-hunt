@@ -24,3 +24,11 @@
   - | Subdomain Takeover | **VALID** | 6.5 | P1 |
   - | Mock Integration Ungated | **VALID** | 5.3 | P1 |
   - | API CORS Reflection | **VALID** | 7.5 | P0 |
+
+- 6 lead(s) marked VALID at 2026-09-11 22:26:42 UTC
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - | **VALID** | 4 | api.sipgate.com CORS, app.dev.sipgate.com dev SPA, S3 bucket, Redis endpoint in public repos, Kong command injection |
