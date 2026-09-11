@@ -21568,3 +21568,204 @@ window.onload = function() {
     <title>Swagger UI</title>
     <link rel="stylesheet" type="text/css" href="/
 [0m
+===== ANALYST bigpickle 2026-09-11 11:38:34 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sS -D- -o /dev/null --max-time 10 -H "Origin: https://evil.example.com" "https://mock.integration.sipgate.cloud/swagger.json" 2>&1 | head -30
+HTTP/2 404 
+date: Fri, 11 Sep 2026 11:33:07 GMT
+content-type: text/html; charset=utf-8
+content-length: 151
+x-powered-by: Express
+access-control-allow-origin: *
+vary: Origin, Accept-Encoding
+access-control-allow-credentials: true
+content-security-policy: default-src 'none'
+x-content-type-options: nosniff
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type
+access-control-max-age: 1728000
+[0m
+[0m$ [0mcurl -sS -D- --max-time 10 "https://mock.integration.sipgate.cloud/robots.txt" 2>&1 | head -20
+HTTP/2 404 
+date: Fri, 11 Sep 2026 11:33:08 GMT
+content-type: text/html; charset=utf-8
+content-length: 149
+x-powered-by: Express
+vary: Origin, Accept-Encoding
+access-control-allow-credentials: true
+content-security-policy: default-src 'none'
+x-content-type-options: nosniff
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: x-provider-locale,x-provider-url,x-provider-key,x-clinq-environment,content-type
+access-control-max-age: 1728000
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+[0m
+[0m$ [0mcurl -sS --max-time 10 "https://mock.integration.sipgate.cloud/swagger.json" 2>&1 | head -100
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot GET /swagger.json</pre>
+</body>
+</html>
+[0m
+[0m$ [0msleep 1; curl -sS --max-time 10 "https://mock.integration.sipgate.cloud/openapi.json" 2>&1 | head -5; echo "---"; sleep 1; curl -sS --max-time 10 "https://mock.integration.sipgate.cloud/v3/api-docs" 2>&1 | head -5; echo "---"; sleep 1; curl -sS -o /dev/null -w "%{http_code}\n" --max-time 10 "https://mock.integration.sipgate.cloud/swagger/swagger-ui-init.js" 2>&1
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+---
+404
+[0m
+[0m$ [0mfor p in proxy forward webhook fetch contacts/search; do sleep 1; code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 "https://mock.integration.sipgate.cloud/$p"); echo "$p -> $code"; done
+proxy -> 404
+forward -> 404
+webhook -> 404
+fetch -> 404
+contacts/search -> 501
+[0m
+[0m$ [0msleep 1; curl -sS -o /dev/null -w "%{http_code}\n" --max-time 10 "https://api.sipgate.com/v2/authorization/oauth2/clients"; sleep 1; curl -sS -o /dev/null -w "%{http_code}\n" --max-time 10 "https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-swagger-ui"; sleep 1; curl -sS -o /dev/null -w "%{http_code}\n" --max-time 10 "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr"
+401
+400
+500
+[0m
+[0m$ [0msleep 1; curl -sS -o /dev/null -w "%{http_code}\n" --max-time 10 "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000"; sleep 1; curl -sS -o /dev/null -w "%{http_code}\n" --max-time 10 -X OPTIONS "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr" -H "Origin: https://evil.example.com"; sleep 1; curl -sS -o /dev/null -w "%{http_code}\n" --max-time 10 "https://api.sipgate.com/v2/authorization/oauth2/clients/11111111-1111-1111-1111-111111111111/gdpr"
+500
+404
+500
+[0m
+[0m$ [0msleep 1; curl -sS -D- -o /dev/null --max-time 10 "https://api.sipgate.com/v2/doc/" 2>&1 | grep -iE "x-frame|content-security|access-control|HTTP/" ; echo "=== initializer ==="; sleep 1; curl -sS --max-time 10 "https://api.sipgate.com/v2/doc/swagger-initializer.js" 2>&1 | head -5
+HTTP/1.1 200 OK
+=== initializer ===
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+[0m
+[0m$ [0msleep 1; curl -sS --max-time 10 "https://api.sipgate.com/v2/doc/swagger-initializer.js" 2>&1 | tail -20
+presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+[0m
+[0m$ [0msleep 1; curl -sS --max-time 10 "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" 2>&1 | rg -o "swagger-ui v?[0-9]+\.[0-9]+\.[0-9]+" | head -3; curl -sS --max-time 10 "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" 2>&1 | rg -o '"version":"[^"]{3,10}"' | head -5
+/bin/bash: line 1: rg: command not found
+/bin/bash: line 1: rg: command not found
+[0m
+[0m$ [0msleep 1; curl -sS --max-time 15 "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" 2>/dev/null | grep -oE "version.?[:=].?[\"']?[0-9]+\.[0-9]+\.[0-9]+" | head -5; echo "---initializer head---"; curl -sS --max-time 10 "https://api.sipgate.com/v2/doc/swagger-initializer.js" 2>/dev/null | grep -nE "url|configUrl|swaggerDoc" | head -10
+version="3.14.3
+version:"3.20.3
+version="2.3.3
+version:"17.0.2
+version="17.0.2
+---initializer head---
+10:  var url = window.location.search.match(/url=([^&]+)/);
+12:  if (url && url.length > 1) {
+13:    url = decodeURIComponent(url[1]);
+18:    url = baseUrl + "/v2/swagger.json";
+24:    url,
+[0m
+[0m$ [0msleep 1; curl -sS --max-time 15 "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" 2>/dev/null | grep -oE "version ?[:=] ?\"[0-9]+\.[0-9]+\.[0-9]+\"|SwaggerUIBundle v[0-9.]+|@swagger-ui/[a-z-]+ v?[0-9.]+" | sort -u | head -20
+version:"1.3.2"
+version:"17.0.2"
+version:"3.20.3"
+version="17.0.2"
+version="2.3.3"
+version="3.14.3"
+[0m
+[0m$ [0msleep 1; curl -sS -o /dev/null -w "HEAD uuid/gdpr -> %{http_code}\n" --max-time 10 -I "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr"; sleep 1; curl -sS -o /dev/null -w "GET zero-uuid/oauth2 client -> %{http_code}\n" --max-time 10 "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/oauth"
+HEAD uuid/gdpr -> 404
+GET zero-uuid/oauth2 client -> 404
+[0m
+# SIPGATE — ANALYSIS CYCLE 2026-09-11
+
+## STEP 1 — DELTA
+- CHANGED `mock.integration.sipgate.cloud`: `/swagger.json`, `/openapi.json`, `/v3/api-docs`, `/swagger/swagger-ui-init.js` → all 404; `/proxy`,`/forward`,`/webhook`,`/fetch` → 404; `/contacts/search` → **501** — mock is purely synthetic, no hidden spec or fetch-sink paths. SSRF-canary lead definitively closed.
+- CHANGED `api.sipgate.com/v2/authorization/oauth2/clients`: authz divergence **re-verified** — list→401 (edge), string-id→400 (app-plane), any well-formed UUID & `{uuid}/gdpr`→**500** (app-plane, unauthenticated), OPTIONS→404, HEAD gdpr→404.
+- NEW/CHANGED `api.sipgate.com/v2/doc`: `swagger-initializer.js` confirms `?url=` attacker-spec outside fetch (`url = decodeURIComponent(url[1])`, no origin/host check, fallback `/v2/swagger.json` now 404); doc page 200 with **no X-Frame-Options / CSP frame-ancestors**; `initOAuth(clientId:"sipgate-swagger-ui", realm:"third-party")`.
+
+## STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/authorization/oauth2/clients — priority 5.70 — attack 5, value 6 (highest-scope realm client metadata+GDPR URLs), tech 8 (global OAuth admin subtree), gate 3 (partial app-plane reach), cloud 5, fresh 8
+- [PRIO] api.sipgate.com/v2/doc (swagger `?url=` forward) — priority 6.40 — attack 6, value 5, tech 9 (OAuth implicit+swagger-ui), gate 8 (public 200), cloud 5, fresh 6
+- [PRIO] integration.sipgate.com oauth2 gate-drift — priority 5.05 — unchanged 42, AUTH_HELPED
+
+## STEP 3 — HYPOTHESES
+[HYP] Unauthenticated app-plane reach into /v2/authorization/oauth2/clients{id}(/gdpr) contradicts uniform edge-401; a registered third-party client UUID likely returns 200 metadata (GDPR/privacy URLs) unauthenticated
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}[/gdpr]
+confidence: 50
+reasoning: Re-verified this cycle: GET /clients→401; GET /clients/sipgate-swagger-ui→400 (string-id validator, app-plane); GET /clients/{0000…|1111…}/gdpr and plain /{uuid}→500 for any well-formed UUID (app lookups-then-throw on miss); OPTIONS/HEAD/subresource variants→404. Divergence from the KB "uniform edge 401" is real, reproduced on 5 request shapes. 500-on-unknown + 400-on-malformed is the classic lookup-miss throw; a real DCR client UUID should yield 200 (metadata + gdpr URLs) past the edge gate.
+evidence_needed: One legitimate third-party realm client UUID (DCR-issued) to confirm 200 vs 500; none obtainable (DCR Trusted-Hosts gated, KB 2026-09-03).
+verify_steps: GET /v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr →500 (re-verified); compare a registered-uuid extraction from any sipgate artifact if ever leaked; HEAD/OPTIONS on same (404) prove write/read method routing is distinct.
+impact: Unauthenticated oracle for client existence + per-client GDPR/privacy metadata read in the highest-scope OAuth realm; stands as proof-of-authz-drift even without data. MEDIUM standalone, HIGH if a UUID is ever leaked (client-confusion/OAuth-chain on login.sipgate.com third-party realm).
+testability: AUTH_HELPED
+[HYP] Frameable swagger doc with attacker-controlled `?url=` spec forward + implicit `sipgate-swagger-ui` produces malicious OAuth prompt on trusted origin / client-side fetch primitive
+class: AUTH
+asset: api.sipgate.com/v2/doc
+confidence: 48
+reasoning: Confirmed this cycle in swagger-initializer.js: `?url=` → decodeURIComponent, no host check, arbitrary URL fetched from api.sipgate.com origin; doc page 200 and frameable (no XFO/CSP-frame-ancestors header observed); initOAuth hardcodes clientId sipgate-swagger-ui, realm third-party, nonce random; oauth2RedirectUrl same-origin (KB 2026-09-06/07 already REJECTED cross-origin opener token read with Chromium 152). Residual primitive: malicious-content hosting on api.sipgate.com origin + victim-browser arbitrary-URL fetch (client-side SSRF/DNS-rebind) + phishing-grade OAuth prompt at login.sipgate.com showing attacker-chosen scopes.
+evidence_needed: swagger-ui 5.x spec-render XSS (x-example/HTML-in-description) reachable via attacker spec under this bundle; external listener to confirm the `?url=` fetch carries api.sipgate.com origin (HUMAN).
+verify_steps: GET /v2/doc/?url=https://evil.example/s.yaml (fetch fires only in victim browser); GET /v2/doc/ → grep headers (done, frameable); GET /v2/doc/swagger-ui-bundle.js → version scan (component versions 17.0.2/3.20.3/3.14.3/2.3.3/1.3.2, exact swagger-ui pin unresolved).
+impact: Attacker-chosen/dishonest OAuth consent + arbitrary-URL forward from trusted origin; token theft only with a spec-render XSS. HIGH if XSS found, LOW-MEDIUM as phishing/DNS-rebind surface otherwise.
+testability: HUMAN_ONLY
+[HYP] /oauth2/{redirect,callback} spec-claims-NO-security vs FB-JWT 403 masks a credential-mint path
+class: MISCONFIG
+asset: integration.sipgate.com/oauth2/{redirect,callback}
+confidence: 42
+reasoning: Unchanged from KB — spec declares both ops without security, runtime uniform app-403; fabricated code/state →403 (KB REJECTED anonymous mint); public metrics show live firebase_jwt_forbidden_requests. Drift real but gated.
+evidence_needed: Any request shape reaching app plane past the 403 gate (Host/trailing-slash variants) or a dev-scope Firebase token.
+verify_steps: GET/POST both paths w/ code+state (403, re-confirmed KB); OPTIONS preflight (ACAO:* no creds).
+impact: Credential-mint → 26-op integration API (contacts/call-logs/tasks/streaming). CRITICAL but AUTH_HELPED.
+testability: AUTH_HELPED
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] Mock integration SSRF canary (was 35): dead — no spec paths (404), no sink paths (proxy/forward/webhook/fetch 404), /contacts/search 501. Synthetic twin final; no further enumeration value.
+- [FINAL] (1) oauth2/clients app-plane authz divergence, conf 50 — real, reproduced, first confirmed break of the "uniform edge 401" invariant; downgraded to reportable authz-consistency/defense-in-depth since data exfiltration requires a valid UUID. (2) swagger `?url=` forward+implicit, conf 48 — stays, HUMAN_ONLY for escalation. (3) integration oauth2 gate-drift, conf 42 — stays, AUTH_HELPED.
+
+## STEP 5 — NEXT ACTION
+- [NEXT] PROBE: GET `https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr` one more time to snapshot the 500 (already re-verified 3x this cycle), then grep `app.dev.sipgate.com/assets/main-D_WMxc4R.js` chunks for "clientId"/"oauth2/clients"/UUID literals to source one legitimate client UUID — the only missing proof to upgrade this finding.
+
+## STEP 6 — LEARNING
+- [LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: openapi/spec/sink paths all 404, /contacts/search 501 — proven synthetic twin, no hidden fetch or SSRF surface; canary closed permanently.
+- [LEARN] ACCEPTED IDOR @ api.sipgate.com/v2/authorization/oauth2/clients: unauthenticated requests reach app-plane (400 malformed / 500 on any well-formed UUID and /gdpr) vs 401 edge on list — first real break of the uniform-edge-auth invariant; app handler reachable pre-auth past the gate, response code is method/path-sensitive (OPTIONS/HEAD 404).
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc: `?url=` outside spec forward confirmed in swagger-initializer.js (decodeURIComponent, no host check); doc frameable; component versions 17.0.2/3.20.3/3.14.3/2.3.3/1.3.2.
+
+## STEP 7 — RISK
+- [RISK] sipgate: 46 — The oauth2/clients authz-divergence (500/400 unauthenticated app-plane reach) is the first confirmed contradiction of the assumed uniform edge gate after 9+ days of 401 uniformity, plus the re-confirmed frameable `?url=`-forward swagger doc. Both remain defense-in-depth/info-grade standalone (no AUTH_HELPED for full data access, no UUID, no XSS). Unauthenticated upside still capped; recommend reporting: (1) oauth2/clients authz-drift + existence oracle, (2) CORS-credential reflection on /v2, (3) swagger doc frameable `?url=` forward + implicit extreme-scope client as a chain surface.
