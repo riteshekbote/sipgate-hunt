@@ -546,3 +546,5 @@ www.sipgate.de
 - CHANGED app.dev.sipgate.com: bundle rotated to main-D_WMxc4R.js (5.65MB) — 18 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10.7
 - CHANGED *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate
 - CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web02/team-web03)
+
+## 2026-09-11 21:40:38 UTC

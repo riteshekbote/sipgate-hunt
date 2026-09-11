@@ -1224,3 +1224,7 @@
 - LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
 - LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+
+## RANKED HYPOTHESES 2026-09-11 21:40:38 UTC
+- [42] api.sipgate.com/v2/{param}/{subroute}: Special-value path-segment scan across param-bound /v2 subroutes for systematic edge-auth bypass (500-class) (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: GET /v2/numbers/00000000-0000-0000-0000-000000000000 and /v2/users/, /v2/history/, /v2/contacts/ same nil-UUID — test whether the 500-class is systemic a

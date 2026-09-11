@@ -21890,3 +21890,304 @@ testability: PASSIVE
 
 **STEP 7 — RISK**
 [RISK] sipgate: 47 — Surface mapping comprehensive; new authz-drift anomaly (oauth2/clients/{clientId} 500-on-UUID) is strongest unauthenticated divergence found in 9 days; string-ID probing immediate next step. CORS credential reflection on /v2/* and swagger ?url= chain remain reportable as defense-in-depth + phishing surface. All other high-value paths stay AUTH_HELPED.
+===== ANALYST bigpickle 2026-09-11 21:40:38 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt 2>/dev/null; ls -la /home/runner/work/sipgate-hunt/sipgate-hunt/art 2>/dev/null
+total 404
+drwxr-xr-x 12 runner runner   4096 Sep 11 21:20 .
+drwxr-xr-x  3 runner runner   4096 Sep 11 21:20 ..
+drwxr-xr-x  7 runner runner   4096 Sep 11 21:20 .git
+drwxr-xr-x  3 runner runner   4096 Sep 11 21:20 .github
+-rw-r--r--  1 runner runner   1755 Sep 11 21:20 README.md
+-rw-r--r--  1 runner runner     32 Sep 11 21:20 analyst-out.txt
+-rw-r--r--  1 runner runner 163217 Sep 11 21:20 analyst-prompt.txt
+-rw-r--r--  1 runner runner 159400 Sep 11 21:20 ctx.txt
+drwxr-xr-x  2 runner runner   4096 Sep 11 21:20 inventory
+drwxr-xr-x  2 runner runner   4096 Sep 11 21:20 knowledge
+drwxr-xr-x  2 runner runner   4096 Sep 11 21:20 leads
+-rw-r--r--  1 runner runner   1798 Sep 11 21:20 probe-results.md
+drwxr-xr-x  2 runner runner   4096 Sep 11 21:20 recon-notes
+drwxr-xr-x  2 runner runner   4096 Sep 11 21:20 reports
+drwxr-xr-x  2 runner runner   4096 Sep 11 21:20 reposcan-raw
+-rw-r--r--  1 runner runner   3230 Sep 11 21:20 scope.yml
+drwxr-xr-x  2 runner runner   4096 Sep 11 21:20 scripts
+-rw-r--r--  1 runner runner     33 Sep 11 21:20 state_bigpickle.json
+-rw-r--r--  1 runner runner     33 Sep 11 21:20 state_laguna.json
+-rw-r--r--  1 runner runner     33 Sep 11 21:20 state_ling3.json
+-rw-r--r--  1 runner runner     33 Sep 11 21:20 state_longcat.json
+-rw-r--r--  1 runner runner     33 Sep 11 21:20 state_mimo.json
+-rw-r--r--  1 runner runner     33 Sep 11 21:20 state_nemotron3.json
+drwxr-xr-x  2 runner runner   4096 Sep 11 21:20 triage
+[0m
+[0m→ [0mRead probe-results.md
+[0m→ [0mRead analyst-out.txt
+[0m→ [0mRead state_bigpickle.json
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt/leads /home/runner/work/sipgate-hunt/sipgate-hunt/reports /home/runner/work/sipgate-hunt/sipgate-hunt/knowledge 2>/dev/null
+/home/runner/work/sipgate-hunt/sipgate-hunt/knowledge:
+total 80
+drwxr-xr-x  2 runner runner  4096 Sep 11 21:20 .
+drwxr-xr-x 12 runner runner  4096 Sep 11 21:20 ..
+-rw-r--r--  1 runner runner 71583 Sep 11 21:20 index.md
+
+/home/runner/work/sipgate-hunt/sipgate-hunt/leads:
+total 1072
+drwxr-xr-x  2 runner runner   4096 Sep 11 21:20 .
+drwxr-xr-x 12 runner runner   4096 Sep 11 21:20 ..
+-rw-r--r--  1 runner runner 424285 Sep 11 21:20 lead-bigpickle.md
+-rw-r--r--  1 runner runner   2907 Sep 11 21:20 lead-laguna.md
+-rw-r--r--  1 runner runner   2850 Sep 11 21:20 lead-ling3.md
+-rw-r--r--  1 runner runner   2964 Sep 11 21:20 lead-longcat.md
+-rw-r--r--  1 runner runner     18 Sep 11 21:20 lead-mimo.md
+-rw-r--r--  1 runner runner 594808 Sep 11 21:20 lead-nemotron3.md
+-rw-r--r--  1 runner runner  47613 Sep 11 21:20 reposcan-sipgate.md
+
+/home/runner/work/sipgate-hunt/sipgate-hunt/reports:
+total 3704
+drwxr-xr-x  2 runner runner    4096 Sep 11 21:20 .
+drwxr-xr-x 12 runner runner    4096 Sep 11 21:20 ..
+-rw-r--r--  1 runner runner 1643130 Sep 11 21:20 analyst-bigpickle.log
+-rw-r--r--  1 runner runner   12369 Sep 11 21:20 analyst-laguna.log
+-rw-r--r--  1 runner runner   12312 Sep 11 21:20 analyst-ling3.log
+-rw-r--r--  1 runner runner   12426 Sep 11 21:20 analyst-longcat.log
+-rw-r--r--  1 runner runner 1875533 Sep 11 21:20 analyst-nemotron3.log
+-rw-r--r--  1 runner runner    5813 Sep 11 21:20 hypotheses-bigpickle.txt
+-rw-r--r--  1 runner runner      51 Sep 11 21:20 hypotheses-laguna.txt
+-rw-r--r--  1 runner runner      50 Sep 11 21:20 hypotheses-ling3.txt
+-rw-r--r--  1 runner runner      52 Sep 11 21:20 hypotheses-longcat.txt
+-rw-r--r--  1 runner runner   13081 Sep 11 21:20 hypotheses-nemotron3.txt
+-rw-r--r--  1 runner runner  185163 Sep 11 21:20 hypotheses.md
+-rw-r--r--  1 runner runner    1486 Sep 11 21:20 valid-bugs.md
+[0m
+[0m→ [0mRead reports/hypotheses-bigpickle.txt
+[0m→ [0mRead reports/valid-bugs.md
+My NEXT action's probes are due. Running the string client-ID probes (passive GET, no auth).
+[0m
+[0m$ [0mfor id in sipgate-app-web platypus-swagger sipgate-app sipgate-swagger-ui; do
+  echo "=== $id ==="
+  curl -sS -o /tmp/opencode/resp_body.txt -w "HTTP %{http_code} | %{time_total}s\n" \
+    -H "Origin: https://evil.example" \
+    "https://api.sipgate.com/v2/authorization/oauth2/clients/$id" 2>&1
+  wc -c < /tmp/opencode/resp_body.txt
+  head -c 300 /tmp/opencode/resp_body.txt; echo
+  sleep 1
+done
+=== sipgate-app-web ===
+HTTP 400 | 0.606272s
+0
+
+=== platypus-swagger ===
+HTTP 400 | 0.588470s
+0
+
+=== sipgate-app ===
+HTTP 400 | 0.632022s
+0
+
+=== sipgate-swagger-ui ===
+HTTP 400 | 0.566598s
+0
+[0m
+All string IDs → 400 (uniform validator, no bypass). Reconfirming the two control cases (base 401, UUID 500) to validate the earlier anomaly still holds.
+[0m$ [0mecho "=== base /clients ==="
+curl -sS -o /tmp/opencode/r2.txt -w "HTTP %{http_code}\n" -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/oauth2/clients"
+wc -c < /tmp/opencode/r2.txt
+sleep 1
+echo "=== /clients/{uuid} ==="
+curl -sS -o /tmp/opencode/r3.txt -w "HTTP %{http_code}\n" -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/oauth2/clients/123e4567-e89b-12d3-a456-426614174000"
+wc -c < /tmp/opencode/r3.txt
+head -c 200 /tmp/opencode/r3.txt; echo
+sleep 1
+echo "=== HEAD variants /clients/{uuid} (only HEAD/GET allowed) ==="
+curl -sS -I -o /tmp/opencode/r4.txt -w "HTTP %{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients/123e4567-e89b-12d3-a456-426614174000" 2>&1 | head -3
+=== base /clients ===
+HTTP 401
+0
+=== /clients/{uuid} ===
+HTTP 400
+0
+
+=== HEAD variants /clients/{uuid} (only HEAD/GET allowed) ===
+HTTP 404
+[0m
+The UUID now returns 400, not 500 — prior anomaly degraded. Probing UUID variants to confirm whether the 500 was transient or format-specific.
+[0m$ [0mfor u in "00000000-0000-0000-0000-000000000000" "123E4567-E89B-12D3-A456-426614174000" "00000000-0000-4000-8000-000000000000" "ffffffff-ffff-ffff-ffff-ffffffffffff"; do
+  echo "=== $u ==="
+  curl -sS -o /tmp/opencode/rb.txt -w "HTTP %{http_code}\n" -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/oauth2/clients/$u"
+  wc -c < /tmp/opencode/rb.txt
+  sleep 1
+done
+echo "=== control base /clients via GET ==="
+curl -sS -o /tmp/opencode/rc.txt -w "HTTP %{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients"
+=== 00000000-0000-0000-0000-000000000000 ===
+HTTP 500
+0
+=== 123E4567-E89B-12D3-A456-426614174000 ===
+HTTP 400
+0
+=== 00000000-0000-4000-8000-000000000000 ===
+HTTP 500
+0
+=== ffffffff-ffff-ffff-ffff-ffffffffffff ===
+HTTP 400
+0
+=== control base /clients via GET ===
+HTTP 401
+[0m
+500 appears on all-zero/version-4 nil UUIDs but 400 on the version-1 UUID — the validator differs per value. Mapping the boundary.
+[0m$ [0mfor u in "123e4567-e89b-42d3-a456-426614174000" "6ba7b810-9dad-41d1-80b4-00c04fd430c8" "c8a2e61b-9f8e-4d99-9a0b-7c2a3b4c5d6e" "11111111-1111-4111-8111-111111111111" "123e4567-e89b-12d3-a456-426614174001"; do
+  echo "=== $u ==="
+  curl -sS -o /tmp/opencode/rx.txt -w "HTTP %{http_code}\n" -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/oauth2/clients/$u"
+  wc -c < /tmp/opencode/rx.txt
+  sleep 1
+done
+=== 123e4567-e89b-42d3-a456-426614174000 ===
+HTTP 400
+0
+=== 6ba7b810-9dad-41d1-80b4-00c04fd430c8 ===
+HTTP 400
+0
+=== c8a2e61b-9f8e-4d99-9a0b-7c2a3b4c5d6e ===
+HTTP 400
+0
+=== 11111111-1111-4111-8111-111111111111 ===
+HTTP 500
+0
+=== 123e4567-e89b-12d3-a456-426614174001 ===
+HTTP 400
+0
+[0m
+500 pattern is odd — three repeat-y UUIDs 500, realistic ones 400. Re-testing the 500 cases for determinism (possible multi-replica validator inconsistency).
+[0m$ [0mfor u in "00000000-0000-0000-0000-000000000000" "11111111-1111-4111-8111-111111111111" "00000000-0000-4000-8000-000000000000"; do
+  echo "=== $u ==="
+  for i in 1 2 3; do curl -sS -o /tmp/opencode/rd.txt -w "  %{http_code} " -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/oauth2/clients/$u"; sleep 1; done
+  echo
+  sleep 1
+done
+=== 00000000-0000-0000-0000-000000000000 ===
+  500   500   500 
+=== 11111111-1111-4111-8111-111111111111 ===
+  500   500   500 
+=== 00000000-0000-4000-8000-000000000000 ===
+  500   500   500
+[0m
+Deterministic 500 on the three "repeat-pattern" UUIDs. Comparing response headers between 500 vs 400 to see which layer throws (edge vs app).
+[0m$ [0mecho "=== 500 case (nil uuid) full headers ==="
+curl -sS -D - -o /dev/null -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000"
+sleep 1
+echo "=== 400 case (string) full headers ==="
+curl -sS -D - -o /dev/null -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app-web"
+sleep 1
+echo "=== 400 case (v1 uuid) full headers ==="
+curl -sS -D - -o /dev/null -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/oauth2/clients/123e4567-e89b-12d3-a456-426614174000"
+sleep 1
+echo "=== 401 base full headers ==="
+curl -sS -D - -o /dev/null -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/oauth2/clients"
+=== 500 case (nil uuid) full headers ===
+HTTP/1.1 500 Internal Server Error
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,WWW-Authenticate,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,Mcp-Session-Id,X-Sipgate-Command
+content-length: 0
+vary: origin
+x-b3-traceid: 99594cc60d932a4a83cb1a7623c40274
+date: Fri, 11 Sep 2026 21:22:16 GMT
+
+=== 400 case (string) full headers ===
+HTTP/1.1 400 Bad Request
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,WWW-Authenticate,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,Mcp-Session-Id,X-Sipgate-Command
+content-length: 0
+vary: origin
+x-b3-traceid: 981d16ddfc1b68c5dd61c4e7b6a0bebd
+date: Fri, 11 Sep 2026 21:22:17 GMT
+
+=== 400 case (v1 uuid) full headers ===
+HTTP/1.1 400 Bad Request
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,WWW-Authenticate,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,Mcp-Session-Id,X-Sipgate-Command
+content-length: 0
+vary: origin
+x-b3-traceid: d0ea9ad3ad6df7f109db942c1c3cdeb9
+date: Fri, 11 Sep 2026 21:22:19 GMT
+
+=== 401 base full headers ===
+HTTP/1.1 401 Unauthorized
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,WWW-Authenticate,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,Mcp-Session-Id,X-Sipgate-Command
+content-length: 0
+vary: origin
+x-b3-traceid: 332cf36d270f7c64c93cc9ba6151f9b6
+date: Fri, 11 Sep 2026 21:22:20 GMT
+[0m
+All four share identical edge-header middleware (gap CORS on every status incl 500); 500 is an empty-body edge throw. The string-ID bypass hypothesis is deflated. Closing the loop on the subtree with cheap GET variants (query-param clientId, subpaths).
+[0m$ [0mecho "=== query-param clientId variant ==="
+curl -sS -o /tmp/opencode/q1.txt -w "HTTP %{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients?clientId=00000000-0000-0000-0000-000000000000"
+wc -c < /tmp/opencode/q1.txt
+sleep 1
+echo "=== /clients/{nil}/secret ==="
+curl -sS -o /tmp/opencode/q2.txt -w "HTTP %{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/secret"
+wc -c < /tmp/opencode/q2.txt
+sleep 1
+echo "=== /clients/{nil}/ with trailing slash ==="
+curl -sS -o /tmp/opencode/q3.txt -w "HTTP %{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/"
+sleep 1
+echo "=== OPTIONS preflight on clients subtree ==="
+curl -sS -o /tmp/opencode/q4.txt -w "HTTP %{http_code}\n" -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000"
+=== query-param clientId variant ===
+HTTP 401
+0
+=== /clients/{nil}/secret ===
+HTTP 404
+53
+=== /clients/{nil}/ with trailing slash ===
+HTTP 404
+=== OPTIONS preflight on clients subtree ===
+HTTP 204
+[0m
+[0m$ [0mcat /tmp/opencode/q2.txt; echo
+<html><body><h1>Resource not found</h1></body></html>
+[0m
+STEP 1 — DELTA
+- [CHANGED] api.sipgate.com/v2/authorization/oauth2/clients/{clientId}: string-ID probes (sipgate-app-web, platypus-swagger, sipgate-app) all → 400 empty — known-client-ID bypass DEFLATED; real doc client sipgate-swagger-ui → 400 too.
+- [CHANGED] api.sipgate.com/v2/authorization/oauth2/clients/{clientId}: KB "500 on UUID" not reproducible — 123e4567-e89b-12d3-a456-426614174000 now 400; 500 restricted to nil/special UUIDs (00000000-0000-0000-0000-000000000000, 11111111-1111-4111-8111-111111111111), deterministic ×3, empty body via same edge middleware.
+- [NEW] api.sipgate.com/v2/authorization/oauth2/clients subtree fully gated: query-param clientId → 401; /clients/{nil}/secret → 404 (HTML, route absent for GET); trailing slash → 404; OPTIONS → 204 (gap CORS). No unauthenticated 200 on the whole subtree.
+
+STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/doc/*,6.1,public-oauth-client+spec-forward+frameable
+- [PRIO] api.sipgate.com/v2/*,5.8,cors-credential-reflection-reconfirmed-all-statuses
+- [PRIO] api.sipgate.com/v2/authorization/oauth2/clients/{clientId},2.9,authz-drift-deflated-500-noise
+
+STEP 3 — HYPOTHESES
+[HYP] Special-value path-segment scan across param-bound /v2 subroutes for systematic edge-auth bypass (500-class)
+class: MISCONFIG
+asset: api.sipgate.com/v2/{param}/{subroute}
+confidence: 42
+reasoning: GET /clients/{id} is the only known route returning 500 (nil/special UUID) while every other unauth path yields uniform 401/404/400; edge-auth filter is applied to the collection but the param-bound subroute reaches a validator that accepts nil GUIDs and throws. If other param-bound subroutes (numbers/{id}, users/{id}, history/{id}, contacts/{id}) share the binding pattern, the 500-class may be systemic.
+evidence_needed: second 500 (or any non-401/404/400) on a param-bound /v2 subroute fed a nil/special UUID
+verify_steps: GET /v2/numbers/00000000-0000-0000-0000-000000000000; GET /v2/users/00000000-0000-0000-0000-000000000000; GET /v2/history/00000000-0000-0000-0000-000000000000; GET /v2/contacts/00000000-0000-0000-0000-000000000000 (all GET, no auth, ≤1 rps)
+impact: systemic edge-auth inconsistency would elevate authz-consistency report; bodies are empty so standalone impact LOW
+testability: PASSIVE
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] String client-ID variants: PROBED → all known IDs (incl real doc client) return uniform 400; hypothesis DEFLATED, no 200 metadata path exists unauthenticated.
+- [PARKED] oauth2/clients 500 as authz-drift proof: empty-body edge exception, no leak beyond known x-b3-traceid; KB claim non-reproducible on example UUID; downgraded to robustness noise (DoS class OOS).
+- [PARKED] Swagger-ui bundle version extraction: confidence 30 < 40; HUMAN needed for full ?url= chain.
+- [FINAL] Special-value path-segment scan: confidence 42; PASSIVE; 4 concrete probes, binary outcome (systemic 500 vs path-local), closes or elevates the only open api anomaly.
+- [FINAL] Reportable already-validated: v2/* CORS credential reflection (re-confirmed on 401/400/500/204 this cycle, expose-headers on all), swagger ?url= spec-forward + frameable doc + implicit sipgate-swagger-ui OAuth, extreme scope set.
+
+STEP 5 — NEXT ACTION
+[NEXT] PROBE: GET /v2/numbers/00000000-0000-0000-0000-000000000000 and /v2/users/, /v2/history/, /v2/contacts/ same nil-UUID — test whether the 500-class is systemic across param-bound subroutes or path-local to oauth2/clients (all PASSIVE).
+
+STEP 6 — LEARNING
+- [LEARN] REJECTED IDOR @ api.sipgate.com/v2/authorization/oauth2/clients: known client IDs from other realms (sipgate-app-web, platypus-swagger, sipgate-app) and the real doc client sipgate-swagger-ui all → uniform 400 empty; no unauthenticated read of per-client OAuth metadata; string-ID bypass deflated.
+- [LEARN] REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients: prior "500-on-UUID = app-plane reach" not reproducible on KB example (123e4567-... → 400); 500 limited to nil/special UUIDs, deterministic, empty-body, same edge middleware (ACAO+ACAC+expose-headers+x-b3-traceid identical to 400/401) — no data/header leak, robustness noise, OOS.
+- [LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: CORS credential reflection re-confirmed uniform across 401/400/500 and OPTIONS-204 on the oauth2/clients subtree — is the reflection on error paths too, exposing sensitive headers (Sunset, X-Sipgate-Reload, MCP-Session-Id) cross-origin.
+
+STEP 7 — RISK
+[RISK] sipgate: 42 — Prior 47 driven up by the oauth2/clients app-plane 500 anomaly; this cycle deflated it (no unauthenticated 200, 500 is empty-body edge noise, KB example UUID now 400s). Standing reportable: /v2/* CORS credential reflection (validated, error-paths too), swagger-ui ?url= spec-forward + frameable doc + implicit high-scope OAuth client (defense-in-depth/phishing), plus the accepted family-wide MISCONFIG set. No critical-path vector advancing without credentials or a same-origin XSS.

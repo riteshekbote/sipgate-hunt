@@ -2888,3 +2888,15 @@ testability: PASSIVE
 [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as same-origin-XSS amplifier — re-confirmed this cycle.
 [LEARN] REJECTED AUTH @ api.sipgate.com/v2: all tested paths return 401 empty-body unauth; uniform edge auth; no authz-drift/BOLA unauthenticated — except oauth2/clients/{clientId} subtree (500 on UUID = app-plane reach, confirmed).
 [RISK] sipgate: 47 — Surface mapping comprehensive; new authz-drift anomaly (oauth2/clients/{clientId} 500-on-UUID) is strongest unauthenticated divergence found in 9 days; string-ID probing immediate next step. CORS credential reflection on /v2/* and swagger ?url= chain remain reportable as defense-in-depth + phishing surface. All other high-value paths stay AUTH_HELPED.
+## 2026-09-11 21:23:32 UTC [target] (model bigpickle)
+[HYP] Special-value path-segment scan across param-bound /v2 subroutes for systematic edge-auth bypass (500-class)
+class: MISCONFIG
+asset: api.sipgate.com/v2/{param}/{subroute}
+confidence: 42
+reasoning: GET /clients/{id} is the only known route returning 500 (nil/special UUID) while every other unauth path yields uniform 401/404/400; edge-auth filter is applied to the collection but the param-bound subroute reaches a validator that accepts nil GUIDs and throws. If other param-bound subroutes (numbers/{id}, users/{id}, history/{id}, contacts/{id}) share the binding pattern, the 500-class may be systemic.
+evidence_needed: second 500 (or any non-401/404/400) on a param-bound /v2 subroute fed a nil/special UUID
+verify_steps: GET /v2/numbers/00000000-0000-0000-0000-000000000000; GET /v2/users/00000000-0000-0000-0000-000000000000; GET /v2/history/00000000-0000-0000-0000-000000000000; GET /v2/contacts/00000000-0000-0000-0000-000000000000 (all GET, no auth, ≤1 rps)
+impact: systemic edge-auth inconsistency would elevate authz-consistency report; bodies are empty so standalone impact LOW
+testability: PASSIVE
+[NEXT] PROBE: GET /v2/numbers/00000000-0000-0000-0000-000000000000 and /v2/users/, /v2/history/, /v2/contacts/ same nil-UUID — test whether the 500-class is systemic across param-bound subroutes or path-local to oauth2/clients (all PASSIVE).
+[RISK] sipgate: 42 — Prior 47 driven up by the oauth2/clients app-plane 500 anomaly; this cycle deflated it (no unauthenticated 200, 500 is empty-body edge noise, KB example UUID now 400s). Standing reportable: /v2/* CORS credential reflection (validated, error-paths too), swagger-ui ?url= spec-forward + frameable doc + implicit high-scope OAuth client (defense-in-depth/phishing), plus the accepted family-wide MISCONFIG set. No critical-path vector advancing without credentials or a same-origin XSS.
