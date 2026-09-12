@@ -388,3 +388,5 @@
 - 2026-09-12 REJECTED network DoS @ `app.sipgate.com`: Out of scope per program policy
 - 2026-09-12 REJECTED SSL/TLS best practice @ `login.sipgate.com`: Out of scope per program policy
 - 2026-09-12 ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as same-origin-XSS amplifier
+- 2026-09-12 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 70358 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+- 2026-09-12 REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list endpoint 404, individual endpoints 404 — prior 500-on-UUID authz-drift signal not reproducible; endpoint may be removed

@@ -597,3 +597,18 @@ www.sipgate.de
 ## 2026-09-12 14:17:41 UTC
 
 ## 2026-09-12 17:20:20 UTC
+
+## 2026-09-12 19:43:58 UTC
+- NEW api.sipgate.com/v2/authorization/oauth2/clients/ list endpoint returns 404 (not 401/500) — previous 500-on-UUID authz-drift signal gone; endpoint may be removed or routing changed
+- NEW api.sipgate.com/v2/authorization/oauth2/clients/{clientId} individual endpoints return 404 — string validators (sipgate-app-web) and nil-UUID all 404; prior 500/400 behavior not reproducible
+- CHANGED app.dev.sipgate.com bundle rotated to main-K-JtiyRc.js (5.65MB) — 17 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10.73
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS
+- CHANGED *.integration.sipgate.cloud (94 hosts) uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate
+- CHANGED mock.integration.sipgate.cloud ungated Express twin — /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — x-provider-url does NOT parameterize fetch
+- CHANGED team-de.live.sipgate.com + team-uk.live.sipgate.com CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web01)
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com publicly listable (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested
+- CHANGED grafana.sipgate.cloud live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via /api/health
+- CHANGED share1.sipgate.cloud dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN — subdomain-takeover candidate
+- CHANGED login.sipgate.com third-party realm live OIDC with extreme scopes (authorization:oauth2:clients:write, balance:read, payment:methods:*, contacts/sms/account read+write), HS256/HS384/HS512, PKCE plain,
+- CHANGED integration.sipgate.com/metrics firebase_jwt_forbidden_requests 70358 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+- CHANGED api.sipgate.com/v2/* arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak

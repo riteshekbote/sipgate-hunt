@@ -3735,3 +3735,78 @@ testability: PASSIVE
 [LEARN] REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 [LEARN] REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
 [RISK] sipgate: 78 — high-value OAuth implicit flow (login.sipgate.com) + arbitrary-origin CORS with credentials on API (api.sipgate.com/v2) + live dev SPA leaking prod internal topology (app.dev.sipgate.com) + integration platform spec-behavior drift with SSRF parameter (integration.sipgate.com) + 94-host CRM adapter fleet with SSRF headers behind single nginx gate (*.integration.sipgate.cloud) + dangling subdomain takeover candidate (share1.sipgate.cloud) + publicly listable S3 bucket with stale artifacts (sipgate-desktop-app.s3) + NEW authz-drift on OAuth client management (500 on UUID, string validators distinct) — multiple chainable high-severity vectors across auth, SSRF, and info-disclosure classes; active development (bundle rotation, new prod subdomains in dev config) increases regression risk
+## 2026-09-12 19:43:48 UTC [target] (model nemotron3)
+[NEW] api.sipgate.com/v2/authorization/oauth2/clients/ list endpoint returns 404 (not 401/500) — previous 500-on-UUID authz-drift signal gone; endpoint may be removed or routing changed
+[NEW] api.sipgate.com/v2/authorization/oauth2/clients/{clientId} individual endpoints return 404 — string validators (sipgate-app-web) and nil-UUID all 404; prior 500/400 behavior not reproducible
+[CHANGED] app.dev.sipgate.com bundle rotated to main-K-JtiyRc.js (5.65MB) — 17 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10.73.71) and admin.dev.sipgate.net (CNAME→helpdesk.dev.sipgate.net, 217.116.120.148); multiple .local hosts resolve to 127.0.0.1
+[CHANGED] api.sipgate.com/v2/doc/oauth2-redirect.html still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS
+[CHANGED] *.integration.sipgate.cloud (94 hosts) uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate
+[CHANGED] mock.integration.sipgate.cloud ungated Express twin — /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — x-provider-url does NOT parameterize fetch
+[CHANGED] team-de.live.sipgate.com + team-uk.live.sipgate.com CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web01)
+[CHANGED] sipgate-desktop-app.s3.eu-central-1.amazonaws.com publicly listable (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested
+[CHANGED] grafana.sipgate.cloud live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via /api/health
+[CHANGED] share1.sipgate.cloud dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN — subdomain-takeover candidate
+[CHANGED] login.sipgate.com third-party realm live OIDC with extreme scopes (authorization:oauth2:clients:write, balance:read, payment:methods:*, contacts/sms/account read+write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+[CHANGED] integration.sipgate.com/metrics firebase_jwt_forbidden_requests 70358 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+[CHANGED] api.sipgate.com/v2/* arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
+[PRIO] app.dev.sipgate.com, 8.45, attack_surface=9 business_value=7 tech_exposure=9 gate_ease=10 cloud_surface=7 freshness=10
+[PRIO] api.sipgate.com/v2/doc/oauth2-redirect.html, 8.15, attack_surface=8 business_value=8 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=9
+[PRIO] login.sipgate.com (third-party realm), 7.45, attack_surface=7 business_value=9 tech_exposure=8 gate_ease=4 cloud_surface=5 freshness=8
+[PRIO] *.integration.sipgate.cloud (94 hosts), 6.95, attack_surface=7 business_value=6 tech_exposure=7 gate_ease=5 cloud_surface=9 freshness=8
+[PRIO] integration.sipgate.com, 6.85, attack_surface=7 business_value=7 tech_exposure=8 gate_ease=3 cloud_surface=7 freshness=8
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com, 6.70, attack_surface=4 business_value=7 tech_exposure=5 gate_ease=10 cloud_surface=9 freshness=7
+[PRIO] grafana.sipgate.cloud, 6.25, attack_surface=5 business_value=6 tech_exposure=6 gate_ease=8 cloud_surface=7 freshness=6
+[PRIO] team-uk.live.sipgate.com + team-de.live.sipgate.com, 6.00, attack_surface=5 business_value=5 tech_exposure=6 gate_ease=10 cloud_surface=4 freshness=6
+[PRIO] share1.sipgate.cloud, 5.50, attack_surface=3 business_value=4 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=6
+[PRIO] api.sipgate.com/v2/*, 7.85, attack_surface=8 business_value=7 tech_exposure=8 gate_ease=10 cloud_surface=6 freshness=9
+[HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References
+class: SSRF
+asset: app.dev.sipgate.com
+confidence: 90
+reasoning: Live dev SPA on Fastly CDN serves production-identical JS bundle (main-K-JtiyRc.js, 5.65MB) with 17 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10.73.71) and admin.dev.sipgate.net (CNAME→helpdesk.dev.sipgate.net, 217.116.120.148); multiple .local hosts resolve to 127.0.0.1 confirming internal-only references; bundle rotates frequently (freshness=10); no IP restriction on dev SPA; internal ports 3396, 3443, 8080, 10443 exposed in config
+evidence_needed: HTTP response from newly extracted prod subdomains (admin.live.sipgate.net, admin.dev.sipgate.net) showing live services on non-standard ports (8080, 8443, 3396, 3443, 10443); proof of SSRF via dev SPA proxy/chaining or XSS on dev SPA to pivot to internal hosts; DNS resolution showing RFC1918 IPs for any .local hosts
+verify_steps: GET https://app.dev.sipgate.com/assets/main-K-JtiyRc.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve all *.dev.sipgate.net, *.live.sipgate.net, *.dev.sipgate.com hosts; probe discovered hosts for HTTP responses on ports 80/443/3396/3443/8080/10443 (read-only, ≤1 rps); test for SSRF via any proxy/chaining endpoints in dev SPA
+impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, team-uk.local, integration.dev, admin.live, helpdesk.live); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface + prod subdomain exposure in dev bundle)
+testability: PASSIVE
+[HYP] Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection Enables Token Exfiltration Chain
+class: MISCONFIG
+asset: api.sipgate.com/v2/doc/oauth2-redirect.html
+confidence: 85
+reasoning: Confirmed oauth2-redirect.html reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — inherits API.v2 domain's permissive CORS; token fragment delivered to same-origin redirect page via implicit flow from login.sipgate.com third-party realm (client sipgate-swagger-ui, extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); cross-origin popup test shows SecurityError on window.opener read but same-origin XSS on this page would allow token access + exfiltration via fetch to api.sipgate.com/v2/* (CORS allows credentials from any origin)
+evidence_needed: Confirmation that token fragment from implicit flow lands on this page and is accessible to page JS; proof that page JS can exfiltrate token via fetch to api.sipgate.com/v2/contacts (CORS allows credentials from any origin)
+verify_steps: GET https://api.sipgate.com/v2/doc/oauth2-redirect.html with Origin: https://evil.com — observe ACAO: https://evil.com + ACAC:true (confirmed); initiate implicit auth via sipgate-swagger-ui client on /v2/doc/, observe redirect to oauth2-redirect.html with token fragment; test if page JS can read fragment and exfiltrate via fetch to api.sipgate.com/v2/contacts
+impact: Defense-in-depth gap — OAuth redirect endpoint exposes credentials-enabled CORS; enables token exfiltration if XSS exists on Swagger-UI page or spec; chain-dependent for full exploitation; severity MEDIUM
+testability: PASSIVE
+[HYP] Third-Party Realm OIDC Implicit Flow with Extreme Scopes — Credential Acquisition Path
+class: AUTH
+asset: login.sipgate.com (third-party realm)
+confidence: 80
+reasoning: Live OIDC realm exposes extreme scopes (authorization:oauth2:clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); implicit flow (response_type=token) with fragment delivery to app.sipgate.com/implicit-auth-redirect; HS256/HS384/HS512 id_token signing algs supported; PKCE plain allowed; DCR endpoint exists but gated by Keycloak Trusted Hosts policy (POST → insufficient_scope); redirect_uri validation strict (invalid URI → 400); demo client_id/secret from rest-api-examples/.npmrc.dist revoked (invalid_client)
+evidence_needed: Valid client credentials for third-party realm (client_id + client_secret) OR successful DCR bypass via Trusted Hosts policy OR ROPC grant with valid user credentials; proof that obtained token accesses high-value API scopes (contacts, sms, account, balance, payment)
+verify_steps: GET https://login.sipgate.com/auth/realms/third-party/.well-known/openid-configuration (confirmed live); POST /auth/realms/third-party/clients-registrations/openid-connect with malicious redirect_uri (expect 403 insufficient_scope); POST /auth/realms/third-party/protocol/openid-connect/token with grant_type=password + demo creds (expect invalid_client); enumerate known client_ids (sipgate-swagger-ui, platypus-swagger, sipgate-app-web) for implicit flow initiation
+impact: Full account takeover via OAuth token with extreme scopes (contacts/sms/account/balance/payment + client management); requires credential acquisition (AUTH_HELPED) — no standalone unauthenticated exploit; severity HIGH if creds obtained
+testability: AUTH_HELPED
+[PARKED] OAuth2 Client Management List Endpoint Authz-Drift via Edge Auth Bypass: list endpoint returns 404, individual endpoints return 404 — prior 500-on-UUID signal not reproducible; endpoint may be removed
+[PARKED] SSRF via x-provider-url Header on *.integration.sipgate.cloud: nginx Basic-auth 401 enforced before app; x-provider-url/x-provider-key headers do NOT bypass nginx gate (confirmed via OPTIONS 204 + data GET 401); requires creds — not reachable unauthenticated
+[PARKED] Subdomain Takeover share1.sipgate.cloud: dangling CNAME → NXDOMAIN confirmed but HUMAN claim validation required (mutating, not performed)
+[FINAL] 1. Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References (confidence 90, PASSIVE) — highest freshness, concrete verify_steps, live rotating bundle with NEW prod subdomains in dev config
+[FINAL] 2. Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection (confidence 85, PASSIVE) — confirmed ACAO:*+ACAC:true on OAuth redirect page; high-value as chain component for XSS-based token theft
+[FINAL] 3. Third-Party Realm OIDC Implicit Flow with Extreme Scopes (confidence 80, AUTH_HELPED) — live high-value target but requires credential acquisition; no standalone bypass
+[NEXT] PROBE: GET https://admin.live.sipgate.net:8443 — test if newly exposed prod subdomain in dev bundle has live service on non-standard port (read-only, ≤1 rps)
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth gap, chain-dependent for full exploitation
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as same-origin-XSS amplifier
+[LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+[LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct gate tier from apex Firebase-JWT
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 70358 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation
+[LEARN] ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stale since 2024-06-11); ACL/policy reads denied; write path NOT tested (HUMAN sign-off required)
+[LEARN] ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list endpoint 404, individual endpoints 404 — prior 500-on-UUID authz-drift signal not reproducible; endpoint may be removed
+[LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, token persists to localStorage before navigation — fragment never forwarded off-origin (per KB, consistent across cycles)
+[LEARN] REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reachable flawed verifier (per KB)
+[LEARN] REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live credential exposure (per KB)
+[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
+[LEARN] REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
+[LEARN] REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+[RISK] sipgate: 82 — high-value OAuth implicit flow (login.sipgate.com third-party realm) + arbitrary-origin CORS with credentials on API (api.sipgate.com/v2/*) + live dev SPA leaking prod internal topology + NEW prod subdomains in dev bundle (admin.live/dev.sipgate.net) + integration platform spec-behavior drift with SSRF parameter (integration.sipgate.com users.integrations.create apiUrl) + 94-host CRM adapter fleet with SSRF headers behind single nginx gate (*.integration.sipgate.cloud) + dangling subdomain takeover candidate (share1.sipgate.cloud) + publicly listable S3 bucket with stale artifacts (sipgate-desktop-app.s3) + live Grafana internet-exposed (grafana.sipgate.cloud) — multiple chainable high-severity vectors across auth, SSRF, info-disclosure, and takeover classes; active development (bundle rotation, new prod subdomains in dev config) increases regression risk

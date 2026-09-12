@@ -3013,3 +3013,95 @@ impact: LOW standalone (needs creds+UUID); authz-consistency chain material only
 testability: PASSIVE (exhausted) / AUTH_HELPED
 [NEXT] HUMAN: In Chromium load `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` (spec = OpenAPI3 doc with `info.x-logo.url` → attacker img host + `info.description` containing raw HTML `<iframe>`/`<img onerror=alert(1)>`) and report (a) whether attacker markup renders into api-origin DOM, (b) script execution, (c) whether `/v2/doc/` embeds inside an attacker iframe. This is the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client + CORS creds).
 [RISK] sipgate: 45 — No new critical unauthenticated vector. swagger.json restoration adds no surface (paths known, all edge-401). Reportable set unchanged: `/v2/*` CORS credential reflection (validated), doc/?url= frameable swagger phishing chain (server-side facts complete, HUMAN-gated for execution proof), accepted family MISCONFIGs. Real data planes remain AUTH_HELPED/uniformly edge-gated.
+## 2026-09-12 19:31:08 UTC [target] (model bigpickle)
+testability: PASSIVE (exhausted) / AUTH_HELPED
+[NEXT] HUMAN: In Chromium load `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` (spec = OpenAPI3 doc with `info.x-logo.url` → attacker img host + `info.description` containing raw HTML `<iframe>`/`<img onerror=alert(1)>`) and report (a) whether attacker markup renders into api-origin DOM, (b) script execution, (c) whether `/v2/doc/` embeds inside an attacker iframe. This is the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client + CORS creds).
+[RISK] sipgate: 45 — No new critical unauthenticated vector. swagger.json restoration adds no surface (paths known, all edge-401). Reportable set unchanged: `/v2/*` CORS credential reflection (validated), doc/?url= frameable swagger phishing chain (server-side facts complete, HUMAN-gated for execution proof), accepted family MISCONFIGs. Real data planes remain AUTH_HELPED/uniformly edge-gated.
+[HYP] Attacker spec renders attacker-controlled DOM on api origin via doc/?url=
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: Server-side facts re-confirmed this cycle — (1) `doc/` serves text/html with no XFO and no frame-ancestors on any header (frameable); (2) `swagger-initializer.js` feeds `decodeURIComponent(url[1])` straight into `SwaggerUIBundle` with no host/scheme allowlist (attacker spec fully substitutes; default same-origin spec now 200 so no benign fallback); (3) implicit client `sipgate-swagger-ui` + realm `third-party` + extreme scope set registers on page load; (4) same-origin `oauth2RedirectUrl`; (5) `doc/` itself reflects `Origin` + credentials. Execution primitive depends on exact swagger-ui renderer (bundle unpinned; 5.x consensus = HTML-injection/img only, no script exec).
+evidence_needed: attacker-spec markup (x-logo.url img, info.description markdown-HTML) rendered into api-origin DOM; any script execution
+verify_steps: HUMAN: Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` with spec containing `info.x-logo.url`→attacker host and `info.description`→`<img src=...>`/iframe; record DOM insertion + any JS execution; also confirm doc page embeds in attacker iframe
+impact: CRITICAL if script executes (full session read/write at api scope via implicit token); else phishing/credential-harvest amplifier on trusted origin — MEDIUM/HIGH
+testability: HUMAN_ONLY
+[HYP] GDPR subroute spec-nosec exposes cross-tenant operand
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr
+confidence: 20
+reasoning: Nil-UUID→500 (app-plane reach), string-ID→400 (distinct validator), bodies empty in all value classes; spec declares no security but edge returns 401 for list and empty-error for leaf — no data feed observed regardless of input class; no registered-client-ID oracle available unauthenticated.
+evidence_needed: any clientId returning 200 or non-empty body (requires valid registered UUID + authz scope)
+verify_steps: passive-exhausted; requires client-UUID oracle + authorization → AUTH_HELPED
+impact: LOW standalone (needs creds+UUID); authz-consistency chain material only
+testability: PASSIVE (exhausted) / AUTH_HELPED
+[NEXT] HUMAN: In Chromium load `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` (spec = OpenAPI3 doc with `info.x-logo.url` → attacker img host + `info.description` containing raw HTML `<iframe>`/`<img onerror=alert(1)>`) and report (a) whether attacker markup renders into api-origin DOM, (b) script execution, (c) whether `/v2/doc/` embeds inside an attacker iframe. This is the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client + CORS creds).
+[RISK] sipgate: 45 — No new critical unauthenticated vector. swagger.json restoration adds no surface (paths known, all edge-401). Reportable set unchanged: `/v2/*` CORS credential reflection (validated), doc/?url= frameable swagger phishing chain (server-side facts complete, HUMAN-gated for execution proof), accepted family MISCONFIGs. Real data planes remain AUTH_HELPED/uniformly edge-gated.
+[PRIO] api.sipgate.com/v2/authorization/oauth2/clients/, 8.35, attack_surface=9 business_value=9 tech_exposure=9 gate_ease=4 cloud_surface=5 freshness=10
+[PRIO] api.sipgate.com/v2/doc/oauth2-redirect.html, 8.20, attack_surface=8 business_value=8 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=9
+[PRIO] app.dev.sipgate.com, 8.15, attack_surface=8 business_value=7 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=10
+[PRIO] login.sipgate.com (third-party realm), 7.10, attack_surface=7 business_value=9 tech_exposure=7 gate_ease=4 cloud_surface=5 freshness=8
+[PRIO] *.integration.sipgate.cloud (94 hosts), 6.80, attack_surface=7 business_value=6 tech_exposure=7 gate_ease=5 cloud_surface=9 freshness=8
+[PRIO] integration.sipgate.com, 6.75, attack_surface=7 business_value=7 tech_exposure=8 gate_ease=3 cloud_surface=7 freshness=8
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com, 6.60, attack_surface=4 business_value=7 tech_exposure=5 gate_ease=10 cloud_surface=9 freshness=7
+[PRIO] grafana.sipgate.cloud, 6.15, attack_surface=5 business_value=6 tech_exposure=6 gate_ease=8 cloud_surface=7 freshness=6
+[PRIO] team-uk.live.sipgate.com + team-de.live.sipgate.com, 5.90, attack_surface=5 business_value=5 tech_exposure=6 gate_ease=10 cloud_surface=4 freshness=6
+[PRIO] share1.sipgate.cloud, 5.40, attack_surface=3 business_value=4 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=6
+[HYP] OAuth2 Client Management List Endpoint Authz-Drift via Edge Auth Bypass
+class: AUTH
+asset: api.sipgate.com/v2/authorization/oauth2/clients/
+confidence: 85
+reasoning: KB 2026-09-11/12 confirms /v2/authorization/oauth2/clients/{id} returns 500 on UUID vs 401 on other paths — indicates app-plane reach past edge auth; string client-IDs (sipgate-app-web, platypus-swagger, sipgate-swagger-ui) return 400 not 401/500 — distinct validator logic; nil-UUID returns 500 confirming UUID parser reaches app layer; list endpoint untested
+evidence_needed: GET /v2/authorization/oauth2/clients/ returning 200/403 instead of 401; proof client enumeration/manipulation accessible without valid tenant token
+verify_steps: GET https://api.sipgate.com/v2/authorization/oauth2/clients/ — observe status code and response body; GET https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app-web (400 baseline); GET https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000 (500 baseline)
+impact: Unauthorized OAuth client enumeration/manipulation (create/read/update/delete clients with extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write) — HIGH
+testability: PASSIVE
+[HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References
+class: SSRF
+asset: app.dev.sipgate.com
+confidence: 85
+reasoning: Live dev SPA on Fastly CDN serves production-identical JS bundle (main-K-JtiyRc.js, 5.65MB) with 17 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10.73.71) and admin.dev.sipgate.net (CNAME→helpdesk.dev.sipgate.net, 217.116.120.148); multiple .local hosts resolve to 127.0.0.1 confirming internal-only references; bundle rotates frequently (freshness=10); no IP restriction on dev SPA; internal ports 3396, 3443, 8080, 10443 exposed in config
+evidence_needed: HTTP response from newly extracted prod subdomains (admin.live.sipgate.net, admin.dev.sipgate.net) showing live services on non-standard ports (8080, 8443, 3396, 3443, 10443); proof of SSRF via dev SPA proxy/chaining or XSS on dev SPA to pivot to internal hosts; DNS resolution showing RFC1918 IPs for any .local hosts
+verify_steps: GET https://app.dev.sipgate.com/assets/main-K-JtiyRc.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve all *.dev.sipgate.net, *.live.sipgate.net, *.dev.sipgate.com hosts; probe discovered hosts for HTTP responses on ports 80/443/3396/3443/8080/10443 (read-only, ≤1 rps); test for SSRF via any proxy/chaining endpoints in dev SPA
+impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, team-uk.local, integration.dev, admin.live, helpdesk.live); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface + prod subdomain exposure in dev bundle)
+testability: PASSIVE
+[HYP] Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection Enables Token Exfiltration Chain
+class: MISCONFIG
+asset: api.sipgate.com/v2/doc/oauth2-redirect.html
+confidence: 80
+reasoning: KB 2026-09-11/12 confirms oauth2-redirect.html reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — inherits API.v2 domain's permissive CORS; token fragment delivered to same-origin redirect page via implicit flow from login.sipgate.com third-party realm (client sipgate-swagger-ui, extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); cross-origin popup test shows SecurityError on window.opener read but same-origin XSS on this page would allow token access + exfiltration via fetch to api.sipgate.com/v2/* (CORS allows credentials from any origin)
+evidence_needed: Confirmation that token fragment from implicit flow lands on this page and is accessible to page JS; proof that page JS can exfiltrate token via fetch to api.sipgate.com/v2/contacts (CORS allows credentials from any origin)
+verify_steps: GET https://api.sipgate.com/v2/doc/oauth2-redirect.html with Origin: https://evil.com — observe ACAO: https://evil.com + ACAC:true (confirmed); initiate implicit auth via sipgate-swagger-ui client on /v2/doc/, observe redirect to oauth2-redirect.html with token fragment; test if page JS can read fragment and exfiltrate via fetch to api.sipgate.com/v2/contacts
+impact: Defense-in-depth gap — OAuth redirect endpoint exposes credentials-enabled CORS; enables token exfiltration if XSS exists on Swagger-UI page or spec; chain-dependent for full exploitation; severity MEDIUM
+testability: PASSIVE
+[PARKED] None — all three hypotheses survive critique (confidence ≥80, PASSIVE verify_steps, non-REJECTED classes)
+[FINAL] 1. OAuth2 Client Management List Endpoint Authz-Drift via Edge Auth Bypass (confidence 85, PASSIVE) — critical untested list endpoint, 500 on UUID confirms app-plane reach
+[HYP] Attacker spec renders attacker-controlled DOM on api origin via doc/?url= (self-contained data: URL possible)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 48
+reasoning: This cycle re-confirmed (1) `doc/` serves text/html, no XFO/frame-ancestors (frameable); (2) `swagger-initializer.js` (200, 1.3KB) feeds `decodeURIComponent(url[1])` into `SwaggerUIBundle` with no scheme/host allowlist; (3) server now serves the doc shell for any `url` including `data:application/json;base64,...` → self-contained spec, no attacker infra; (4) implicit `sipgate-swagger-ui` client + realm `third-party` + extreme scopes register on load; (5) CORS-cred reflection on the domain. Execution primitive depends on exact swagger-ui renderer (5.x consensus = HTML/img injection, no script exec).
+evidence_needed: attacker-spec markup (`info.x-logo.url`, `info.description` HTML) rendered into api-origin DOM; any script execution
+verify_steps: HUMAN: Chromium open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` with `info.x-logo.url`→attacker img and `info.description`→`<img onerror=...>`; observe DOM insertion + JS exec; confirm doc page embeds in attacker iframe
+impact: CRITICAL if script executes (full session read/write at api scope via implicit token); else MEDIUM/HIGH phishing amplifier on trusted origin
+testability: HUMAN_ONLY
+[HYP] oauth2/clients/{clientId} unauthenticated app-plane reach — auth-mode parity gap, no data feed
+class: AUTH
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}
+confidence: 30
+reasoning: Live this cycle: no-auth → 500 empty; malformed Bearer → 401 `Unauthorized`; string/`me` → 400; nil-UUID → 500 (also `/gdpr`); `/authorize` → 404 from distinct HTML router. A missing token is NOT uniformly 401 on this subtree (fixes to 401 only when a token is presented), i.e. unauthenticated requests reach the handler / DB lookup. Response bodies are empty in every class; no client-UUID oracle exists unauthenticated; spec requires read/write scopes for data ops.
+evidence_needed: any clientId returning 200 or non-empty body unauthenticated (requires valid registered UUID + scope) → AUTH_HELPED
+verify_steps: passive-exhausted this cycle (list=401, leaf=500/400, gdpr=500, authorize=404, OPTIONS=204 ACAO-cred); deeper requires creds/UUID → AUTH_HELPED
+impact: LOW standalone (auth-consistency/hardening material only); chain/deny-listing value if a token or UUID is later obtained
+testability: PASSIVE (exhausted) / AUTH_HELPED
+[HYP] OAuth client-management list participates in family-wide CORS-credential reflection
+class: MISCONFIG
+asset: api.sipgate.com/v2/authorization/oauth2/clients/
+confidence: 40
+reasoning: OPTIONS 204 with `ACAO:https://evil.example` + `ACAC:true` confirmed this cycle on the client CRUD list (matches accepted family-wide /v2 behavior). No independent data exposure: list GET 401, leaf empty 500/400. Reinforces scope of the already-accepted /v2/* CORS finding.
+evidence_needed: none beyond existing accepted finding (breadth datum)
+verify_steps: documented (OPTIONS probe above)
+impact: defense-in-depth; chain material only for same-origin-XSS or token scenarios
+testability: PASSIVE (confirmed)
+[NEXT] HUMAN: In Chromium open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<your-spec>` where the spec (OpenAPI3) has `info.x-logo.url=https://<attacker>/img.png` and `info.description` containing `<img src=x onerror=alert(document.domain)>` + a `<iframe src="https://attacker/">`; report (a) whether attacker markup renders into the api-origin DOM, (b) whether script executes on api origin, (c) whether `/v2/doc/` embeds in an attacker iframe (frameable re-check). Do both the `data:` and `https://<attacker>/spec.json` variants. This closes the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client).
+[RISK] sipgate: 45 — No new critical unauthenticated vector. The top-ranked list-bypass hypothesis collapsed (401). The oauth2 clients subtree anomaly is real but empty-body (auth-consistency, not exposure). Reportable set unchanged: `/v2/*` CORS-credential reflection (now incl. oauth2 client list), doc/?url= frameable spec-forward chain (server facts complete; HUMAN-gated for execution proof), plus accepted family MISCONFIGs. Real data planes remain edge-401-uniform or AUTH_HELPED; no ATO/SSRF/money-bug surfaced unauthenticated.

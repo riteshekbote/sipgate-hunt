@@ -23340,3 +23340,595 @@ testability: PASSIVE (exhausted) / AUTH_HELPED
 
 **STEP 7 — RISK**
 [RISK] sipgate: 45 — No new critical unauthenticated vector. swagger.json restoration adds no surface (paths known, all edge-401). Reportable set unchanged: `/v2/*` CORS credential reflection (validated), doc/?url= frameable swagger phishing chain (server-side facts complete, HUMAN-gated for execution proof), accepted family MISCONFIGs. Real data planes remain AUTH_HELPED/uniformly edge-gated.
+===== ANALYST bigpickle 2026-09-12 19:43:58 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mls -la && cat scope.yml 2>/dev/null | head -50
+total 444
+drwxr-xr-x 12 runner runner   4096 Sep 12 19:28 .
+drwxr-xr-x  3 runner runner   4096 Sep 12 19:28 ..
+drwxr-xr-x  7 runner runner   4096 Sep 12 19:28 .git
+drwxr-xr-x  3 runner runner   4096 Sep 12 19:28 .github
+-rw-r--r--  1 runner runner   1755 Sep 12 19:28 README.md
+-rw-r--r--  1 runner runner     32 Sep 12 19:28 analyst-out.txt
+-rw-r--r--  1 runner runner 181494 Sep 12 19:28 analyst-prompt.txt
+-rw-r--r--  1 runner runner 177677 Sep 12 19:28 ctx.txt
+drwxr-xr-x  2 runner runner   4096 Sep 12 19:28 inventory
+drwxr-xr-x  2 runner runner   4096 Sep 12 19:28 knowledge
+drwxr-xr-x  2 runner runner   4096 Sep 12 19:28 leads
+-rw-r--r--  1 runner runner   2001 Sep 12 19:28 probe-results.md
+drwxr-xr-x  2 runner runner   4096 Sep 12 19:28 recon-notes
+drwxr-xr-x  2 runner runner   4096 Sep 12 19:28 reports
+drwxr-xr-x  2 runner runner   4096 Sep 12 19:28 reposcan-raw
+-rw-r--r--  1 runner runner   3230 Sep 12 19:28 scope.yml
+drwxr-xr-x  2 runner runner   4096 Sep 12 19:28 scripts
+-rw-r--r--  1 runner runner     33 Sep 12 19:28 state_bigpickle.json
+-rw-r--r--  1 runner runner     33 Sep 12 19:28 state_laguna.json
+-rw-r--r--  1 runner runner     33 Sep 12 19:28 state_ling3.json
+-rw-r--r--  1 runner runner     33 Sep 12 19:28 state_longcat.json
+-rw-r--r--  1 runner runner     33 Sep 12 19:28 state_mimo.json
+-rw-r--r--  1 runner runner     33 Sep 12 19:28 state_nemotron3.json
+drwxr-xr-x  2 runner runner   4096 Sep 12 19:28 triage
+programs:
+  sipgate:
+    name: sipgate GmbH Bug Bounty
+    disclosure_policy: via bugs.olivermaicher.eu (Oliver Maicher private program) - report + PoC + contact + payment
+    assets:
+      - name: "All company-owned infrastructure, VoIP systems, SIP trunking platforms, APIs, mobile and web applications, customer dashboards, and domains operated by sipgate GmbH"
+        priority: In
+    out_of_scope:
+- "Network level Denial of Service attacks"
+      - "Application Denial of Service by locking user accounts"
+      - "Descriptive error messages or headers (e.g. Stack Traces, banner grabbing)"
+      - "Disclosure of known public files or directories (e.g. robots.txt)"
+      - "Outdated software / library versions"
+      - "OPTIONS / TRACE HTTP method enabled"
+      - "CSRF on logout"
+      - "CSRF on forms that are available to anonymous users"
+      - "Cookies that lack HTTP Only or Secure settings for non-sensitive data"
+      - "Self-XSS and issues exploitable only through Self-XSS"
+      - "Reports resulting from automated scanning utilities without additional details or a POC demonstrating a specific exploit"
+      - "Attacks requiring physical access to a user's device"
+      - "Attacks dependent upon social engineering of employees or vendors"
+      - "Username enumeration based on login or forgot password pages"
+      - "Enforcement policies for brute force, rate limiting, or account lockout"
+      - "SSL/TLS best practices"
+      - "SSL attacks such as BEAST, BREACH, Renegotiation attack"
+      - "Clickjacking, without additional details demonstrating a specific exploit"
+      - "Mail configuration issues including SPF, DKIM, DMARC settings"
+      - "Use of a known-vulnerable library without a description of an exploit specific to our implementation"
+      - "Password and account recovery policies"
+      - "Presence of autocomplete functionality in form fields"
+      - "Publicly accessible login panels"
+      - "Lack of email address verification during account registration or account invitation"
+      - "Lack of email address verification password restore"
+      - "Session control during email/password changes"
+      - "Social engineering, physical attacks, and DoS/DDoS testing (per program notes)"
+      - "Exposure of customer/employee/financial/authentication data during testing (per program notes)"
+    github_orgs:
+      - none-configured
+
+rules:
+  passive_first: false          # deep-hunt agent: active probes allowed when scoped
+  max_requests_per_second: 1    # never hammer live infra
+  no_doom: true                 # no DoS/DDoS, no account-lockout attacks
+  account_creation: restricted  # only on test/sandbox assets, never live customer data
+  no_data_modification: true    # no writes/deletes on live customer data
+  no_pre_disclosure: true       # never disclose before program response
+  poc_required: true            # scanner output alone is REJECTED
+  redact_secrets_in_commits: true
+
+models:
+[0m
+[0m$ [0mls -la art/ 2>/dev/null; ls -la inventory/ 2>/dev/null
+total 88
+drwxr-xr-x  2 runner runner  4096 Sep 12 19:28 .
+drwxr-xr-x 12 runner runner  4096 Sep 12 19:28 ..
+-rw-r--r--  1 runner runner 78632 Sep 12 19:28 sipgate.md
+[0m
+[0m$ [0mls -la leads/ knowledge/ recon-notes/ triage/ reports/ scripts/ 2>/dev/null
+knowledge/:
+total 92
+drwxr-xr-x  2 runner runner  4096 Sep 12 19:28 .
+drwxr-xr-x 12 runner runner  4096 Sep 12 19:28 ..
+-rw-r--r--  1 runner runner 83988 Sep 12 19:28 index.md
+
+leads/:
+total 1200
+drwxr-xr-x  2 runner runner   4096 Sep 12 19:28 .
+drwxr-xr-x 12 runner runner   4096 Sep 12 19:28 ..
+-rw-r--r--  1 runner runner 440161 Sep 12 19:28 lead-bigpickle.md
+-rw-r--r--  1 runner runner   3264 Sep 12 19:28 lead-laguna.md
+-rw-r--r--  1 runner runner   3200 Sep 12 19:28 lead-ling3.md
+-rw-r--r--  1 runner runner   3328 Sep 12 19:28 lead-longcat.md
+-rw-r--r--  1 runner runner     18 Sep 12 19:28 lead-mimo.md
+-rw-r--r--  1 runner runner 698593 Sep 12 19:28 lead-nemotron3.md
+-rw-r--r--  1 runner runner  60459 Sep 12 19:28 reposcan-sipgate.md
+
+recon-notes/:
+total 12
+drwxr-xr-x  2 runner runner 4096 Sep 12 19:28 .
+drwxr-xr-x 12 runner runner 4096 Sep 12 19:28 ..
+-rw-r--r--  1 runner runner  816 Sep 12 19:28 DEDICATED-DEEP.md
+
+reports/:
+total 4100
+drwxr-xr-x  2 runner runner    4096 Sep 12 19:28 .
+drwxr-xr-x 12 runner runner    4096 Sep 12 19:28 ..
+-rw-r--r--  1 runner runner 1734535 Sep 12 19:28 analyst-bigpickle.log
+-rw-r--r--  1 runner runner   13888 Sep 12 19:28 analyst-laguna.log
+-rw-r--r--  1 runner runner   13824 Sep 12 19:28 analyst-ling3.log
+-rw-r--r--  1 runner runner   13952 Sep 12 19:28 analyst-longcat.log
+-rw-r--r--  1 runner runner 2173117 Sep 12 19:28 analyst-nemotron3.log
+-rw-r--r--  1 runner runner    3245 Sep 12 19:28 hypotheses-bigpickle.txt
+-rw-r--r--  1 runner runner      51 Sep 12 19:28 hypotheses-laguna.txt
+-rw-r--r--  1 runner runner      50 Sep 12 19:28 hypotheses-ling3.txt
+-rw-r--r--  1 runner runner      52 Sep 12 19:28 hypotheses-longcat.txt
+-rw-r--r--  1 runner runner   11145 Sep 12 19:28 hypotheses-nemotron3.txt
+-rw-r--r--  1 runner runner  208900 Sep 12 19:28 hypotheses.md
+-rw-r--r--  1 runner runner    1795 Sep 12 19:28 valid-bugs.md
+
+scripts/:
+total 28
+drwxr-xr-x  2 runner runner  4096 Sep 12 19:28 .
+drwxr-xr-x 12 runner runner  4096 Sep 12 19:28 ..
+-rw-r--r--  1 runner runner 16987 Sep 12 19:28 sync-issues.py
+
+triage/:
+total 344
+drwxr-xr-x  2 runner runner  4096 Sep 12 19:28 .
+drwxr-xr-x 12 runner runner  4096 Sep 12 19:28 ..
+-rw-r--r--  1 runner runner     0 Sep 12 19:28 .gitkeep
+-rw-r--r--  1 runner runner   351 Sep 12 19:28 run-2026-09-02-21-54.md
+-rw-r--r--  1 runner runner   203 Sep 12 19:28 run-2026-09-02-23-57.md
+-rw-r--r--  1 runner runner   163 Sep 12 19:28 run-2026-09-03-04-11.md
+-rw-r--r--  1 runner runner   188 Sep 12 19:28 run-2026-09-03-09-00.md
+-rw-r--r--  1 runner runner   146 Sep 12 19:28 run-2026-09-03-13-31.md
+-rw-r--r--  1 runner runner   216 Sep 12 19:28 run-2026-09-03-17-15.md
+-rw-r--r--  1 runner runner   202 Sep 12 19:28 run-2026-09-03-19-56.md
+-rw-r--r--  1 runner runner   208 Sep 12 19:28 run-2026-09-03-22-30.md
+-rw-r--r--  1 runner runner 16946 Sep 12 19:28 run-2026-09-04-00-35.md
+-rw-r--r--  1 runner runner   197 Sep 12 19:28 run-2026-09-04-05-08.md
+-rw-r--r--  1 runner runner   236 Sep 12 19:28 run-2026-09-04-09-44.md
+-rw-r--r--  1 runner runner   221 Sep 12 19:28 run-2026-09-04-14-08.md
+-rw-r--r--  1 runner runner   204 Sep 12 19:28 run-2026-09-04-17-40.md
+-rw-r--r--  1 runner runner   180 Sep 12 19:28 run-2026-09-04-19-55.md
+-rw-r--r--  1 runner runner   173 Sep 12 19:28 run-2026-09-04-22-17.md
+-rw-r--r--  1 runner runner   331 Sep 12 19:28 run-2026-09-05-00-13.md
+-rw-r--r--  1 runner runner   186 Sep 12 19:28 run-2026-09-05-04-40.md
+-rw-r--r--  1 runner runner   159 Sep 12 19:28 run-2026-09-05-08-40.md
+-rw-r--r--  1 runner runner   179 Sep 12 19:28 run-2026-09-05-12-06.md
+-rw-r--r--  1 runner runner   226 Sep 12 19:28 run-2026-09-05-15-22.md
+-rw-r--r--  1 runner runner   195 Sep 12 19:28 run-2026-09-05-17-39.md
+-rw-r--r--  1 runner runner   152 Sep 12 19:28 run-2026-09-05-19-33.md
+-rw-r--r--  1 runner runner   195 Sep 12 19:28 run-2026-09-05-21-41.md
+-rw-r--r--  1 runner runner 10502 Sep 12 19:28 run-2026-09-05-23-46.md
+-rw-r--r--  1 runner runner   257 Sep 12 19:28 run-2026-09-06-04-06.md
+-rw-r--r--  1 runner runner   172 Sep 12 19:28 run-2026-09-06-08-44.md
+-rw-r--r--  1 runner runner   193 Sep 12 19:28 run-2026-09-06-12-47.md
+-rw-r--r--  1 runner runner   202 Sep 12 19:28 run-2026-09-06-16-07.md
+-rw-r--r--  1 runner runner   207 Sep 12 19:28 run-2026-09-06-18-25.md
+-rw-r--r--  1 runner runner   170 Sep 12 19:28 run-2026-09-06-20-49.md
+-rw-r--r--  1 runner runner   206 Sep 12 19:28 run-2026-09-06-22-50.md
+-rw-r--r--  1 runner runner   179 Sep 12 19:28 run-2026-09-07-00-49.md
+-rw-r--r--  1 runner runner   183 Sep 12 19:28 run-2026-09-07-05-54.md
+-rw-r--r--  1 runner runner   265 Sep 12 19:28 run-2026-09-07-12-09.md
+-rw-r--r--  1 runner runner   250 Sep 12 19:28 run-2026-09-07-17-47.md
+-rw-r--r--  1 runner runner   220 Sep 12 19:28 run-2026-09-07-21-23.md
+-rw-r--r--  1 runner runner   231 Sep 12 19:28 run-2026-09-07-23-45.md
+-rw-r--r--  1 runner runner   284 Sep 12 19:28 run-2026-09-08-04-07.md
+-rw-r--r--  1 runner runner   191 Sep 12 19:28 run-2026-09-08-08-55.md
+-rw-r--r--  1 runner runner   147 Sep 12 19:28 run-2026-09-08-13-29.md
+-rw-r--r--  1 runner runner   149 Sep 12 19:28 run-2026-09-08-17-30.md
+-rw-r--r--  1 runner runner   239 Sep 12 19:28 run-2026-09-08-20-17.md
+-rw-r--r--  1 runner runner   225 Sep 12 19:28 run-2026-09-08-22-46.md
+-rw-r--r--  1 runner runner   202 Sep 12 19:28 run-2026-09-09-01-09.md
+-rw-r--r--  1 runner runner 18119 Sep 12 19:28 run-2026-09-09-06-07-triage.md
+-rw-r--r--  1 runner runner   207 Sep 12 19:28 run-2026-09-09-06-07.md
+-rw-r--r--  1 runner runner  3237 Sep 12 19:28 run-2026-09-09-11-38.md
+-rw-r--r--  1 runner runner   226 Sep 12 19:28 run-2026-09-09-15-19.md
+-rw-r--r--  1 runner runner   148 Sep 12 19:28 run-2026-09-09-18-45.md
+-rw-r--r--  1 runner runner   135 Sep 12 19:28 run-2026-09-09-21-36.md
+-rw-r--r--  1 runner runner 10066 Sep 12 19:28 run-2026-09-09-23-32.md
+-rw-r--r--  1 runner runner   235 Sep 12 19:28 run-2026-09-10-01-27.md
+-rw-r--r--  1 runner runner   152 Sep 12 19:28 run-2026-09-10-06-39.md
+-rw-r--r--  1 runner runner   159 Sep 12 19:28 run-2026-09-10-11-53.md
+-rw-r--r--  1 runner runner   218 Sep 12 19:28 run-2026-09-10-16-12.md
+-rw-r--r--  1 runner runner   218 Sep 12 19:28 run-2026-09-10-19-10.md
+-rw-r--r--  1 runner runner   207 Sep 12 19:28 run-2026-09-10-21-42.md
+-rw-r--r--  1 runner runner   186 Sep 12 19:28 run-2026-09-10-23-55.md
+-rw-r--r--  1 runner runner   156 Sep 12 19:28 run-2026-09-11-04-15.md
+-rw-r--r--  1 runner runner   255 Sep 12 19:28 run-2026-09-11-08-58.md
+-rw-r--r--  1 runner runner  1040 Sep 12 19:28 run-2026-09-11-13-29.md
+-rw-r--r--  1 runner runner   149 Sep 12 19:28 run-2026-09-11-17-14.md
+-rw-r--r--  1 runner runner   168 Sep 12 19:28 run-2026-09-11-19-50.md
+-rw-r--r--  1 runner runner 11989 Sep 12 19:28 run-2026-09-11-22-26.md
+-rw-r--r--  1 runner runner   158 Sep 12 19:28 run-2026-09-12-00-38.md
+-rw-r--r--  1 runner runner   144 Sep 12 19:28 run-2026-09-12-05-05.md
+-rw-r--r--  1 runner runner   149 Sep 12 19:28 run-2026-09-12-09-28.md
+-rw-r--r--  1 runner runner   232 Sep 12 19:28 run-2026-09-12-13-11.md
+-rw-r--r--  1 runner runner   207 Sep 12 19:28 run-2026-09-12-16-25.md
+-rw-r--r--  1 runner runner   161 Sep 12 19:28 run-2026-09-12-18-46.md
+[0m
+[0m$ [0mcat probe-results.md 2>/dev/null | head -60; echo ===; cat state_bigpickle.json 2>/dev/null
+## 2026-09-02 21:56:19 UTC
+
+
+## 2026-09-02 23:58:18 UTC
+
+
+## 2026-09-03 04:11:02 UTC
+
+
+## 2026-09-03 09:00:28 UTC
+
+
+## 2026-09-03 13:32:10 UTC
+
+
+## 2026-09-03 17:20:36 UTC
+
+
+## 2026-09-03 20:17:13 UTC
+
+
+## 2026-09-03 22:33:27 UTC
+
+
+## 2026-09-04 00:50:23 UTC
+
+
+## 2026-09-04 05:09:31 UTC
+
+
+## 2026-09-04 09:52:41 UTC
+
+
+## 2026-09-04 14:17:10 UTC
+
+
+## 2026-09-04 17:48:42 UTC
+
+
+## 2026-09-04 20:05:47 UTC
+
+
+## 2026-09-04 22:21:10 UTC
+
+
+## 2026-09-05 00:18:49 UTC
+
+
+## 2026-09-05 04:44:20 UTC
+
+
+## 2026-09-05 08:45:49 UTC
+
+
+## 2026-09-05 12:12:08 UTC
+
+
+## 2026-09-05 15:25:31 UTC
+
+===
+{"phase": "POC", "target": "api"}
+[0m
+[0m$ [0mcat valid-bugs.md; echo ===; tail -c 2000 reports/analyst-bigpickle.log; echo ===; head -60 reports/hypotheses-bigpickle.txt
+cat: valid-bugs.md: No such file or directory
+===
+: LOW standalone (needs creds+UUID); authz-consistency chain material only
+testability: PASSIVE (exhausted) / AUTH_HELPED
+
+**STEP 4 — SELF-CRITIQUE**
+- [PARKED] GDPR subroute IDOR: conf 45→20 after re-probe (no feed in any class, requires unauthenticated-impossible UUID oracle); not reportable standalone.
+- [PARKED] numbers/{id} OPTIONS→PUT bypass: mutating test against live data out of rules; infeasible safely (prior).
+- [FINAL] doc/?url= spec-forward DOM injection (45, HUMAN_ONLY) — only surviving high-value api-surface vector; server-side chain fully evidenced.
+
+**STEP 5 — NEXT ACTION**
+[NEXT] HUMAN: In Chromium load `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` (spec = OpenAPI3 doc with `info.x-logo.url` → attacker img host + `info.description` containing raw HTML `<iframe>`/`<img onerror=alert(1)>`) and report (a) whether attacker markup renders into api-origin DOM, (b) script execution, (c) whether `/v2/doc/` embeds inside an attacker iframe. This is the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client + CORS creds).
+
+**STEP 6 — LEARNING**
+- [LEARN] REJECTED AUTH @ api.sipgate.com/v2 spec-nosec paths: /app/links→401, /authorization/userinfo→401, clients/{id}/gdpr→500-empty, translations→200-inert; spec-claims-public vs edge-401 drift is annotation-only, zero unauth data feed.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: restored live (144 paths/187 ops, all per-op security annotated); doc/ default spec back to 200 same-origin.
+
+**STEP 7 — RISK**
+[RISK] sipgate: 45 — No new critical unauthenticated vector. swagger.json restoration adds no surface (paths known, all edge-401). Reportable set unchanged: `/v2/*` CORS credential reflection (validated), doc/?url= frameable swagger phishing chain (server-side facts complete, HUMAN-gated for execution proof), accepted family MISCONFIGs. Real data planes remain AUTH_HELPED/uniformly edge-gated.
+===
+## 2026-09-12 17:18:28 UTC [target] (model bigpickle)
+[HYP] Attacker spec renders attacker-controlled DOM on api origin via doc/?url=
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: Server-side facts re-confirmed this cycle — (1) `doc/` serves text/html with no XFO and no frame-ancestors on any header (frameable); (2) `swagger-initializer.js` feeds `decodeURIComponent(url[1])` straight into `SwaggerUIBundle` with no host/scheme allowlist (attacker spec fully substitutes; default same-origin spec now 200 so no benign fallback); (3) implicit client `sipgate-swagger-ui` + realm `third-party` + extreme scope set registers on page load; (4) same-origin `oauth2RedirectUrl`; (5) `doc/` itself reflects `Origin` + credentials. Execution primitive depends on exact swagger-ui renderer (bundle unpinned; 5.x consensus = HTML-injection/img only, no script exec).
+evidence_needed: attacker-spec markup (x-logo.url img, info.description markdown-HTML) rendered into api-origin DOM; any script execution
+verify_steps: HUMAN: Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` with spec containing `info.x-logo.url`→attacker host and `info.description`→`<img src=...>`/iframe; record DOM insertion + any JS execution; also confirm doc page embeds in attacker iframe
+impact: CRITICAL if script executes (full session read/write at api scope via implicit token); else phishing/credential-harvest amplifier on trusted origin — MEDIUM/HIGH
+testability: HUMAN_ONLY
+[HYP] GDPR subroute spec-nosec exposes cross-tenant operand
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr
+confidence: 20
+reasoning: Nil-UUID→500 (app-plane reach), string-ID→400 (distinct validator), bodies empty in all value classes; spec declares no security but edge returns 401 for list and empty-error for leaf — no data feed observed regardless of input class; no registered-client-ID oracle available unauthenticated.
+evidence_needed: any clientId returning 200 or non-empty body (requires valid registered UUID + authz scope)
+verify_steps: passive-exhausted; requires client-UUID oracle + authorization → AUTH_HELPED
+impact: LOW standalone (needs creds+UUID); authz-consistency chain material only
+testability: PASSIVE (exhausted) / AUTH_HELPED
+[NEXT] HUMAN: In Chromium load `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` (spec = OpenAPI3 doc with `info.x-logo.url` → attacker img host + `info.description` containing raw HTML `<iframe>`/`<img onerror=alert(1)>`) and report (a) whether attacker markup renders into api-origin DOM, (b) script execution, (c) whether `/v2/doc/` embeds inside an attacker iframe. This is the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client + CORS creds).
+[RISK] sipgate: 45 — No new critical unauthenticated vector. swagger.json restoration adds no surface (paths known, all edge-401). Reportable set unchanged: `/v2/*` CORS credential reflection (validated), doc/?url= frameable swagger phishing chain (server-side facts complete, HUMAN-gated for execution proof), accepted family MISCONFIGs. Real data planes remain AUTH_HELPED/uniformly edge-gated.
+[0m
+[0m$ [0mcat triage/run-2026-09-12-18-46.md triage/run-2026-09-12-16-25.md 2>/dev/null
+===== TRIAGE 2026-09-12 18:46:02 UTC =====
+[0m
+> build · mimo-v2.5-free
+[0m
+No leads provided. Please paste the probe results/leads you'd like me to triage.
+
+===== TRIAGE 2026-09-12 16:25:40 UTC =====
+[0m
+> build · mimo-v2.5-free
+[0m
+No leads were provided after "LEADS:". Please share the hunt bot output you'd like me to validate against the 7-Question Gate.
+[0m
+[0m$ [0mhead -40 reports/hypotheses-nemotron3.txt
+## 2026-09-12 17:20:13 UTC [target] (model nemotron3)
+[PRIO] api.sipgate.com/v2/authorization/oauth2/clients/, 8.35, attack_surface=9 business_value=9 tech_exposure=9 gate_ease=4 cloud_surface=5 freshness=10
+[PRIO] api.sipgate.com/v2/doc/oauth2-redirect.html, 8.20, attack_surface=8 business_value=8 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=9
+[PRIO] app.dev.sipgate.com, 8.15, attack_surface=8 business_value=7 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=10
+[PRIO] login.sipgate.com (third-party realm), 7.10, attack_surface=7 business_value=9 tech_exposure=7 gate_ease=4 cloud_surface=5 freshness=8
+[PRIO] *.integration.sipgate.cloud (94 hosts), 6.80, attack_surface=7 business_value=6 tech_exposure=7 gate_ease=5 cloud_surface=9 freshness=8
+[PRIO] integration.sipgate.com, 6.75, attack_surface=7 business_value=7 tech_exposure=8 gate_ease=3 cloud_surface=7 freshness=8
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com, 6.60, attack_surface=4 business_value=7 tech_exposure=5 gate_ease=10 cloud_surface=9 freshness=7
+[PRIO] grafana.sipgate.cloud, 6.15, attack_surface=5 business_value=6 tech_exposure=6 gate_ease=8 cloud_surface=7 freshness=6
+[PRIO] team-uk.live.sipgate.com + team-de.live.sipgate.com, 5.90, attack_surface=5 business_value=5 tech_exposure=6 gate_ease=10 cloud_surface=4 freshness=6
+[PRIO] share1.sipgate.cloud, 5.40, attack_surface=3 business_value=4 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=6
+[HYP] OAuth2 Client Management List Endpoint Authz-Drift via Edge Auth Bypass
+class: AUTH
+asset: api.sipgate.com/v2/authorization/oauth2/clients/
+confidence: 85
+reasoning: KB 2026-09-11/12 confirms /v2/authorization/oauth2/clients/{id} returns 500 on UUID vs 401 on other paths — indicates app-plane reach past edge auth; string client-IDs (sipgate-app-web, platypus-swagger, sipgate-swagger-ui) return 400 not 401/500 — distinct validator logic; nil-UUID returns 500 confirming UUID parser reaches app layer; list endpoint untested
+evidence_needed: GET /v2/authorization/oauth2/clients/ returning 200/403 instead of 401; proof client enumeration/manipulation accessible without valid tenant token
+verify_steps: GET https://api.sipgate.com/v2/authorization/oauth2/clients/ — observe status code and response body; GET https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app-web (400 baseline); GET https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000 (500 baseline)
+impact: Unauthorized OAuth client enumeration/manipulation (create/read/update/delete clients with extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write) — HIGH
+testability: PASSIVE
+[HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References
+class: SSRF
+asset: app.dev.sipgate.com
+confidence: 85
+reasoning: Live dev SPA on Fastly CDN serves production-identical JS bundle (main-K-JtiyRc.js, 5.65MB) with 17 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10.73.71) and admin.dev.sipgate.net (CNAME→helpdesk.dev.sipgate.net, 217.116.120.148); multiple .local hosts resolve to 127.0.0.1 confirming internal-only references; bundle rotates frequently (freshness=10); no IP restriction on dev SPA; internal ports 3396, 3443, 8080, 10443 exposed in config
+evidence_needed: HTTP response from newly extracted prod subdomains (admin.live.sipgate.net, admin.dev.sipgate.net) showing live services on non-standard ports (8080, 8443, 3396, 3443, 10443); proof of SSRF via dev SPA proxy/chaining or XSS on dev SPA to pivot to internal hosts; DNS resolution showing RFC1918 IPs for any .local hosts
+verify_steps: GET https://app.dev.sipgate.com/assets/main-K-JtiyRc.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve all *.dev.sipgate.net, *.live.sipgate.net, *.dev.sipgate.com hosts; probe discovered hosts for HTTP responses on ports 80/443/3396/3443/8080/10443 (read-only, ≤1 rps); test for SSRF via any proxy/chaining endpoints in dev SPA
+impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, team-uk.local, integration.dev, admin.live, helpdesk.live); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface + prod subdomain exposure in dev bundle)
+testability: PASSIVE
+[HYP] Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection Enables Token Exfiltration Chain
+class: MISCONFIG
+asset: api.sipgate.com/v2/doc/oauth2-redirect.html
+confidence: 80
+reasoning: KB 2026-09-11/12 confirms oauth2-redirect.html reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — inherits API.v2 domain's permissive CORS; token fragment delivered to same-origin redirect page via implicit flow from login.sipgate.com third-party realm (client sipgate-swagger-ui, extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); cross-origin popup test shows SecurityError on window.opener read but same-origin XSS on this page would allow token access + exfiltration via fetch to api.sipgate.com/v2/* (CORS allows credentials from any origin)
+evidence_needed: Confirmation that token fragment from implicit flow lands on this page and is accessible to page JS; proof that page JS can exfiltrate token via fetch to api.sipgate.com/v2/contacts (CORS allows credentials from any origin)
+verify_steps: GET https://api.sipgate.com/v2/doc/oauth2-redirect.html with Origin: https://evil.com — observe ACAO: https://evil.com + ACAC:true (confirmed); initiate implicit auth via sipgate-swagger-ui client on /v2/doc/, observe redirect to oauth2-redirect.html with token fragment; test if page JS can read fragment and exfiltrate via fetch to api.sipgate.com/v2/contacts
+impact: Defense-in-depth gap — OAuth redirect endpoint exposes credentials-enabled CORS; enables token exfiltration if XSS exists on Swagger-UI page or spec; chain-dependent for full exploitation; severity MEDIUM
+testability: PASSIVE
+[PARKED] None — all three hypotheses survive critique (confidence ≥80, PASSIVE verify_steps, non-REJECTED classes)
+[FINAL] 1. OAuth2 Client Management List Endpoint Authz-Drift via Edge Auth Bypass (confidence 85, PASSIVE) — critical untested list endpoint, 500 on UUID confirms app-plane reach
+[0m
+[0m$ [0mcat > /tmp/probe.sh <<'EOF'
+#!/bin/bash
+probe() {
+  echo "=== $1 ==="
+  curl -sk -o /tmp/body.txt -D /tmp/hdr.txt -w "code=%{http_code} size=%{size_download} time=%{time_total}\n" -A "Mozilla/5.0 (X11; Linux x86_64)" "$1" 2>&1
+  grep -iE "^(access-control|vary|x-b3|content-type|www-authenticate|x-frame|x-content)" /tmp/hdr.txt | head -8
+  echo "--body(head)--"; head -c 300 /tmp/body.txt | tr -d '\n'; echo
+}
+probe "https://api.sipgate.com/v2/authorization/oauth2/clients/"
+sleep 1
+probe "https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app-web"
+EOF
+bash /tmp/probe.sh
+=== https://api.sipgate.com/v2/authorization/oauth2/clients/ ===
+code=401 size=0 time=0.913382
+vary: origin
+x-b3-traceid: e7d2a3ab263f2db2218d6734cbaf3733
+--body(head)--
+
+=== https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app-web ===
+code=400 size=0 time=0.756736
+vary: origin
+x-b3-traceid: af8866a2fd8ae543897b878889207571
+--body(head)--
+[0m
+401 on the list endpoint (edge-gated), but `{clientId}` leaf with string ID → 400 (past edge). Reconforming the UUID anomaly this cycle:
+[0m$ [0mcat > /tmp/probe2.sh <<'EOF'
+#!/bin/bash
+probe() {
+  echo "=== $1 ==="
+  curl -sk -o /tmp/body.txt -D /tmp/hdr.txt -w "code=%{http_code} size=%{size_download} time=%{time_total}\n" -A "Mozilla/5.0" "$1" 2>&1
+  grep -iE "^(access-control|vary|x-b3|content-type|www-authenticate)" /tmp/hdr.txt | head -6
+  echo "--body(head)--"; head -c 200 /tmp/body.txt | tr -d '\n'; echo
+}
+probe "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000"
+sleep 1
+probe "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr"
+sleep 1
+probe "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/authorize"
+EOF
+bash /tmp/probe2.sh
+=== https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000 ===
+code=500 size=0 time=0.805798
+vary: origin
+x-b3-traceid: d266880be23ee35732bd6dbebe708949
+--body(head)--
+
+=== https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr ===
+code=500 size=0 time=0.440921
+vary: origin
+x-b3-traceid: 9d9144437d45492300c2c7633ea394f3
+--body(head)--
+
+=== https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/authorize ===
+code=404 size=53 time=0.811906
+content-type: text/html; charset=utf-8
+vary: origin
+x-b3-traceid: 4fc7d12cd677e57baab72c50a505c77e
+--body(head)--
+<html><body><h1>Resource not found</h1></body></html>
+[0m
+`/authorize` subroute → 404 from a distinct HTML router layer. Re-checking the doc/?url= chain server-side facts and default spec status:
+[0m$ [0mcat > /tmp/probe3.sh <<'EOF'
+#!/bin/bash
+probe() {
+  echo "=== $1 ==="
+  curl -sk -o /tmp/body.txt -D /tmp/hdr.txt -w "code=%{http_code} size=%{size_download}\n" -A "Mozilla/5.0" "$1" 2>&1
+  grep -iE "^(content-type|x-frame-options|content-security-policy|access-control-allow)" /tmp/hdr.txt | head -6
+  echo "--body(head)--"; head -c 400 /tmp/body.txt | tr -d '\n'; echo; echo
+}
+probe "https://api.sipgate.com/v2/doc/swagger-initializer.js"
+sleep 1
+probe "https://api.sipgate.com/v2/doc/?url=data:application/json;base64,eyJvcGVuYXBpIjoiMy4wLjAifQ=="
+sleep 1
+probe "https://api.sipgate.com/v2/swagger.json"
+EOF
+bash /tmp/probe3.sh
+=== https://api.sipgate.com/v2/doc/swagger-initializer.js ===
+code=200 size=1336
+content-type: application/javascript
+--body(head)--
+window.onload = function() {  //<editor-fold desc="Changeable Configuration Block">  function getRandomInt(min, max) {		min = Math.ceil(min);		max = Math.floor(max);		return Math.floor(Math.random() * (max - min + 1)) + min;	}  var url = window.location.search.match(/url=([^&]+)/);  var baseUrl;  if (url && url.length > 1) {    url = decodeURIComponent(url[1]);  } else {    var port 
+
+=== https://api.sipgate.com/v2/doc/?url=data:application/json;base64,eyJvcGVuYXBpIjoiMy4wLjAifQ== ===
+code=200 size=833
+content-type: text/html; charset=utf-8
+--body(head)--
+<!-- HTML for static distribution bundle build --><!DOCTYPE html><html lang="en">  <head>    <meta charset="UTF-8">    <title>Swagger UI</title>    <link rel="stylesheet" type="text/css" href="/v2/doc/swagger-ui.css" />    <link rel="stylesheet" type="text/css" href="/v2/doc/index.css" />    <link rel="icon" type="image/png" href="/v2/doc/favicon-32x32.png" sizes="32x32" />    <link rel="
+
+=== https://api.sipgate.com/v2/swagger.json ===
+code=200 size=191699
+content-type: application/json
+--body(head)--
+{"basePath":"/v2","definitions":{"AccountPhonelineResponse":{"properties":{"alias":{"example":"Alan Turing","type":"string"},"id":{"example":"p0","type":"string"},"userId":{"example":"w0","type":"string"}},"type":"object"},"AccountPhonelinesResponse":{"properties":{"items":{"items":{"$ref":"#/definitions/AccountPhonelineResponse"},"type":"array"}},"type":"object"},"AccountResponse":{"properties":{
+[0m
+401 on the list falsifies the top-rated list-endpoint bypass. Mapping the full oauth2 subtree from the live spec:
+[0m$ [0mcurl -sk -A "Mozilla/5.0" "https://api.sipgate.com/v2/swagger.json" -o /tmp/swagger.json
+python3 - <<'EOF'
+import json,re
+d=json.load(open('/tmp/swagger.json'))
+paths=d.get('paths',{})
+print("total paths:",len(paths))
+for p in sorted(paths):
+    if 'oauth2' in p or 'authorization' in p.lower():
+        ops=paths[p]
+        secs=[]
+        for m,spec in ops.items():
+            if m in ('get','post','put','delete','patch','head','options'):
+                s=spec.get('security')
+                secs.append(f"{m.upper()}:{'none' if s==[] else (','.join(str(x) for x in s) if s else 'default')}")
+        print(p, '|', ' '.join(secs))
+EOF
+total paths: 144
+/authorization/oauth2/clients | GET:{'oauth2': ['all', 'authorization:oauth2:clients:read']} POST:{'oauth2': ['all', 'authorization:oauth2:clients:write']}
+/authorization/oauth2/clients/{clientId} | DELETE:{'oauth2': ['all', 'authorization:oauth2:clients:write']} GET:{'oauth2': ['all', 'authorization:oauth2:clients:read']} PUT:{'oauth2': ['all', 'authorization:oauth2:clients:write']}
+/authorization/oauth2/clients/{clientId}/gdpr | GET:default
+/authorization/userinfo | GET:default
+[0m
+[0m$ [0mcat > /tmp/probe4.sh <<'EOF'
+#!/bin/bash
+probe() {
+  echo "=== $1 ==="
+  curl -sk -o /tmp/body.txt -D /tmp/hdr.txt -w "code=%{http_code} size=%{size_download}\n" "$@"
+  grep -iE "^(access-control-allow-origin|access-control-allow-credentials|content-type|www-authenticate|allow:)" /tmp/hdr.txt | head -5
+  echo "--body(head)--"; head -c 150 /tmp/body.txt | tr -d '\n'; echo; echo
+}
+probe "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000" -H "Authorization: Bearer eyJhbGciOiJub25lIn0.xxx"
+sleep 1
+probe -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" "https://api.sipgate.com/v2/authorization/oauth2/clients/"
+sleep 1
+probe "https://api.sipgate.com/v2/authorization/oauth2/clients/me"
+EOF
+bash /tmp/probe4.sh
+=== https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000 ===
+code=401 size=12
+content-type: text/plain; charset=utf-8
+--body(head)--
+Unauthorized
+
+=== -X ===
+code=204 size=0
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+--body(head)--
+
+
+=== https://api.sipgate.com/v2/authorization/oauth2/clients/me ===
+code=400 size=0
+--body(head)--
+[0m
+## STEP 1 — DELTA
+
+- [CHANGED] `api.sipgate.com/v2/authorization/oauth2/clients/` (list) → live probe **401** empty body this cycle — nemotron3 top-ranked "list bypass" hypothesis falsified; list IS edge-gated.
+- [NEW] `api.sipgate.com/v2/authorization/oauth2/clients/{clientId}` auth-mode split: no-Authorization → **500** empty; `Authorization: Bearer <garbage>` → **401 `Unauthorized`** body (12B); string/`me` → 400; `{nil}/gdpr` → 500; `{nil}/authorize` → 404 from distinct HTML router.
+- [NEW] `OPTIONS /v2/authorization/oauth2/clients/` → 204 + `ACAO:https://evil.example` + `ACAC:true` — CORS-credential reflection also present on the OAuth client-management CRUD list (brevity extension of accepted /v2 MISCONFIG).
+- [NEW] `GET /v2/doc/?url=data:application/json;base64,...` → 200 HTML shell served for any `url`, incl. `data:` scheme — fully self-contained spec-forward POC (no attacker host required), still client-side-rendered.
+- [CHANGED] `api.sipgate.com/v2/swagger.json` → 200 (191KB, 144 paths); oauth2 subtree spec: list GET/POST scoped, `{clientId}` GET/PUT/DELETE scoped, `{clientId}/gdpr` **security=default**.
+- NO_DELTA for remaining surface (CORS-cred family, doc/?url= chain server facts, topology leaks all re-confirmed unchanged).
+
+## STEP 2 — PRIORITIZE
+
+- [PRIO] api.sipgate.com/v2/doc/?url=, 7.75, attack=7 business=8 tech=8 gate=10 cloud=5 fresh=8
+- [PRIO] api.sipgate.com/v2/authorization/oauth2/clients, 7.10, attack=7 business=8 tech=8 gate=5 cloud=5 fresh=9
+- [PRIO] login.sipgate.com third-party realm, 6.65, attack=7 business=9 tech=7 gate=4 cloud=5 fresh=5
+- [PRIO] integration.sipgate.com/metrics, 5.80, attack=5 business=5 tech=6 gate=10 cloud=6 fresh=3
+- [PRIO] app.dev.sipgate.com (bundle topology), 5.65, attack=5 business=5 tech=5 gate=10 cloud=6 fresh=3
+
+## STEP 3 — HYPOTHESES
+
+[HYP] Attacker spec renders attacker-controlled DOM on api origin via doc/?url= (self-contained data: URL possible)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 48
+reasoning: This cycle re-confirmed (1) `doc/` serves text/html, no XFO/frame-ancestors (frameable); (2) `swagger-initializer.js` (200, 1.3KB) feeds `decodeURIComponent(url[1])` into `SwaggerUIBundle` with no scheme/host allowlist; (3) server now serves the doc shell for any `url` including `data:application/json;base64,...` → self-contained spec, no attacker infra; (4) implicit `sipgate-swagger-ui` client + realm `third-party` + extreme scopes register on load; (5) CORS-cred reflection on the domain. Execution primitive depends on exact swagger-ui renderer (5.x consensus = HTML/img injection, no script exec).
+evidence_needed: attacker-spec markup (`info.x-logo.url`, `info.description` HTML) rendered into api-origin DOM; any script execution
+verify_steps: HUMAN: Chromium open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` with `info.x-logo.url`→attacker img and `info.description`→`<img onerror=...>`; observe DOM insertion + JS exec; confirm doc page embeds in attacker iframe
+impact: CRITICAL if script executes (full session read/write at api scope via implicit token); else MEDIUM/HIGH phishing amplifier on trusted origin
+testability: HUMAN_ONLY
+
+[HYP] oauth2/clients/{clientId} unauthenticated app-plane reach — auth-mode parity gap, no data feed
+class: AUTH
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}
+confidence: 30
+reasoning: Live this cycle: no-auth → 500 empty; malformed Bearer → 401 `Unauthorized`; string/`me` → 400; nil-UUID → 500 (also `/gdpr`); `/authorize` → 404 from distinct HTML router. A missing token is NOT uniformly 401 on this subtree (fixes to 401 only when a token is presented), i.e. unauthenticated requests reach the handler / DB lookup. Response bodies are empty in every class; no client-UUID oracle exists unauthenticated; spec requires read/write scopes for data ops.
+evidence_needed: any clientId returning 200 or non-empty body unauthenticated (requires valid registered UUID + scope) → AUTH_HELPED
+verify_steps: passive-exhausted this cycle (list=401, leaf=500/400, gdpr=500, authorize=404, OPTIONS=204 ACAO-cred); deeper requires creds/UUID → AUTH_HELPED
+impact: LOW standalone (auth-consistency/hardening material only); chain/deny-listing value if a token or UUID is later obtained
+testability: PASSIVE (exhausted) / AUTH_HELPED
+
+[HYP] OAuth client-management list participates in family-wide CORS-credential reflection
+class: MISCONFIG
+asset: api.sipgate.com/v2/authorization/oauth2/clients/
+confidence: 40
+reasoning: OPTIONS 204 with `ACAO:https://evil.example` + `ACAC:true` confirmed this cycle on the client CRUD list (matches accepted family-wide /v2 behavior). No independent data exposure: list GET 401, leaf empty 500/400. Reinforces scope of the already-accepted /v2/* CORS finding.
+evidence_needed: none beyond existing accepted finding (breadth datum)
+verify_steps: documented (OPTIONS probe above)
+impact: defense-in-depth; chain material only for same-origin-XSS or token scenarios
+testability: PASSIVE (confirmed)
+
+## STEP 4 — SELF-CRITIQUE
+
+- [PARKED] oauth2/clients list-endpoint edge-bypass (nemotron3, conf 85): **falsified this cycle** — `GET /v2/authorization/oauth2/clients/` → 401 empty; uniform edge gate applies.
+- [PARKED] {clientId} leaf app-plane reach exploitable: conf 30 — no data feed (empty 500/400), no UUID oracle, mutating/PUT against live objects out of rules; authz-consistency only.
+- [PARKED] GDPR subroute IDOR vertical: unchanged from prior (needs creds+UUID), no feed.
+- [FINAL] doc/?url= spec-forward DOM injection (48, HUMAN_ONLY) — sole surviving high-value api-surface vector; server facts fully evidenced, data:-URL POC now self-contained.
+
+## STEP 5 — NEXT ACTION
+
+[NEXT] HUMAN: In Chromium open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<your-spec>` where the spec (OpenAPI3) has `info.x-logo.url=https://<attacker>/img.png` and `info.description` containing `<img src=x onerror=alert(document.domain)>` + a `<iframe src="https://attacker/">`; report (a) whether attacker markup renders into the api-origin DOM, (b) whether script executes on api origin, (c) whether `/v2/doc/` embeds in an attacker iframe (frameable re-check). Do both the `data:` and `https://<attacker>/spec.json` variants. This closes the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client).
+
+## STEP 6 — LEARNING
+
+- [LEARN] REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: live GET list → 401 empty; nemotron3 "list bypass" (conf 85) falsified — uniform edge auth applies to the list.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/oauth2/clients/{clientId}: auth-mode split (no-auth→500, bad-Bearer→401 "Unauthorized", string→400, nil/gdpr→500, /authorize→404 HTML router) — unauthenticated requests reach the handler but all bodies empty; no data feed; auth-consistency gap only.
+- [LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/authorization/oauth2/clients/: OPTIONS → 204 with ACAO:<evil> + ACAC:true — CORS-credential reflection extends to the OAuth client-management list (breadth of accepted /v2/* CORS finding).
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/?url=: server serves doc shell (200) for any url incl `data:application/json;base64,...` — self-contained spec-forward POC confirmed; no scheme validation server-side.
+
+## STEP 7 — RISK
+
+[RISK] sipgate: 45 — No new critical unauthenticated vector. The top-ranked list-bypass hypothesis collapsed (401). The oauth2 clients subtree anomaly is real but empty-body (auth-consistency, not exposure). Reportable set unchanged: `/v2/*` CORS-credential reflection (now incl. oauth2 client list), doc/?url= frameable spec-forward chain (server facts complete; HUMAN-gated for execution proof), plus accepted family MISCONFIGs. Real data planes remain edge-401-uniform or AUTH_HELPED; no ATO/SSRF/money-bug surfaced unauthenticated.
