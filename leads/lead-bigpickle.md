@@ -3135,3 +3135,24 @@ impact: full host takeover on *.sipgate.cloud family — phishing/credential/ema
 testability: HUMAN_ONLY
 [NEXT] HUMAN: Fresh Chromium (no cookies), open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` where spec = OpenAPI3 with `info.description` = `<img src=x onerror=alert(document.domain)>` and `info.x-logo.url` = `https://<attacker>/log.png`; then repeat with `https://<attacker>/spec.json`. Report (a) attacker markup inserted into api-origin DOM, (b) alert(document.domain) fires, (c) `/v2/doc/` embeds in attacker `<iframe>`. Verdict decides CRITICAL-vs-phishing for the doc chain.
 [RISK] sipgate: 40 — No new critical unauthenticated vector. The last high-confidence api lead (oauth2 client list) collapsed to 404; ranked-#1 dev-topology SSRF deflated by port probes (inert). doc/?url= stands as frameable spec-shell + auto-registered extreme-scope implicit client, but script-exec remains HUMAN-unproven (chain-dependent). Reportable set unchanged: /v2/* CORS-cred reflection, doc/?url= frameable spec-shell (MEDIUM), family MISCONFIGs, share1 takeover candidate (HUMAN claim). Data planes uniformly edge-401; no ATO/SSRF/money bug surfaced unauthenticated.
+## 2026-09-12 23:27:22 UTC [target] (model bigpickle)
+[HYP] OAuth client GDPR-URL leaf: unauthenticated app-plane reach (edge auth not uniform; spec security:None)
+class: AUTH
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr
+confidence: 55
+reasoning: swagger.json live (144 paths) declares gdpr GET with security ABSENT returning 200 GdprUrls JSON; unauthenticated nil-UUID → 500 (handler/DB reach), non-nil-UUID/string/me → 400, sibling list → 401 (edge enforced); reproduced 2026-09-11 + 2026-09-12×2, absent only in the single flapped-404 cycle; bodies empty in every class; no SERVERID header on error leaves (replica signal inconclusive).
+evidence_needed: any real registered OAuth client UUID returning 200 + GdprUrls body without Authorization header, or any non-empty body unauthenticated.
+verify_steps: AUTH_HELPED — with a real client UUID GET `/v2/authorization/oauth2/clients/<uuid>/gdpr`; passively, re-sample statuses each cycle to track flapping (version-skew gate).
+impact: LOW standalone (empty bodies, no UUID oracle, no data feed); auth-consistency/spec-vs-behavior drift on a GDPR-named endpoint = hardening + chain material; meaningful only if a client UUID is later obtained.
+testability: AUTH_HELPED
+[HYP] Attacker-spec render on api origin via doc/?url= (frameable, extreme-scope implicit OAuth client)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 48
+reasoning: re-confirmed unchanged this cycle — data: spec served 200 text/html; initializer feeds decodeURIComponent(url[1]) into SwaggerUIBundle with no allowlist; initOAuth registers sipgate-swagger-ui (realm third-party, scopes incl oauth2-clients:write/balance:read/payment:methods:*) on every load; no XFO/frame-ancestors on doc shell; oauth2RedirectUrl fixed same-origin.
+evidence_needed: attacker spec markup (info.description / info.x-logo.url) rendering in api-origin DOM; any script exec; iframe-embed from attacker page.
+verify_steps: HUMAN_ONLY — fresh Chromium, `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` with description `<img src=x onerror=alert(document.domain)>`; repeat with `https://<attacker>/spec.json`.
+impact: CRITICAL if script executes (api-scope session via implicit token + CORS-cred); else MEDIUM phishing amplifier on trusted origin.
+testability: HUMAN_ONLY
+[NEXT] HUMAN: Fresh Chromium (no cookies): open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` where spec = OpenAPI3 with `info.description`=`<img src=x onerror=alert(document.domain)>` and `info.x-logo.url=https://<attacker>/l.png`; then again with `https://<attacker>/spec.json`. Report (a) attacker markup in api-origin DOM, (b) script executes, (c) `/v2/doc/` embeds in attacker iframe. Decides CRITICAL-vs-MEDIUM for the only remaining high-value api chain.
+[RISK] sipgate: 40 — No new critical unauth vector. The oauth2-clients/gdpr subtree is real, reproducible edge-auth drift on a GDPR-named endpoint, but data-less without a client UUID. doc/?url= stands as frameable spec-shell + extreme-scope implicit client, HUMAN-gated for exec. Reportable set unchanged: `/v2/*` CORS-cred reflection (now incl. oauth2 client CRUD list), doc/?url= chain (MEDIUM/CRITICAL-HUMAN), family MISCONFIGs, share1 takeover candidate. Data planes otherwise uniform edge-401.

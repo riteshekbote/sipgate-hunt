@@ -626,3 +626,5 @@ www.sipgate.de
 - CHANGED login.sipgate.com third-party realm live OIDC with extreme scopes (authorization:oauth2:clients:write, balance:read, payment:methods:*, contacts/sms/account read+write), HS256/HS384/HS512, PKCE plain,
 - CHANGED integration.sipgate.com/metrics firebase_jwt_forbidden_requests 72223 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
 - CHANGED api.sipgate.com/v2/* arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
+
+## 2026-09-12 23:27:44 UTC
