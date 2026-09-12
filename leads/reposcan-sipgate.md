@@ -647,3 +647,5 @@ reasoning: `DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-change-me-please}` — the
 impact: LOW-MEDIUM (4.3) — If deployed without setting the env var, the database GUI is accessible with a trivially guessable password.
 verify_steps: 1) Check if any production Flow-IO deployment uses the default password. 2) Verify Studio is not exposed to the internet.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-12 09:03:49 UTC
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
