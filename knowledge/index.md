@@ -343,3 +343,47 @@
 - 2026-09-12 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
 - 2026-09-12 REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - 2026-09-12 REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+- 2026-09-12 REJECTED network DoS @ app.sipgate.com: Out of scope per program policy.
+- 2026-09-12 REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope.
+- 2026-09-12 ACCEPTED AUTH @ login.sipgate.com: OIDC implicit flow with fragment token delivery is in-scope high-value target.
+- 2026-09-12 REJECTED network DoS @ app.sipgate.com: Out of scope per program policy.
+- 2026-09-12 REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope.
+- 2026-09-12 ACCEPTED AUTH @ login.sipgate.com: OIDC implicit flow with fragment token delivery is in-scope high-value target.
+- 2026-09-12 REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin.
+- 2026-09-12 REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reachable flawed verifier.
+- 2026-09-12 REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. revoked/not registered.
+- 2026-09-12 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scope`), no Host-header bypass found; redirect_uri validation correct.
+- 2026-09-12 ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/account/balance/payment).
+- 2026-09-12 ACCEPTED MISCONFIG @ clinq-bridge-sipgate (GitHub): K8s deployment exposes internal Redis IP `10.37.248.211:6378` + GCP project `clinq-services` in public repo.
+- 2026-09-12 ACCEPTED MISCONFIG/SECRET @ radau (GitHub): Default CORS `AllowAllOrigins+AllowCredentials` + hardcoded API keys/DB passwords in public repo.
+- 2026-09-12 REJECTED network DoS @ app.sipgate.com: Out of scope per program policy.
+- 2026-09-12 REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope.
+- 2026-09-12 ACCEPTED AUTH @ login.sipgate.com: OIDC implicit flow with fragment token delivery is in-scope high-value target.
+- 2026-09-12 REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin.
+- 2026-09-12 REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reachable flawed verifier.
+- 2026-09-12 REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. revoked/not registered — not a live credential exposure.
+- 2026-09-12 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scope`), no Host-header bypass found; redirect_uri validation correct.
+- 2026-09-12 ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/account/balance/payment).
+- 2026-09-12 ACCEPTED MISCONFIG @ clinq-bridge-sipgate (GitHub): K8s deployment exposes internal Redis IP `10.37.248.211:6378` + GCP project `clinq-services` in public repo.
+- 2026-09-12 ACCEPTED MISCONFIG/SECRET @ radau (GitHub): Default CORS `AllowAllOrigins+AllowCredentials` + hardcoded API keys/DB passwords in public repo.
+- 2026-09-12 REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is not demonstrable statically; token persists to localStorage before navigation — fragment never forwarded off-origin. Class signal: unvalidated client redirect is not by itself token theft.
+- 2026-09-12 REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reachable flawed verifier; treat as config hardening, not a vulnerability.
+- 2026-09-12 REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. revoked/not registered — not a live credential exposure; the pattern is example-code-only.
+- 2026-09-12 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scope`), no Host-header bypass found; redirect_uri validation correct (invalid URI → 400); treat as hardened config, not a vulnerability.
+- 2026-09-12 ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/account/balance/payment) — a legitimate high-value target if a client credential or DCR bypass is ever obtained.
+- 2026-09-12 ACCEPTED MISCONFIG @ `api.sipgate.com/v2/*`: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth gap, chain-dependent for full exploitation
+- 2026-09-12 ACCEPTED INFO @ `api.sipgate.com/v2/doc/*`: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as same-origin-XSS amplifier
+- 2026-09-12 REJECTED SSRF @ `mock.integration.sipgate.cloud`: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+- 2026-09-12 ACCEPTED MISCONFIG @ `*.integration.sipgate.cloud` (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with `ACAO:*` CORS exposing x-provider-{url,key} SSRF inputs; distinct gate tier from apex Firebase-JWT
+- 2026-09-12 ACCEPTED INFO @ `integration.sipgate.com/metrics`: firebase_jwt_forbidden_requests 17394 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+- 2026-09-12 ACCEPTED MISCONFIG @ `team-uk.live.sipgate.com` + `team-de.live.sipgate.com`: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation
+- 2026-09-12 ACCEPTED MISCONFIG @ `sipgate-desktop-app.s3.eu-central-1.amazonaws.com`: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stale since 2024-06-11); ACL/policy reads denied; write path NOT tested (HUMAN sign-off required)
+- 2026-09-12 ACCEPTED AUTH @ `login.sipgate.com` third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+- 2026-09-12 REJECTED OATH @ `api.sipgate.com/v2/doc/oauth2-redirect.html`: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin
+- 2026-09-12 REJECTED AUTH @ `api.sipgate.com/v2`: all tested paths return 401 empty-body unauth; uniform edge auth; no authz-drift/BOLA unauthenticated (per KB) — except oauth2/clients/{clientId} subtree (500 on UUID = app-plane reach, confirmed)
+- 2026-09-12 REJECTED OATH @ `app.sipgate.com/implicit-auth-redirect`: history.replace(external) in React Router resolves same-origin, token persists to localStorage before navigation — fragment never forwarded off-origin (per KB, consistent across cycles)
+- 2026-09-12 REJECTED AUTH @ `login.sipgate.com` Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reachable flawed verifier (per KB)
+- 2026-09-12 REJECTED SECRET @ `api.sipgate.com` third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live credential exposure (per KB)
+- 2026-09-12 REJECTED AUTH @ `login.sipgate.com` third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
+- 2026-09-12 REJECTED network DoS @ `app.sipgate.com`: Out of scope per program policy
+- 2026-09-12 REJECTED SSL/TLS best practice @ `login.sipgate.com`: Out of scope per program policy

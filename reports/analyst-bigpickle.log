@@ -22770,3 +22770,124 @@ testability: HUMAN_ONLY
 
 **STEP 7 — RISK**
 [RISK] sipgate: 44 — Spec re-exposure + anomaly extended to a spec-claims-public GDPR subroute raises the authz-consistency story slightly, but it remains empty-body edge-noise requiring valid client UUIDs + scopes for any real feed; reportable set unchanged (/v2/* CORS creds, doc/?url= frameable swagger phishing chain, accepted family MISCONFIG). No critical unauthenticated vector without same-origin XSS or a token source.
+===== ANALYST bigpickle 2026-09-12 11:21:22 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sk -o /dev/null -D - 'https://api.sipgate.com/v2/authorization/oauth2/clients/' --max-time 20; echo '---LIST-DONE---'
+HTTP/1.1 401 Unauthorized
+content-length: 0
+vary: origin
+x-b3-traceid: 611d39a3c54bf34def1b6f67cde6a316
+date: Sat, 12 Sep 2026 11:16:51 GMT
+
+---LIST-DONE---
+[0m
+[0m$ [0mcurl -sk -o /dev/null -D - 'https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr' --max-time 20; echo '---GDPR-NIL-DONE---'
+HTTP/1.1 500 Internal Server Error
+content-length: 0
+vary: origin
+x-b3-traceid: e85ec3bf7317133f278e2a699ee608fa
+date: Sat, 12 Sep 2026 11:16:51 GMT
+
+---GDPR-NIL-DONE---
+[0m
+[0m$ [0mcurl -sk -D - -o /dev/null 'https://api.sipgate.com/v2/dummy-path-xyz' --max-time 20; echo '---COOKIE-PROBE-DONE---'
+HTTP/1.1 404 Not Found
+content-length: 53
+content-type: text/html; charset=utf-8
+vary: origin
+x-b3-traceid: a9240bc08ad35b24de1b5a1ead76c5ec
+date: Sat, 12 Sep 2026 11:16:52 GMT
+
+---COOKIE-PROBE-DONE---
+[0m
+[0m$ [0mcurl -sk 'https://api.sipgate.com/v2/dummy-path-xyz' --max-time 20; echo; echo '---404BODY-DONE---'
+<html><body><h1>Resource not found</h1></body></html>
+---404BODY-DONE---
+[0m
+[0m$ [0mcurl -sk 'https://api.sipgate.com/v2/doc/' --max-time 20 | head -c 2500; echo; echo '---DOCINDEX-DONE---'
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="/v2/doc/swagger-ui.css" />
+    <link rel="stylesheet" type="text/css" href="/v2/doc/index.css" />
+    <link rel="icon" type="image/png" href="/v2/doc/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/v2/doc/favicon-16x16.png" sizes="16x16" />
+  </head>
+
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="/v2/doc/swagger-ui-bundle.js" charset="UTF-8"> </script>
+    <script src="/v2/doc/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
+    <script src="/v2/doc/keycloak-logout.js"></script>
+    <script src="/v2/doc/swagger-initializer.js" charset="UTF-8"> </script>
+  </body>
+</html>
+
+---DOCINDEX-DONE---
+[0m
+[0m$ [0mcurl -sk 'https://api.sipgate.com/v2/doc/swagger-initializer.js' --max-time 20; echo; echo '---INIT-DONE---'
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+
+---INIT-DONE---
+[0m
+[0m$ [0mcurl -sk 'https://api.sipgate.com/v2/doc/swagger-ui.css' --max-time 30 | head -c 600; echo; echo '---CSSHEAD-DONE---'
+.swagger-ui{color:#3b4151;
+  /*! normalize.css v7.0.0 | MIT License | github.com/necolas/normalize.css */font-family:sans-serif}.swagger-ui html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;line-height:1.15}.swagger-ui body{margin:0}.swagger-ui article,.swagger-ui aside,.swagger-ui footer,.swagger-ui header,.swagger-ui nav,.swagger-ui section{display:block}.swagger-ui h1{font-size:2em;margin:.67em 0}.swagger-ui figcaption,.swagger-ui figure,.swagger-ui main{display:block}.swagger-ui figure{margin:1em 40px}.swagger-ui hr{box-sizing:content-box;height:0;overflow:visible}.swagger-ui pr
+---CSSHEAD-DONE---
+[0m
+[93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting
+[0m✗ [0mcd /tmp && curl -sk 'https://api.sipgate.com/v2/doc/swagger-ui-bundle.js' --max-time 60 -o su.js; ls -la su.js; grep -aoE '(version[:=][[:space:]]*[,("'"'"']?[0-9v]+\.[0-9]+\.[0-9]+|swagger-ui@?[0-9]+\.[0-9]+\.[0-9]+|"version":"[0-9]+\.[0-9]+\.[0-9]+")' su.js | sort -u | head -40 failed
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.
+[93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting
+[0m✗ [0mcd /tmp && curl -sk 'https://api.sipgate.com/v2/doc/swagger-ui-bundle.js.map' --max-time 60 -o su.map; echo "map size: $(wc -c < su.map 2>/dev/null)"; grep -aoE 'swagger-ui[^"]{0,40}"version"[^,]{0,30}' su.map 2>/dev/null | head -10; grep -aoE 'SwaggerUI v?[0-9]+\.[0-9]+\.[0-9]+|"name":"swagger-ui"[^}]{0,80}' su.map 2>/dev/null | sort -u | head -20 failed
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.
