@@ -23036,3 +23036,307 @@ testability: PASSIVE (infeasible)
 
 ## STEP 7 — RISK
 [RISK] sipgate: 45 — No critical unauthenticated vector this cycle; doc/?url= chain strengthened on server-side facts (frameable + spec-substitution + implicit extreme-scope OAuth client + dead default spec) but remains HUMAN-gated for execution proof and swagger-ui 5.x gives no script-executing render primitive by consensus. Reportable set unchanged: /v2/* CORS credential reflection (validated), doc/?url= frameable spec-forward phishing chain (HUMAN pending), plus accepted family MISCONFIGs. Real data planes remain AUTH_HELPED or edge-401-uniform; no ATO/SSRF/money-bug surfaced unauthenticated.
+===== ANALYST bigpickle 2026-09-12 17:20:20 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code} %{size_download} %{content_type}\n" -H "Origin: https://evil.example" -D - "https://api.sipgate.com/v2/doc/" 2>&1 | head -30; sleep 1
+HTTP/1.1 200 OK
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,WWW-Authenticate,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,Mcp-Session-Id,X-Sipgate-Command
+cache-control: max-age=0
+content-type: text/html; charset=utf-8
+last-modified: Mon, 30 Oct 2023 17:20:29 GMT
+set-cookie: SERVERID=web-apps-web01; path=/; HttpOnly; Secure
+vary: origin
+x-b3-traceid: f51136eb9919c61bb9f8330765db4e91
+date: Sat, 12 Sep 2026 17:16:40 GMT
+transfer-encoding: chunked
+
+200 833 text/html; charset=utf-8
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "swagger.json: %{http_code} %{size_download}\n" "https://api.sipgate.com/v2/swagger.json"; sleep 1; curl -s -D - -o /dev/null -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/userinfo" 2>&1 | grep -iE "HTTP/|access-control|x-b3|vary"
+swagger.json: 200 191699
+HTTP/1.1 401 Unauthorized
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,WWW-Authenticate,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,Mcp-Session-Id,X-Sipgate-Command
+vary: origin
+x-b3-traceid: fb8e9940bc353246cb2bd7c262752230
+[0m
+[0m$ [0mcurl -s -H "Origin: https://evil.example" "https://api.sipgate.com/v2/doc/" ; echo "---INIT---"; curl -s "https://api.sipgate.com/v2/doc/swagger-initializer.js"; echo; sleep 1
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="/v2/doc/swagger-ui.css" />
+    <link rel="stylesheet" type="text/css" href="/v2/doc/index.css" />
+    <link rel="icon" type="image/png" href="/v2/doc/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/v2/doc/favicon-16x16.png" sizes="16x16" />
+  </head>
+
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="/v2/doc/swagger-ui-bundle.js" charset="UTF-8"> </script>
+    <script src="/v2/doc/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
+    <script src="/v2/doc/keycloak-logout.js"></script>
+    <script src="/v2/doc/swagger-initializer.js" charset="UTF-8"> </script>
+  </body>
+</html>
+---INIT---
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "swagger.json lastmod probing\n" -D - "https://api.sipgate.com/v2/swagger.json" 2>&1 | grep -iE "HTTP/|last-modified|etag"; sleep 1; curl -s -o /dev/null -w "gdpr-subroute: %{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000/gdpr"; sleep 1; curl -s -o /dev/null -w "clients-list: %{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients/"
+HTTP/1.1 200 OK
+gdpr-subroute: 500
+clients-list: 401
+[0m
+[0m$ [0mgrep -oE "SwaggerUIBundle|swagger-ui@?[0-9.]+|version[^,;]{0,20}" /tmp/sui.js 2>/dev/null | sort -u | head -20; echo "---"; grep -oE "matrix|openApi|JSONSchema|onComplete|requestInterceptor|[0-9]\.[0-9]{1,2}\.[0-9]{1,2}" /tmp/sui.js 2>/dev/null | sort -u | head
+---
+[0m
+[0m$ [0mcurl -s -o /tmp/spec.json -w "%{http_code} %{size_download}\n" "https://api.sipgate.com/v2/swagger.json"; sleep 1; curl -s "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" -o /tmp/sui.js -w "bundle: %{http_code} %{size_download}\n"
+200 191699
+bundle: 200 1096221
+[0m
+[0m$ [0mgrep -oE "version\"[^,]{0,30}|rev\.[0-9.]+|swagger-ui"[0-9.]*| [0-9]\.[0-9]{1,2}\.[0-9]{1,2}" /tmp/sui.js | sort -u | head; echo "===paths==="; grep -oE "\"/v2/[a-zA-Z0-9/{}$_.-]+\"" /tmp/spec.json | sort -u | wc -l; grep -oE "\"/v2/[a-zA-Z0-9/{}$_.-]+\"" /tmp/spec.json | sort -u | head -70
+/bin/bash: -c: line 1: unexpected EOF while looking for matching `"'
+[0m
+[0m$ [0mgrep -oE 'version.{0,20}|rev\.[0-9.]+|[0-9]\.[0-9]{1,2}\.[0-9]{1,2}' /tmp/sui.js | sort -u | head; echo "===pathcount==="; grep -oE '"/v2/[a-zA-Z0-9/{}$_.-]+"' /tmp/spec.json | sort -u | wc -l
+0.2.0
+0.3.0
+0.4.0
+0.6.0
+0.7.0
+3.0.0
+3.10.0
+3.20.3
+3.26.0
+4.0.0
+===pathcount===
+0
+[0m
+[0m$ [0mpython3 -c "
+import json,re
+s=json.load(open('/tmp/spec.json'))
+paths=s['paths']
+print('paths:',len(paths))
+for p in sorted(paths):
+    ops=','.join(sorted(paths[p].keys())) if isinstance(paths[p],dict) else str(paths[p])
+    # security present per-op?
+    secs=[]
+    for m,o in paths[p].items():
+        if isinstance(o,dict) and 'security' in o: secs.append(m+'::'+str(o['security']))
+    print(p, ops, ('SEC:'+';'.join(secs)) if secs else 'nosec')
+" 2>&1 | head -80
+paths: 144
+/ get nosec
+/account get SEC:get::[{'oauth2': ['all', 'account:read']}]
+/account/verified put SEC:put::[{'oauth2': ['all', 'account:write']}]
+/addresses get SEC:get::[{'oauth2': ['all', 'addresses:read']}]
+/addresses/itemCount get SEC:get::[{'oauth2': ['all', 'addresses:read']}]
+/addresses/{addressId} get,put SEC:get::[{'oauth2': ['all', 'addresses:read']}];put::[{'oauth2': ['all', 'addresses:write']}]
+/addresses/{addressId}/numbers get SEC:get::[{'oauth2': ['all', 'numbers:read']}]
+/app/events get SEC:get::[{'oauth2': ['internal']}]
+/app/events/{id} delete SEC:delete::[{'oauth2': ['internal']}]
+/app/links get nosec
+/app/properties get SEC:get::[{'oauth2': ['all', 'internal']}]
+/app/tacs get SEC:get::[{'oauth2': ['internal']}]
+/app/users get SEC:get::[{'oauth2': ['internal']}]
+/authorization/oauth2/clients get,post SEC:get::[{'oauth2': ['all', 'authorization:oauth2:clients:read']}];post::[{'oauth2': ['all', 'authorization:oauth2:clients:write']}]
+/authorization/oauth2/clients/{clientId} delete,get,put SEC:delete::[{'oauth2': ['all', 'authorization:oauth2:clients:write']}];get::[{'oauth2': ['all', 'authorization:oauth2:clients:read']}];put::[{'oauth2': ['all', 'authorization:oauth2:clients:write']}]
+/authorization/oauth2/clients/{clientId}/gdpr get nosec
+/authorization/userinfo get nosec
+/autorecordings/greetings get,post SEC:get::[{'oauth2': ['autorecording:greeting:read', 'all']}];post::[{'oauth2': ['autorecording:greeting:write', 'all']}]
+/autorecordings/greetings/{greetingId} delete SEC:delete::[{'oauth2': ['autorecording:greeting:write', 'all']}]
+/autorecordings/{extension}/settings get,put SEC:get::[{'oauth2': ['devices:read', 'all']}];put::[{'oauth2': ['devices:read', 'all']}]
+/balance get SEC:get::[{'oauth2': ['all', 'balance:read']}]
+/blacklist/incoming get,post SEC:get::[{'oauth2': ['all', 'blacklist:read']}];post::[{'oauth2': ['all', 'blacklist:write']}]
+/blacklist/incoming/{phoneNumber} delete SEC:delete::[{'oauth2': ['all', 'blacklist:write']}]
+/callrestrictions get SEC:get::[{'oauth2': ['all', 'callrestrictions:read']}]
+/calls get,post SEC:get::[{'oauth2': ['all', 'rtcm:read']}];post::[{'oauth2': ['all', 'rtcm:write']}]
+/calls/{callId} delete SEC:delete::[{'oauth2': ['all', 'rtcm:write']}]
+/calls/{callId}/announcements post SEC:post::[{'oauth2': ['all', 'rtcm:write']}]
+/calls/{callId}/dtmf post SEC:post::[{'oauth2': ['all', 'rtcm:write']}]
+/calls/{callId}/hold put SEC:put::[{'oauth2': ['all', 'rtcm:write']}]
+/calls/{callId}/muted put SEC:put::[{'oauth2': ['all', 'rtcm:write']}]
+/calls/{callId}/recording put SEC:put::[{'oauth2': ['all', 'rtcm:write']}]
+/calls/{callId}/transfer post SEC:post::[{'oauth2': ['all', 'rtcm:write']}]
+/channels get SEC:get::[{'oauth2': ['all', 'channels:read']}]
+/channels/{channelId} delete SEC:delete::[{'oauth2': ['all', 'channels:write']}]
+/channels/{channelId}/events get SEC:get::[{'oauth2': ['all', 'channels:read']}]
+/channels/{channelId}/name put SEC:put::[{'oauth2': ['all', 'channels:write']}]
+/channels/{channelId}/users put SEC:put::[{'oauth2': ['all', 'channels:write']}]
+/channels/{channelId}/users/{userId}/devices put SEC:put::[{'oauth2': ['all', 'channels:write']}]
+/contacts delete,get,post SEC:delete::[{'oauth2': ['all', 'contacts:write']}];get::[{'oauth2': ['all', 'contacts:read']}];post::[{'oauth2': ['all', 'contacts:write']}]
+/contacts/csv get SEC:get::[{'oauth2': ['all', 'contacts:read']}]
+/contacts/import/csv post SEC:post::[{'oauth2': ['all', 'contacts:write']}]
+/contacts/import/google post SEC:post::[{'oauth2': ['all', 'contacts:write']}]
+/contacts/internal get SEC:get::[{'oauth2': ['all', 'contacts:read']}]
+/contacts/vcard get,put SEC:get::[{'oauth2': ['all', 'contacts:read']}];put::[{'oauth2': ['all', 'contacts:write']}]
+/contacts/{contactId} get,put SEC:get::[{'oauth2': ['all', 'contacts:read']}];put::[{'oauth2': ['all', 'contacts:write']}]
+/contacts/{contactid} delete SEC:delete::[{'oauth2': ['all', 'contacts:write']}]
+/devices/{deviceId} delete,get,put SEC:delete::[{'oauth2': ['all', 'devices:write']}];get::[{'oauth2': ['all', 'devices:read']}];put::[{'oauth2': ['all', 'devices:write']}]
+/devices/{deviceId}/alias put SEC:put::[{'oauth2': ['all', 'devices:write']}]
+/devices/{deviceId}/callerid get,put SEC:get::[{'oauth2': ['all', 'devices:read', 'devices:callerid:read']}];put::[{'oauth2': ['all', 'devices:write', 'devices:callerid:write']}]
+/devices/{deviceId}/credentials/password post SEC:post::[{'oauth2': ['all', 'devices:write']}]
+/devices/{deviceId}/external/incomingcalldisplay put SEC:put::[{'oauth2': ['all', 'devices:write']}]
+/devices/{deviceId}/external/targetnumber put SEC:put::[{'oauth2': ['all', 'devices:write']}]
+/devices/{deviceId}/localprefix get,put SEC:get::[{'oauth2': ['all', 'devices:read', 'devices:localprefix:read']}];put::[{'oauth2': ['all', 'devices:write', 'devices:localprefix:write']}]
+/devices/{deviceId}/singlerowdisplay get,put SEC:get::[{'oauth2': ['all', 'devices:read', 'devices:singlerowdisplay:read']}];put::[{'oauth2': ['all', 'devices:write', 'devices:singlerowdisplay:write']}]
+/devices/{deviceId}/tariffannouncement get,put SEC:get::[{'oauth2': ['all', 'devices:read', 'devices:tariffannouncement:read']}];put::[{'oauth2': ['all', 'devices:write', 'devices:tariffannouncement:write']}]
+/groupfaxlines get SEC:get::[{'oauth2': ['all', 'groups:read', 'groups:faxlines:read']}]
+/groupfaxlines/{faxlineId}/callerid get SEC:get::[{'oauth2': ['all', 'groups:read', 'groups:faxlines:read']}]
+/groupfaxlines/{faxlineId}/numbers get SEC:get::[{'oauth2': ['all', 'groups:read', 'groups:faxlines:read']}]
+/groups get SEC:get::[{'oauth2': ['all', 'groups:read']}]
+/groups/{groupId} get SEC:get::[{'oauth2': ['all', 'groups:read']}]
+/groups/{groupId}/devices post SEC:post::[{'oauth2': ['all', 'groups:devices:write']}]
+/groups/{groupId}/devices/{deviceId} delete SEC:delete::[{'oauth2': ['all', 'groups:devices:write']}]
+/groups/{groupId}/faxlines get SEC:get::[{'oauth2': ['all', 'groups:read', 'groups:faxlines:read']}]
+/groups/{groupId}/numbers get SEC:get::[{'oauth2': ['all', 'groups:read', 'groups:numbers:read']}]
+/groups/{groupId}/users get SEC:get::[{'oauth2': ['all', 'groups:read', 'groups:users:read']}]
+/groups/{groupId}/voicemail get SEC:get::[{'oauth2': ['all', 'groups:read', 'groups:voicemails:read']}]
+/history delete,get,put SEC:delete::[{'oauth2': ['all', 'history:write']}];get::[{'oauth2': ['all', 'history:read']}];put::[{'oauth2': ['all', 'history:write']}]
+/history/export get SEC:get::[{'oauth2': ['all', 'history:read']}]
+/history/{entryId} delete,get,put SEC:delete::[{'oauth2': ['all', 'history:write']}];get::[{'oauth2': ['all', 'history:read']}];put::[{'oauth2': ['all', 'history:write']}]
+/history/{entryId}/archive put SEC:put::[{'oauth2': ['all', 'history:write']}]
+/history/{entryId}/note put SEC:put::[{'oauth2': ['all', 'history:write']}]
+/history/{entryId}/read put SEC:put::[{'oauth2': ['all', 'history:write']}]
+/log/webhooks get SEC:get::[{'oauth2': ['all', 'log:webhooks:read']}]
+/numbers get SEC:get::[{'oauth2': ['all', 'numbers:read']}]
+/numbers/quickdial post SEC:post::[{'oauth2': ['all', 'numbers:write']}]
+/numbers/quickdial/validation/{quickDialNumber} get SEC:get::[{'oauth2': ['all', 'numbers:read']}]
+/numbers/quickdial/{numberId} delete SEC:delete::[{'oauth2': ['all', 'numbers:write']}]
+/numbers/quickdial/{quickdialId} put SEC:put::[{'oauth2': ['all', 'numbers:write']}]
+/numbers/{numberId} put SEC:put::[{'oauth2': ['all', 'numbers:write']}]
+[0m
+[0m$ [0mpython3 -c "
+import json
+s=json.load(open('/tmp/spec.json'))
+paths=s['paths']
+nosec=[p for p in sorted(paths) if any(isinstance(o,dict) and 'security' not in o for o in paths[p].values()) or (isinstance(paths[p],dict) and not paths[p])]
+print('nosec paths:',nosec)
+print('total ops:',sum(len(v) for v in paths.values() if isinstance(v,dict)))
+"
+for p in / "" /app/links /authorization/userinfo; do curl -s -o /dev/null -w "GET %{url_effective} -> %{http_code}\n" "https://api.sipgate.com$p"; sleep 1; done
+nosec paths: ['/', '/app/links', '/authorization/oauth2/clients/{clientId}/gdpr', '/authorization/userinfo', '/translations/{language}']
+total ops: 187
+GET https://api.sipgate.com/ -> 301
+GET https://api.sipgate.com/ -> 301
+GET https://api.sipgate.com/app/links -> 404
+GET https://api.sipgate.com/authorization/userinfo -> 404
+[0m
+[0m$ [0mfor p in / /v2/ /v2/app/links /v2/authorization/userinfo /v2/translations/de; do curl -s -o /dev/null -w "%{url_effective} -> %{http_code}\n" "https://api.sipgate.com$p"; sleep 1; done
+https://api.sipgate.com/ -> 301
+https://api.sipgate.com/v2/ -> 404
+https://api.sipgate.com/v2/app/links -> 401
+https://api.sipgate.com/v2/authorization/userinfo -> 401
+https://api.sipgate.com/v2/translations/de -> 200
+[0m
+[0m$ [0mgrep -oE 'SwaggerUIBundle\.VERSION[^;]{0,40}|"rev"[^,]{0,20}|version:"[0-9][^"]*"|VERSION="[0-9.]+"' /tmp/sui.js | sort -u | head; echo "==marker=="; grep -c "StandaloneLayout" /tmp/sui.js; grep -oE 'SwaggerUIBundle[^=]{0,30}' /tmp/sui.js | head -3; echo "==webpack=="; head -c 300 /tmp/sui.js
+"rev"
+version:"1.0"
+version:"1.3.2"
+version:"17.0.2"
+version:"3.20.3"
+==marker==
+0
+SwaggerUIBundle
+SwaggerUIBundle
+==webpack==
+/*! For license information please see swagger-ui-bundle.js.LICENSE.txt */
+!function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.SwaggerUIBundle=t():e.SwaggerUIBundle=t()}(this,(function
+[0m
+**STEP 1 — DELTA**
+- [CHANGED] `api.sipgate.com/v2/swagger.json` restored to **200** (191,699 bytes, 144 paths/187 ops) — default doc spec live again after 404 on 09-07; all 5 spec-`nosec` data paths re-probed.
+- [CONFIRMED] Spec-`nosec` paths uniformly edge-guarded: `/v2/app/links` 401, `/v2/authorization/userinfo` 401, `/v2/authorization/oauth2/clients/{clientId}/gdpr` nil-UUID→500 empty-body, `/v2/translations/de` 200 inert — no unauth data feed.
+- [CONFIRMED] Arbitrary-origin CORS+credentials reflection persists on `doc/` and `userinfo` (evil.example → `ACAO:` + `ACAC:true`); `doc/` HTML 200, no XFO/frame-ancestors, `SERVERID=web-apps-web01`.
+- [CONFIRMED] `swagger-initializer.js`: `decodeURIComponent(?url)` → `SwaggerUIBundle` unvalidated; `oauth2RedirectUrl` same-origin `/v2/doc/oauth2-redirect.html`; implicit client `sipgate-swagger-ui` realm `third-party`; bundle is stock webpack UMD (version not pinned, deps 3.20.3/17.0.2).
+- NO_DELTA elsewhere (integration/chatbot/s3/team-* family unchanged).
+
+**STEP 2 — PRIORITIZE**
+- [PRIO] api.sipgate.com/v2/doc/,0.93,axis=(a:6 b:6 t:7 g:6 c:4 f:5 → 0.25·6+0.25·6+0.15·7+0.15·6+0.10·4+0.10·5 = 5.9→/6 scaled 0.93)
+- [PRIO] api.sipgate.com/v2/swagger.json,0.55,axis=(fresh re-exposure, no new ops — inert refresh)
+- [PRIO] api.sipgate.com/v2/authorization/oauth2/clients/*,0.40,axis=(AUTH_HELPED/exhausted)
+
+**STEP 3 — HYPOTHESES**
+[HYP] Attacker spec renders attacker-controlled DOM on api origin via doc/?url=
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: Server-side facts re-confirmed this cycle — (1) `doc/` serves text/html with no XFO and no frame-ancestors on any header (frameable); (2) `swagger-initializer.js` feeds `decodeURIComponent(url[1])` straight into `SwaggerUIBundle` with no host/scheme allowlist (attacker spec fully substitutes; default same-origin spec now 200 so no benign fallback); (3) implicit client `sipgate-swagger-ui` + realm `third-party` + extreme scope set registers on page load; (4) same-origin `oauth2RedirectUrl`; (5) `doc/` itself reflects `Origin` + credentials. Execution primitive depends on exact swagger-ui renderer (bundle unpinned; 5.x consensus = HTML-injection/img only, no script exec).
+evidence_needed: attacker-spec markup (x-logo.url img, info.description markdown-HTML) rendered into api-origin DOM; any script execution
+verify_steps: HUMAN: Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` with spec containing `info.x-logo.url`→attacker host and `info.description`→`<img src=...>`/iframe; record DOM insertion + any JS execution; also confirm doc page embeds in attacker iframe
+impact: CRITICAL if script executes (full session read/write at api scope via implicit token); else phishing/credential-harvest amplifier on trusted origin — MEDIUM/HIGH
+testability: HUMAN_ONLY
+[HYP] GDPR subroute spec-nosec exposes cross-tenant operand
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr
+confidence: 20
+reasoning: Nil-UUID→500 (app-plane reach), string-ID→400 (distinct validator), bodies empty in all value classes; spec declares no security but edge returns 401 for list and empty-error for leaf — no data feed observed regardless of input class; no registered-client-ID oracle available unauthenticated.
+evidence_needed: any clientId returning 200 or non-empty body (requires valid registered UUID + authz scope)
+verify_steps: passive-exhausted; requires client-UUID oracle + authorization → AUTH_HELPED
+impact: LOW standalone (needs creds+UUID); authz-consistency chain material only
+testability: PASSIVE (exhausted) / AUTH_HELPED
+
+**STEP 4 — SELF-CRITIQUE**
+- [PARKED] GDPR subroute IDOR: conf 45→20 after re-probe (no feed in any class, requires unauthenticated-impossible UUID oracle); not reportable standalone.
+- [PARKED] numbers/{id} OPTIONS→PUT bypass: mutating test against live data out of rules; infeasible safely (prior).
+- [FINAL] doc/?url= spec-forward DOM injection (45, HUMAN_ONLY) — only surviving high-value api-surface vector; server-side chain fully evidenced.
+
+**STEP 5 — NEXT ACTION**
+[NEXT] HUMAN: In Chromium load `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` (spec = OpenAPI3 doc with `info.x-logo.url` → attacker img host + `info.description` containing raw HTML `<iframe>`/`<img onerror=alert(1)>`) and report (a) whether attacker markup renders into api-origin DOM, (b) script execution, (c) whether `/v2/doc/` embeds inside an attacker iframe. This is the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client + CORS creds).
+
+**STEP 6 — LEARNING**
+- [LEARN] REJECTED AUTH @ api.sipgate.com/v2 spec-nosec paths: /app/links→401, /authorization/userinfo→401, clients/{id}/gdpr→500-empty, translations→200-inert; spec-claims-public vs edge-401 drift is annotation-only, zero unauth data feed.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: restored live (144 paths/187 ops, all per-op security annotated); doc/ default spec back to 200 same-origin.
+
+**STEP 7 — RISK**
+[RISK] sipgate: 45 — No new critical unauthenticated vector. swagger.json restoration adds no surface (paths known, all edge-401). Reportable set unchanged: `/v2/*` CORS credential reflection (validated), doc/?url= frameable swagger phishing chain (server-side facts complete, HUMAN-gated for execution proof), accepted family MISCONFIGs. Real data planes remain AUTH_HELPED/uniformly edge-gated.

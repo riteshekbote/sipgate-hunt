@@ -1,14 +1,23 @@
-## 2026-09-12 14:17:32 UTC [target] (model nemotron3)
-[PRIO] api.sipgate.com/v2/doc/oauth2-redirect.html, 8.35, attack_surface=8 business_value=8 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=9
-[PRIO] app.dev.sipgate.com, 8.20, attack_surface=8 business_value=7 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=10
-[PRIO] api.sipgate.com/v2/authorization/oauth2/clients/{clientId}, 7.60, attack_surface=8 business_value=9 tech_exposure=9 gate_ease=4 cloud_surface=5 freshness=9
-[PRIO] login.sipgate.com (third-party realm), 6.85, attack_surface=7 business_value=9 tech_exposure=7 gate_ease=4 cloud_surface=5 freshness=7
-[PRIO] *.integration.sipgate.cloud (94 hosts), 6.65, attack_surface=7 business_value=6 tech_exposure=7 gate_ease=5 cloud_surface=9 freshness=7
-[PRIO] integration.sipgate.com, 6.65, attack_surface=7 business_value=7 tech_exposure=8 gate_ease=3 cloud_surface=7 freshness=8
+## 2026-09-12 17:20:13 UTC [target] (model nemotron3)
+[PRIO] api.sipgate.com/v2/authorization/oauth2/clients/, 8.35, attack_surface=9 business_value=9 tech_exposure=9 gate_ease=4 cloud_surface=5 freshness=10
+[PRIO] api.sipgate.com/v2/doc/oauth2-redirect.html, 8.20, attack_surface=8 business_value=8 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=9
+[PRIO] app.dev.sipgate.com, 8.15, attack_surface=8 business_value=7 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=10
+[PRIO] login.sipgate.com (third-party realm), 7.10, attack_surface=7 business_value=9 tech_exposure=7 gate_ease=4 cloud_surface=5 freshness=8
+[PRIO] *.integration.sipgate.cloud (94 hosts), 6.80, attack_surface=7 business_value=6 tech_exposure=7 gate_ease=5 cloud_surface=9 freshness=8
+[PRIO] integration.sipgate.com, 6.75, attack_surface=7 business_value=7 tech_exposure=8 gate_ease=3 cloud_surface=7 freshness=8
 [PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com, 6.60, attack_surface=4 business_value=7 tech_exposure=5 gate_ease=10 cloud_surface=9 freshness=7
 [PRIO] grafana.sipgate.cloud, 6.15, attack_surface=5 business_value=6 tech_exposure=6 gate_ease=8 cloud_surface=7 freshness=6
 [PRIO] team-uk.live.sipgate.com + team-de.live.sipgate.com, 5.90, attack_surface=5 business_value=5 tech_exposure=6 gate_ease=10 cloud_surface=4 freshness=6
 [PRIO] share1.sipgate.cloud, 5.40, attack_surface=3 business_value=4 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=6
+[HYP] OAuth2 Client Management List Endpoint Authz-Drift via Edge Auth Bypass
+class: AUTH
+asset: api.sipgate.com/v2/authorization/oauth2/clients/
+confidence: 85
+reasoning: KB 2026-09-11/12 confirms /v2/authorization/oauth2/clients/{id} returns 500 on UUID vs 401 on other paths — indicates app-plane reach past edge auth; string client-IDs (sipgate-app-web, platypus-swagger, sipgate-swagger-ui) return 400 not 401/500 — distinct validator logic; nil-UUID returns 500 confirming UUID parser reaches app layer; list endpoint untested
+evidence_needed: GET /v2/authorization/oauth2/clients/ returning 200/403 instead of 401; proof client enumeration/manipulation accessible without valid tenant token
+verify_steps: GET https://api.sipgate.com/v2/authorization/oauth2/clients/ — observe status code and response body; GET https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app-web (400 baseline); GET https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000 (500 baseline)
+impact: Unauthorized OAuth client enumeration/manipulation (create/read/update/delete clients with extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write) — HIGH
+testability: PASSIVE
 [HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References
 class: SSRF
 asset: app.dev.sipgate.com
@@ -18,28 +27,19 @@ evidence_needed: HTTP response from newly extracted prod subdomains (admin.live.
 verify_steps: GET https://app.dev.sipgate.com/assets/main-K-JtiyRc.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve all *.dev.sipgate.net, *.live.sipgate.net, *.dev.sipgate.com hosts; probe discovered hosts for HTTP responses on ports 80/443/3396/3443/8080/10443 (read-only, ≤1 rps); test for SSRF via any proxy/chaining endpoints in dev SPA
 impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, team-uk.local, integration.dev, admin.live, helpdesk.live); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface + prod subdomain exposure in dev bundle)
 testability: PASSIVE
-[HYP] OAuth2 Client Management Endpoint Authz-Drift via UUID Validator Bypass
-class: AUTH
-asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}
-confidence: 80
-reasoning: KB 2026-09-11/12 confirms /v2/authorization/oauth2/clients/{id} returns 500 on UUID vs 401 on other paths — indicates app-plane reach past edge auth; string client-ID validators (sipgate-app-web, platypus-swagger, sipgate-swagger-ui) return 400 (bad request) not 401/500 — distinct validator logic; nil-UUID returns 500 confirming UUID parser reaches app layer
-evidence_needed: String client-ID variants returning 200/403 instead of 400/500; proof that client-management operations (read/write/delete) accessible without valid tenant token; enumeration of valid client-IDs via 200/403 responses
-verify_steps: GET https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-app-web (400 confirmed); GET https://api.sipgate.com/v2/authorization/oauth2/clients/platypus-swagger (400 confirmed); GET https://api.sipgate.com/v2/authorization/oauth2/clients/sipgate-swagger-ui (400 confirmed); GET https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000 (500 confirmed); GET https://api.sipgate.com/v2/authorization/oauth2/clients/ (list) — observe status codes and response bodies
-impact: If string client-IDs bypass edge auth → unauthorized OAuth client enumeration/manipulation (create/read/update/delete clients with extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write) — HIGH
-testability: PASSIVE
-[HYP] Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection Enables Token Exfiltration
+[HYP] Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection Enables Token Exfiltration Chain
 class: MISCONFIG
 asset: api.sipgate.com/v2/doc/oauth2-redirect.html
-confidence: 75
-reasoning: KB 2026-09-11/12 confirms oauth2-redirect.html reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — inherits API.v2 domain's permissive CORS; token fragment delivered to same-origin redirect page via implicit flow from login.sipgate.com third-party realm (client sipgate-swagger-ui, extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write)
+confidence: 80
+reasoning: KB 2026-09-11/12 confirms oauth2-redirect.html reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — inherits API.v2 domain's permissive CORS; token fragment delivered to same-origin redirect page via implicit flow from login.sipgate.com third-party realm (client sipgate-swagger-ui, extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); cross-origin popup test shows SecurityError on window.opener read but same-origin XSS on this page would allow token access + exfiltration via fetch to api.sipgate.com/v2/* (CORS allows credentials from any origin)
 evidence_needed: Confirmation that token fragment from implicit flow lands on this page and is accessible to page JS; proof that page JS can exfiltrate token via fetch to api.sipgate.com/v2/contacts (CORS allows credentials from any origin)
 verify_steps: GET https://api.sipgate.com/v2/doc/oauth2-redirect.html with Origin: https://evil.com — observe ACAO: https://evil.com + ACAC:true (confirmed); initiate implicit auth via sipgate-swagger-ui client on /v2/doc/, observe redirect to oauth2-redirect.html with token fragment; test if page JS can read fragment and exfiltrate via fetch to api.sipgate.com/v2/contacts
 impact: Defense-in-depth gap — OAuth redirect endpoint exposes credentials-enabled CORS; enables token exfiltration if XSS exists on Swagger-UI page or spec; chain-dependent for full exploitation; severity MEDIUM
 testability: PASSIVE
-[PARKED] None — all three hypotheses survive critique (confidence ≥75, PASSIVE verify_steps, non-REJECTED classes)
-[FINAL] 1. Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References (confidence 85, PASSIVE) — highest confidence, concrete verify_steps, live rotating bundle with NEW prod subdomains in dev config
-[FINAL] 2. OAuth2 Client Management Endpoint Authz-Drift via UUID Validator Bypass (confidence 80, PASSIVE) — NEW confirmed: 500 on UUID indicates app-plane reach past edge auth; string client-ID validators distinct (400 not 401)
-[FINAL] 3. Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection (confidence 75, PASSIVE) — NEW confirmed: oauth2-redirect.html reflects arbitrary Origin with credentials; high-value as chain component for XSS-based token theft
+[PARKED] None — all three hypotheses survive critique (confidence ≥80, PASSIVE verify_steps, non-REJECTED classes)
+[FINAL] 1. OAuth2 Client Management List Endpoint Authz-Drift via Edge Auth Bypass (confidence 85, PASSIVE) — critical untested list endpoint, 500 on UUID confirms app-plane reach
+[FINAL] 2. Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References (confidence 85, PASSIVE) — highest freshness, concrete verify_steps, live rotating bundle with NEW prod subdomains in dev config
+[FINAL] 3. Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection (confidence 80, PASSIVE) — confirmed ACAO:*+ACAC:true on OAuth redirect page; high-value as chain component for XSS-based token theft
 [NEXT] PROBE: GET https://api.sipgate.com/v2/authorization/oauth2/clients/ — test if client enumeration bypasses edge auth; critical untested list endpoint for authz-drift hypothesis
 [LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth gap, chain-dependent for full exploitation
 [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as same-origin-XSS amplifier

@@ -595,3 +595,5 @@ www.sipgate.de
 - CHANGED dev.sipgate.de resolves to sipgate IP 217.10.68.23 but dead (no HTTP 80/443, timeout) — abandoned host, owned IP, no takeover.
 
 ## 2026-09-12 14:17:41 UTC
+
+## 2026-09-12 17:20:20 UTC
