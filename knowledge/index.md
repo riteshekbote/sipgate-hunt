@@ -387,3 +387,4 @@
 - 2026-09-12 REJECTED AUTH @ `login.sipgate.com` third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
 - 2026-09-12 REJECTED network DoS @ `app.sipgate.com`: Out of scope per program policy
 - 2026-09-12 REJECTED SSL/TLS best practice @ `login.sipgate.com`: Out of scope per program policy
+- 2026-09-12 ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as same-origin-XSS amplifier

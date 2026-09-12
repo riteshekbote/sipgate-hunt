@@ -2962,3 +2962,33 @@ testability: HUMAN_ONLY
 [NEXT] HUMAN: In Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` and record whether attacker-controlled spec HTML/JS is rendered into the api-origin DOM (spec-forward + frameable + implicit extreme-scope OAuth client chain) — the only remaining high-value api-surface vector; server-side probing is exhausted.
 [RISK] sipgate: 44 — Spec re-exposure + anomaly extended to a spec-claims-public GDPR subroute raises the authz-consistency story slightly, but it remains empty-body edge-noise requiring valid client UUIDs + scopes for any real feed; reportable set unchanged (/v2/* CORS creds, doc/?url= frameable swagger phishing chain, accepted family MISCONFIG). No critical unauthenticated vector without same-origin XSS or a token source.
 ## 2026-09-12 11:17:26 UTC [target] (model bigpickle)
+## 2026-09-12 14:15:48 UTC [target] (model bigpickle)
+[HYP] Attacker spec renders attacker-controlled DOM on api origin (XSS/phishing chain)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: Fresh probes confirm (1) endpoint serves text/html with no XFO and no CSP frame-ancestors → frameable; (2) swagger-initializer.js passes decodeURIComponent(?url) into SwaggerUIBundle un-validated → attacker spec fully substitutes doc; (3) spec 404 → no benign default cert; (4) implicit `sipgate-swagger-ui` client + extreme scopes registered on load; (5) same-origin oauth2RedirectUrl with ACAO+ACAD creds (KB). Script-execution primitive depends on exact swagger-ui version (unpinnable in served bundle); swagger-ui 5.x has community-consensus no script-executing spec render, HTML-injection only.
+evidence_needed: DOM-execution or even HTML-iframe/img injection of attacker spec fields on api origin (browser-only)
+verify_steps: HUMAN: Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json`; check DOM for injected element; test `info.description` markdown-HTML and `x-logo.url`
+impact: CRITICAL if script executes (full session read/write via implicit token on api origin); else phishing amplifier on trusted origin — MEDIUM/HIGH
+testability: HUMAN_ONLY
+[HYP] Registered third-party client-ID GUID returns metadata (IDOR/INFO)
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr
+confidence: 25
+reasoning: nil-GUID → 500 (app-plane reach past edge auth), string-ID → 400 (separate validator); spec re-exposed this subtree with no per-op security; response bodies empty in all tests — no data feed observed regardless of value class.
+evidence_needed: any clientId returning 200/non-empty body (requires valid registered client UUID oracle)
+verify_steps: passive-exhausted; further requires client-UUID oracle + authorization → AUTH_HELPED
+impact: cross-tenant GDPR operand reachable only with credentials+valid UUID — LOW standalone, authz-consistency material
+testability: PASSIVE (exhausted) / AUTH_HELPED
+[HYP] numbers/{id} OPTIONS 200 + Allow: PUT bypasses uniform edge-auth (AUTH/BUSLOGIC)
+class: AUTH
+asset: api.sipgate.com/v2/numbers/{numberId}
+confidence: 20
+reasoning: OPTIONS passes edge (200, Allow: PUT) where data GETs are 401; if PUT handler also skips edge-authz it would be a mutating primitive — but requires a valid numberId owned by a tenant; mutating probes against live data out of rules.
+evidence_needed: authenticated-or-not PUT result per numberId (blocked)
+verify_steps: infeasible safely (mutating, needs valid numberId)
+impact: potential number reconfiguration (BUSLOGIC) if handler shares OPTIONS' lint; safety-prevented
+testability: PASSIVE (infeasible)
+[NEXT] HUMAN: In Chromium load `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` (spec = OpenAPI 3 doc whose `info.description` contains an HTML iframe/img and `info.x-logo.url` points at attacker host); record whether attacker-controlled markup renders into the api-origin DOM and whether any script executes; also confirm the doc page is embeddable in an attacker iframe (no XFO/frame-ancestors confirmed server-side, browser re-check advised).
+[RISK] sipgate: 45 — No critical unauthenticated vector this cycle; doc/?url= chain strengthened on server-side facts (frameable + spec-substitution + implicit extreme-scope OAuth client + dead default spec) but remains HUMAN-gated for execution proof and swagger-ui 5.x gives no script-executing render primitive by consensus. Reportable set unchanged: /v2/* CORS credential reflection (validated), doc/?url= frameable spec-forward phishing chain (HUMAN pending), plus accepted family MISCONFIGs. Real data planes remain AUTH_HELPED or edge-401-uniform; no ATO/SSRF/money-bug surfaced unauthenticated.

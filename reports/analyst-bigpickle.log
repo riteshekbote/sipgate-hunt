@@ -22891,3 +22891,148 @@ window.onload = function() {
 [93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting
 [0m✗ [0mcd /tmp && curl -sk 'https://api.sipgate.com/v2/doc/swagger-ui-bundle.js.map' --max-time 60 -o su.map; echo "map size: $(wc -c < su.map 2>/dev/null)"; grep -aoE 'swagger-ui[^"]{0,40}"version"[^,]{0,30}' su.map 2>/dev/null | head -10; grep -aoE 'SwaggerUI v?[0-9]+\.[0-9]+\.[0-9]+|"name":"swagger-ui"[^}]{0,80}' su.map 2>/dev/null | sort -u | head -20 failed
 [91m[1mError: [0mThe user rejected permission to use this specific tool call.
+===== ANALYST bigpickle 2026-09-12 14:17:41 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -D - -o /tmp/opencode/doc.html "https://api.sipgate.com/v2/doc/" --max-time 20 | head -40
+HTTP/1.1 200 OK
+cache-control: max-age=0
+content-type: text/html; charset=utf-8
+last-modified: Mon, 30 Oct 2023 17:20:29 GMT
+set-cookie: SERVERID=web-apps-web01; path=/; HttpOnly; Secure
+vary: origin
+x-b3-traceid: e68a77e0301cba06f7df7b8053cd179f
+date: Sat, 12 Sep 2026 14:14:37 GMT
+transfer-encoding: chunked
+[0m
+[0m$ [0mcurl -s "https://api.sipgate.com/v2/doc/swagger-initializer.js" --max-time 20
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+[0m
+[0m$ [0mcurl -s "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" --max-time 20 -r 0-3199 | grep -oP 'swagger-ui[^"]*|version["\s:]*"[0-9][^"]*|@5\.[0-9]+\.[0-9]+' | head -5
+swagger-ui-bundle.js.LICENSE.txt */
+[0m
+[0m$ [0mcurl -s -I "https://api.sipgate.com/v2/swagger.json" --max-time 10
+HTTP/1.1 404 Not Found
+vary: origin
+x-b3-traceid: c0859e4f095c5ab9c2acbd01087f1d4f
+date: Sat, 12 Sep 2026 14:15:07 GMT
+[0m
+[0m$ [0mcurl -s "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" --max-time 20 -o /tmp/opencode/suib.js; wc -c /tmp/opencode/suib.js; grep -oP '5\.[0-9.]+' /tmp/opencode/suib.js | sort -u | head; grep -oP 'version:"[0-9.]+"' /tmp/opencode/suib.js | head
+1096221 /tmp/opencode/suib.js
+5.176
+5.199
+5.6
+5.672
+5.8
+5.83
+5.841
+version:"3.20.3"
+version:"17.0.2"
+version:"1.3.2"
+version:"1.0"
+[0m
+## STEP 1 — DELTA
+- [CHANGED] `api.sipgate.com/v2/doc/` — 200 text/html; **no X-Frame-Options and no CSP frame-ancestors** (frameable confirmed at header level); reveals `SERVERID=web-apps-web01` (new server in web-apps family); `vary: origin` present.
+- [CHANGED] `api.sipgate.com/v2/swagger.json` — **404** re-confirmed (default spec dead) ⇒ doc page renders only via attacker `?url=` when no param, fallback baseUrl+/v2/swagger.json dead → effectively URL-substitution required either way.
+- [CHANGED] `swagger-initializer.js` — re-fetched: `decodeURIComponent(url[1])` fed to `SwaggerUIBundle({url,...})` with **no scheme/host allowlist**; `oauth2RedirectUrl` = same-origin `baseUrl+"/v2/doc/oauth2-redirect.html"`; implicit `clientId:"sipgate-swagger-ui"`, realm third-party.
+- [CHANGED] `swagger-ui-bundle.js` — 1,096,221 bytes, version marker unpinnable (candidate semvers all third-party libs); version-unpinnability persists (KB).
+- NO_DELTA on integration/gateway/cloud families this cycle.
+
+## STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/doc/ (spec-forward+frameable+implicit extreme-scope OAuth), 7.1, XSS
+- [PRIO] api.sipgate.com/v2/authorization/oauth2/clients/{clientId}, 5.2, IDOR
+- [PRIO] api.sipgate.com/v2/numbers/{numberId} OPTIONS-Auth-bypass surface, 3.9, AUTH
+
+## STEP 3 — HYPOTHESES
+[HYP] Attacker spec renders attacker-controlled DOM on api origin (XSS/phishing chain)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: Fresh probes confirm (1) endpoint serves text/html with no XFO and no CSP frame-ancestors → frameable; (2) swagger-initializer.js passes decodeURIComponent(?url) into SwaggerUIBundle un-validated → attacker spec fully substitutes doc; (3) spec 404 → no benign default cert; (4) implicit `sipgate-swagger-ui` client + extreme scopes registered on load; (5) same-origin oauth2RedirectUrl with ACAO+ACAD creds (KB). Script-execution primitive depends on exact swagger-ui version (unpinnable in served bundle); swagger-ui 5.x has community-consensus no script-executing spec render, HTML-injection only.
+evidence_needed: DOM-execution or even HTML-iframe/img injection of attacker spec fields on api origin (browser-only)
+verify_steps: HUMAN: Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json`; check DOM for injected element; test `info.description` markdown-HTML and `x-logo.url`
+impact: CRITICAL if script executes (full session read/write via implicit token on api origin); else phishing amplifier on trusted origin — MEDIUM/HIGH
+testability: HUMAN_ONLY
+
+[HYP] Registered third-party client-ID GUID returns metadata (IDOR/INFO)
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr
+confidence: 25
+reasoning: nil-GUID → 500 (app-plane reach past edge auth), string-ID → 400 (separate validator); spec re-exposed this subtree with no per-op security; response bodies empty in all tests — no data feed observed regardless of value class.
+evidence_needed: any clientId returning 200/non-empty body (requires valid registered client UUID oracle)
+verify_steps: passive-exhausted; further requires client-UUID oracle + authorization → AUTH_HELPED
+impact: cross-tenant GDPR operand reachable only with credentials+valid UUID — LOW standalone, authz-consistency material
+testability: PASSIVE (exhausted) / AUTH_HELPED
+
+[HYP] numbers/{id} OPTIONS 200 + Allow: PUT bypasses uniform edge-auth (AUTH/BUSLOGIC)
+class: AUTH
+asset: api.sipgate.com/v2/numbers/{numberId}
+confidence: 20
+reasoning: OPTIONS passes edge (200, Allow: PUT) where data GETs are 401; if PUT handler also skips edge-authz it would be a mutating primitive — but requires a valid numberId owned by a tenant; mutating probes against live data out of rules.
+evidence_needed: authenticated-or-not PUT result per numberId (blocked)
+verify_steps: infeasible safely (mutating, needs valid numberId)
+impact: potential number reconfiguration (BUSLOGIC) if handler shares OPTIONS' lint; safety-prevented
+testability: PASSIVE (infeasible)
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] clients/{clientId}/gdpr IDOR: conf<30 after nil-GUID-500 deflation, no UUID oracle, empty bodies — chain material only.
+- [PARKED] numbers PUT: mutating test out of rules, no valid numberId, edge-evidence thin.
+- [PARKED] swagger-ui version CVE pinning: bundle unpinnable; community consensus = no executing primitive in 5.x; adds nothing reportable.
+- [FINAL] spec-forward+frameable+implicit OAuth chain on /v2/doc/ — only survivable high-value api vector (conf 45, HUMAN_ONLY).
+
+## STEP 5 — NEXT ACTION
+[NEXT] HUMAN: In Chromium load `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` (spec = OpenAPI 3 doc whose `info.description` contains an HTML iframe/img and `info.x-logo.url` points at attacker host); record whether attacker-controlled markup renders into the api-origin DOM and whether any script executes; also confirm the doc page is embeddable in an attacker iframe (no XFO/frame-ancestors confirmed server-side, browser re-check advised).
+
+## STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/: fresh probes confirm frameable (no XFO, no CSP frame-ancestors) + unvalidated `?url=` spec substitution + dead default spec (404) + SERVERID=web-apps-web01 header leak.
+- [LEARN] REJECTED AUTH/IDOR @ api.sipgate.com/v2/authorization/oauth2/clients: (per KB) 500-on-nil-GUID is empty app-plane crash artifact; all other inputs 400 empty-body; no data feed; not reportable without UUID oracle + scope.
+- [LEARN] REJECTED OTHER @ api.sipgate.com/v2/swagger.json: default spec 404 — doc contents depend on attacker URL; spec-claims-public vs edge-401 already KB'd, no new drift.
+
+## STEP 7 — RISK
+[RISK] sipgate: 45 — No critical unauthenticated vector this cycle; doc/?url= chain strengthened on server-side facts (frameable + spec-substitution + implicit extreme-scope OAuth client + dead default spec) but remains HUMAN-gated for execution proof and swagger-ui 5.x gives no script-executing render primitive by consensus. Reportable set unchanged: /v2/* CORS credential reflection (validated), doc/?url= frameable spec-forward phishing chain (HUMAN pending), plus accepted family MISCONFIGs. Real data planes remain AUTH_HELPED or edge-401-uniform; no ATO/SSRF/money-bug surfaced unauthenticated.
