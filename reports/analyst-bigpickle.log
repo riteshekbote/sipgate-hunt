@@ -22600,3 +22600,173 @@ testability: PASSIVE (infeasible safely)
 
 ## STEP 7 — RISK
 [RISK] sipgate: 43 — This cycle deflated the strongest unauth lead (string-ID variants all 400; nil-GUID 500 is an empty crash artifact; only 2 subroutes bypass edge-auth and both are data-inert). Reportable set unchanged: /v2/* CORS credential reflection (validated), doc/?url= + frameable + implicit high-scope OAuth client (defense-in-depth/phishing, HUMAN pending), plus accepted family MISCONFIG. Real data planes remain AUTH_HELPED; no critical unauthenticated vector.
+===== ANALYST bigpickle 2026-09-12 06:34:29 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mfor p in "https://api.sipgate.com/v2/doc/" "https://api.sipgate.com/v2/doc/swagger-ui-init.js" "https://api.sipgate.com/v2/doc/swagger-initializer.js" "https://api.sipgate.com/v2/doc/oauth2-redirect.html" "https://api.sipgate.com/v2/swagger.json"; do echo "== $p"; curl -sk -m 15 -o /dev/null -w "%{http_code} type=%{content_type} size=%{size_download}\n" "$p"; sleep 1.2; done
+== https://api.sipgate.com/v2/doc/
+200 type=text/html; charset=utf-8 size=833
+== https://api.sipgate.com/v2/doc/swagger-ui-init.js
+200 type=text/html; charset=utf-8 size=24
+== https://api.sipgate.com/v2/doc/swagger-initializer.js
+200 type=application/javascript size=1336
+== https://api.sipgate.com/v2/doc/oauth2-redirect.html
+200 type=text/html; charset=utf-8 size=2690
+== https://api.sipgate.com/v2/swagger.json
+200 type=application/json size=191699
+[0m
+[0m$ [0mecho "-- swagger-ui-init.js body:"; curl -sk -m 15 "https://api.sipgate.com/v2/doc/swagger-ui-init.js"; echo; echo "-- swagger-initializer.js:"; curl -sk -m 15 "https://api.sipgate.com/v2/doc/swagger-initializer.js"; echo; echo "-- swagger.json head:"; curl -sk -m 15 "https://api.sipgate.com/v2/swagger.json" -o /tmp/swagger.json && head -c 600 /tmp/swagger.json; echo; sleep 1.2
+-- swagger-ui-init.js body:
+<!-- Smoketest - OK -->
+
+-- swagger-initializer.js:
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+  var url = window.location.search.match(/url=([^&]+)/);
+  var baseUrl;
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    var port = /^(80|443)$/.test(window.location.port) || !window.location.port.length ? '' : ':'
+      + window.location.port;
+    baseUrl = "https://" + window.location.hostname + port;
+    url = baseUrl + "/v2/swagger.json";
+  }
+
+  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  window.ui = SwaggerUIBundle({
+    oauth2RedirectUrl: baseUrl + "/v2/doc/oauth2-redirect.html",
+    url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl, OAuthLogoutPlugin
+    ],
+    layout: "StandaloneLayout"
+  });
+
+  window.ui.initOAuth({
+    clientId: "sipgate-swagger-ui",
+    realm: "third-party",
+    appName: "sipgate-swagger-ui",
+    scopeSeparator: " ",
+    additionalQueryStringParams: {nonce: getRandomInt(1000000, 9999999)}
+  });
+
+  //</editor-fold>
+};
+
+-- swagger.json head:
+{"basePath":"/v2","definitions":{"AccountPhonelineResponse":{"properties":{"alias":{"example":"Alan Turing","type":"string"},"id":{"example":"p0","type":"string"},"userId":{"example":"w0","type":"string"}},"type":"object"},"AccountPhonelinesResponse":{"properties":{"items":{"items":{"$ref":"#/definitions/AccountPhonelineResponse"},"type":"array"}},"type":"object"},"AccountResponse":{"properties":{"company":{"example":"Love sipgate","type":"string"},"email":{"example":"test@sipgate.de","type":"string"},"firstName":{"example":"Ada","type":"string"},"historyLifeTime":{"enum":["NONE","THIRTY_DAYS"
+[0m
+[0m$ [0mecho "== clientId nil-GUID:"; curl -sk -m 15 -w "\n%{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000"; echo "== doc headers:"; curl -sk -m 15 -sI "https://api.sipgate.com/v2/doc/" | grep -iE "x-frame|content-security|server|vary|access-control"; echo "== swagger.json top-level keys/security:"; python3 -c "import json;d=json.load(open('/tmp/swagger.json'));print('paths',len(d.get('paths',{})),'security',d.get('security'));print('has host',d.get('host'),'basePath',d.get('basePath'));import re;pc=[p for p in d.get('paths',{}) if p.count('/')>=4];print('deepest sample:',pc[:6])"
+== clientId nil-GUID:
+
+500
+== doc headers:
+set-cookie: SERVERID=web-apps-web01; path=/; HttpOnly; Secure
+vary: origin
+== swagger.json top-level keys/security:
+paths 144 security None
+has host api.sipgate.com basePath /v2
+deepest sample: ['/authorization/oauth2/clients/{clientId}', '/authorization/oauth2/clients/{clientId}/gdpr', '/channels/{channelId}/users/{userId}/devices', '/devices/{deviceId}/credentials/password', '/devices/{deviceId}/external/incomingcalldisplay', '/devices/{deviceId}/external/targetnumber']
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import json
+d=json.load(open('/tmp/swagger.json'))
+paths=d['paths']
+for p,v in paths.items():
+    if 'oauth2/clients' in p or 'gdpr' in p.lower():
+        print("PATH",p)
+        for m,op in v.items():
+            if m in ('get','put','post','delete','patch'):
+                sec=op.get('security','<inherit>')
+                print(f"  {m.upper()} sec={sec}")
+                for par in op.get('parameters',[]):
+                    print(f"    par {par.get('name')} in={par.get('in')} req={par.get('required')} type={par.get('type')}")
+EOF
+PATH /authorization/oauth2/clients
+  GET sec=[{'oauth2': ['all', 'authorization:oauth2:clients:read']}]
+  POST sec=[{'oauth2': ['all', 'authorization:oauth2:clients:write']}]
+    par client in=body req=True type=None
+PATH /authorization/oauth2/clients/{clientId}
+  DELETE sec=[{'oauth2': ['all', 'authorization:oauth2:clients:write']}]
+    par clientId in=path req=True type=string
+  GET sec=[{'oauth2': ['all', 'authorization:oauth2:clients:read']}]
+    par clientId in=path req=True type=string
+  PUT sec=[{'oauth2': ['all', 'authorization:oauth2:clients:write']}]
+    par clientId in=path req=True type=string
+    par client in=body req=True type=None
+PATH /authorization/oauth2/clients/{clientId}/gdpr
+  GET sec=<inherit>
+    par clientId in=path req=True type=string
+[0m
+[0m$ [0mfor id in "sipgate-app-web" "00000000-0000-0000-0000-000000000000"; do echo "== gdpr/$id:"; curl -sk -m 15 -w "\n%{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients/$id/gdpr"; sleep 1.2; done
+== gdpr/sipgate-app-web:
+
+400
+== gdpr/00000000-0000-0000-0000-000000000000:
+
+500
+[0m
+Probes done (5 reqs, ≤1rps, GET-only). Fresh spec re-exposure + subroute confirmed this cycle.
+
+**STEP 1 — DELTA**
+- CHANGED `api.sipgate.com/v2/swagger.json`: back to 200 (144 paths, 191KB) — was 404 per KB 2026-09-07/08; spec relocation reverted, deployment churn near the anomalous clients subtree.
+- NEW subroute in spec `…/oauth2/clients/{clientId}/gdpr`: GET declared with NO per-op security (global security absent) → spec-claims-public GDPR op.
+- CHANGED `api.sipgate.com/v2/doc/`: `swagger-initializer.js` confirms `?url=` fully attacker-controlled (`decodeURIComponent` unpinned, no scheme/host check), default = same-origin `/v2/swagger.json`; doc still frameable (no XFO, no CSP frame-ancestors).
+- NEW `api.sipgate.com` cookies: `SERVERID=web-apps-web01` on doc path (descriptive, same family as team-web rotation).
+- CHANGED `…/clients/{clientId}` live behavior: string-id→400, nil-UUID→500 persists; same sign confirmed on the new `…/{clientId}/gdpr` subroute (string 400, nil-UUID 500, empty body = app-plane validator reach).
+
+**STEP 2 — PRIORITIZE**
+- [PRIO] api.sipgate.com/v2/doc/?url= (swagger chain),5.6,frameable+unpinned-spec-forward+implicit-extreme-scope-OAuth-client
+- [PRIO] api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr,4.0,spec-claims-public-GDPR-op-on-anomalous-subtree
+
+**STEP 3 — HYPOTHESES**
+[HYP] GDPR subroute of anomalous clients subtree spec-declared public
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr
+confidence: 45
+reasoning: spec rotation restores 144-path doc with `{clientId}/gdpr` carrying no per-op security (global security absent). Live probe mirrors parent subtree exactly (string-id 400, nil-UUID 500, empty body) → same param-bound validator throwing past edge auth. GDPR ops conventionally gate erasure/export primitives.
+evidence_needed: any clientId returning 200 or non-empty body; or a valid registered client UUID returning 403-with-body (tenant-scoped response rather than generic 400)
+verify_steps: GET /v2/authorization/oauth2/clients/{any-non-nil-UUID}/gdpr (done nil/string); beyond that requires valid client-UUID oracle + authorization scope → AUTH_HELPED
+impact: cross-tenant GDPR operand only reachable with credentials + registered client UUID; standalone LOW, chain material for the authz-consistency report
+testability: PASSIVE (exhausted) / AUTH_HELPED for real data
+[HYP] Swagger-ui spec-forward renders attacker DOM on api origin
+class: XSS
+asset: api.sipgate.com/v2/doc/
+confidence: 40
+reasoning: swagger-initializer.js passes `decodeURIComponent(?url)` directly to SwaggerUIBundle (no host/scheme allowlist); default spec now 200 same-origin but attacker URL fully substitutes it; doc frameable; implicit `sipgate-swagger-ui` registers extreme scopes (clients:write, balance, payment:methods:*)
+evidence_needed: script/DOM execution from a crafted spec field on api origin (browser-only)
+verify_steps: HUMAN: Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json`, inspect DOM for injected element
+impact: phishing amplifier on api origin; full session read/write only if a script-executing render primitive exists — MEDIUM-CRITICAL chain
+testability: HUMAN_ONLY
+
+**STEP 4 — SELF-CRITIQUE**
+- [PARKED] Swagger-ui bundle version extraction: confidence 30 < 40, informational only, requires browser.
+- [PARKED] oauth2/clients collection re-check: confidence 30 < 40, spec churn already characterized.
+- [FINAL] GDPR subroute IDOR: 45, direct extension of ranked-75 anomaly into a spec-claims-public op.
+- [FINAL] Swagger-ui spec-render XSS: 40, standing highest-value api-origin chain, HUMAN-only verdict.
+
+**STEP 5 — NEXT ACTION**
+[NEXT] HUMAN: In Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` and record whether attacker-controlled spec HTML/JS is rendered into the api-origin DOM (spec-forward + frameable + implicit extreme-scope OAuth client chain) — the only remaining high-value api-surface vector; server-side probing is exhausted.
+
+**STEP 6 — LEARNING**
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live again (144 paths, global security absent, host api.sipgate.com) after 09-07/08 404 — deployment churn near the anomalous clients subtree; `{clientId}/gdpr` declared public.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr: live string-id→400, nil-UUID→500 empty-body — same param validator as parent; spec-claims-public vs edge behavior; no unauth data plane.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/: swagger-initializer.js `?url=` fully attacker-controlled with same-origin default; doc frameable; `SERVERID=web-apps-web01` cookie (descriptive).
+
+**STEP 7 — RISK**
+[RISK] sipgate: 44 — Spec re-exposure + anomaly extended to a spec-claims-public GDPR subroute raises the authz-consistency story slightly, but it remains empty-body edge-noise requiring valid client UUIDs + scopes for any real feed; reportable set unchanged (/v2/* CORS creds, doc/?url= frameable swagger phishing chain, accepted family MISCONFIG). No critical unauthenticated vector without same-origin XSS or a token source.

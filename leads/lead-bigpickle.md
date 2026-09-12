@@ -2940,3 +2940,24 @@ impact: potential number reconfiguration (BUSLOGIC) if the app-plane PUT handler
 testability: PASSIVE (infeasible safely)
 [NEXT] HUMAN: In Chromium, open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` and verify whether attacker-controlled spec HTML (logo `x-logo` url, italic/description markdown HTML) is rendered into the api-origin DOM — the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client + CORS credentials).
 [RISK] sipgate: 43 — This cycle deflated the strongest unauth lead (string-ID variants all 400; nil-GUID 500 is an empty crash artifact; only 2 subroutes bypass edge-auth and both are data-inert). Reportable set unchanged: /v2/* CORS credential reflection (validated), doc/?url= + frameable + implicit high-scope OAuth client (defense-in-depth/phishing, HUMAN pending), plus accepted family MISCONFIG. Real data planes remain AUTH_HELPED; no critical unauthenticated vector.
+## 2026-09-12 06:33:24 UTC [target] (model bigpickle)
+[HYP] GDPR subroute of anomalous clients subtree spec-declared public
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}/gdpr
+confidence: 45
+reasoning: spec rotation restores 144-path doc with `{clientId}/gdpr` carrying no per-op security (global security absent). Live probe mirrors parent subtree exactly (string-id 400, nil-UUID 500, empty body) → same param-bound validator throwing past edge auth. GDPR ops conventionally gate erasure/export primitives.
+evidence_needed: any clientId returning 200 or non-empty body; or a valid registered client UUID returning 403-with-body (tenant-scoped response rather than generic 400)
+verify_steps: GET /v2/authorization/oauth2/clients/{any-non-nil-UUID}/gdpr (done nil/string); beyond that requires valid client-UUID oracle + authorization scope → AUTH_HELPED
+impact: cross-tenant GDPR operand only reachable with credentials + registered client UUID; standalone LOW, chain material for the authz-consistency report
+testability: PASSIVE (exhausted) / AUTH_HELPED for real data
+[HYP] Swagger-ui spec-forward renders attacker DOM on api origin
+class: XSS
+asset: api.sipgate.com/v2/doc/
+confidence: 40
+reasoning: swagger-initializer.js passes `decodeURIComponent(?url)` directly to SwaggerUIBundle (no host/scheme allowlist); default spec now 200 same-origin but attacker URL fully substitutes it; doc frameable; implicit `sipgate-swagger-ui` registers extreme scopes (clients:write, balance, payment:methods:*)
+evidence_needed: script/DOM execution from a crafted spec field on api origin (browser-only)
+verify_steps: HUMAN: Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json`, inspect DOM for injected element
+impact: phishing amplifier on api origin; full session read/write only if a script-executing render primitive exists — MEDIUM-CRITICAL chain
+testability: HUMAN_ONLY
+[NEXT] HUMAN: In Chromium open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` and record whether attacker-controlled spec HTML/JS is rendered into the api-origin DOM (spec-forward + frameable + implicit extreme-scope OAuth client chain) — the only remaining high-value api-surface vector; server-side probing is exhausted.
+[RISK] sipgate: 44 — Spec re-exposure + anomaly extended to a spec-claims-public GDPR subroute raises the authz-consistency story slightly, but it remains empty-body edge-noise requiring valid client UUIDs + scopes for any real feed; reportable set unchanged (/v2/* CORS creds, doc/?url= frameable swagger phishing chain, accepted family MISCONFIG). No critical unauthenticated vector without same-origin XSS or a token source.
