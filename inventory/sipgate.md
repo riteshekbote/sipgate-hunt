@@ -559,3 +559,13 @@ www.sipgate.de
 - CHANGED mock.integration.sipgate.cloud: /swagger.json 404 — ungated twin has no spec endpoint (KB 2026-09-11)
 - CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web02/team-web03)
 - CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested
+
+## 2026-09-12 01:39:05 UTC
+- NEW api.sipgate.com/v2/authorization/oauth2/clients/{clientId}: returns 500 on UUID vs 401 on other paths — indicates app-plane reach past edge auth; string client-ID validators distinct from UUID validat
+- NEW api.sipgate.com/v2/doc/oauth2-redirect.html: reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit flow redirect endpoint inherits API.v2 permissive CORS (KB 20
+- NEW api.sipgate.com/v2/{param}/{subroute}: special-value path-segment scan hypothesis for systematic edge-auth bypass (500-class) (ranked 2026-09-11 21:40:38)
+- CHANGED app.dev.sipgate.com: bundle rotated to main-D_WMxc4R.js (5.65MB) — 18 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10.7
+- CHANGED integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 17394 (down from 93107) — per-replica counter confirms restart-reset; live Firebase-JWT validator active
+- CHANGED *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate
+- CHANGED mock.integration.sipgate.cloud: /swagger.json 404 — ungated twin has no spec endpoint
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web02/team-web03)

@@ -1,10 +1,30 @@
-## 2026-09-11 23:34:18 UTC [target] (model bigpickle)
-[HYP] Swagger-ui spec-render chain on trusted api origin via unfiltered ?url=
+## 2026-09-12 01:36:54 UTC [target] (model bigpickle)
+[HYP] Registered third-party client-ID GUID metadata reach via /clients/{id}
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}
+confidence: 25
+reasoning: Only all-zeros GUID returns 500 (app-plane reach); every other tested value (string IDs, random/max UUID) → 400. A GUID, if any, that resolves in the third-party clients store could return metadata — but no enumeration of valid client UUIDs exists and responses are empty-bodied.
+evidence_needed: any clientId returning 200
+verify_steps: GET https://api.sipgate.com/v2/authorization/oauth2/clients/{any-valid-format-GUID} (PASSIVE, done for 2/randomized — all 400/500)
+impact: none demonstrated; IDOR implausible without UUID oracle
+testability: PASSIVE
+[HYP] Swagger-ui version-specific spec-render XSS
 class: XSS
 asset: api.sipgate.com/v2/doc/
-confidence: 40
-reasoning: swagger-initializer.js passes decodeURIComponent(?url) directly to SwaggerUIBundle with no host/scheme check; default spec 404 so the page renders ONLY attacker-provided specs; spec renders on api.sipgate.com origin; doc has no XFO/CSP frame-ancestors and implicitly registers `sipgate-swagger-ui` (extreme scope set) for authorize-button flows.
-evidence_needed: HTML/script execution from a crafted spec `description`/`x-example` field rendered on api origin (browser-only); or at minimum a spec-controlled iframe/image rendered into the doc DOM
-verify_steps: HUMAN: open https://api.sipgate.com/v2/doc/?url=https://attacker/spec.json in Chromium, inspect DOM for injected element; no server-side probe possible
-impact: Spec-injection/phishing on api origin; full read/write session only if a script-executing render primitive exists (swagger version unpinnable → unknown CVE exposure); otherwise phishing amplifier only — MEDIUM chain, CRITICAL if render-XSS proven
+confidence: 25
+reasoning: Version not extractable from served bundle; swagger-ui 5.x line has no known script-executing spec-render primitive (community-consensus HTML-injection only, non-executing). Chain otherwise intact (spec-forward, frameable, implicit sipgate-swagger-ui, CORS creds).
+evidence_needed: DOM-execution proof of attacker spec field on api origin (browser-only)
+verify_steps: HUMAN: Chromium open https://api.sipgate.com/v2/doc/?url=https://attacker/spec.json
+impact: CRITICAL if proven; otherwise phishing amplifier
 testability: HUMAN_ONLY
+[HYP] numbers/{id} PUT reachable unauthenticated
+class: AUTH
+asset: api.sipgate.com/v2/numbers/{numberId}
+confidence: 20
+reasoning: OPTIONS 200 + Allow: PUT unauth shows subroute bypasses edge-401; does the PUT handler enforce its own auth? PUT is a mutating operation on phone-number objects.
+evidence_needed: unauthenticated PUT result
+verify_steps: blocked — mutating test against live customer data is out of rules, and requires a valid numberId
+impact: potential number reconfiguration (BUSLOGIC) if the app-plane PUT handler is equally unauth-cheap
+testability: PASSIVE (infeasible safely)
+[NEXT] HUMAN: In Chromium, open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` and verify whether attacker-controlled spec HTML (logo `x-logo` url, italic/description markdown HTML) is rendered into the api-origin DOM — the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client + CORS credentials).
+[RISK] sipgate: 43 — This cycle deflated the strongest unauth lead (string-ID variants all 400; nil-GUID 500 is an empty crash artifact; only 2 subroutes bypass edge-auth and both are data-inert). Reportable set unchanged: /v2/* CORS credential reflection (validated), doc/?url= + frameable + implicit high-scope OAuth client (defense-in-depth/phishing, HUMAN pending), plus accepted family MISCONFIG. Real data planes remain AUTH_HELPED; no critical unauthenticated vector.

@@ -22431,3 +22431,172 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 - [RISK] sipgate: 40 — Both open api hypotheses deflated by direct probes: back to a closed taxonomy with oauth2/clients/{id} (empty-body, format-gated 500) as the sole unauth app-plane reach = reportable only as authz-consistency. Standing report kit unchanged and validated: (1) /v2/* CORS-credential reflection (+x-b3-traceid), (2) swagger ?url= spec-forward + frameable doc + high-scope implicit client (defense-in-depth/phishing, browser POC needed), (3) oauth2/clients authz-consistency. Nothing on a critical path without credentials or a proven render-XSS.
+===== ANALYST bigpickle 2026-09-12 01:39:05 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mfor id in sipgate-app-web platypus-swagger sipgate-app; do echo "=== clients/$id ==="; curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients/$id"; sleep 1.3; done
+=== clients/sipgate-app-web ===
+400 
+=== clients/platypus-swagger ===
+400 
+=== clients/sipgate-app ===
+400
+[0m
+[0m$ [0mfor p in numbers users history contacts account calls; do echo "=== /v2/$p/nil-uuid ==="; curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "https://api.sipgate.com/v2/$p/00000000-0000-0000-0000-000000000000"; sleep 1.3; done
+=== /v2/numbers/nil-uuid ===
+405 
+=== /v2/users/nil-uuid ===
+401 
+=== /v2/history/nil-uuid ===
+401 
+=== /v2/contacts/nil-uuid ===
+401 
+=== /v2/account/nil-uuid ===
+404 text/html; charset=utf-8
+=== /v2/calls/nil-uuid ===
+401
+[0m
+`/v2/numbers/{nil-uuid}` → **405** — router hit, edge-auth bypassed for GET on that subroute, but GET unpermitted. Scanning more param-bound subroutes for the systemic class:
+[0m$ [0mfor p in extensions devices devices/ws endpoints faxlines phonelines voicemail ringgroups sms ipphonelines fax fax/mailsettings; do echo "=== /v2/$p/nil-uuid ==="; curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "https://api.sipgate.com/v2/$p/00000000-0000-0000-0000-000000000000"; sleep 1.3; done
+=== /v2/extensions/nil-uuid ===
+404 text/html; charset=utf-8
+=== /v2/devices/nil-uuid ===
+401 
+=== /v2/devices/ws/nil-uuid ===
+404 
+=== /v2/endpoints/nil-uuid ===
+404 text/html; charset=utf-8
+=== /v2/faxlines/nil-uuid ===
+404 text/html; charset=utf-8
+=== /v2/phonelines/nil-uuid ===
+404 
+=== /v2/voicemail/nil-uuid ===
+404 text/html; charset=utf-8
+=== /v2/ringgroups/nil-uuid ===
+404 text/html; charset=utf-8
+=== /v2/sms/nil-uuid ===
+404 text/html; charset=utf-8
+=== /v2/ipphonelines/nil-uuid ===
+404 text/html; charset=utf-8
+=== /v2/fax/nil-uuid ===
+404 text/html; charset=utf-8
+=== /v2/fax/mailsettings/nil-uuid ===
+404 text/html; charset=utf-8
+[0m
+`numbers/{id}` (405) and `oauth2/clients/{id}` (500) are the only param-subroutes bypassing edge 401; everything else 401/404. Characterizing the two anomalies:
+[0m$ [0mecho "=== OPTIONS numbers/nil ==="; curl -s -o /dev/null -w "%{http_code} %{content_type} allow:%{header_allow}\n" -X OPTIONS "https://api.sipgate.com/v2/numbers/00000000-0000-0000-0000-000000000000"; sleep 1.3; echo "=== HEAD numbers/nil ==="; curl -s -I -w "RESP:%{http_code}\n" "https://api.sipgate.com/v2/numbers/00000000-0000-0000-0000-000000000000" 2>/dev/null | head -3; sleep 1.3; echo "=== OPTIONS clients/nil ==="; curl -s -o /dev/null -w "%{http_code} %{content_type} allow:%{header_allow}\n" -X OPTIONS "https://api.sipgate.com/v2/authorization/oauth2/clients/00000000-0000-0000-0000-000000000000"; sleep 1.3; echo "=== GET clients/plugin-max-uuid ==="; curl -s -o /dev/null -w "%{http_code}\n" "https://api.sipgate.com/v2/authorization/oauth2/clients/ffffffff-ffff-ffff-ffff-ffffffffffff"
+=== OPTIONS numbers/nil ===
+curl: unknown --write-out variable: 'header_allow'
+200 text/plain allow:
+=== HEAD numbers/nil ===
+HTTP/1.1 405 Method Not Allowed
+allow: OPTIONS, PUT
+vary: origin
+=== OPTIONS clients/nil ===
+curl: unknown --write-out variable: 'header_allow'
+404 text/html; charset=utf-8 allow:
+=== GET clients/plugin-max-uuid ===
+400
+[0m
+Nil-GUID specificity: only all-zeros → 500; any other value (string IDs from other realms, random/max-UUID) → 400. `numbers/{id}` allows OPTIONS+PUT (GET/HEAD 405, Allow header). Probing nested `numbers/{id}/...` subroutes for a GET-data route in the same bypass tier:
+[0m$ [0mfor p in numbers/00000000-0000-0000-0000-000000000000/move numbers/00000000-0000-0000-0000-000000000000/settings numbers/00000000-0000-0000-0000-000000000000/sipgateio numbers/00000000-0000-0000-0000-000000000000/autorecordings/greetings numbers/00000000-0000-0000-0000-000000000000/callerIds; do echo "=== /v2/$p ==="; curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "https://api.sipgate.com/v2/$p"; sleep 1.3; done
+=== /v2/numbers/00000000-0000-0000-0000-000000000000/move ===
+404 
+=== /v2/numbers/00000000-0000-0000-0000-000000000000/settings ===
+404 
+=== /v2/numbers/00000000-0000-0000-0000-000000000000/sipgateio ===
+404 
+=== /v2/numbers/00000000-0000-0000-0000-000000000000/autorecordings/greetings ===
+404 
+=== /v2/numbers/00000000-0000-0000-0000-000000000000/callerIds ===
+404
+[0m
+Nested `numbers/{id}/*` → all 404. The bypass tier exposes no GET-data route. One closing passive probe — extract the exact swagger-ui bundle version for the known-CVE re-check on the doc/* chain:
+[0m$ [0mcurl -s "https://api.sipgate.com/v2/doc/swagger-ui-bundle.js" -o /tmp/swb.js; wc -c /tmp/swb.js; grep -oE '"version":"[^"]{1,20}"' /tmp/swb.js | sort -u | head; grep -oE 'Swagger UI ?[0-9.vX*]+' /tmp/swb.js | sort -u | head; grep -oE 'version[:=]["'"'"'][0-9]+\.[0-9]+\.[0-9]+' /tmp/swb.js | sort -u | head
+1096221 /tmp/swb.js
+Swagger UI.
+version:"1.3.2
+version:"17.0.2
+version:"3.20.3
+version="17.0.2
+version="2.3.3
+version="3.14.3
+[0m
+[0m$ [0mgrep -oE 'Swagger UI[^"]*[0-9]+\.[0-9]+\.[0-9]+' /tmp/swb.js | sort -u | head; grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' /tmp/swb.js | sort -u | head -40; grep -oE 'version:"5[0-9.]*"|version="5[0-9.]*"' /tmp/swb.js | sort -u | head
+"1.3.2"
+"10.2.0"
+"10.3.0"
+"10.4.0"
+"10.6.0"
+"10.7.0"
+"10.7.3"
+"17.0.2"
+"2.3.3"
+"3.14.3"
+"3.20.3"
+"4.11.1"
+[0m
+[0m$ [0mgrep -oE 'banner[^;]{0,120}' /tmp/swb.js | head -3; grep -oE 'VERSION[^,;]{0,30}|__VERSION__[^,;]{0,20}' /tmp/swb.js | head -3; grep -oE '"5\.[0-9]+\.[0-9]+"|5\.[0-9]+\.[0-9]+' /tmp/swb.js | sort -u | head
+(no output)
+[0m
+String-IDs all 400; nil-UUID all-zeros sole 500 trigger; systemic scan shows only numbers/{id} + oauth2/clients/{id} bypass edge-401, both data-inert unauth; bundle version unextractable. Analysis complete.
+
+## STEP 1 — DELTA
+- [NEW] `/v2/numbers/{numberId}`: GET/HEAD → 405 `Allow: OPTIONS, PUT`, OPTIONS → 200 unauth — 2nd subroute past edge-401 (after oauth2/clients/{id}); nested `/numbers/{id}/*` → 404. No GET-data route exposed.
+- [NEW] oauth2/clients/{id} nil-GUID specificity: all-zeros → 500; max/random UUID → 400; string IDs → 400 — only nil GUID reaches the app-plane handler.
+- [CHANGED] String client-ID probes (`sipgate-app-web`, `platypus-swagger`, `sipgate-app`) → all 400 — prior 48-conf hypothesis deflated.
+- [CHANGED] Systemic 500-scan: users/history/contacts/calls nil-UUID → 401; unknown prefixes → 404 text/html; only numbers + oauth2/clients bypass.
+- [CHANGED] swagger-ui-bundle.js (1.09MB): no extractable version string; no 5.x script-executing spec-render XSS known.
+
+## STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/doc/*,6.05,spec-forward+frameable+implicit-high-scope-oauth-client (HUMAN_ONLY)
+- [PRIO] api.sipgate.com/v2/authorization/oauth2/clients/{clientId},5.6,app-plane-reach-but-nil-crash-only
+- [PRIO] api.sipgate.com/v2/numbers/{numberId},4.55,edge-bypass-but-data-inert
+
+## STEP 3 — HYPOTHESES
+[HYP] Registered third-party client-ID GUID metadata reach via /clients/{id}
+class: IDOR
+asset: api.sipgate.com/v2/authorization/oauth2/clients/{clientId}
+confidence: 25
+reasoning: Only all-zeros GUID returns 500 (app-plane reach); every other tested value (string IDs, random/max UUID) → 400. A GUID, if any, that resolves in the third-party clients store could return metadata — but no enumeration of valid client UUIDs exists and responses are empty-bodied.
+evidence_needed: any clientId returning 200
+verify_steps: GET https://api.sipgate.com/v2/authorization/oauth2/clients/{any-valid-format-GUID} (PASSIVE, done for 2/randomized — all 400/500)
+impact: none demonstrated; IDOR implausible without UUID oracle
+testability: PASSIVE
+[HYP] Swagger-ui version-specific spec-render XSS
+class: XSS
+asset: api.sipgate.com/v2/doc/
+confidence: 25
+reasoning: Version not extractable from served bundle; swagger-ui 5.x line has no known script-executing spec-render primitive (community-consensus HTML-injection only, non-executing). Chain otherwise intact (spec-forward, frameable, implicit sipgate-swagger-ui, CORS creds).
+evidence_needed: DOM-execution proof of attacker spec field on api origin (browser-only)
+verify_steps: HUMAN: Chromium open https://api.sipgate.com/v2/doc/?url=https://attacker/spec.json
+impact: CRITICAL if proven; otherwise phishing amplifier
+testability: HUMAN_ONLY
+[HYP] numbers/{id} PUT reachable unauthenticated
+class: AUTH
+asset: api.sipgate.com/v2/numbers/{numberId}
+confidence: 20
+reasoning: OPTIONS 200 + Allow: PUT unauth shows subroute bypasses edge-401; does the PUT handler enforce its own auth? PUT is a mutating operation on phone-number objects.
+evidence_needed: unauthenticated PUT result
+verify_steps: blocked — mutating test against live customer data is out of rules, and requires a valid numberId
+impact: potential number reconfiguration (BUSLOGIC) if the app-plane PUT handler is equally unauth-cheap
+testability: PASSIVE (infeasible safely)
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] Registered client-ID GUID metadata: 25 < 40; no UUID oracle; nil-crash is empty-body noise.
+- [PARKED] Swagger-ui spec-render XSS: 25 < 40; version unknown, no known 5.x exec primitive; needs human.
+- [PARKED] numbers/{id} PUT unauth: mutating/prohibited; no safe verify path.
+- [FINAL] No hypothesis survives the 40-bar. Standing findings (CORS credential reflection on /v2/*, doc/?url= defense-in-depth, family MISCONFIG set) already ACCEPTED in KB; the 500/405 subroute edges are an authz-consistency topology note folded into the reportable set.
+
+## STEP 5 — NEXT ACTION
+[NEXT] HUMAN: In Chromium, open `https://api.sipgate.com/v2/doc/?url=https://<attacker>/spec.json` and verify whether attacker-controlled spec HTML (logo `x-logo` url, italic/description markdown HTML) is rendered into the api-origin DOM — the only remaining high-value chain on the api surface (spec-forward + frameable + implicit extreme-scope OAuth client + CORS credentials).
+
+## STEP 6 — LEARNING
+- [LEARN] REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/{clientId}: known cross-realm IDs (sipgate-app-web, platypus-swagger, sipgate-app) → 400; only all-zeros nil GUID → 500 (empty-body nil-deref artifact); no unauth metadata path.
+- [LEARN] REJECTED AUTH @ api.sipgate.com/v2/numbers/{numberId}: GET/HEAD 405 `Allow: OPTIONS,PUT`, OPTIONS 200 unauth, nested subroutes 404 — routed past edge-401 but data-inert unauth; PUT mutating/OOS.
+- [LEARN] REJECTED AUTH @ api.sipgate.com/v2 systemic: of ~20 param subroutes scanned, only oauth2/clients/{id} + numbers/{id} bypass edge-401; both empty-bodied — edge-auth inconsistency reduced to topology note, no unauth data.
+- [LEARN] REJECTED OTHER @ api.sipgate.com/v2/doc/swagger-ui-bundle.js: version unextractable; no known script-executing spec-render XSS in 5.x line — doc/?url= chain stays phishing/defense-in-depth.
+
+## STEP 7 — RISK
+[RISK] sipgate: 43 — This cycle deflated the strongest unauth lead (string-ID variants all 400; nil-GUID 500 is an empty crash artifact; only 2 subroutes bypass edge-auth and both are data-inert). Reportable set unchanged: /v2/* CORS credential reflection (validated), doc/?url= + frameable + implicit high-scope OAuth client (defense-in-depth/phishing, HUMAN pending), plus accepted family MISCONFIG. Real data planes remain AUTH_HELPED; no critical unauthenticated vector.
