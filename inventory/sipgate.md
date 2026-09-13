@@ -666,3 +666,18 @@ www.sipgate.de
 - CHANGED `login.sipgate.com` third-party realm live OIDC with extreme scopes (authorization:oauth2:clients:write, balance:read, payment:methods:*, contacts/sms/account read+write), HS256/HS384/HS512, PKCE plai
 - CHANGED `integration.sipgate.com/metrics` firebase_jwt_forbidden_requests 72223 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
 - CHANGED `api.sipgate.com/v2/*` arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
+
+## 2026-09-13 06:52:41 UTC
+- NEW `admin.live.sipgate.net` / `admin.dev.sipgate.net` — NEW prod subdomains discovered in app.dev.sipgate.com JS bundle (CNAME → helpdesk.live/dev.sipgate.net, resolve to 217.10.73.71 / 217.116.120.148),
+- NEW `integration.dev.sipgate.com` — NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle
+- NEW `integration.sipgate.com` — PROD "Platypus" integration platform exposes full 26-op OpenAPI spec at `/swagger` (contacts, call-logs, tasks, oauth2, streaming); all data paths 403-gated with Firebase-J
+- NEW `*.integration.sipgate.cloud` (94 hosts) — per-vendor CRM adapters behind nginx Basic-auth 401 with `ACAO:*` CORS exposing `x-provider-{url,key}` SSRF inputs; distinct gate tier from apex Firebase-JWT
+- NEW `grafana.sipgate.cloud` — LIVE Grafana 11.5.1 internet-exposed (AWS 3.33.226.160), login-gated, version leaked via `/api/health`
+- NEW `share1.sipgate.cloud` — dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN; subdomain-takeover candidate
+- NEW `mock.integration.sipgate.cloud` — only ungated *.integration.sipgate.cloud host; `/health` 200, `/contacts` 200 (~8MB synthetic), `ACAO:*` + `ACAC:true` + `allow-headers: x-provider-*`
+- NEW `api.sipgate.com/v2/doc/oauth2-redirect.html` — reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true); inherits API.v2 permissive CORS
+- CHANGED `app.dev.sipgate.com` — JS bundle rotated to `main-K-JtiyRc.js` (5.65MB); 17 hardcoded internal host:port pairs including NEW prod subdomains `admin.live.sipgate.net` / `admin.dev.sipgate.net`
+- CHANGED `api.sipgate.com/v2/authorization/oauth2/clients/{clientId}` — list/individual endpoints now return 404 (was 500 on UUID); prior authz-drift signal gone
+- CHANGED `integration.sipgate.com/metrics` — `firebase_jwt_forbidden_requests` 72223 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime
+- CHANGED `team-uk.live.sipgate.com` + `team-de.live.sipgate.com` — CSP `frame-ancestors` includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation
+- CHANGED `sipgate-desktop-app.s3.eu-central-1.amazonaws.com` — publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write pa
