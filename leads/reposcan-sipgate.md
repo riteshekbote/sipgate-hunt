@@ -732,3 +732,5 @@ reasoning: `push_public_key_into_file()` constructs `echo -n " .. publickey .. "
 impact: HIGH — Secondary injection vector; typo degrades security posture.
 verify_steps: 1) Trace call path. 2) Verify typo causes Lua error. 3) Confirm SHM write never reached.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-13 19:43:51 UTC
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
