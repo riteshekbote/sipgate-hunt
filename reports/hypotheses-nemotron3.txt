@@ -1,23 +1,14 @@
-## 2026-09-13 12:58:41 UTC [target] (model nemotron3)
-[PRIO] `api.sipgate.com/v2/*`, 8.15, attack_surface=9 business_value=9 tech_exposure=8 gate_ease=10 cloud_surface=6 freshness=9  
-[PRIO] `login.sipgate.com` (third-party realm), 7.65, attack_surface=8 business_value=9 tech_exposure=8 gate_ease=4 cloud_surface=5 freshness=8  
-[PRIO] `app.dev.sipgate.com`, 7.25, attack_surface=7 business_value=7 tech_exposure=7 gate_ease=10 cloud_surface=6 freshness=10  
-[PRIO] `integration.sipgate.com`, 7.10, attack_surface=8 business_value=8 tech_exposure=8 gate_ease=3 cloud_surface=7 freshness=8  
-[PRIO] `*.integration.sipgate.cloud` (94 hosts), 6.95, attack_surface=7 business_value=6 tech_exposure=7 gate_ease=5 cloud_surface=9 freshness=8  
-[PRIO] `api.sipgate.com/v2/doc/oauth2-redirect.html`, 6.80, attack_surface=6 business_value=8 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=9  
-[PRIO] `sipgate-desktop-app.s3.eu-central-1.amazonaws.com`, 6.45, attack_surface=4 business_value=7 tech_exposure=5 gate_ease=10 cloud_surface=9 freshness=7  
-[PRIO] `grafana.sipgate.cloud`, 6.10, attack_surface=5 business_value=6 tech_exposure=6 gate_ease=8 cloud_surface=7 freshness=6  
-[PRIO] `team-uk.live.sipgate.com` + `team-de.live.sipgate.com`, 5.95, attack_surface=5 business_value=5 tech_exposure=6 gate_ease=10 cloud_surface=4 freshness=6  
-[PRIO] `share1.sipgate.cloud`, 5.30, attack_surface=3 business_value=4 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=6  
-[HYP] Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection Enables Token Exfiltration Chain
-class: MISCONFIG
-asset: api.sipgate.com/v2/doc/oauth2-redirect.html
-confidence: 85
-reasoning: Confirmed oauth2-redirect.html reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — inherits API.v2 domain's permissive CORS; token fragment delivered to same-origin redirect page via implicit flow from login.sipgate.com third-party realm (client sipgate-swagger-ui, extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); cross-origin popup test shows SecurityError on window.opener read but same-origin XSS on this page would allow token access + exfiltration via fetch to api.sipgate.com/v2/* (CORS allows credentials from any origin)
-evidence_needed: Confirmation that token fragment from implicit flow lands on this page and is accessible to page JS; proof that page JS can exfiltrate token via fetch to api.sipgate.com/v2/contacts (CORS allows credentials from any origin)
-verify_steps: GET https://api.sipgate.com/v2/doc/oauth2-redirect.html with Origin: https://evil.com — observe ACAO: https://evil.com + ACAC:true (confirmed); initiate implicit auth via sipgate-swagger-ui client on /v2/doc/, observe redirect to oauth2-redirect.html with token fragment; test if page JS can read fragment and exfiltrate via fetch to api.sipgate.com/v2/contacts
-impact: Defense-in-depth gap — OAuth redirect endpoint exposes credentials-enabled CORS; enables token exfiltration if XSS exists on Swagger-UI page or spec; chain-dependent for full exploitation; severity MEDIUM
-testability: PASSIVE
+## 2026-09-13 16:46:25 UTC [target] (model nemotron3)
+[PRIO] `app.dev.sipgate.com`, 7.55, attack_surface=8 business_value=7 tech_exposure=8 gate_ease=10 cloud_surface=7 freshness=10  
+[PRIO] `integration.sipgate.com`, 7.35, attack_surface=8 business_value=8 tech_exposure=8 gate_ease=3 cloud_surface=7 freshness=9  
+[PRIO] `*.integration.sipgate.cloud` (94 hosts), 7.05, attack_surface=7 business_value=6 tech_exposure=7 gate_ease=5 cloud_surface=9 freshness=8  
+[PRIO] `api.sipgate.com/v2/doc/oauth2-redirect.html`, 6.85, attack_surface=6 business_value=8 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=9  
+[PRIO] `admin.live.sipgate.net` / `admin.dev.sipgate.net`, 6.60, attack_surface=6 business_value=7 tech_exposure=6 gate_ease=10 cloud_surface=6 freshness=10  
+[PRIO] `grafana.sipgate.cloud`, 6.20, attack_surface=5 business_value=6 tech_exposure=6 gate_ease=8 cloud_surface=7 freshness=7  
+[PRIO] `team-uk.live.sipgate.com` + `team-de.live.sipgate.com`, 6.05, attack_surface=5 business_value=5 tech_exposure=6 gate_ease=10 cloud_surface=4 freshness=7  
+[PRIO] `share1.sipgate.cloud`, 5.40, attack_surface=3 business_value=4 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=7  
+[PRIO] `sipgate-desktop-app.s3.eu-central-1.amazonaws.com`, 6.50, attack_surface=4 business_value=7 tech_exposure=5 gate_ease=10 cloud_surface=9 freshness=7  
+[PRIO] `mock.integration.sipgate.cloud`, 5.80, attack_surface=5 business_value=4 tech_exposure=6 gate_ease=10 cloud_surface=6 freshness=8  
 [HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References
 class: SSRF
 asset: app.dev.sipgate.com
@@ -26,6 +17,15 @@ reasoning: Live dev SPA on Fastly CDN serves production-identical JS bundle (mai
 evidence_needed: HTTP response from newly extracted prod subdomains (admin.live.sipgate.net, admin.dev.sipgate.net) showing live services on non-standard ports (8080, 8443, 3396, 3443, 10443); proof of SSRF via dev SPA proxy/chaining or XSS on dev SPA to pivot to internal hosts; DNS resolution showing RFC1918 IPs for any .local hosts
 verify_steps: GET https://app.dev.sipgate.com/assets/main-K-JtiyRc.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve all *.dev.sipgate.net, *.live.sipgate.net, *.dev.sipgate.com hosts; probe discovered hosts for HTTP responses on ports 80/443/3396/3443/8080/10443 (read-only, ≤1 rps); test for SSRF via any proxy/chaining endpoints in dev SPA
 impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, team-uk.local, integration.dev, admin.live, helpdesk.live); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface + prod subdomain exposure in dev bundle)
+testability: PASSIVE
+[HYP] Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection Enables Token Exfiltration Chain
+class: MISCONFIG
+asset: api.sipgate.com/v2/doc/oauth2-redirect.html
+confidence: 85
+reasoning: Confirmed oauth2-redirect.html reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — inherits API.v2 domain's permissive CORS; token fragment delivered to same-origin redirect page via implicit flow from login.sipgate.com third-party realm (client sipgate-swagger-ui, extreme scopes: oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/account read+write); cross-origin popup test shows SecurityError on window.opener read but same-origin XSS on this page would allow token access + exfiltration via fetch to api.sipgate.com/v2/* (CORS allows credentials from any origin)
+evidence_needed: Confirmation that token fragment from implicit flow lands on this page and is accessible to page JS; proof that page JS can exfiltrate token via fetch to api.sipgate.com/v2/contacts (CORS allows credentials from any origin)
+verify_steps: GET https://api.sipgate.com/v2/doc/oauth2-redirect.html with Origin: https://evil.com — observe ACAO: https://evil.com + ACAC:true (confirmed); initiate implicit auth via sipgate-swagger-ui client on /v2/doc/, observe redirect to oauth2-redirect.html with token fragment; test if page JS can read fragment and exfiltrate via fetch to api.sipgate.com/v2/contacts
+impact: Defense-in-depth gap — OAuth redirect endpoint exposes credentials-enabled CORS; enables token exfiltration if XSS exists on Swagger-UI page or spec; chain-dependent for full exploitation; severity MEDIUM
 testability: PASSIVE
 [HYP] Integration Platform Spec-Behavior Drift with SSRF Parameter in users.integrations.create
 class: SSRF
