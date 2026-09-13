@@ -3861,3 +3861,26 @@ evidence_needed: valid FB JWT → POST create apiUrl=http://169.254.169.254/... 
 [LEARN] REJECTED MCP @ api.sipgate.com: SSE/MCP probes (Accept text/event-stream, MCP-Protocol-Version, JSON-RPC initialize) on /v2/authorization/token + /v2/command → no handshake; Mcp-Session-Id/X-Sipgate-Command remain generic CORS allow-list strings only.
 [LEARN] ACCEPTED INFO @ api.sipgate.com/v2 (GET): unauthenticated endpoint-index (72 URLs) incl undocumented token/crm-bridge/user-role paths; anonymous surface-map. (from prior parallel probe set)
 [RISK] sipgate: 84 — undocumented api-origin token-mint route technically reachable (all-documented-routes-401 edge does NOT gate it: 500 not 401), persistent CORS-cred reflection + MCP/SSE/Token header seed edge-wide, live 144-op spec restored with unallowlisted swagger-url shell, integration apiUrl-SSRF behind live FB-JWT (AUTH_HELPED), 94-host CRM fleet behind single nginx gate. No token minted, no valid credential used; anomaly-level now, HIGH-conditional if the route returns 200/401 (restored) with any leaked credential — re-probe next cycle for drift.
+## 2026-09-13 19:05:04 UTC [target] (model bigpickle)
+[HYP] /v2/authorization/token is a miswired OIDC client-credentials token proxy on the api origin; only undocumented route escaping the uniform-401 edge
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token (POST, index-advertised, absent from 144-op swagger)
+confidence: 50
+reasoning: this cycle again CONSTANT 500 text/plain "OK" for random client_credentials; 404 for password/GET; sibling undocumented GET routes (/v2/crm-bridge 404, /v2/users/{uuid}/role 401) do NOT reach app-plane → the 500 path is route-specific; CONTROL real Keycloak third-party token endpoint returns proper 401 invalid_client; OPTIONS 204 exposes OIDC+MCP/SSE allow-headers.
+evidence_needed: status transition to 200 (with valid tokenId/token, AUTH_HELPED) or to 401/400 (upstream restored ⇒ leaked cred would mint high-scope bearer); multi-cycle constant-500 stability so far.
+verify_steps: PASSIVE drift re-probe POST /v2/authorization/token + GET /v2 once@1rps each cycle; never send valid creds.
+impact: if restored + credential leak ⇒ silent mint of contacts/sms/account/balance/payment-scope bearer (ATO-class); currently characterization/anomaly only, MEDIUM conditional HIGH.
+testability: PASSIVE
+[HYP] Swagger-UI attacker-spec shell on api origin (carry-forward, unchanged)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: unallowlisted url=, swagger 5.x, implicit extreme-scope client auto-registered via initOAuth, spec live, CORS-cred edge. evidence_needed: attacker markup executing in api-origin DOM; iframe embed; Authorize-popup interception.
+verify_steps: HUMAN_ONLY fresh Chromium.
+impact: CRITICAL only with exec primitive; currently LOW-MEDIUM. testability: HUMAN_ONLY
+[HYP] users.integrations.create free-form apiUrl SSRF behind FB-JWT 403 (carry-forward, unchanged)
+class: SSRF
+asset: integration.sipgate.com (spec /oauth2/redirect + /oauth2/callback no-security vs app-403; users.integrations.create free-form apiUrl)
+confidence: 55
+reasoning: uniform app-403 FB-JWT gate; GCP metadata (169.254.169.254) reachable if apiUrl server-fetched post-auth.
+evidence_needed: valid FB JWT → POST apiUrl=internal URL. verify_steps: AUTH_HELPED. impact HIGH conditional. testability: AUTH_HELPED

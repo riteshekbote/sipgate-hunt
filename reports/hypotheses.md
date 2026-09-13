@@ -1636,3 +1636,6 @@
 - LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
 - LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+
+## RANKED HYPOTHESES 2026-09-13 19:23:36 UTC
+- [50] api.sipgate.com/v2/authorization/token: /v2/authorization/token is a miswired OIDC client-credentials token proxy on the api origin; only undocumented route escaping the uniform-401 edge (from art/lead_bigpickle.txt)

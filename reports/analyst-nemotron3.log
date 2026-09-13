@@ -19790,3 +19790,361 @@ testability: AUTH_HELPED
 
 **STEP 7 — RISK**
 [RISK] sipgate: 82 — high-value OAuth implicit flow (login.sipgate.com third-party realm) + arbitrary-origin CORS with credentials on API (api.sipgate.com/v2/*) + live dev SPA leaking prod internal topology + NEW prod subdomains in dev bundle (admin.live/dev.sipgate.net) + integration platform spec-behavior drift with SSRF parameter (integration.sipgate.com users.integrations.create apiUrl) + 94-host CRM adapter fleet with SSRF headers behind single nginx gate (*.integration.sipgate.cloud) + dangling subdomain takeover candidate (share1.sipgate.cloud) + publicly listable S3 bucket with stale artifacts (sipgate-desktop-app.s3) + live Grafana internet-exposed (grafana.sipgate.cloud) — multiple chainable high-severity vectors across auth, SSRF, info-disclosure, and takeover classes; active development (bundle rotation, new prod subdomains in dev config) increases regression risk
+===== ANALYST nemotron3 2026-09-13 19:23:36 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mcurl -s -I "https://admin.live.sipgate.net:8443" --max-time 5 2>&1 | head -20
+(no output)
+[0m
+[0m$ [0mcurl -s -I "http://admin.live.sipgate.net:8443" --max-time 5 2>&1 | head -20
+(no output)
+[0m
+[0m$ [0mcurl -s -I "https://admin.dev.sipgate.net:8443" --max-time 5 2>&1 | head -20
+(no output)
+[0m
+[0m$ [0mcurl -s -I "http://admin.dev.sipgate.net:8443" --max-time 5 2>&1 | head -20
+(no output)
+[0m
+[0m$ [0mdig +short admin.live.sipgate.net admin.dev.sipgate.net 2>&1
+helpdesk.live.sipgate.net.
+217.10.73.71
+helpdesk.dev.sipgate.net.
+217.116.120.148
+[0m
+[0m$ [0mcurl -s -I "https://helpdesk.live.sipgate.net" --max-time 5 2>&1 | head -20
+(no output)
+[0m
+[0m$ [0mcurl -s -I "https://helpdesk.dev.sipgate.net" --max-time 5 2>&1 | head -20
+(no output)
+[0m
+[0m$ [0mcurl -s -I "http://helpdesk.live.sipgate.net" --max-time 5 2>&1 | head -20
+(no output)
+[0m
+[0m$ [0mcurl -s -I "http://helpdesk.dev.sipgate.net" --max-time 5 2>&1 | head -20
+(no output)
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com" --max-time 10 2>&1 | grep -oE 'main-[a-zA-Z0-9_-]+\.js' | head -1
+main-K-JtiyRc.js
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-K-JtiyRc.js" --max-time 15 2>&1 | head -c 5000
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/exceljs.min-Dm9JI-nm.js","assets/chunk-CernVdwh.js","assets/widget-CFRM7Fnx.js","assets/WebBlfView-blrS7Xga.js","assets/WebBlfView-DBTJOySX.css","assets/BlocklistView-CTfZeRw5.js","assets/hooks-Ct-_M2Uw.js","assets/PersonalSettingsView-DrqfYvhP.js","assets/UserSettingsView-DtwwAdd-.js","assets/datetime-Bg9M5dlC.js","assets/costCenters-Btidkdbr.js","assets/OfflineForwardingsSettings-DNax4Qff.js","assets/hooks-CTV6xuD9.js","assets/hooks-BJxzVXJE.js","assets/country-formatter-B-lqEZPe.js","assets/voicemail-CCgE4ei5.js","assets/ChannelSmReceivingSimSettingsSection-Dd_8jhgM.js","assets/UserSettingsView-nFlUIwBU.css","assets/PersonalAccessToken-CLcagMpK.js","assets/PersonalAccessToken-ClNTnG0w.css","assets/UserNotificationsView-B4CpgEXh.js","assets/hooks-D15nYCsw.js","assets/utils-D8xQdbVW.js","assets/selectors-Ha8aXEmA.js","assets/UserNotificationsView-BouYSbwH.css","assets/NeoUserNotificationsView-CZAxcf9m.js","assets/neoNotifications-BB22jPgK.js","assets/NeoUserNotificationsView-CA2DYrBB.css","assets/UserView-D7D6widq.js","assets/TariffManagementWrapper-BG1QQgK9.js","assets/StackedBarGraph-aEP0Rgpb.js","assets/Path-c73MpIeg.js","assets/Path-C5ROTcpm.css","assets/dates-BdYeIgAx.js","assets/StackedBarGraph-ufrKLGTX.css","assets/CurrentBooking-DHB4m1PR.js","assets/Booking-GTvv43G7.js","assets/Booking-CSjfEcqj.css","assets/productLanguageKeys-BBdjWnZ1.js","assets/dates-1gRIyN_P.js","assets/mobileInfoMessageLanguageKeys-Bp2Bo-l_.js","assets/TariffManagementWrapper-nnBK2AFw.css","assets/RoutingGraphTooltip-R9AwA5A2.js","assets/dist-DPzN1-ql.js","assets/string-tRRB0r5l.js","assets/RoutingGraphTooltip-DzUrLeVA.css","assets/CtaCommand-BP5EU_Ek.js","assets/CtaCommand-BlBZuUpm.css","assets/EventTour-BCBLwVcG.js","assets/ChannelVoiceboxAccessWidget-DusxVueB.js","assets/DragAndDropProvider-k9sQBUb2.js","assets/StatelessAudioPlayer-Bylir7zR.js","assets/StatelessAudioPlayer-DvxYuVh6.css","assets/ExternalDeviceIcon-Y-Lhm8nU.js","assets/ViewTimeTracks-KSDvr3TU.js","assets/helpers-BL0rhbuJ.js","assets/ViewTimeTracks-HSv9s7s8.css","assets/SimIcon-ab_pdMHN.js","assets/helpers-Bb34mOaS.js","assets/frontdeskTopics-BGK_9vSj.js","assets/selectors-deQNXOP3.js","assets/utils-Cucg9Uid.js","assets/hooks-M9RnofLE.js","assets/hooks-CeJJLfKI.js","assets/aria-id-CNzcc1wy.js","assets/merge-refs-6VZKPg6C.js","assets/util-00WusAM0.js","assets/DragAndDropProvider-DcAX0IFz.css","assets/Widget-CvfCZUKX.js","assets/Widget-1pvT0MIE.css","assets/ChannelVoiceboxAccessWidget-Dsnddmoa.css","assets/DragAndDropWidget-BWw635eR.js","assets/DragAndDropWidget-BzRmCfbN.css","assets/UserChannelRoutingCard-DmoaYRO5.js","assets/RoutingCardTabs-C5IGkslj.js","assets/DeviceDropdownValue--YALI0sX.js","assets/activeTimesUtils-C3EV4RAx.js","assets/DeviceDropdownValue-BcHKcI7Y.css","assets/DeviceDropdownSettingsGroup-JmNZ7AFz.js","assets/DeviceDropdownSettingsGroup-Dj-nKGaY.css","assets/useConfirmDeleteAdditionalSim-B2tZZUW2.js","assets/useConfirmDeleteDevice-BLKiVF5-.js","assets/ActiveTimesInfoDropdown-Qaz8lTix.js","assets/NumberColumn-BN27RdEl.js","assets/PhoneNumberIcon-BYMjwHTI.js","assets/NumberColumn-CN-J7h-O.css","assets/ActiveTimesInfoDropdown-DwYJgp6I.css","assets/call-recorder-DXfPg_rP.js","assets/hooks-FBuIxhkj.js","assets/RoutingCardTabs-CpR0dk9q.css","assets/DeviceCard-CjTqo5GW.js","assets/DeviceCard-Df3whYJO.css","assets/GroupFaxRoutingCard-4p6zBK_Z.js","assets/FaxRoutingGraph-CMbOJ0ab.js","assets/FaxRoutingGraph-BM2XMM0j.css","assets/GroupFaxRoutingCard-J5op0imJ.css","assets/UserChannelRoutingCard-lrhn3yQZ.css","assets/DeviceTable-BCfNledK.js","assets/DeviceTable-CEDb7B3v.css","assets/AppsAndDevicesView-Bw5IPfJB.js","assets/MobileDeviceTable-CYSEG0TP.js","assets/MobileDeviceTable-CKBrBE-N.css","assets/neoPbxOnly-Cj3ObAzH.js","assets/AppsAndDevicesView-DVQocswR.css","assets/mobile-device-DdRoOScz.js","assets/PandaTwoColumnLayout-B1kkcF4U.js","assets/PandaTwoColumnLayout-D7Gfma26.css","assets/selectors-CC7233By.js","assets/PersonalChannelReactFlowGraph-DxvaT0uD.js","assets/UserView-CYmgSYuJ.css","assets/UsersOverview-CHMAt_-4.js","assets/DirectdialsMetaCell-Bn1-DgBJ.js","assets/DirectdialsMetaCell-C0txtVv1.css","assets/IconWithTextCell-vH1g5MK4.js","assets/IconWithTextCell-BKF-QMrn.css","assets/PhonenumbersMetaCell-CU11AzIv.js","assets/PhonenumbersMetaCell.module-X9LxpCQn.js","assets/PhonenumbersMetaCell-BJ7q4PIo.css","assets/Skeleton-CyTHEyCJ.js","assets/Skeleton-BS0n-Gtu.css","assets/UsersOverview-yYjQ76wa.css","assets/FaxLinesOverview-C0i_nxUo.js","assets/UserAvatarStack-B_t0KgYl.js","assets/restrictionGuard-1k6H_guu.js","assets/FaxLineDetailView-C0o-mJ5O.js","assets/RedirectFrom-C6bedyAc.js","assets/FaxLineDetailView-D1nTO6jd.css","assets/ApiClientView-BdDIb5EA.js","assets/CopySectionEntry-DdLZGLMO.js","assets/CopySectionEntry-CP-vnifJ.css","assets/TrunksOverviewContainer-Bta4ar8Q.js","assets/contingent--LyMGBOl.js","assets/TrunkView-DTx8r_vK.js","assets/TreeList-D2ACSX5p.js","assets/utils
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-K-JtiyRc.js" --max-time 15 2>&1 | grep -oE '(api|app|payment|team-de|team-uk|integration|admin|login|helpdesk)\.(dev|live|local)\.sipgate\.(com|net)(:[0-9]+)?' | sort -u
+admin.dev.sipgate.net
+admin.live.sipgate.net
+api.dev.sipgate.com
+api.local.sipgate.com
+api.local.sipgate.com:3396
+app.dev.sipgate.com
+app.local.sipgate.com:3443
+integration.dev.sipgate.com
+login.dev.sipgate.com
+payment.dev.sipgate.com
+payment.local.sipgate.com:8080
+team-de.dev.sipgate.com
+team-de.live.sipgate.com
+team-de.local.sipgate.com:10443
+team-uk.dev.sipgate.com
+team-uk.live.sipgate.com
+team-uk.local.sipgate.com:10443
+[0m
+[0m$ [0mcurl -s -I -H "Origin: https://evil.com" "https://api.sipgate.com/v2/doc/oauth2-redirect.html" --max-time 5 2>&1 | grep -iE 'access-control-allow-origin|access-control-allow-credentials|vary'
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.com
+vary: origin
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/swagger/swagger-ui-init.js" --max-time 10 2>&1 | head -c 10000
+window.onload = function() {
+  // Build a system
+  let url = window.location.search.match(/url=([^&]+)/);
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    url = window.location.origin;
+  }
+  let options = {
+  "swaggerDoc": {
+    "openapi": "3.0.3",
+    "info": {
+      "title": "Platypus",
+      "description": "Platform for integration Purposes",
+      "version": "0.0.1",
+      "contact": {}
+    },
+    "servers": [],
+    "paths": {
+      "/streaming.start": {
+        "post": {
+          "operationId": "StreamingController_start",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": "Streaming start job created"
+            }
+          },
+          "security": [
+            {
+              "oauth2": []
+            }
+          ],
+          "summary": "Start streaming for all connected integrations of a user",
+          "tags": [
+            "streaming"
+          ]
+        }
+      },
+      "/contacts.list": {
+        "get": {
+          "operationId": "ContactController_list",
+          "parameters": [
+            {
+              "name": "page",
+              "required": false,
+              "in": "query",
+              "deprecated": true,
+              "description": "Use pageToken instead",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": false,
+              "in": "query",
+              "description": "Maximum number of contacts to return",
+              "schema": {
+                "example": 10000,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageToken",
+              "required": false,
+              "in": "query",
+              "description": "Token for the next page of results",
+              "schema": {
+                "format": "base64",
+                "type": "string"
+              }
+            },
+            {
+              "name": "scope",
+              "required": false,
+              "in": "query",
+              "description": "The scope to search in all | team (sipgate account members) | contacts)",
+              "schema": {
+                "example": "team",
+                "type": "string",
+                "enum": [
+                  "all",
+                  "team",
+                  "contacts"
+                ]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The active contact objects and ids of deleted contacts along with the next pagination cursor.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "description": "List of contacts",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "ID of the contact",
+                              "example": "123456"
+                            },
+                            "source": {
+                              "type": "string",
+                              "description": "Source of the contact",
+                              "example": "HUBSPOT"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Full name of the contact, should be used if integration uses combined first and last name",
+                              "example": "Hans Wurst",
+                              "nullable": true
+                            },
+                            "firstName": {
+                              "type": "string",
+                              "description": "First name of the contact, should be used if integration uses separate first and last name",
+                              "example": "Hans",
+                              "nullable": true
+                            },
+                            "lastName": {
+                              "type": "string",
+                              "description": "Last name of the contact, should be used if integration uses separate first and last name",
+                              "example": "Wurst",
+                              "nullable": true
+                            },
+                            "email": {
+                              "type": "string",
+                              "description": "Email address of the contact",
+                              "example": "test@test.de ",
+                              "nullable": true
+                            },
+                            "organization": {
+                              "type": "string",
+                              "description": "Organization of the contact",
+                              "example": "Wurst GmbH",
+                              "nullable": true
+                            },
+                            "type": {
+                              "enum": [
+                                "contacts",
+                                "deals",
+                                "companies",
+                                "tickets",
+                                "leads",
+                                "accounts",
+                                "opportunities",
+                                "cases",
+                                "contacts_folder",
+                                "users",
+                                "tasks",
+                                "building_objects",
+                                "building_objects_leads"
+                              ],
+                              "type": "string",
+                              "description": "Type the contact has in CRM",
+                              "example": "contacts",
+                              "nullable": true
+                            },
+                            "contactUrl": {
+                              "type": "string",
+                              "description": "URL to the contact in CRM",
+                              "example": "https://crm.com/contact/123456",
+                              "nullable": true
+                            },
+                            "avatarUrl": {
+                              "type": "string",
+                              "description": "URL to the avatar of the contact",
+                              "example": "https://crm.com/avatar/123456",
+                              "nullable": true
+                            },
+                            "readonly": {
+                              "type": "boolean",
+                              "description": "Flag if the contact is readonly",
+                              "example": false,
+                              "nullable": true
+                            },
+                            "phoneNumbers": {
+                              "description": "Phone numbers of the contact",
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Label for the phone number, only lables compatible to CRM should be used ",
+                                    "example": "Mobile"
+                                  },
+                                  "type": {
+                                    "enum": [
+                                      "DIRECT_DIAL",
+                                      "STANDARD"
+                                    ],
+                                    "type": "string",
+                                    "description": "Type of the phone number"
+                                  },
+                                  "e164": {
+                                    "type": "string",
+                                    "description": "E164 formatted phone number",
+                                    "example": "+49123456789"
+                                  },
+                                  "localized": {
+                                    "type": "string",
+                                    "description": "Localized formatted phone number",
+                                    "example": "+49 1234 56789"
+                                  }
+                                },
+                                "required": [
+                                  "label",
+                                  "type",
+                                  "e164",
+                                  "localized"
+                                ]
+                              }
+                            },
+                            "relatesTo": {
+                              "description": "Entities the contact relates to",
+                              "nullable": true,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "enum": [
+                                      "contacts",
+                                      "deals",
+                                      "companies",
+                                      "tickets",
+                                      "leads",
+                                      "accounts",
+                                      "opportunities",
+                                      "cases",
+                                      "contacts_folder",
+                                      "users",
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/swagger/swagger-ui-init.js" --max-time 10 2>&1 | grep -A 50 'users.integrations.create'
+"/users.integrations.create": {
+        "post": {
+          "operationId": "UserController_createIntegration",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "integrationName": {
+                      "type": "string",
+                      "description": "Name of the integration",
+                      "example": "HUBSPOT"
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "Key of the integration, must be an existing integration profile key",
+                      "example": "some-key"
+                    },
+                    "apiUrl": {
+                      "type": "string",
+                      "description": "Api URL of the integration",
+                      "example": "https://api.example.com"
+                    },
+                    "locale": {
+                      "type": "string",
+                      "description": "Locale of the integration",
+                      "example": "de-DE",
+                      "deprecated": true
+                    },
+                    "region": {
+                      "type": "string",
+                      "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+                      "example": "DE"
+                    },
+                    "language": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 2,
+                      "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+                      "example": "de"
+                    }
+                  },
+                  "required": [
+                    "integrationName",
+                    "key"
+                  ]
+                }
+              }
+[0m

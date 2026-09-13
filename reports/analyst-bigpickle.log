@@ -27725,3 +27725,194 @@ evidence_needed: valid FB JWT → POST create apiUrl=http://169.254.169.254/... 
 === STEP 7 — RISK ===
 
 [RISK] sipgate: 84 — undocumented api-origin token-mint route technically reachable (all-documented-routes-401 edge does NOT gate it: 500 not 401), persistent CORS-cred reflection + MCP/SSE/Token header seed edge-wide, live 144-op spec restored with unallowlisted swagger-url shell, integration apiUrl-SSRF behind live FB-JWT (AUTH_HELPED), 94-host CRM fleet behind single nginx gate. No token minted, no valid credential used; anomaly-level now, HIGH-conditional if the route returns 200/401 (restored) with any leaked credential — re-probe next cycle for drift.
+===== ANALYST bigpickle 2026-09-13 19:23:36 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/gett_v2_body.txt -D /tmp/opencode/gett_v2_hdr.txt -w "HTTP %{http_code} time=%{time_total}\n" "https://api.sipgate.com/v2" ; echo "---HDR---"; cat /tmp/opencode/gett_v2_hdr.txt; echo "---BODY---"; head -c 600 /tmp/opencode/gett_v2_body.txt
+HTTP 200 time=0.795983
+---HDR---
+HTTP/1.1 200 OK
+content-length: 5481
+content-type: application/json
+vary: origin
+x-b3-traceid: 8dd59458fd09adcbaec39a13e69dea86
+date: Sun, 13 Sep 2026 19:03:27 GMT
+
+---BODY---
+{"accountUrl":"https://api.sipgate.com/v2/account","accountVerifiedUrl":"https://api.sipgate.com/v2/account/verified","addressUrl":"https://api.sipgate.com/v2/addresses/{addressId}","addressesUrl":"https://api.sipgate.com/v2/addresses","addressNumbersUrl":"https://api.sipgate.com/v2/addresses/{addressId}/numbers","authorizationOauthClientsUrl":"https://api.sipgate.com/v2/authorization/oauth2/clients","authorizationOauthClientUrl":"https://api.sipgate.com/v2/authorization/oauth2/clients/{clientId}","authorizationTokenUrl":"https://api.sipgate.com/v2/authorization/token","balanceUrl":"https://ap
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/post_token_body.txt -D /tmp/opencode/post_token_hdr.txt -w "HTTP %{http_code} time=%{time_total}\n" -X POST "https://api.sipgate.com/v2/authorization/token" -H "Content-Type: application/x-www-form-urlencoded" --data "grant_type=client_credentials&client_id=bigp-cyc13-rnd&client_secret=4d6a3c9e2f1b8a7c0d5e6f1234567890abcdef12" ; echo "---HDR---"; cat /tmp/opencode/post_token_hdr.txt; echo "---BODY---"; head -c 600 /tmp/opencode/post_token_body.txt
+HTTP 500 time=0.749814
+---HDR---
+HTTP/1.1 500 Internal Server Error
+content-length: 2
+vary: origin
+x-b3-traceid: b595fcb66ea88988d1ca532fd8d2ccfe
+date: Sun, 13 Sep 2026 19:03:28 GMT
+content-type: text/plain; charset=utf-8
+
+---BODY---
+OK
+[0m
+[0m$ [0mpython3 -c "
+import json
+d=json.load(open('/tmp/opencode/gett_v2_body.txt'))
+print('total keys:',len(d))
+for k in sorted(d): print(k,'=',d[k])
+"
+total keys: 72
+accountUrl = https://api.sipgate.com/v2/account
+accountVerifiedUrl = https://api.sipgate.com/v2/account/verified
+addDirectDialUrl = https://api.sipgate.com/v2/numbers/quickdial
+addressNumbersUrl = https://api.sipgate.com/v2/addresses/{addressId}/numbers
+addressUrl = https://api.sipgate.com/v2/addresses/{addressId}
+addressesUrl = https://api.sipgate.com/v2/addresses
+authorizationOauthClientUrl = https://api.sipgate.com/v2/authorization/oauth2/clients/{clientId}
+authorizationOauthClientsUrl = https://api.sipgate.com/v2/authorization/oauth2/clients
+authorizationTokenUrl = https://api.sipgate.com/v2/authorization/token
+balanceUrl = https://api.sipgate.com/v2/balance
+callRestrictionsUrl = https://api.sipgate.com/v2/{userId}/callrestrictions/{restriction}
+changeDirectDialUrl = https://api.sipgate.com/v2/numbers/quickdial/{quickdialId}
+contactsUrl = https://api.sipgate.com/v2/contacts
+crmBridgeUrl = https://api.sipgate.com/v2/crm-bridge
+deleteDirectDialUrl = https://api.sipgate.com/v2/numbers/quickdial/{numberId}
+deviceCallerIdUrl = https://api.sipgate.com/v2/devices/{deviceId}/callerid
+deviceSimOrdersUrl = https://api.sipgate.com/v2/{userId}/devices/{deviceId}/sim/orders
+deviceUrl = https://api.sipgate.com/v2/devices/{deviceId}
+devicesSingleRowDisplayUrl = https://api.sipgate.com/v2/devices/{deviceId}/singlerowdisplay
+devicesTariffAnnouncementUrl = https://api.sipgate.com/v2/devices/{deviceId}/tariffannouncement
+faxlineNumbersUrl = https://api.sipgate.com/v2/{userId}/faxlines/{faxlineId}/numbers
+faxlineUrl = https://api.sipgate.com/v2/{userId}/faxlines/{faxlineId}
+faxlinesUrl = https://api.sipgate.com/v2/{userId}/faxlines
+getCallRestrictionsUrl = https://api.sipgate.com/v2/callrestrictions
+groupDetailUrl = https://api.sipgate.com/v2/groups/{groupId}
+groupDevicesUrl = https://api.sipgate.com/v2/groups/{groupId}/devices
+groupNumbersUrl = https://api.sipgate.com/v2/groups/{groupId}/numbers
+groupUserUrl = https://api.sipgate.com/v2/groups/{groupId}/users
+groupsUrl = https://api.sipgate.com/v2/groups
+historyEntryUrl = https://api.sipgate.com/v2/history/{entryId}
+historyUrl = https://api.sipgate.com/v2/history
+internalContactsUrl = https://api.sipgate.com/v2/contacts/internal
+notificationsUrl = https://api.sipgate.com/v2/{userId}/notifications
+numberUrl = https://api.sipgate.com/v2/numbers/{numberId}
+numbersUrl = https://api.sipgate.com/v2/numbers
+phonelineBlockAnonymousUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/blockanonymous
+phonelineDetailUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}
+phonelineDevicesUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/devices
+phonelineForwardingsUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/forwardings
+phonelineNumbersUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/numbers
+phonelineSipgateIoLogUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/sipgateio/log
+phonelineSipgateIoUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/sipgateio
+phonelineUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}
+phonelineVoicemailGreetingUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId}
+phonelineVoicemailGreetingsUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings
+phonelineVoicemailUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}
+phonelineVoicemailsUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/voicemails
+phonelinesParallelForwardingUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId}
+phonelinesParallelForwardingsUrl = https://api.sipgate.com/v2/{userId}/phonelines/{phonelineId}/parallelforwardings
+phonelinesUrl = https://api.sipgate.com/v2/{userId}/phonelines
+portingUrl = https://api.sipgate.com/v2/portings/{portingId}
+portingsUrl = https://api.sipgate.com/v2/portings
+restrictionsUrl = https://api.sipgate.com/v2/restrictions
+sessionsCallUrl = https://api.sipgate.com/v2/sessions/calls
+settingsSipgateioUrl = https://api.sipgate.com/v2/settings/sipgateio
+smsCallerIdsUrl = https://api.sipgate.com/v2/{userId}/sms/{smsId}/callerids
+smsUrl = https://api.sipgate.com/v2/{userId}/sms
+translationsUrl = https://api.sipgate.com/v2/translations/{locale}
+userBusyOnBusyUrl = https://api.sipgate.com/v2/users/{userId}/busyonbusy
+userDefaultDeviceUrl = https://api.sipgate.com/v2/users/{userId}/defaultdevice
+userDeviceSimUrl = https://api.sipgate.com/v2/{userId}/devices/{deviceId}/sim
+userDevicesUrl = https://api.sipgate.com/v2/{userId}/devices
+userExternalDevicesUrl = https://api.sipgate.com/v2/{userId}/devices/external
+userInfoUrl = https://api.sipgate.com/v2/authorization/userinfo
+userMobileDevicesUrl = https://api.sipgate.com/v2/{userId}/devices/mobile
+userRegisterDevicesUrl = https://api.sipgate.com/v2/{userId}/devices/register
+userRoleUrl = https://api.sipgate.com/v2/users/{userId}/role
+userUrl = https://api.sipgate.com/v2/users/{userId}
+usersUrl = https://api.sipgate.com/v2/users
+voicemailDetailUrl = https://api.sipgate.com/v2/voicemails/{voicemailId}
+voicemailsUrl = https://api.sipgate.com/v2/voicemails
+webuserNumbersUrl = https://api.sipgate.com/v2/{userId}/numbers
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/admin8443_body.txt -D /tmp/opencode/admin8443_hdr.txt -k -m 12 -w "HTTP %{http_code} time=%{time_total} remote=%{remote_ip}\n" "https://admin.live.sipgate.net:8443/" ; echo "---HDR---"; cat /tmp/opencode/admin8443_hdr.txt 2>/dev/null; echo "---BODY---"; head -c 400 /tmp/opencode/admin8443_body.txt 2>/dev/null
+curl: (28) Connection timed out after 12000 milliseconds
+HTTP 000 time=12.000995 remote=
+---HDR---
+---BODY---
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/crmb_body.txt -D /tmp/opencode/crmb_hdr.txt -w "HTTP %{http_code}\n" "https://api.sipgate.com/v2/crm-bridge"; echo "---HDR---"; cat /tmp/opencode/crmb_hdr.txt; echo "---BODY---"; head -c 300 /tmp/opencode/crmb_body.txt
+HTTP 404
+---HDR---
+HTTP/1.1 404 Not Found
+content-length: 53
+content-type: text/html; charset=utf-8
+vary: origin
+x-b3-traceid: dcfbc9b1931c4ad928418d89b3f29f72
+date: Sun, 13 Sep 2026 19:04:36 GMT
+
+---BODY---
+<html><body><h1>Resource not found</h1></body></html>
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/role_body.txt -D /tmp/opencode/role_hdr.txt -w "HTTP %{http_code}\n" "https://api.sipgate.com/v2/users/uu6eaa12-0000-4000-8000-000000000000/role"; echo "---HDR---"; cat /tmp/opencode/role_hdr.txt; echo "---BODY---"; head -c 300 /tmp/opencode/role_body.txt
+HTTP 401
+---HDR---
+HTTP/1.1 401 Unauthorized
+content-length: 0
+vary: origin
+x-b3-traceid: 085665ef677a0399936a3a30e750de5b
+date: Sun, 13 Sep 2026 19:04:37 GMT
+
+---BODY---
+[0m
+STEP 1 — DELTA
+- [CONFIRMED] POST `api.sipgate.com/v2/authorization/token` (random client_credentials) → still CONSTANT 500 text/plain body "OK", x-b3-traceid present — no upstream-restore drift (would be 401/400/200) across cycles.
+- [CONFIRMED] GET `/v2` → 200, 72-key anonymous endpoint index stable; `authorizationTokenUrl` still advertised.
+- [TESTED] `admin.live.sipgate.net:8443` (nemotron3 ranked [90] lead) → TCP timeout HTTP 000 — non-standard port externally inert, matches family.
+- [NEW] Sibling index-advertised undocumented routes probed: `/v2/crm-bridge` → 404; `/v2/users/{uuid}/role` → 401 empty-body edge-gated. The token-route 500 anomaly does NOT extend family-wide.
+
+STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/authorization/token, 8.75, attack_surface=8 business_value=10 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=8
+- [PRIO] api.sipgate.com/v2/doc/?url=, 7.10, attack_surface=5 business_value=8 tech_exposure=7 gate_ease=10 frameable+unauth cloud_surface=5 freshness=8
+- [PRIO] integration.sipgate.com users.integrations.create, 6.90, attack_surface=7 business_value=8 tech_exposure=8(apiUrl-SSRF) gate_ease=3(FB-JWT) cloud_surface=8 freshness=7
+
+STEP 3 — HYPOTHESES
+[HYP] /v2/authorization/token is a miswired OIDC client-credentials token proxy on the api origin; only undocumented route escaping the uniform-401 edge
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token (POST, index-advertised, absent from 144-op swagger)
+confidence: 50
+reasoning: this cycle again CONSTANT 500 text/plain "OK" for random client_credentials; 404 for password/GET; sibling undocumented GET routes (/v2/crm-bridge 404, /v2/users/{uuid}/role 401) do NOT reach app-plane → the 500 path is route-specific; CONTROL real Keycloak third-party token endpoint returns proper 401 invalid_client; OPTIONS 204 exposes OIDC+MCP/SSE allow-headers.
+evidence_needed: status transition to 200 (with valid tokenId/token, AUTH_HELPED) or to 401/400 (upstream restored ⇒ leaked cred would mint high-scope bearer); multi-cycle constant-500 stability so far.
+verify_steps: PASSIVE drift re-probe POST /v2/authorization/token + GET /v2 once@1rps each cycle; never send valid creds.
+impact: if restored + credential leak ⇒ silent mint of contacts/sms/account/balance/payment-scope bearer (ATO-class); currently characterization/anomaly only, MEDIUM conditional HIGH.
+testability: PASSIVE
+[HYP] Swagger-UI attacker-spec shell on api origin (carry-forward, unchanged)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: unallowlisted url=, swagger 5.x, implicit extreme-scope client auto-registered via initOAuth, spec live, CORS-cred edge. evidence_needed: attacker markup executing in api-origin DOM; iframe embed; Authorize-popup interception.
+verify_steps: HUMAN_ONLY fresh Chromium.
+impact: CRITICAL only with exec primitive; currently LOW-MEDIUM. testability: HUMAN_ONLY
+[HYP] users.integrations.create free-form apiUrl SSRF behind FB-JWT 403 (carry-forward, unchanged)
+class: SSRF
+asset: integration.sipgate.com (spec /oauth2/redirect + /oauth2/callback no-security vs app-403; users.integrations.create free-form apiUrl)
+confidence: 55
+reasoning: uniform app-403 FB-JWT gate; GCP metadata (169.254.169.254) reachable if apiUrl server-fetched post-auth.
+evidence_needed: valid FB JWT → POST apiUrl=internal URL. verify_steps: AUTH_HELPED. impact HIGH conditional. testability: AUTH_HELPED
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] admin.live.sipgate.net:8443 (nemotron3 [90]): TCP timeout — externally inert like family; specific non-standard-port lead deflated this cycle.
+- [PARKED] undocumented-sibling-route anomaly extension: crm-bridge 404, user-role 401 — 500 pattern is token-route-specific, no family-wide undocumented-route surface.
+- [PARKED] re-ranked-by-others oauth2-redirect.html token theft (nemotron3 85): KB Chromium SecurityError REJECT stands; chain-component (XSS-amplifier) only, not standalone.
+- [FINAL] survivors ranked: 1) token-route characterization (50, PASSIVE) 2) swagger-url shell (45, HUMAN_ONLY) 3) integration apiUrl SSRF (55, AUTH_HELPED).
+
+STEP 5 — NEXT ACTION
+- [NEXT] PROBE: next cycle re-probe `GET https://api.sipgate.com/v2` + `POST https://api.sipgate.com/v2/authorization/token` (grant_type=client_credentials, random creds) once each @1rps as the sole live action — watch for status transition (200/401/400) that would flip the token route from anomaly to live-mint lead; no valid creds ever.
+
+STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: drift-watch cycle confirms multi-cycle constant-500 stability (text/plain "OK", 2-byte) for random client_credentials; no upstream-restore dynamics observed; characterization only, no token minted.
+- [LEARN] REJECTED AUTH @ admin.live.sipgate.net:8443: TCP timeout (HTTP 000) — no live service on non-standard port; consistent with family-wide external-inert status; nemotron3 [90] lead deflated on this probe.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2: sibling index-advertised undocumented routes do NOT share token-route 500 — /v2/crm-bridge → 404, /v2/users/{uuid}/role → 401 edge-gated; uniform-401 edge holds for GET data routes; token-route 500 is a route-specific app-plane anomaly.
+
+STEP 7 — RISK
+- [RISK] sipgate: 84 — unchanged: token-route 500 stable anomaly (no mint, no valid creds used), uniform-401 edge elsewhere, CORS-cred reflection + swagger-XSS amplifier chain, integration apiUrl-SSRF behind live FB-JWT (AUTH_HELPED), 94-host CRM fleet behind single nginx gate, dangling `share1.sipgate.cloud` takeover candidate. This cycle added no new exploitable surface (admin.live:8443 dead, sibling routes edge-gated).
