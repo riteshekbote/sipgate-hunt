@@ -1451,3 +1451,115 @@
 - LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
 - LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+
+## RANKED HYPOTHESES 2026-09-13 01:28:20 UTC
+- [85] api.sipgate.com/v2/doc/oauth2-redirect.html: Swagger-UI Implicit Redirect Endpoint CORS Credential Reflection Enables Token Exfiltration Chain (from art/lead_nemotron3.txt)
+- [75] chatbot.dev.sipgate.com/chat/session/socket.io/: Dev Chatbot Socket.io Arbitrary-Origin WebSocket Handshake Acceptance (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: GET `wss://chatbot.dev.sipgate.com/chat/session/socket.io/?EIO=4&transport=websocket` with `Origin: https://evil.example` — confirm WS handshake response
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://admin.live.sipgate.net:8443 — test if newly exposed prod subdomain in dev bundle has live service on non-standard port (read-only, ≤1 rps)
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: empirical localhost Chromium 152 cross-origin popup test → victim popup reading `window.opener.swag
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: live swagger-ui 5.x; implicit-only third-party client `sipgate-swagger-ui` exposes extreme scope set (oauth2-clients:w
+- LEARN: ACCEPTED INFO @ sipgate.io / developer.sipgate.io: developer platform = Cloudflare-fronted static marketing/docs (301 → www.sipgate.io/for-developer), links bac
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/keycloak-logout.js: logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, n
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally iner
+- LEARN: REJECTED OTHER @ login.dev.sipgate.com / team-de.dev.sipgate.com / payment.dev.sipgate.com: DNS resolve to sipgate-owned 217.116.x.x but HTTP 000 (timeout) — ex
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: Second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443, connect-s
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: Spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: Direct WS transport rejects arbitrary Origin (evil → 400 no-ACAO) — browser-readable arbitrary-origin channel not demons
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads; identical to prod chatbot REJECT class
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as 
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot with socket.io endpoint — contradicts prior "dev env externally inert"
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to pr
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally iner
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstr
+- LEARN: ACCEPTED MISCONFIG @ integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *` — hardcode
+- LEARN: ACCEPTED INFO @ app.dev.sipgate.com: JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integratio
+- LEARN: ACCEPTED INFO @ integration.sipgate.com: PROD integration platform "Platypus" exposes full 26-op OpenAPI spec publicly under /swagger (contacts/call-logs/tasks/
+- LEARN: ACCEPTED INFO @ integration.dev.sipgate.com: dev twin serves near-identical spec (only auth host differs: login.dev); swagger bundle+sourcemap public; same unif
+- LEARN: ACCEPTED MISCONFIG @ integration.sipgate.com: `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external re
+- LEARN: REJECTED AUTH @ integration.sipgate.com direct: unauthenticated GET on all 26 documented paths returns uniform app-403 "Forbidden resource" (Bearer: dummy ident
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads; identical to prod chatbot REJECT class
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client `sipgate-swagger-ui`; extreme scope set; high-value only as 
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot with socket.io endpoint — contradicts prior "dev env externally inert"
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401
+- LEARN: REJECTED AUTH @ chatbot.dev.sipgate.com WS: direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to pr
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: ACCEPTED MISCONFIG @ chatbot.dev.sipgate.com: LIVE dev chatbot (nginx/1.24.0, Google Cloud) with socket.io endpoint — contradicts prior "dev env externally iner
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com: second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/swagger.json: spec live (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthent
+- LEARN: REJECTED AUTH @ chatbot.sipgate.com WS: direct WS transport rejects arbitrary Origin (evil→400 no-ACAO) — browser-readable arbitrary-origin channel not demonstr
+- LEARN: ACCEPTED MISCONFIG @ integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *` — hardcode
+- LEARN: ACCEPTED INFO @ app.dev.sipgate.com: JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integratio
+- LEARN: ACCEPTED INFO @ integration.sipgate.com: PROD integration platform "Platypus" exposes full 26-op OpenAPI spec publicly under /swagger (contacts/call-logs/tasks/
+- LEARN: ACCEPTED INFO @ integration.dev.sipgate.com: dev twin serves near-identical spec (only auth host differs: login.dev); swagger bundle+sourcemap public; same unif
+- LEARN: ACCEPTED MISCONFIG @ integration.sipgate.com: `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external re
+- LEARN: REJECTED AUTH @ integration.sipgate.com direct: unauthenticated GET on all 26 documented paths returns uniform app-403 "Forbidden resource" (Bearer: dummy ident
+- LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy.
+- LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope.
+- LEARN: ACCEPTED AUTH @ login.sipgate.com: OIDC implicit flow with fragment token delivery is in-scope high-value target.
+- LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy.
+- LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope.
+- LEARN: ACCEPTED AUTH @ login.sipgate.com: OIDC implicit flow with fragment token delivery is in-scope high-value target.
+- LEARN: REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: `history.replace(external)` in React Router resolves same-origin, so implicit token-in-fragment leak is 
+- LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of a reac
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from `rest-api-examples/.npmrc.dist` returns `invalid_client`, i.e. rev
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint is gated by Keycloak `Trusted Hosts` policy (POST → `insufficient_scop
+- LEARN: ACCEPTED AUTH @ api.sipgate.com: confirmed live OIDC `third-party` realm proxied from the API domain to Keycloak, exposing high-value scopes (contacts/sms/accou
+- LEARN: ACCEPTED MISCONFIG @ clinq-bridge-sipgate (GitHub): K8s deployment exposes internal Redis IP `10.37.248.211:6378` + GCP project `clinq-services` in public repo.
+- LEARN: ACCEPTED MISCONFIG/SECRET @ radau (GitHub): Default CORS `AllowAllOrigins+AllowCredentials` + hardcoded API keys/DB passwords in public repo.
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth g
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as sa
+- LEARN: REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+- LEARN: ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} 
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 72223 (per-replica counter, restart-reset confirmed); live Firebase-JWT validat
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in produ
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stal
+- LEARN: ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list endpoint 404, individual endpoints 404 — prior 500-on-UUID authz-drift signal not reprodu
+- LEARN: REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, token persists to localStorage before na
+- LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reacha
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live cr
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
+- LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
+- LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth g
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as sa
+- LEARN: REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+- LEARN: ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} 
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 72223 (per-replica counter, restart-reset confirmed); live Firebase-JWT validat
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in produ
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stal
+- LEARN: ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list endpoint 404, individual endpoints 404 — prior 500-on-UUID authz-drift signal not reprodu
+- LEARN: REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, token persists to localStorage before na
+- LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reacha
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live cr
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
+- LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
+- LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth g
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as sa
+- LEARN: REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+- LEARN: ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} 
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 72223 (per-replica counter, restart-reset confirmed); live Firebase-JWT validat
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in produ
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stal
+- LEARN: ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list endpoint 404, individual endpoints 404 — prior 500-on-UUID authz-drift signal not reprodu
+- LEARN: REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, token persists to localStorage before na
+- LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reacha
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live cr
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
+- LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
+- LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy

@@ -628,3 +628,41 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/* arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
 
 ## 2026-09-12 23:27:44 UTC
+
+## 2026-09-13 01:28:20 UTC
+- NEW integration.dev.sipgate.com — NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle from app.dev.sipgate.com
+- NEW app.dev.sipgate.com — JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.1
+- CHANGED chatbot.dev.sipgate.com WS — direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html — Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert c
+- CHANGED team-uk.live.sipgate.com — confirmed second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)
+- CHANGED api.sipgate.com/v2/swagger.json — live spec (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated
+- NEW integration.dev.sipgate.com — NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle from app.dev.sipgate.com
+- NEW app.dev.sipgate.com — JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.1
+- CHANGED chatbot.dev.sipgate.com WS — direct WS-transport test evil→400 no-ACAO; polling blocks cross-origin reads (Vary:Origin, no ACAO); identical to prod chatbot REJECT class
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html — Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert c
+- CHANGED team-uk.live.sipgate.com — confirmed second live team portal with identical CSP dev-origin leak (frame-ancestors app.local.sipgate.com:3443 + connect-src *.sipgate.com:3396)
+- CHANGED api.sipgate.com/v2/swagger.json — live spec (144 paths, global security=[]), re-confirms stale annotations vs edge-401 — no authz drift unauthenticated
+- NEW `api.sipgate.com/v2/doc/*` — live swagger-ui 5.x; implicit-only third-party client `sipgate-swagger-ui` exposes extreme scope set (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/a
+- NEW `api.sipgate.com/v2/doc/keycloak-logout.js` — logout bridge always redirects to fixed same-origin oauth2-logout.html — not attacker-controllable, no open redirect (KB ACCEPTED INFO 2026-09-07)
+- CHANGED `api.sipgate.com/v2/swagger.json` — now returns 404 (was live 144-path spec per KB 2026-09-05/06); spec relocated to /v2/doc/ swagger-ui or removed
+- CHANGED `integration.sipgate.com` — full 26-op OpenAPI spec confirmed at /swagger with OAuth/SSRF chain potential; all external paths
+- NEW `www.sipgate.de` — 200 OK, Cloudflare fronted marketing site (not in prior inventory as live)
+- NEW `login.sipgate.com` — 302 to Keycloak OIDC auth realm `sipgate-apps`, client `sipgate-app-web`, implicit flow redirect to `app.sipgate.com`
+- NEW `app.sipgate.com` — 200 OK, main SPA (Fastly/CDN), permissive CSP allowing `*.sipgate.com/*.de/*.co.uk/*.net`, WebSocket to `wss://*.sipgate.*`, Pusher, Intercom, Sentry
+- NEW `sipgate.de` — 301 → `www.sipgate.de` (lighttpd)
+- CHANGED `app.sipgate.de` — 301 → `login.sipgate.com` (was nginx redirect target, now confirmed live chain)
+- CHANGED `login.sipgate.de` — 301 → `www.sipgate.de` (was nginx redirect target, now confirmed live chain)
+- NEW `dev.sipgate.de` — no HTTP response (TCP timeout)
+- NEW `mail.sipgate.de` — no HTTP response (CNAME → `ghs.google.com`, Google Workspace)
+- NEW `api.sipgate.com/v2/authorization/oauth2/clients/{clientId}` endpoints now return 404 (was 500 on UUID) — prior authz-drift signal gone; endpoint may be removed or routing changed
+- NEW `app.dev.sipgate.com` bundle rotated to `main-K-JtiyRc.js` (5.65MB) — 17 hardcoded internal host:port pairs including NEW prod subdomains `admin.live.sipgate.net` (CNAME→helpdesk.live.sipgate.net, 217
+- NEW `api.sipgate.com/v2/doc/oauth2-redirect.html` still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS
+- CHANGED `*.integration.sipgate.cloud` (94 hosts) uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate
+- CHANGED `mock.integration.sipgate.cloud` ungated Express twin — /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — x-provider-url does NOT parameterize fetch
+- CHANGED `team-de.live.sipgate.com` + `team-uk.live.sipgate.com` CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web01)
+- CHANGED `sipgate-desktop-app.s3.eu-central-1.amazonaws.com` publicly listable (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested
+- CHANGED `grafana.sipgate.cloud` live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via /api/health
+- CHANGED `share1.sipgate.cloud` dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN — subdomain-takeover candidate
+- CHANGED `login.sipgate.com` third-party realm live OIDC with extreme scopes (authorization:oauth2:clients:write, balance:read, payment:methods:*, contacts/sms/account read+write), HS256/HS384/HS512, PKCE plai
+- CHANGED `integration.sipgate.com/metrics` firebase_jwt_forbidden_requests 72223 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+- CHANGED `api.sipgate.com/v2/*` arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
