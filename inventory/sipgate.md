@@ -687,3 +687,15 @@ www.sipgate.de
 ## 2026-09-13 16:51:13 UTC
 
 ## 2026-09-13 19:23:36 UTC
+
+## 2026-09-13 21:29:04 UTC
+- NEW integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with ACAO:*, hardcoded in production JS bundle from app.dev.sipgate.com
+- NEW app.dev.sipgate.com: JS bundle rotated to main-Dr5Dd34d.js; new hardcoded hosts admin.dev.sipgate.net, admin.live.sipgate.net, integration.dev.sipgate.com — all resolve to sipgate-owned 217.116.x.x/21
+- NEW api.sipgate.com/v2/doc/*: live swagger-ui 5.x; implicit-only third-party client sipgate-swagger-ui exposes extreme scope set (oauth2-clients:write, balance:read, payment:methods:*, contacts/sms/accoun
+- NEW integration.sipgate.com: PROD "Platypus" integration platform exposes full 26-op OpenAPI spec at /swagger (contacts/call-logs/tasks/oauth2/streaming); spec auth=login.sipgate.com sipgate-apps realm; a
+- NEW integration.sipgate.com: /oauth2/redirect + /oauth2/callback declared with NO security requirement in embedded spec yet all external requests return app-403 — spec-vs-behavior drift; users.integration
+- CHANGED api.sipgate.com/v2/authorization/oauth2/clients/{clientId}: list/individual endpoints now return 404 (was 500 on UUID) — prior authz-drift signal gone; endpoint may be removed
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS
+- CHANGED *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate
+- CHANGED mock.integration.sipgate.cloud: ungated Express twin, /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — x-provider-url does NOT parameterize fetch
+- CHANGED integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 72223 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift[0m

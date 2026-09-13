@@ -27916,3 +27916,96 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 - [RISK] sipgate: 84 — unchanged: token-route 500 stable anomaly (no mint, no valid creds used), uniform-401 edge elsewhere, CORS-cred reflection + swagger-XSS amplifier chain, integration apiUrl-SSRF behind live FB-JWT (AUTH_HELPED), 94-host CRM fleet behind single nginx gate, dangling `share1.sipgate.cloud` takeover candidate. This cycle added no new exploitable surface (admin.live:8443 dead, sibling routes edge-gated).
+===== ANALYST bigpickle 2026-09-13 21:29:04 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sS -o /tmp/opencode/r1.txt -D /tmp/opencode/h1.txt -X OPTIONS "https://api.sipgate.com/v2/authorization/token" -H "Origin: https://target.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" -m 20; echo "---H1---"; cat /tmp/opencode/h1.txt; echo "---R1---"; cat /tmp/opencode/r1.txt
+---H1---
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://target.example
+access-control-max-age: 151200
+vary: origin
+date: Sun, 13 Sep 2026 21:25:36 GMT
+
+---R1---
+[0m
+[0m$ [0msleep 2; curl -sS -o /tmp/opencode/r2.txt -D /tmp/opencode/h2.txt "https://api.sipgate.com/v2" -H "Origin: https://target.example" -m 20; echo "---H2---"; cat /tmp/opencode/h2.txt; echo "---R2(first 400b)---"; head -c 400 /tmp/opencode/r2.txt
+---H2---
+HTTP/1.1 200 OK
+access-control-allow-credentials: true
+access-control-allow-origin: https://target.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,WWW-Authenticate,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,Mcp-Session-Id,X-Sipgate-Command
+content-length: 5481
+content-type: application/json
+vary: origin
+x-b3-traceid: 18f5678e319b41312e1548cb3a21783e
+date: Sun, 13 Sep 2026 21:25:41 GMT
+
+---R2(first 400b)---
+{"accountUrl":"https://api.sipgate.com/v2/account","accountVerifiedUrl":"https://api.sipgate.com/v2/account/verified","addressUrl":"https://api.sipgate.com/v2/addresses/{addressId}","addressesUrl":"https://api.sipgate.com/v2/addresses","addressNumbersUrl":"https://api.sipgate.com/v2/addresses/{addressId}/numbers","authorizationOauthClientsUrl":"https://api.sipgate.com/v2/authorization/oauth2/clien
+[0m
+[0m$ [0msleep 2; curl -sS -o /tmp/opencode/r3.txt -D /tmp/opencode/h3.txt "https://api.sipgate.com/v2/authorization/token" -m 20; echo "---H3---"; cat /tmp/opencode/h3.txt; echo "---R3---"; head -c 300 /tmp/opencode/r3.txt
+---H3---
+HTTP/1.1 404 Not Found
+content-length: 53
+content-type: text/html; charset=utf-8
+vary: origin
+x-b3-traceid: be7d58195168ba8cdc6f4cbb8c7b7fe8
+date: Sun, 13 Sep 2026 21:25:46 GMT
+
+---R3---
+<html><body><h1>Resource not found</h1></body></html>
+[0m
+STEP 1 — DELTA
+- [CHANGED] `api.sipgate.com/v2/authorization/token`: `OPTIONS` 204 persists with `ACAO` arbitrary-origin+credentials; allow-headers now explicitly seed a **token-pair credential model** on the api origin (`X-Sipgate-Token-Id`, `X-Sipgate-Token-Secret`) alongside OIDC+MCP/SSE (`MCP-Protocol-Version`, `Mcp-Session-Id`, `Last-Event-ID`) and `X-Sipgate-Command`.
+- [CHANGED] `GET /v2` index still 200 (5481B, 72 URLs), CORS-cred reflection + `x-b3-traceid` + `Www-Authenticate` exposure persisted; `GET /v2/authorization/token` → 404 (route POST-only, unchanged).
+
+STEP 2 — PRIORITIZE
+- [PRIO] `api.sipgate.com/v2/authorization/token`, 8.95, attack_surface=8 business_value=10 tech_exposure=9(OIDC-proxy+token-pair) gate_ease=10(unauth-500/204) cloud_surface=6 freshness=10
+- [PRIO] `api.sipgate.com/v2/doc/?url=`, 7.20, attack_surface=5 business_value=8 tech_exposure=7(swagger5+implicit) gate_ease=10 frameable+unauth cloud_surface=5 freshness=9
+- [PRIO] `integration.sipgate.com users.integrations.create`, 7.00, attack_surface=7 business_value=8 tech_exposure=8(apiUrl-SSRF) gate_ease=3(FB-JWT) cloud_surface=8 freshness=8
+
+STEP 3 — HYPOTHESES
+[HYP] /v2/authorization/token is a miswired OIDC client-credentials token proxy keyed off a X-Sipgate-Token-Id/Secret pair on the api origin
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token (POST, index-advertised, absent from 144-op swagger)
+confidence: 50
+reasoning: OPTIONS 204 (this cycle) exposes allow-headers `X-Sipgate-Token-Id` + `X-Sipgate-Token-Secret` + OIDC/MCP/SSE headers on the api origin with ACAO arbitrary-origin+credentials; GET on route 404 (POST-only); KB carry-forward: constant 500 "OK" for random client_credentials/refresh_token, 404 for password; sibling undocumented GET routes (crm-bridge 404, users/{uuid}/role 401) do NOT reach app-plane → 500 path is route-specific; real Keycloak third-party token endpoint returns proper 401.
+evidence_needed: status transition to 200 (valid tokenId/secret → mint, AUTH_HELPED never with live creds) or to 401/400 (upstream restored → leaked token-pair would mint high-scope bearer).
+verify_steps: PASSIVE drift re-probe OPTIONS + GET /v2 once per cycle at ≤1rps; POST transition check deferred to HUMAN/AUTH_HELPED cycle (outside passive-first rules).
+impact: restored route + leaked/derived token-pair ⇒ silent mint of contacts/sms/account/balance/payment-scope bearer (ATO-class); currently characterized anomaly only. severity HIGH conditional / MEDIUM now.
+testability: PASSIVE
+[HYP] Swagger-UI attacker-spec shell on api origin (carry-forward, unchanged)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: unallowlisted url=, swagger 5.x implicit extreme-scope client, doc page live, same-origin CORS-cred edge. evidence_needed: attacker markup executing in api-origin DOM / Authorize-popup interception.
+verify_steps: HUMAN_ONLY fresh Chromium (no exec primitive demonstrable statically).
+impact: CRITICAL only with exec primitive; currently LOW-MEDIUM. testability: HUMAN_ONLY
+[HYP] users.integrations.create free-form apiUrl SSRF behind FB-JWT 403 (carry-forward, unchanged)
+class: SSRF
+asset: integration.sipgate.com (spec /oauth2/redirect + /oauth2/callback no-security vs app-403; users.integrations.create free-form apiUrl)
+confidence: 55
+reasoning: uniform app-403 Firebase-JWT gate; GCP metadata reachable if apiUrl server-fetched post-auth.
+evidence_needed: valid FB JWT → POST apiUrl=169.254.169.254. verify_steps: AUTH_HELPED. impact HIGH conditional. testability: AUTH_HELPED
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] swagger url= shell XSS: 45, HUMAN_ONLY, no exec primitive demonstrated, static-only — carries lowest survival weight.
+- [PARKED] MCP/command gateway: SSE/MCP probes both paths → no handshake; headers are generic CORS allow-list strings only (dropped <40, prior).
+- [PARKED] oauth2-redirect.html token theft: KB Chromium SecurityError REJECT; chain-component only.
+- [FINAL] survivors ranked: 1) integration SSRF (55, AUTH_HELPED) 2) token-route characterization (50, PASSIVE) 3) swagger url= shell (45, HUMAN_ONLY).
+
+STEP 5 — NEXT ACTION
+[NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` + `GET https://api.sipgate.com/v2` once each (~0.5rps, no creds, no POST) next cycle to watch for upstream-restore drift (204→401/400 or index-shape change would flip this lead); POST 500→200/401 transition check deferred to AUTH_HELPED since live POST is out of passive-first rules.
+
+STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS 204 persists (this cycle), allow-headers seed token-pair model `X-Sipgate-Token-Id`/`X-Sipgate-Token-Secret` + `MCP-Protocol-Version`/`Mcp-Session-Id`/`Last-Event-ID`/`X-Sipgate-Command`; GET 404 (POST-only); no token minted, no credential used — corroborates miswired-OIDC-proxy characterization.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2: GET index 200 (5481B) persists with arbitrary-origin CORS+credentials and `x-b3-traceid`; route map unchanged vs prior cycle.
+- [LEARN] REJECTED OTHER @ api.sipgate.com/v2/authorization/token: no status/drift change on GET/OPTIONS-only probes — constant surface, carry-forward anomaly stands unchanged.
+
+STEP 7 — RISK
+[RISK] sipgate: 84 — undocumented api-origin token-mint route still anomalously live (OPTIONS 204 bypasses the uniform-401 edge; POST constant-500), token-pair credential headers now confirmed by direct probe; persistent CORS-cred reflection edge-wide; integration apiUrl-SSRF and 94-host CRM fleet behind a single nginx gate remain AUTH_HELPED; no token minted, no credential used, anomaly-level only with HIGH-conditional if upstream restores.
