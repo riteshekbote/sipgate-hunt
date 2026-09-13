@@ -3748,3 +3748,29 @@ impact: if found, new session/command surface (potential auth primitive); else p
 testability: PASSIVE
 [NEXT] RAG: fetch /v2/swagger.json (live again, 191,699 B) and diff all 144 path/op pairs against the KB-tested 401/404 set; emit the ±20 never-probed ops as the next-cycle gate-probe list for api.sipgate.com.
 [RISK] sipgate: 82 — persistent chainable surface: edge-wide CORS-cred reflection with MCP/command-seeded header template (api), live 144-path spec restored + unallowlisted url= swagger shell (frameable trusted-origin OAuth amplifier), apiUrl SSRF on integration behind live FB-JWT (AUTH_HELPED), dev SPA leaking prod subdomains, 94-host CRM fleet behind single nginx gate, dangling takeover candidate; active development (bundle/spec/metrics rotation) raises regression risk but no new exploitable class proven this cycle.
+## 2026-09-13 12:41:41 UTC [target] (model bigpickle)
+[HYP] Unauthenticated session-priming POST on /v2/sessions/* (call/SMS/fax initiation)
+class: AUTH
+asset: api.sipgate.com/v2/sessions/{calls,fax,fax/resend,sms,ivr/recording,voicemail/play,voicemail/recording}
+confidence: 55
+reasoning: GET/HEAD on all 7 registered POST-only /sessions routes → 405 (method rejection only), while POST-only /contacts/import/csv → 401 and all other registered routes → 401 empty-body unauth; /sessions{/foo,/calls/123} → 404. Edge-auth filter is bypassed exactly on the session-priming subtree; OPTIONS preflight returns 204 with ACAO:evil.com + ACAC:true + methods incl POST. These ops map to chargeable services (outbound call, SMS, fax, voicemail/IVR playback) — telecom-fraud/cost-incurrence surface if handler auth is absent or in-band.
+evidence_needed: POST /v2/sessions/sms or /sessions/calls returns anything other than 401/403 (e.g. 400/422/202) with no Authorization header.
+verify_steps: AUTH_HELPED — with a test account, POST /v2/sessions/calls {from,to,"callerId":...} min payload; passively: re-check 405-vs-401 asymmetry each cycle for flapping + whether /sessions routes begin to emit 401.
+impact: if handler-unauthenticated: free outbound calls/SMS/fax at sipgate cost + caller-spoofing on call leg (telecom fraud, billing abuse). Severity HIGH conditional; currently method-gate only, handler-auth undetermined. testability: AUTH_HELPED
+[HYP] Swagger-UI attacker-spec shell on api origin: unallowlisted url= param + frameable + expanded token/MCP header template
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: swagger-initializer.js `url=([^&]+)` → decodeURIComponent fed to SwaggerUIBundle, no scheme/host allowlist; default /v2/swagger.json restored to 200 this cycle; initOAuth auto-registers extreme-scope implicit client sipgate-swagger-ui; CORS-cred reflection persists with headers now incl X-Sipgate-Token-Id/X-Sipgate-Token-Secret advertised edge-wide.
+evidence_needed: attacker-spec markup (info.description / x-logo.url) rendering in api-origin DOM; script exec; iframe-embed; Authorize-popup token interception.
+verify_steps: HUMAN_ONLY — fresh Chromium: https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec> with info.description=<img onerror=alert(document.domain)> and info.x-logo.url=https://<attacker>/p.png; watch spec fetch + popup target.
+impact: trusted-origin phishing + OAuth-authorize-popup amplifier on api origin (token/secret headers readable cross-origin once authed); CRITICAL only with exec primitive. severity LOW-MEDIUM.
+testability: HUMAN_ONLY
+[HYP] Marginal: /v2/history, /phonelines, /restrictions expose data or differ in auth behavior when probed post-spec-live
+class: AUTH
+asset: api.sipgate.com/v2/{history,phonelines,restrictions}
+confidence: 40
+reasoning: RAG-diff flagged these as never-individually-probed template-free ops; unauthenticated GET → uniform 401 empty-body this cycle, consistent with edge uniformity — no drift signal retained.
+evidence_needed: any non-401 status among these three under any header/param variance.
+verify_steps: PASSIVE — repeat GETs with x-sipgate-version / X-Sipgate-Token-Id header variants (advertised in CORS allow-headers) to test edge token alternatives.
+impact: LOW. testability: PASSIVE

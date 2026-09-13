@@ -1,30 +1,26 @@
-## 2026-09-13 06:49:59 UTC [target] (model bigpickle)
-[HYP] Swagger-UI attacker-spec shell on api origin: unallowlisted url= param + frameable, CORS-cred edge
+## 2026-09-13 12:41:41 UTC [target] (model bigpickle)
+[HYP] Unauthenticated session-priming POST on /v2/sessions/* (call/SMS/fax initiation)
+class: AUTH
+asset: api.sipgate.com/v2/sessions/{calls,fax,fax/resend,sms,ivr/recording,voicemail/play,voicemail/recording}
+confidence: 55
+reasoning: GET/HEAD on all 7 registered POST-only /sessions routes → 405 (method rejection only), while POST-only /contacts/import/csv → 401 and all other registered routes → 401 empty-body unauth; /sessions{/foo,/calls/123} → 404. Edge-auth filter is bypassed exactly on the session-priming subtree; OPTIONS preflight returns 204 with ACAO:evil.com + ACAC:true + methods incl POST. These ops map to chargeable services (outbound call, SMS, fax, voicemail/IVR playback) — telecom-fraud/cost-incurrence surface if handler auth is absent or in-band.
+evidence_needed: POST /v2/sessions/sms or /sessions/calls returns anything other than 401/403 (e.g. 400/422/202) with no Authorization header.
+verify_steps: AUTH_HELPED — with a test account, POST /v2/sessions/calls {from,to,"callerId":...} min payload; passively: re-check 405-vs-401 asymmetry each cycle for flapping + whether /sessions routes begin to emit 401.
+impact: if handler-unauthenticated: free outbound calls/SMS/fax at sipgate cost + caller-spoofing on call leg (telecom fraud, billing abuse). Severity HIGH conditional; currently method-gate only, handler-auth undetermined. testability: AUTH_HELPED
+[HYP] Swagger-UI attacker-spec shell on api origin: unallowlisted url= param + frameable + expanded token/MCP header template
 class: XSS
 asset: api.sipgate.com/v2/doc/?url=
 confidence: 45
-reasoning: re-fetched swagger-initializer.js (2026-09-13): `url=([^&]+)` → `decodeURIComponent(url[1])` fed directly to SwaggerUIBundle with no scheme host allowlist; index.html served 200 with no frame-ancestors/XFO observed; default `/v2/swagger.json` restored to 200; initOAuth auto-registers extreme-scope third-party client sipgate-swagger-ui (oauth2-clients:write balance:read payment:methods:* contacts/sms/account rw) with weak 7-digit integer nonce; api edge reflects arbitrary Origin + credentials and full expose-headers on the shell page.
-evidence_needed: attacker-spec markup (info.description / x-logo.url) rendering inside api-origin DOM; script exec; cross-origin iframe embed of /v2/doc/?url=<attacker spec>; victim Authorize-popup → token interception.
-verify_steps: HUMAN_ONLY Chromium: https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec> with info.x-logo.url=https://<attacker>/p.png and info.description=<img onerror>; then https://<attacker>/spec.json; watch network for spec fetch + Authorize popup target.
-impact: SwaggerUI 5.x escapes info markup so raw XSS unlikely; practical impact = phishing / trusted-origin OAuth authorize-popup amplifier on api origin (frameable, CORS-cred, weak nonce); CRITICAL only if an exec primitive is found. severity LOW-MEDIUM.
+reasoning: swagger-initializer.js `url=([^&]+)` → decodeURIComponent fed to SwaggerUIBundle, no scheme/host allowlist; default /v2/swagger.json restored to 200 this cycle; initOAuth auto-registers extreme-scope implicit client sipgate-swagger-ui; CORS-cred reflection persists with headers now incl X-Sipgate-Token-Id/X-Sipgate-Token-Secret advertised edge-wide.
+evidence_needed: attacker-spec markup (info.description / x-logo.url) rendering in api-origin DOM; script exec; iframe-embed; Authorize-popup token interception.
+verify_steps: HUMAN_ONLY — fresh Chromium: https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec> with info.description=<img onerror=alert(document.domain)> and info.x-logo.url=https://<attacker>/p.png; watch spec fetch + popup target.
+impact: trusted-origin phishing + OAuth-authorize-popup amplifier on api origin (token/secret headers readable cross-origin once authed); CRITICAL only with exec primitive. severity LOW-MEDIUM.
 testability: HUMAN_ONLY
-[HYP] users.integrations.create free-form apiUrl SSRF behind FB-JWT 403 tier
-class: SSRF
-asset: integration.sipgate.com (users.integrations.create + /oauth2/redirect /oauth2/callback spec-drift)
-confidence: 55
-reasoning: embedded 26-op spec declares /oauth2/redirect + /oauth2/callback with NO security requirement yet both return app-403 "Forbidden resource" (fabricated code/state identical) — spec-vs-behavior drift; users.integrations.create documents free-form apiUrl; gate is Firebase-JWT (metrics firebase_jwt_forbidden_requests 75973 live this cycle) not the Keycloak auth in the spec; all data ops uniform app-403 externally.
-evidence_needed: a valid Firebase JWT (from any web app using the same project) → 403 → reachable POST users/integrations.create with apiUrl=http://169.254.169.254/... → metadata; or an oauth2 flow reaching the callback with minted code.
-verify_steps: AUTH_HELPED — obtain Firebe JWT via an authorized session, POST /v1/users/{userId}/integrations or per-spec create path with apiUrl=internal URL; passively: re-check /oauth2/callback + /oauth2/redirect status each cycle for gate flapping.
-impact: direct GCP metadata access (project/secret keys) if Firebase-JWT gate is passed and apiUrl is fetched server-side; severity HIGH conditionally, currently gated (AUTH_HELPED).
-testability: AUTH_HELPED
-[HYP] Drop: MCP/command gateway surface seeded by api-family expose-headers dictionary
-class: OTHER
-asset: api.sipgate.com (undocumented MCP/command paths)
+[HYP] Marginal: /v2/history, /phonelines, /restrictions expose data or differ in auth behavior when probed post-spec-live
+class: AUTH
+asset: api.sipgate.com/v2/{history,phonelines,restrictions}
 confidence: 40
-reasoning: api edge advertises Mcp-Session-Id + X-Sipgate-Command + X-Sipgate-Was-NQ-Request in Access-Control-Expose-Headers on every response while integration family does NOT — header set is api-gateway CORS template pointing at an upstream service that emits MCP-session/command headers; guessed paths all 404, headers never observed emitted.
-evidence_needed: any api.sipgate.com endpoint emitting Mcp-Session-Id or X-Sipgate-Command, or a non-404 MCP/SSE handshake path.
-verify_steps: PASSIVE dictionary probe (≤1rps): /v2/mcp, /mcp, /mcp/sse, /v2/.well-known/mcp, /v2/command, /v2/commands, /v2/session, /v2/chat, /v2/agent — flag any status !=404 and any emitted Mcp-Session-Id.
-impact: if found, new session/command surface (potential auth primitive); else pure topology signal. severity LOW.
-testability: PASSIVE
-[NEXT] RAG: fetch /v2/swagger.json (live again, 191,699 B) and diff all 144 path/op pairs against the KB-tested 401/404 set; emit the ±20 never-probed ops as the next-cycle gate-probe list for api.sipgate.com.
-[RISK] sipgate: 82 — persistent chainable surface: edge-wide CORS-cred reflection with MCP/command-seeded header template (api), live 144-path spec restored + unallowlisted url= swagger shell (frameable trusted-origin OAuth amplifier), apiUrl SSRF on integration behind live FB-JWT (AUTH_HELPED), dev SPA leaking prod subdomains, 94-host CRM fleet behind single nginx gate, dangling takeover candidate; active development (bundle/spec/metrics rotation) raises regression risk but no new exploitable class proven this cycle.
+reasoning: RAG-diff flagged these as never-individually-probed template-free ops; unauthenticated GET → uniform 401 empty-body this cycle, consistent with edge uniformity — no drift signal retained.
+evidence_needed: any non-401 status among these three under any header/param variance.
+verify_steps: PASSIVE — repeat GETs with x-sipgate-version / X-Sipgate-Token-Id header variants (advertised in CORS allow-headers) to test edge token alternatives.
+impact: LOW. testability: PASSIVE

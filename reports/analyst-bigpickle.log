@@ -25671,3 +25671,592 @@ testability: PASSIVE
 
 ## STEP 7 — RISK
 [RISK] sipgate: 82 — persistent chainable surface: edge-wide CORS-cred reflection with MCP/command-seeded header template (api), live 144-path spec restored + unallowlisted url= swagger shell (frameable trusted-origin OAuth amplifier), apiUrl SSRF on integration behind live FB-JWT (AUTH_HELPED), dev SPA leaking prod subdomains, 94-host CRM fleet behind single nginx gate, dangling takeover candidate; active development (bundle/spec/metrics rotation) raises regression risk but no new exploitable class proven this cycle.
+===== ANALYST bigpickle 2026-09-13 12:58:50 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -o /tmp/swagger.json -w "%{http_code}" https://api.sipgate.com/v2/swagger.json 2>&1
+200
+[0m
+Swagger live again (200). Executing the queued NEXT: RAG diff of all 144 paths against KB-tested set.
+[0m$ [0mpython3 -c "
+import json
+spec=json.load(open('/tmp/swagger.json'))
+print('paths:',len(spec.get('paths',{})))
+print('security global:',spec.get('security'))
+ops=[]
+for p,methods in spec['paths'].items():
+    for m,op in methods.items():
+        if m.lower() not in ('get','put','post','delete','patch','head','options'): continue
+        sec=op.get('security','__inherit__')
+        ops.append((m.upper(),p,sec))
+print('ops:',len(ops))
+for m,p,s in ops:
+    print(f'{m:6} {p}  sec={s}')
+" 2>&1 | head -80
+paths: 144
+security global: None
+ops: 187
+GET    /  sec=__inherit__
+GET    /account  sec=[{'oauth2': ['all', 'account:read']}]
+PUT    /account/verified  sec=[{'oauth2': ['all', 'account:write']}]
+GET    /addresses  sec=[{'oauth2': ['all', 'addresses:read']}]
+GET    /addresses/itemCount  sec=[{'oauth2': ['all', 'addresses:read']}]
+GET    /addresses/{addressId}  sec=[{'oauth2': ['all', 'addresses:read']}]
+PUT    /addresses/{addressId}  sec=[{'oauth2': ['all', 'addresses:write']}]
+GET    /addresses/{addressId}/numbers  sec=[{'oauth2': ['all', 'numbers:read']}]
+GET    /app/events  sec=[{'oauth2': ['internal']}]
+DELETE /app/events/{id}  sec=[{'oauth2': ['internal']}]
+GET    /app/links  sec=__inherit__
+GET    /app/properties  sec=[{'oauth2': ['all', 'internal']}]
+GET    /app/tacs  sec=[{'oauth2': ['internal']}]
+GET    /app/users  sec=[{'oauth2': ['internal']}]
+GET    /authorization/oauth2/clients  sec=[{'oauth2': ['all', 'authorization:oauth2:clients:read']}]
+POST   /authorization/oauth2/clients  sec=[{'oauth2': ['all', 'authorization:oauth2:clients:write']}]
+DELETE /authorization/oauth2/clients/{clientId}  sec=[{'oauth2': ['all', 'authorization:oauth2:clients:write']}]
+GET    /authorization/oauth2/clients/{clientId}  sec=[{'oauth2': ['all', 'authorization:oauth2:clients:read']}]
+PUT    /authorization/oauth2/clients/{clientId}  sec=[{'oauth2': ['all', 'authorization:oauth2:clients:write']}]
+GET    /authorization/oauth2/clients/{clientId}/gdpr  sec=__inherit__
+GET    /authorization/userinfo  sec=__inherit__
+GET    /autorecordings/greetings  sec=[{'oauth2': ['autorecording:greeting:read', 'all']}]
+POST   /autorecordings/greetings  sec=[{'oauth2': ['autorecording:greeting:write', 'all']}]
+DELETE /autorecordings/greetings/{greetingId}  sec=[{'oauth2': ['autorecording:greeting:write', 'all']}]
+GET    /autorecordings/{extension}/settings  sec=[{'oauth2': ['devices:read', 'all']}]
+PUT    /autorecordings/{extension}/settings  sec=[{'oauth2': ['devices:read', 'all']}]
+GET    /balance  sec=[{'oauth2': ['all', 'balance:read']}]
+GET    /blacklist/incoming  sec=[{'oauth2': ['all', 'blacklist:read']}]
+POST   /blacklist/incoming  sec=[{'oauth2': ['all', 'blacklist:write']}]
+DELETE /blacklist/incoming/{phoneNumber}  sec=[{'oauth2': ['all', 'blacklist:write']}]
+GET    /callrestrictions  sec=[{'oauth2': ['all', 'callrestrictions:read']}]
+GET    /calls  sec=[{'oauth2': ['all', 'rtcm:read']}]
+POST   /calls  sec=[{'oauth2': ['all', 'rtcm:write']}]
+DELETE /calls/{callId}  sec=[{'oauth2': ['all', 'rtcm:write']}]
+POST   /calls/{callId}/announcements  sec=[{'oauth2': ['all', 'rtcm:write']}]
+POST   /calls/{callId}/dtmf  sec=[{'oauth2': ['all', 'rtcm:write']}]
+PUT    /calls/{callId}/hold  sec=[{'oauth2': ['all', 'rtcm:write']}]
+PUT    /calls/{callId}/muted  sec=[{'oauth2': ['all', 'rtcm:write']}]
+PUT    /calls/{callId}/recording  sec=[{'oauth2': ['all', 'rtcm:write']}]
+POST   /calls/{callId}/transfer  sec=[{'oauth2': ['all', 'rtcm:write']}]
+GET    /channels  sec=[{'oauth2': ['all', 'channels:read']}]
+DELETE /channels/{channelId}  sec=[{'oauth2': ['all', 'channels:write']}]
+GET    /channels/{channelId}/events  sec=[{'oauth2': ['all', 'channels:read']}]
+PUT    /channels/{channelId}/name  sec=[{'oauth2': ['all', 'channels:write']}]
+PUT    /channels/{channelId}/users  sec=[{'oauth2': ['all', 'channels:write']}]
+PUT    /channels/{channelId}/users/{userId}/devices  sec=[{'oauth2': ['all', 'channels:write']}]
+DELETE /contacts  sec=[{'oauth2': ['all', 'contacts:write']}]
+GET    /contacts  sec=[{'oauth2': ['all', 'contacts:read']}]
+POST   /contacts  sec=[{'oauth2': ['all', 'contacts:write']}]
+GET    /contacts/csv  sec=[{'oauth2': ['all', 'contacts:read']}]
+POST   /contacts/import/csv  sec=[{'oauth2': ['all', 'contacts:write']}]
+POST   /contacts/import/google  sec=[{'oauth2': ['all', 'contacts:write']}]
+GET    /contacts/internal  sec=[{'oauth2': ['all', 'contacts:read']}]
+GET    /contacts/vcard  sec=[{'oauth2': ['all', 'contacts:read']}]
+PUT    /contacts/vcard  sec=[{'oauth2': ['all', 'contacts:write']}]
+GET    /contacts/{contactId}  sec=[{'oauth2': ['all', 'contacts:read']}]
+PUT    /contacts/{contactId}  sec=[{'oauth2': ['all', 'contacts:write']}]
+DELETE /contacts/{contactid}  sec=[{'oauth2': ['all', 'contacts:write']}]
+DELETE /devices/{deviceId}  sec=[{'oauth2': ['all', 'devices:write']}]
+GET    /devices/{deviceId}  sec=[{'oauth2': ['all', 'devices:read']}]
+PUT    /devices/{deviceId}  sec=[{'oauth2': ['all', 'devices:write']}]
+PUT    /devices/{deviceId}/alias  sec=[{'oauth2': ['all', 'devices:write']}]
+GET    /devices/{deviceId}/callerid  sec=[{'oauth2': ['all', 'devices:read', 'devices:callerid:read']}]
+PUT    /devices/{deviceId}/callerid  sec=[{'oauth2': ['all', 'devices:write', 'devices:callerid:write']}]
+POST   /devices/{deviceId}/credentials/password  sec=[{'oauth2': ['all', 'devices:write']}]
+PUT    /devices/{deviceId}/external/incomingcalldisplay  sec=[{'oauth2': ['all', 'devices:write']}]
+PUT    /devices/{deviceId}/external/targetnumber  sec=[{'oauth2': ['all', 'devices:write']}]
+GET    /devices/{deviceId}/localprefix  sec=[{'oauth2': ['all', 'devices:read', 'devices:localprefix:read']}]
+PUT    /devices/{deviceId}/localprefix  sec=[{'oauth2': ['all', 'devices:write', 'devices:localprefix:write']}]
+GET    /devices/{deviceId}/singlerowdisplay  sec=[{'oauth2': ['all', 'devices:read', 'devices:singlerowdisplay:read']}]
+PUT    /devices/{deviceId}/singlerowdisplay  sec=[{'oauth2': ['all', 'devices:write', 'devices:singlerowdisplay:write']}]
+GET    /devices/{deviceId}/tariffannouncement  sec=[{'oauth2': ['all', 'devices:read', 'devices:tariffannouncement:read']}]
+PUT    /devices/{deviceId}/tariffannouncement  sec=[{'oauth2': ['all', 'devices:write', 'devices:tariffannouncement:write']}]
+GET    /groupfaxlines  sec=[{'oauth2': ['all', 'groups:read', 'groups:faxlines:read']}]
+GET    /groupfaxlines/{faxlineId}/callerid  sec=[{'oauth2': ['all', 'groups:read', 'groups:faxlines:read']}]
+GET    /groupfaxlines/{faxlineId}/numbers  sec=[{'oauth2': ['all', 'groups:read', 'groups:faxlines:read']}]
+GET    /groups  sec=[{'oauth2': ['all', 'groups:read']}]
+[0m
+[0m$ [0mpython3 -c "
+import json
+spec=json.load(open('/tmp/swagger.json'))
+ops=[]
+for p,methods in spec['paths'].items():
+    for m,op in methods.items():
+        if m.lower() not in ('get','put','post','delete','patch','head','options'): continue
+        ops.append((m.upper(),p))
+for m,p in ops:
+    print(f'{m:6} {p}')
+" 2>&1 | tail -80
+POST   /sessions/fax
+POST   /sessions/fax/resend
+POST   /sessions/ivr/recording
+POST   /sessions/sms
+POST   /sessions/voicemail/play
+POST   /sessions/voicemail/recording
+GET    /settings/sipgateio
+PUT    /settings/sipgateio
+GET    /translations/{language}
+GET    /users
+DELETE /users/{userId}
+GET    /users/{userId}
+PUT    /users/{userId}/busyonbusy
+PUT    /users/{userId}/defaultdevice
+PUT    /users/{userId}/location
+GET    /voicemails
+GET    /voicemails/{voicemailId}
+POST   /{userId}/callrestrictions/{restriction}
+GET    /{userId}/devices
+POST   /{userId}/devices
+POST   /{userId}/devices/external
+POST   /{userId}/devices/mobile
+POST   /{userId}/devices/register
+GET    /{userId}/devices/{deviceId}/contingents
+DELETE /{userId}/devices/{deviceId}/sim
+POST   /{userId}/devices/{deviceId}/sim
+POST   /{userId}/devices/{deviceId}/sim/orders
+GET    /{userId}/faxlines
+POST   /{userId}/faxlines
+DELETE /{userId}/faxlines/{faxlineId}
+PUT    /{userId}/faxlines/{faxlineId}
+GET    /{userId}/faxlines/{faxlineId}/callerid
+PUT    /{userId}/faxlines/{faxlineId}/callerid
+GET    /{userId}/faxlines/{faxlineId}/numbers
+PUT    /{userId}/faxlines/{faxlineId}/tagline
+GET    /{userId}/notifications
+POST   /{userId}/notifications/call/email
+POST   /{userId}/notifications/call/sms
+POST   /{userId}/notifications/fax/email
+POST   /{userId}/notifications/fax/report
+POST   /{userId}/notifications/fax/sms
+POST   /{userId}/notifications/sms/email
+POST   /{userId}/notifications/voicemail/email
+POST   /{userId}/notifications/voicemail/sms
+DELETE /{userId}/notifications/{notificationId}
+GET    /{userId}/numbers
+GET    /{userId}/phonelines
+POST   /{userId}/phonelines
+DELETE /{userId}/phonelines/{phonelineId}
+GET    /{userId}/phonelines/{phonelineId}
+PUT    /{userId}/phonelines/{phonelineId}
+GET    /{userId}/phonelines/{phonelineId}/blockanonymous
+PUT    /{userId}/phonelines/{phonelineId}/blockanonymous
+GET    /{userId}/phonelines/{phonelineId}/devices
+POST   /{userId}/phonelines/{phonelineId}/devices
+DELETE /{userId}/phonelines/{phonelineId}/devices/{deviceId}
+GET    /{userId}/phonelines/{phonelineId}/forwardings
+PUT    /{userId}/phonelines/{phonelineId}/forwardings
+GET    /{userId}/phonelines/{phonelineId}/numbers
+GET    /{userId}/phonelines/{phonelineId}/parallelforwardings
+POST   /{userId}/phonelines/{phonelineId}/parallelforwardings
+DELETE /{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId}
+PUT    /{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId}
+GET    /{userId}/phonelines/{phonelineId}/sipgateio
+PUT    /{userId}/phonelines/{phonelineId}/sipgateio
+GET    /{userId}/phonelines/{phonelineId}/sipgateio/log
+GET    /{userId}/phonelines/{phonelineId}/voicemails
+PUT    /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}
+GET    /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings
+POST   /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings
+DELETE /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId}
+PUT    /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId}
+PUT    /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/transcriptions
+GET    /{userId}/sms
+PUT    /{userId}/sms/{smsId}
+GET    /{userId}/sms/{smsId}/callerids
+POST   /{userId}/sms/{smsId}/callerids
+DELETE /{userId}/sms/{smsId}/callerids/{callerId}
+PUT    /{userId}/sms/{smsId}/callerids/{callerId}
+POST   /{userId}/sms/{smsId}/callerids/{callerId}/verification
+[0m
+[0m$ [0mpython3 -c "
+import json,re
+spec=json.load(open('/tmp/swagger.json'))
+ops=[]
+for p,methods in spec['paths'].items():
+    for m,op in methods.items():
+        if m.lower() not in ('get','put','post','delete','patch','head','options'): continue
+        ops.append((m.upper(),p))
+
+kb_tested=set('''/
+/account
+account/verified
+addresses
+addresses/itemCount
+app/events
+app/links
+app/properties
+app/tacs
+app/users
+authorization/oauth2/clients
+authorization/userinfo
+autorecordings/greetings
+balance
+blacklist/incoming
+callrestrictions
+calls
+channels
+contacts
+contacts/csv
+contacts/internal
+contacts/vcard
+devices
+groupfaxlines
+groups
+history/export
+voicemails
+settings/sipgateio
+translations/{language}
+users
+portings
+log/webhooks
+numbers
+authorization
+graphql
+health
+sms
+fax
+'''.split())
+
+never=[]
+for m,p in ops:
+    base=p.strip('/').split('/')[0] if not p.split('/')[1:] else '/'.join(p.strip('/').split('/')[:2])
+    # normalize base candidate
+    toks=p.strip('/').split('/')
+    base='/'.join(toks[:2])
+    hit=any(b in p or p.startswith('/'+b) or b==base for b in kb_tested)
+    if not hit:
+        never.append((m,p))
+print('NEVER-PROBED ops:',len(never))
+for m,p in never[:40]:
+    print(f'{m:6} {p}')
+" 2>&1
+NEVER-PROBED ops: 0
+[0m
+[0m$ [0mpython3 -c "
+import json
+spec=json.load(open('/tmp/swagger.json'))
+ops=[]
+for p,methods in spec['paths'].items():
+    for m,op in methods.items():
+        if m.lower() not in ('get','put','post','delete','patch','head','options'): continue
+        ops.append((m.upper(),p))
+
+# paths explicitly confirmed 401/404/500 in KB
+kb_explicit=set([
+    '/',
+    '/account',
+    '/account/verified',
+    '/addresses',
+    '/addresses/itemCount',
+    '/app/events',
+    '/app/links',
+    '/app/properties',
+    '/app/tacs',
+    '/app/users',
+    '/authorization/userinfo',
+    '/autorecordings/greetings',
+    '/balance',
+    '/blacklist/incoming',
+    '/callrestrictions',
+    '/calls',
+    '/channels',
+    '/contacts',
+    '/contacts/csv',
+    '/contacts/import/csv',
+    '/contacts/import/google',
+    '/contacts/internal',
+    '/contacts/vcard',
+    '/groupfaxlines',
+    '/groups',
+    '/history/export',
+    '/numbers',
+    '/numbers/quickdial/validation',
+    '/portings',
+    '/log/webhooks',
+    '/settings/sipgateio',
+    '/translations/{language}',
+    '/users',
+    '/voicemails',
+    '/health',
+    '/v2/graphql',
+    '/v1/',
+])
+
+never=[]
+for m,p in ops:
+    # normalize: strip template params for root match
+    base='/'+'/'.join(p.strip('/').split('/')[:1])
+    base2='/'+'/'.join(p.strip('/').split('/')[:2])
+    if p in kb_explicit or base in kb_explicit or base2 in kb_explicit:
+        continue
+    never.append((m,p))
+
+print(f'NEVER-PROBED: {len(never)} ops')
+for m,p in never:
+    print(f'  {m:6} {p}')
+" 2>&1
+NEVER-PROBED: 104 ops
+  GET    /authorization/oauth2/clients
+  POST   /authorization/oauth2/clients
+  DELETE /authorization/oauth2/clients/{clientId}
+  GET    /authorization/oauth2/clients/{clientId}
+  PUT    /authorization/oauth2/clients/{clientId}
+  GET    /authorization/oauth2/clients/{clientId}/gdpr
+  GET    /autorecordings/{extension}/settings
+  PUT    /autorecordings/{extension}/settings
+  DELETE /devices/{deviceId}
+  GET    /devices/{deviceId}
+  PUT    /devices/{deviceId}
+  PUT    /devices/{deviceId}/alias
+  GET    /devices/{deviceId}/callerid
+  PUT    /devices/{deviceId}/callerid
+  POST   /devices/{deviceId}/credentials/password
+  PUT    /devices/{deviceId}/external/incomingcalldisplay
+  PUT    /devices/{deviceId}/external/targetnumber
+  GET    /devices/{deviceId}/localprefix
+  PUT    /devices/{deviceId}/localprefix
+  GET    /devices/{deviceId}/singlerowdisplay
+  PUT    /devices/{deviceId}/singlerowdisplay
+  GET    /devices/{deviceId}/tariffannouncement
+  PUT    /devices/{deviceId}/tariffannouncement
+  DELETE /history
+  GET    /history
+  PUT    /history
+  DELETE /history/{entryId}
+  GET    /history/{entryId}
+  PUT    /history/{entryId}
+  PUT    /history/{entryId}/archive
+  PUT    /history/{entryId}/note
+  PUT    /history/{entryId}/read
+  GET    /phonelines
+  GET    /restrictions
+  POST   /sessions/calls
+  POST   /sessions/fax
+  POST   /sessions/fax/resend
+  POST   /sessions/ivr/recording
+  POST   /sessions/sms
+  POST   /sessions/voicemail/play
+  POST   /sessions/voicemail/recording
+  POST   /{userId}/callrestrictions/{restriction}
+  GET    /{userId}/devices
+  POST   /{userId}/devices
+  POST   /{userId}/devices/external
+  POST   /{userId}/devices/mobile
+  POST   /{userId}/devices/register
+  GET    /{userId}/devices/{deviceId}/contingents
+  DELETE /{userId}/devices/{deviceId}/sim
+  POST   /{userId}/devices/{deviceId}/sim
+  POST   /{userId}/devices/{deviceId}/sim/orders
+  GET    /{userId}/faxlines
+  POST   /{userId}/faxlines
+  DELETE /{userId}/faxlines/{faxlineId}
+  PUT    /{userId}/faxlines/{faxlineId}
+  GET    /{userId}/faxlines/{faxlineId}/callerid
+  PUT    /{userId}/faxlines/{faxlineId}/callerid
+  GET    /{userId}/faxlines/{faxlineId}/numbers
+  PUT    /{userId}/faxlines/{faxlineId}/tagline
+  GET    /{userId}/notifications
+  POST   /{userId}/notifications/call/email
+  POST   /{userId}/notifications/call/sms
+  POST   /{userId}/notifications/fax/email
+  POST   /{userId}/notifications/fax/report
+  POST   /{userId}/notifications/fax/sms
+  POST   /{userId}/notifications/sms/email
+  POST   /{userId}/notifications/voicemail/email
+  POST   /{userId}/notifications/voicemail/sms
+  DELETE /{userId}/notifications/{notificationId}
+  GET    /{userId}/numbers
+  GET    /{userId}/phonelines
+  POST   /{userId}/phonelines
+  DELETE /{userId}/phonelines/{phonelineId}
+  GET    /{userId}/phonelines/{phonelineId}
+  PUT    /{userId}/phonelines/{phonelineId}
+  GET    /{userId}/phonelines/{phonelineId}/blockanonymous
+  PUT    /{userId}/phonelines/{phonelineId}/blockanonymous
+  GET    /{userId}/phonelines/{phonelineId}/devices
+  POST   /{userId}/phonelines/{phonelineId}/devices
+  DELETE /{userId}/phonelines/{phonelineId}/devices/{deviceId}
+  GET    /{userId}/phonelines/{phonelineId}/forwardings
+  PUT    /{userId}/phonelines/{phonelineId}/forwardings
+  GET    /{userId}/phonelines/{phonelineId}/numbers
+  GET    /{userId}/phonelines/{phonelineId}/parallelforwardings
+  POST   /{userId}/phonelines/{phonelineId}/parallelforwardings
+  DELETE /{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId}
+  PUT    /{userId}/phonelines/{phonelineId}/parallelforwardings/{parallelForwardingId}
+  GET    /{userId}/phonelines/{phonelineId}/sipgateio
+  PUT    /{userId}/phonelines/{phonelineId}/sipgateio
+  GET    /{userId}/phonelines/{phonelineId}/sipgateio/log
+  GET    /{userId}/phonelines/{phonelineId}/voicemails
+  PUT    /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}
+  GET    /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings
+  POST   /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings
+  DELETE /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId}
+  PUT    /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/greetings/{greetingId}
+  PUT    /{userId}/phonelines/{phonelineId}/voicemails/{voicemailId}/transcriptions
+  GET    /{userId}/sms
+  PUT    /{userId}/sms/{smsId}
+  GET    /{userId}/sms/{smsId}/callerids
+  POST   /{userId}/sms/{smsId}/callerids
+  DELETE /{userId}/sms/{smsId}/callerids/{callerId}
+  PUT    /{userId}/sms/{smsId}/callerids/{callerId}
+  POST   /{userId}/sms/{smsId}/callerids/{callerId}/verification
+[0m
+Now let me probe the template-free never-tested paths (≤1 rps, GET only):
+[0m$ [0mfor path in /history /phonelines /restrictions /sessions/calls /sessions/fax /sessions/sms; do
+  echo "=== GET https://api.sipgate.com/v2${path} ==="
+  curl -s -o /dev/null -w "HTTP %{http_code} | size=%{size_download} | headers=%{header_download}\n" \
+    -H "Origin: https://evil.com" \
+    -H "Access-Control-Request-Method: GET" \
+    "https://api.sipgate.com/v2${path}" 2>&1
+  sleep 1.2
+done
+=== GET https://api.sipgate.com/v2/history ===
+curl: unknown --write-out variable: 'header_download'
+HTTP 401 | size=0 | headers=
+=== GET https://api.sipgate.com/v2/phonelines ===
+curl: unknown --write-out variable: 'header_download'
+HTTP 401 | size=0 | headers=
+=== GET https://api.sipgate.com/v2/restrictions ===
+curl: unknown --write-out variable: 'header_download'
+HTTP 401 | size=0 | headers=
+=== GET https://api.sipgate.com/v2/sessions/calls ===
+curl: unknown --write-out variable: 'header_download'
+HTTP 405 | size=0 | headers=
+=== GET https://api.sipgate.com/v2/sessions/fax ===
+curl: unknown --write-out variable: 'header_download'
+HTTP 405 | size=0 | headers=
+=== GET https://api.sipgate.com/v2/sessions/sms ===
+curl: unknown --write-out variable: 'header_download'
+HTTP 405 | size=0 | headers=
+[0m
+`/sessions/*` returns 405 (registered POST-only routes) while sibling paths return 401 — a method/router-layer distinction. Checking OPTIONS preflight on these vs a standard path:
+[0m$ [0mfor path in /sessions/calls /history /balance; do
+  echo "=== OPTIONS https://api.sipgate.com/v2${path} ==="
+  curl -s -o /dev/null -D - \
+    -X OPTIONS \
+    -H "Origin: https://evil.com" \
+    -H "Access-Control-Request-Method: POST" \
+    -H "Access-Control-Request-Headers: authorization,content-type" \
+    "https://api.sipgate.com/v2${path}" 2>&1 | grep -iE "HTTP/|access-control|allow|vary|content-length" | sed 's/^/  /'
+  sleep 1.2
+done
+=== OPTIONS https://api.sipgate.com/v2/sessions/calls ===
+  HTTP/1.1 204 No Content
+  access-control-allow-credentials: true
+  access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+  access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+  access-control-allow-origin: https://evil.com
+  access-control-max-age: 151200
+  vary: origin
+=== OPTIONS https://api.sipgate.com/v2/history ===
+  HTTP/1.1 204 No Content
+  access-control-allow-credentials: true
+  access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+  access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+  access-control-allow-origin: https://evil.com
+  access-control-max-age: 151200
+  vary: origin
+=== OPTIONS https://api.sipgate.com/v2/balance ===
+  HTTP/1.1 204 No Content
+  access-control-allow-credentials: true
+  access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+  access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+  access-control-allow-origin: https://evil.com
+  access-control-max-age: 151200
+  vary: origin
+[0m
+`/sessions/*` GET→405 while sibling paths→401 indicates the `/sessions` subtree may sit outside the edge-auth filter. Testing the rest of that subtree (POST-only ops from spec):
+[0m$ [0mfor path in /sessions/fax/resend /sessions/ivr/recording /sessions/voicemail/play /sessions/voicemail/recording /contacts/import/csv /authorization/oauth2/clients; do
+  echo "=== GET https://api.sipgate.com/v2${path} ==="
+  curl -s -o /dev/null -w "HTTP %{http_code} | size=%{size_download}\n" \
+    "https://api.sipgate.com/v2${path}" 2>&1
+  sleep 1.2
+done
+=== GET https://api.sipgate.com/v2/sessions/fax/resend ===
+HTTP 405 | size=0
+=== GET https://api.sipgate.com/v2/sessions/ivr/recording ===
+HTTP 405 | size=0
+=== GET https://api.sipgate.com/v2/sessions/voicemail/play ===
+HTTP 405 | size=0
+=== GET https://api.sipgate.com/v2/sessions/voicemail/recording ===
+HTTP 405 | size=0
+=== GET https://api.sipgate.com/v2/contacts/import/csv ===
+HTTP 401 | size=0
+=== GET https://api.sipgate.com/v2/authorization/oauth2/clients ===
+HTTP 401 | size=0
+[0m
+Entire `/sessions/*` subtree is 405-subtree-wide (auth filter bypass region). Verifying breadth of the exemption + 404 boundary:
+[0m$ [0mfor path in /sessions /sessions/foo /sessions/calls/123 /sessions/calls/announcements; do
+  echo "=== GET https://api.sipgate.com/v2${path} ==="
+  curl -s -o /dev/null -w "HTTP %{http_code} | size=%{size_download}\n" \
+    "https://api.sipgate.com/v2${path}" 2>&1
+  sleep 1.2
+done
+echo "=== HEAD /sessions/calls ==="
+curl -s -o /dev/null -w "HTTP %{http_code}\n" -I "https://api.sipgate.com/v2/sessions/calls" 2>&1
+=== GET https://api.sipgate.com/v2/sessions ===
+HTTP 404 | size=0
+=== GET https://api.sipgate.com/v2/sessions/foo ===
+HTTP 404 | size=0
+=== GET https://api.sipgate.com/v2/sessions/calls/123 ===
+HTTP 404 | size=0
+=== GET https://api.sipgate.com/v2/sessions/calls/announcements ===
+HTTP 404 | size=0
+=== HEAD /sessions/calls ===
+HTTP 405
+[0m
+All probes stable. Compiling analysis.
+
+STEP 1 — DELTA
+- [NEW] `api.sipgate.com/v2/sessions/*`: entire POST-only subtree (calls, fax, fax/resend, ivr/recording, sms, voicemail/play, voicemail/recording) returns **405** on GET/HEAD unauthenticated — while every other registered route incl. POST-only `/contacts/import/csv` returns **401**; `/sessions`, `/sessions/foo`, `/sessions/calls/123` → 404. Edge-auth filter exemption scoped to exactly the 7 registered session-priming ops.
+- [CHANGED] `api.sipgate.com/v2/*` CORS allow-headers dictionary expanded vs prior cycles: now advertises `X-INSTANA-{L,S,T}`, `MCP-Protocol-Version`, `Last-Event-ID`, `Mcp-Session-Id`, `X-Sipgate-Token-Id`, `X-Sipgate-Token-Secret`, `X-Sipgate-Enforce-No-NQ`, `x-sipgate-fingerprint`, `x-sipgate-hubspot-utk` — adds SSE/streaming + token-secret headers to the edge-wide credential-CORS template.
+- [CHANGED] `api.sipgate.com/v2/swagger.json` live again (200; 144 paths / 187 ops, global security=[] absent); RAG diff yields 104 never-individually-probed ops, dominated by `/{userId}/*` topology (known family) + `/history`, `/phonelines`, `/restrictions`.
+
+STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/sessions/*, 8.05, attack_surface=8 business_value=10 tech_exposure=7 (POST session-priming, CORS-cred browser-composable) gate_ease=8 (edge-auth skipped; only method gate) cloud_surface=3 freshness=10.
+
+STEP 3 — HYPOTHESES
+[HYP] Unauthenticated session-priming POST on /v2/sessions/* (call/SMS/fax initiation)
+class: AUTH
+asset: api.sipgate.com/v2/sessions/{calls,fax,fax/resend,sms,ivr/recording,voicemail/play,voicemail/recording}
+confidence: 55
+reasoning: GET/HEAD on all 7 registered POST-only /sessions routes → 405 (method rejection only), while POST-only /contacts/import/csv → 401 and all other registered routes → 401 empty-body unauth; /sessions{/foo,/calls/123} → 404. Edge-auth filter is bypassed exactly on the session-priming subtree; OPTIONS preflight returns 204 with ACAO:evil.com + ACAC:true + methods incl POST. These ops map to chargeable services (outbound call, SMS, fax, voicemail/IVR playback) — telecom-fraud/cost-incurrence surface if handler auth is absent or in-band.
+evidence_needed: POST /v2/sessions/sms or /sessions/calls returns anything other than 401/403 (e.g. 400/422/202) with no Authorization header.
+verify_steps: AUTH_HELPED — with a test account, POST /v2/sessions/calls {from,to,"callerId":...} min payload; passively: re-check 405-vs-401 asymmetry each cycle for flapping + whether /sessions routes begin to emit 401.
+impact: if handler-unauthenticated: free outbound calls/SMS/fax at sipgate cost + caller-spoofing on call leg (telecom fraud, billing abuse). Severity HIGH conditional; currently method-gate only, handler-auth undetermined. testability: AUTH_HELPED
+
+[HYP] Swagger-UI attacker-spec shell on api origin: unallowlisted url= param + frameable + expanded token/MCP header template
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: swagger-initializer.js `url=([^&]+)` → decodeURIComponent fed to SwaggerUIBundle, no scheme/host allowlist; default /v2/swagger.json restored to 200 this cycle; initOAuth auto-registers extreme-scope implicit client sipgate-swagger-ui; CORS-cred reflection persists with headers now incl X-Sipgate-Token-Id/X-Sipgate-Token-Secret advertised edge-wide.
+evidence_needed: attacker-spec markup (info.description / x-logo.url) rendering in api-origin DOM; script exec; iframe-embed; Authorize-popup token interception.
+verify_steps: HUMAN_ONLY — fresh Chromium: https://api.sipgate.com/v2/doc/?url=data:application/json;base64,<spec> with info.description=<img onerror=alert(document.domain)> and info.x-logo.url=https://<attacker>/p.png; watch spec fetch + popup target.
+impact: trusted-origin phishing + OAuth-authorize-popup amplifier on api origin (token/secret headers readable cross-origin once authed); CRITICAL only with exec primitive. severity LOW-MEDIUM.
+testability: HUMAN_ONLY
+
+[HYP] Marginal: /v2/history, /phonelines, /restrictions expose data or differ in auth behavior when probed post-spec-live
+class: AUTH
+asset: api.sipgate.com/v2/{history,phonelines,restrictions}
+confidence: 40
+reasoning: RAG-diff flagged these as never-individually-probed template-free ops; unauthenticated GET → uniform 401 empty-body this cycle, consistent with edge uniformity — no drift signal retained.
+evidence_needed: any non-401 status among these three under any header/param variance.
+verify_steps: PASSIVE — repeat GETs with x-sipgate-version / X-Sipgate-Token-Id header variants (advertised in CORS allow-headers) to test edge token alternatives.
+impact: LOW. testability: PASSIVE
+
+STEP 4 — SELF-CRITIQUE
+- [DROPPED] oauth2-redirect.html CORS token-exfil chain (ranked 85): KB REJECTED — Chromium 152 SecurityError on window.opener read, caller inert cross-origin. REJECTED class.
+- [DROPPED] chatbot chat.sipgate.com/dev WS arbitrary-origin: REJECTED both prod and dev (evil→400 no-ACAO).
+- [PARKED] users.integrations.create apiUrl SSRF (55): unchanged — FB-JWT 403 gate + no creds; nothing new this cycle; parked pending AUTH_HELPED or gate flap.
+- [PARKED] MCP/command gateway (40): SSE/streaming headers (MCP-Protocol-Version, Last-Event-ID, Mcp-Session-Id) now advertised on the api allow-headers template — strengthens topology signal but no emitting path found; parked.
+- [FINAL] 1) /sessions/* POST auth-exemption (55) 2) swagger url= shell (45) 3) history/phonelines/restrictions marginal (40).
+
+STEP 5 — NEXT ACTION
+- [NEXT] HUMAN: with authorized test account, POST /v2/sessions/sms (min dummy payload, no Authorization) to determine if /sessions/* POST is handler-unauthenticated — telecom-fraud/cost-incurrence decision point; passively re-sample GET /sessions/calls (405) each cycle for gate flapping.
+
+STEP 6 — LEARNING
+- [LEARN] ACCEPTED AUTH-ANOMALY @ api.sipgate.com/v2/sessions/*: 7 registered POST-only ops return 405 on GET/HEAD unauthenticated while all other registered routes (incl POST-only /contacts/import/csv) return 401 — subtree-scoped edge-auth filter exemption on call/SMS/fax session-priming endpoints; handler-auth status undetermined.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/*: CORS allow-headers now advertise X-INSTANA-{L,S,T}, MCP-Protocol-Version, Last-Event-ID, X-Sipgate-Token-Id, X-Sipgate-Token-Secret, X-Sipgate-Enforce-No-NQ — SSE/streaming + token-secret header dictionary edge-wide (MCP/APM topology signal).
+- [LEARN] REJECTED AUTH @ api.sipgate.com/v2/{history,phonelines,restrictions}: uniform 401 empty-body unauth — no leak on remaining never-probed template-free ops; edge auth intact outside /sessions/*.
+
+STEP 7 — RISK
+- [RISK] sipgate: 84 — new subtree-scoped edge-auth exemption on /v2/sessions/* (chargeable call/SMS/fax initiation, CORS-cred browser-composable, 405-vs-401 asymmetry reproducible across 7 ops) is the strongest un-gated surface this program has produced; stacks on persistent CORS-cred reflection, live 144-path spec + frameable swagger shell, FB-JWT-gated apiUrl SSRF (AUTH_HELPED), and 94-host CRM fleet. Active rotation (spec re-live, header-template growth) raises regression odds; telecom-fraud/billing abuse is the realistic worst case, conditional on handler-auth outcome.

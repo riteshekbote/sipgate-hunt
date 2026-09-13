@@ -681,3 +681,5 @@ www.sipgate.de
 - CHANGED `integration.sipgate.com/metrics` — `firebase_jwt_forbidden_requests` 72223 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime
 - CHANGED `team-uk.live.sipgate.com` + `team-de.live.sipgate.com` — CSP `frame-ancestors` includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation
 - CHANGED `sipgate-desktop-app.s3.eu-central-1.amazonaws.com` — publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write pa
+
+## 2026-09-13 12:58:50 UTC
