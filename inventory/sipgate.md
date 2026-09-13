@@ -699,3 +699,19 @@ www.sipgate.de
 - CHANGED *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate
 - CHANGED mock.integration.sipgate.cloud: ungated Express twin, /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — x-provider-url does NOT parameterize fetch
 - CHANGED integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 72223 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift[0m
+
+## 2026-09-13 23:33:36 UTC
+- NEW api.sipgate.com/v2/authorization/token: undocumented POST-only endpoint (index-advertised, absent from swagger) returns CONSTANT 500 "OK" for client_credentials/refresh_token, 404 for password/GET; OP
+- NEW api.sipgate.com/v2 (GET): unauthenticated JSON endpoint-index (72 URLs) incl undocumented /v2/authorization/token, /v2/crm-bridge, /v2/users/{userId}/role absent from live 144-op swagger — anonymous s
+- NEW integration.dev.sipgate.com: NEWLY ALIVE dev endpoint (217.116.121.180) responds HTTPS 403 with `access-control-allow-origin: *`; hardcoded in production JS bundle from app.dev.sipgate.com
+- NEW app.dev.sipgate.com: JS bundle rotated to `main-Dr5Dd34d.js`; new hardcoded hosts `admin.dev.sipgate.net`, `admin.live.sipgate.net`, `integration.dev.sipgate.com` — all resolve to sipgate-owned 217.11
+- NEW integration.sipgate.com: PROD "Platypus" integration platform exposes full 26-op OpenAPI spec publicly under /swagger (contacts/call-logs/tasks/oauth2/streaming); spec auth = real login.sipgate.com si
+- NEW integration.sipgate.com: `/oauth2/redirect` + `/oauth2/callback` declared with NO security requirement in embedded spec yet all external requests app-403 — spec-vs-behavior drift; `users.integrations.
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS
+- CHANGED api.sipgate.com/v2/authorization/oauth2/clients/{clientId}: list/individual endpoints now return 404 (was 500 on UUID) — prior authz-drift signal gone; endpoint may be removed
+- CHANGED *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate
+- CHANGED mock.integration.sipgate.cloud: ungated Express twin, /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — x-provider-url does NOT parameterize fetch
+- CHANGED integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 72223 (per-replica counter, restart-reset confirmed); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Fire
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested
+- CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
