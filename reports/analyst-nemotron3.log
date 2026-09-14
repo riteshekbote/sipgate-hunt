@@ -20661,3 +20661,140 @@ set-cookie: SERVERID=web-apps-web01; path=/; HttpOnly; Secure
   "voicemailDetailUrl": "https://api.sipgate.com/v2/voicemails/{voicemailId}"
 }
 [0m
+===== ANALYST nemotron3 2026-09-14 14:37:55 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mcurl -s -I "https://app.dev.sipgate.com/assets/main-Dr5Dd34d.js" 2>&1 | head -20
+HTTP/2 200 
+cache-control: max-age=3600
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk wss://ws-eu.pusher.com stats.pusher.com sentry.io api-iam.intercom.io nexus-websocket-a.intercom.io nexus-websocket-b.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io *.zopim.com *.zdassets.com *.zendesk.com wss://*.zopim.com https://amp.sipgate.de *.instana.io https://status.sipgate.de/ https://integration.sipgate.cloud https://docs.google.com *.didww.com/v3/public_keys; script-src 'unsafe-eval' 'unsafe-inline' 'self' stats.pusher.com connect.facebook.com connect.facebook.net *.cloudfront.net www.google-analytics.com *.google.com www.googletagmanager.com www.googleadservices.com sjs.bizographics.com bat.bing.com snap.licdn.com *.doubleclick.net *.linkedin.com secure.adnxs.com js.intercomcdn.com widget.intercom.io data: *.zopim.com *.zdassets.com *.instana.io; style-src 'unsafe-inline' 'self' *.google.com *.googleapis.com static.sipgate.com data: blob: *.zdassets.com; font-src 'self' fonts.intercomcdn.com js.intercomcdn.com static.sipgate.com data: *.zdassets.com *.zopim.com; frame-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com https://player.vimeo.com *.zdassets.com *.zopim.com; child-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com; worker-src 'self' blob:; img-src *.googleusercontent.com *.facebook.com 'self' *.gstatic.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net www.google-analytics.com *.googleapis.com *.doubleclick.net *.google.com *.google.de bat.bing.com *.linkedin.com secure.adnxs.com js.intercomcdn.com downloads.intercomcdn.com static.intercomassets.com data: *.zopim.com *.zdassets.com *.zopim.io; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net js.intercomcdn.com blob: *.zopim.com data: *.zdassets.com; frame-ancestors 'self' *.sipgate.com *.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa;
+content-type: text/html; charset=utf-8
+cross-origin-opener-policy: same-origin-allows-popups
+etag: "6dc5db00b88ed259a2ec835c94e9d61c06bc265bc482f1226bcf100662fbf7cb"
+last-modified: Mon, 14 Sep 2026 13:49:17 GMT
+strict-transport-security: max-age=31556926
+x-content-type-options: nosniff
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/* https://*.sipgate.com/* https://*.sipgate.de/* https://*.sipgate.co.uk/*
+x-xss-protection: 1; mode=block
+accept-ranges: bytes
+date: Mon, 14 Sep 2026 14:19:57 GMT
+x-served-by: cache-bfi-krnt7300053-BFI
+x-cache: MISS
+x-cache-hits: 0
+x-timer: S1789395597.283040,VS0,VE211
+vary: x-fh-requested-host, accept-encoding
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
+content-length: 14544
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/" 2>&1 | grep -oE 'main-[a-zA-Z0-9]+\.js' | head -5
+main-PyHtbRmE.js
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-PyHtbRmE.js" 2>&1 | strings | grep -oE '(https?://|)[a-zA-Z0-9.-]+\.sipgate\.(com|de|net|co\.uk)(:[0-9]+)?' | sort -u | head -40
+.api.dev.sipgate.com
+.api.local.sipgate.com
+.api.sipgate.com
+app.dev.sipgate.com
+app.sipgate.com
+https://admin.dev.sipgate.net
+https://admin.live.sipgate.net
+https://amp.sipgate.de
+https://api.dev.sipgate.com
+https://api.local.sipgate.com:3396
+https://api.sipgate.com
+https://app.dev.sipgate.com
+https://app.local.sipgate.com:3443
+https://app.sipgate.com
+https://chatbot.dev.sipgate.com
+https://chatbot.sipgate.com
+https://info.sipgate.de
+https://integration.dev.sipgate.com
+https://login.dev.sipgate.com
+https://login.sipgate.com
+https://payment.dev.sipgate.com
+https://payment.local.sipgate.com:8080
+https://payment.sipgate.com
+https://static.sipgate.com
+https://status.sipgate.de
+https://team-de.dev.sipgate.com
+https://team-de.live.sipgate.com
+https://team-de.local.sipgate.com:10443
+https://team-uk.dev.sipgate.com
+https://team-uk.live.sipgate.com
+https://team-uk.local.sipgate.com:10443
+https://www.sipgate.de
+[0m
+[0m$ [0mcurl -s -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type,x-sipgate-token-id,x-sipgate-token-secret" "https://api.sipgate.com/v2/authorization/token" -i 2>&1 | head -30
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Mon, 14 Sep 2026 14:25:46 GMT
+[0m
+[0m$ [0mcurl -s -X POST -H "Content-Type: application/x-www-form-urlencoded" -H "Origin: https://evil.example" "https://api.sipgate.com/v2/authorization/token" -d "grant_type=client_credentials&client_id=test&client_secret=test" -i 2>&1 | head -30
+HTTP/1.1 500 Internal Server Error
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,WWW-Authenticate,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,Mcp-Session-Id,X-Sipgate-Command
+content-length: 2
+vary: origin
+x-b3-traceid: c6d61043ff7fbc368e19a986b2c8f793
+date: Mon, 14 Sep 2026 14:27:38 GMT
+content-type: text/plain; charset=utf-8
+
+OK
+[0m
+[0m$ [0mcurl -s -X POST -H "Content-Type: application/x-www-form-urlencoded" "https://login.sipgate.com/realms/sipgate-apps/protocol/openid-connect/token" -d "grant_type=client_credentials&client_id=test&client_secret=test" -i 2>&1 | head -20
+HTTP/1.1 200 OK
+date: Mon, 14 Sep 2026 14:29:49 GMT
+server: Apache
+content-security-policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://*.google.com fonts.googleapis.com fast.fonts.net; script-src 'self' 'unsafe-inline' https://*.googletagmanager.com https://*.google.com https://connect.facebook.net https://www.google-analytics.com https://www.gstatic.com https://static.sipgate.com; frame-src 'self' https://*.sipgate.com https://www.google.com;child-src 'self' https://*.sipgate.com; font-src 'self' fonts.gstatic.com https://static.sipgate.com data:; connect-src 'self' https://*.sipgate.com; img-src 'self' https://static.sipgate.com data: https://*.gstatic.com https://www.google-analytics.com https://www.facebook.com https://stats.g.doubleclick.net https://*.google.com https://*.google.de;frame-ancestors 'self' https://*.satellite.me https://*.satellite.me:3000 https://*.sipgate.com https://*.sipgate.com:3000 https://*.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa https://hubspot-cti.sipgate.cloud https://*.hubspot.com
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/*
+last-modified: Thu, 11 Jun 2026 05:12:30 GMT
+accept-ranges: bytes
+content-length: 517
+cache-control: max-age=0
+expires: Mon, 14 Sep 2026 14:29:49 GMT
+vary: Accept-Encoding
+x-xss-protection: 1; mode=block
+x-content-type-options: nosniff
+access-control-allow-credentials: true
+access-control-allow-headers: Accept-Encoding
+access-control-expose-headers: Accept-Encoding
+p3p: CP="This is not a P3P policy!"
+content-type: text/html; charset=utf-8
+strict-transport-security: max-age=10886400
+set-cookie: SERVERID=web-apps-web02; path=/; HttpOnly; Secure
+[0m
+[0m$ [0mcurl -s -X POST -H "Content-Type: application/x-www-form-urlencoded" "https://login.sipgate.com/realms/sipgate-apps/protocol/openid-connect/token" -d "grant_type=client_credentials&client_id=test&client_secret=test" 2>&1
+<!doctype html>
+<html lang="de">
+<head>
+	<meta charset="utf-8">
+	<title>sipgate login</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex">
+	<meta data-smoketest="Smoketest - OK">
+	<meta http-equiv="refresh" content="0; url=/">
+</head>
+<body>
+	<p>Diese Seite ist umgezogen. Sie werden weitergeleitet &hellip;</p>
+	<p>This page has moved. You are being redirected &hellip;</p>
+	<p><a href="/">Weiter zum Login / Continue to login</a></p>
+</body>
+</html>
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/metrics" 2>&1 | grep -i firebase
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 80474
+[0m
+[0m$ [0mdig +short share1.sipgate.cloud CNAME 2>&1
+nx38603.your-storageshare.de.
+[0m
+[0m$ [0mcurl -s -I "https://integration.dev.sipgate.com/" 2>&1 | head -20
+(no output)
+[0m

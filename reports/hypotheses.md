@@ -1722,3 +1722,10 @@
 - LEARN: ACCEPTED INFO @ app.dev.sipgate.com: bundle rotated to main-CcRiP8Tk.js (5.74MB, 27 hardcoded sipgate host refs incl integration.sipgate.cloud); zero x-sipgate-
 - LEARN: ACCEPTED INFO @ api.sipgate.com/v2: GET /v2/authorization/token still HTML-404 (POST-only) and GET /v2/users/{nil-uuid}/role still 401 → the constant-500 POST a
 - LEARN: ACCEPTED INFO @ api.sipgate.com/v2: unauthenticated index still 5481 B identical — 72-URL anonymous surface-map stable, no new undocumented paths this cycle.
+
+## RANKED HYPOTHESES 2026-09-14 14:37:55 UTC
+- [50] api.sipgate.com/v2/authorization/token: /v2/authorization/token is a miswired OIDC client-credentials token proxy on the api origin; only undocumented route escaping the uniform-401 edge (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin: https://evil.example, ACRM POST, ACRH content-type,x-sipgate-token-id,x-sipgate-token-s
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: 7th consecutive cycle stable — OPTIONS 204, ACAO evil.example+creds, allow-headers byte-identical on /v2
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2 (GET): endpoint index (5481 B, 72 URLs) identical to all prior cycles — no new undocumented paths, no shape drift.
+- LEARN: ACCEPTED INFO @ api.sipgate.com: x-b3-traceid (Zipkin) + vary:origin still leaked on 200+error paths — descriptive header only, OOS standalone (per KB).

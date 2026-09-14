@@ -733,3 +733,5 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak
 
 ## 2026-09-14 07:30:54 UTC
+
+## 2026-09-14 14:37:55 UTC
