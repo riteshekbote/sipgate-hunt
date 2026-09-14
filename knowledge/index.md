@@ -535,3 +535,4 @@
 - 2026-09-14 ACCEPTED INFO @ api.sipgate.com/v2: endpoint index identical (5481 B, 72 URLs, 8th cycle, authorizationTokenUrl advertised); /v2/restrictions + /v2/callrestrictions → uniform 401 empty-body — no new anonymous surface.
 - 2026-09-14 ACCEPTED INFO @ api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 ACAO evil.example+ACAC true + GET 200 (2690 B) — arbitrary-origin credential reflection on swagger implicit-redirect asset persists; chain input for same-origin-XSS amplifier, no exec primitive.
 - 2026-09-14 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 96,931 (+24,708), api_key_forbidden 21 — FB-JWT gate live/incrementing; SSRF precondition intact.
+- 2026-09-14 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 96,931 (+24,708), api_key_forbidden 21 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)

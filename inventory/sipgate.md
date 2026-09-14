@@ -737,3 +737,17 @@ www.sipgate.de
 ## 2026-09-14 14:37:55 UTC
 
 ## 2026-09-14 19:38:59 UTC
+
+## 2026-09-14 22:48:47 UTC
+- NEW api.sipgate.com/v2/authorization/token: undocumented POST-only endpoint returns CONSTANT 500 "OK" for client_credentials/refresh_token (8th consecutive cycle stable), OPTIONS reveals MCP/SSE headers (
+- NEW api.sipgate.com/v2 (GET): unauthenticated JSON endpoint-index (72 URLs, 5481 B) stable across 8 cycles, includes undocumented /v2/authorization/token, /v2/crm-bridge, /v2/users/{userId}/role absent fr
+- NEW api.sipgate.com/v2/crm-bridge: GET → HTML 404 "Resource not found" while OPTIONS → 204 with identical credential-bearing allow-list — CORS-configured non-route, not app-plane reachable
+- NEW api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 ACAO:evil.example + ACAC:true + GET 200 (2690 B) — arbitrary-origin credential reflection on Swagger-UI implicit redirect asset persists
+- CHANGED app.dev.sipgate.com: bundle rotated to main-CcRiP8Tk.js (5.74MB, 27 hardcoded sipgate host refs incl integration.sipgate.cloud); zero x-sipgate-* header names in source
+- CHANGED integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 96,931 (+24,708), api_key_forbidden 21 — FB-JWT gate live/incrementing; SSRF precondition intact
+- CHANGED *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate (re-confirmed)
+- CHANGED mock.integration.sipgate.cloud: ungated Express twin, /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — x-provider-url does NOT parameterize fetch (re-confirmed)
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 + SERVERID rotation (team-web01/team-web02/team-web03)
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); write path NOT tested
+- CHANGED grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via /api/health
+- CHANGED share1.sipgate.cloud: dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN — takeover candidate

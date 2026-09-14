@@ -29074,3 +29074,35 @@ STEP 6 — LEARNING:
 
 STEP 7 — RISK:
 [RISK] sipgate: 84 — no new high-value class emerged (token anomaly flat 8th cycle; crm-bridge proven inert sibling reinforces token-route uniqueness but not exploitability); ACAO-cred reflection end-to-end persists incl. swagger redirect asset; integration apiUrl SSRF + 94-host CRM fleet remain behind live FB-JWT/nginx gates (AUTH_HELPED); no token minted, no credential used. HIGH-conditional only on token POST transition or a gate bypass; drift re-probe next cycle.
+===== ANALYST bigpickle 2026-09-14 22:48:47 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -o /dev/null -D - -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" --max-time 20 https://api.sipgate.com/v2/doc/oauth2-redirect.html
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Mon, 14 Sep 2026 22:45:44 GMT
+[0m
+[0m$ [0mcurl -s -o /tmp/v2index.txt -D - --max-time 20 https://api.sipgate.com/v2; echo "BODYSIZE:"; wc -c < /tmp/v2index.txt
+HTTP/1.1 200 OK
+content-length: 5481
+content-type: application/json
+vary: origin
+x-b3-traceid: fa1a48085fd2acdb14cb8b557136b335
+date: Mon, 14 Sep 2026 22:45:44 GMT
+
+BODYSIZE:
+5481
+[0m
+[0m$ [0mcurl -s -o /tmp/metrics.txt -w "HTTP %{http_code} size %{size_download}\n" --max-time 20 https://integration.sipgate.com/metrics; rg -i "firebase_jwt_forbidden|api_key_forbidden|rate_limit" /tmp/metrics.txt | head -5
+HTTP 200 size 515
+/bin/bash: line 1: rg: command not found
+[0m
+[93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting
+[0m✗ [0mgrep -i -E "firebase_jwt_forbidden|api_key_forbidden|rate_limit" /tmp/metrics.txt | head -5; echo "---"; cat /tmp/metrics.txt | head -20 failed
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.
