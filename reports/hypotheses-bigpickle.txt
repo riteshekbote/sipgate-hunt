@@ -1,1 +1,34 @@
-## 2026-09-14 01:39:21 UTC [target] (model bigpickle)
+## 2026-09-14 07:14:58 UTC [target] (model bigpickle)
+[HYP] /v2/authorization/token stays the sole app-plane-reachable undocumented route — but allow-list is now proven uniform, so value rests on reach, not on leaked credentials
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token (POST, index-advertised, absent from 144-op swagger)
+confidence: 50
+reasoning: 6th stable cycle OPTIONS 204 + ACAO evil+creds; POST client_credentials/refresh_token → constant 500 text/plain "OK", password/GET → 404 (KB carry-forward); new this cycle: identical allow-header list incl X-Sipgate-Token-Id/Secret on OPTIONS /v2/crm-bridge → token-pair/MCP/SSE headers are generic edge config, no route-specific implication; new bundle main-CcRiP8Tk.js has zero x-sipgate-* header refs → SPA is not the token-pair source; GET /v2/users/{nil-uuid}/role still 401 → route-specific app-plane reach on token POST confirmed vs siblings.
+evidence_needed: POST /v2/authorization/token status transition 500→200 (valid pair mint, AUTH_HELPED only) or →401/400 (upstream Keycloak restored → then hypothesis becomes leak-sensitive).
+verify_steps: PASSIVE drift: OPTIONS /v2/authorization/token + OPTIONS /v2/crm-bridge + GET /v2 once each ≤0.5rps next cycle; POST transition deferred to AUTH_HELPED.
+impact: restored route mounted on api origin with bearer for contacts/sms/account/balance/payment scopes = ATO-class; currently MEDIUM anomaly, HIGH only if POST 500→200/401 observed.
+testability: PASSIVE
+[HYP] users.integrations.create free-form apiUrl SSRF → GCP metadata (carry-forward, unchanged)
+class: SSRF
+asset: integration.sipgate.com (spec /oauth2/redirect + /oauth2/callback no-security vs app-403; users.integrations.create apiUrl free-form)
+confidence: 55
+reasoning: uniform app-403 Firebase-JWT gate (metrics live, per-replica counters); GCP 169.254.169.254 readable if apiUrl server-fetched post-auth; no allowlist documented for apiUrl.
+evidence_needed: valid FB JWT → POST create with apiUrl=169.254.169.254 or internal URL → observe outbound fetch/metadata read.
+verify_steps: AUTH_HELPED — passive re-probe /oauth2/callback + /oauth2/redirect status each cycle for gate flapping (403-stable currently).
+impact: GCP metadata/project secrets on gate bypass; severity HIGH conditional.
+testability: AUTH_HELPED
+[HYP] Swagger-UI attacker-spec shell on api origin (carry-forward, unchanged)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url=
+confidence: 45
+reasoning: unallowlisted url=, swagger-ui 5.x implicit extreme-scope client, doc page live, uniform ACAO-cred edge; no exec primitive demonstrable statically (KB REJECT oauth2-redirect opener callback).
+evidence_needed: attacker markup in api-origin DOM or Authorize-popup interception in fresh Chromium.
+verify_steps: HUMAN_ONLY only (data: spec via url=); not passive-verifiable.
+impact: CRITICAL with exec primitive; currently LOW-MEDIUM.
+testability: HUMAN_ONLY
+[NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin: https://evil.example, ACRM POST, ACRH content-type,x-sipgate-token-id,x-sipgate-token-secret,x-sipgate-enforce-no-nq) + `OPTIONS https://api.sipgate.com/v2/crm-bridge` same ACRH + `GET https://api.sipgate.com/v2` once each ≤0.5rps — 204→401 on token OPTIONS or index-shape change (authorizationTokenUrl removal) deflates the anomaly; header-list drift on crm-bridge distinguishes edge config vs route-specific behavior. POST stays deferred (AUTH_HELPED).
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2: OPTIONS /v2/crm-bridge returns byte-identical allow-list (X-Sipgate-Token-Id/Secret + MCP/SSE + X-Sipgate-Enforce-No-NQ + X-INSTANA-*) → credential-bearing header names are uniform edge CORS vocabulary, not token-mint evidence on /v2/authorization/token.
+[LEARN] ACCEPTED INFO @ app.dev.sipgate.com: bundle rotated to main-CcRiP8Tk.js (5.74MB, 27 hardcoded sipgate host refs incl integration.sipgate.cloud); zero x-sipgate-* header names in source → public SPA is not the X-Sipgate-Token-Id/Secret source; internal/legacy B2B client only.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2: GET /v2/authorization/token still HTML-404 (POST-only) and GET /v2/users/{nil-uuid}/role still 401 → the constant-500 POST app-plane reach remains route-specific to /v2/authorization/token (6th cycle).
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2: unauthenticated index still 5481 B identical — 72-URL anonymous surface-map stable, no new undocumented paths this cycle.
+[RISK] sipgate: 84 — undocumented api-origin token-mint route stable 6th cycle (OPTIONS 204 escapes uniform-401 edge, POST constant-500 app-plane reach; now confirmed route-specific since allow-list is uniform edge config and SPA carries no token-pair refs); persistent ACAO-cred reflection end-to-end; integration apiUrl SSRF + 94-host CRM fleet still behind single gates (AUTH_HELPED); no token minted, no credential used. Anomaly-level now, HIGH-conditional only on POST transition (200/401) — drift re-probe next cycle.

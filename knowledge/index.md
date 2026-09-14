@@ -524,3 +524,7 @@
 - 2026-09-14 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
 - 2026-09-14 REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - 2026-09-14 REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+- 2026-09-14 ACCEPTED INFO @ api.sipgate.com/v2: OPTIONS /v2/crm-bridge returns byte-identical allow-list (X-Sipgate-Token-Id/Secret + MCP/SSE + X-Sipgate-Enforce-No-NQ + X-INSTANA-*) → credential-bearing header names are uniform edge CORS vocabulary, not token-mint evidence on /v2/authorization/token.
+- 2026-09-14 ACCEPTED INFO @ app.dev.sipgate.com: bundle rotated to main-CcRiP8Tk.js (5.74MB, 27 hardcoded sipgate host refs incl integration.sipgate.cloud); zero x-sipgate-* header names in source → public SPA is not the X-Sipgate-Token-Id/Secret source; internal/legacy B2B client only.
+- 2026-09-14 ACCEPTED INFO @ api.sipgate.com/v2: GET /v2/authorization/token still HTML-404 (POST-only) and GET /v2/users/{nil-uuid}/role still 401 → the constant-500 POST app-plane reach remains route-specific to /v2/authorization/token (6th cycle).
+- 2026-09-14 ACCEPTED INFO @ api.sipgate.com/v2: unauthenticated index still 5481 B identical — 72-URL anonymous surface-map stable, no new undocumented paths this cycle.

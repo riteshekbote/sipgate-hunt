@@ -1714,3 +1714,11 @@
 - LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
 - LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+
+## RANKED HYPOTHESES 2026-09-14 07:30:54 UTC
+- [50] api.sipgate.com/v2/authorization/token: /v2/authorization/token stays the sole app-plane-reachable undocumented route — but allow-list is now proven uniform, so value rests on reach, not on leaked credentials (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin: https://evil.example, ACRM POST, ACRH content-type,x-sipgate-token-id,x-sipgate-token-s
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2: OPTIONS /v2/crm-bridge returns byte-identical allow-list (X-Sipgate-Token-Id/Secret + MCP/SSE + X-Sipgate-Enforce-No-NQ + X-
+- LEARN: ACCEPTED INFO @ app.dev.sipgate.com: bundle rotated to main-CcRiP8Tk.js (5.74MB, 27 hardcoded sipgate host refs incl integration.sipgate.cloud); zero x-sipgate-
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2: GET /v2/authorization/token still HTML-404 (POST-only) and GET /v2/users/{nil-uuid}/role still 401 → the constant-500 POST a
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2: unauthenticated index still 5481 B identical — 72-URL anonymous surface-map stable, no new undocumented paths this cycle.
