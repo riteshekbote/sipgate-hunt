@@ -736,3 +736,47 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-13 22:00:16 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-14 00:13:38 UTC
+[HYP] Hardcoded Microsoft Azure AD App Registration ID in CLINQ Bridge Outlook Deployment
+class: SECRET
+asset: sipgate/clinq-bridge-outlook/k8s/template/deployment.yml:52-53
+confidence: 90
+reasoning: The K8s deployment manifest hardcodes `APP_ID: 0f1c9f10-310b-4b00-a7ab-a420a53e6c95` — a real Microsoft Azure AD Application (client) ID in UUID v4 format. This is the OAuth client registered for the CLINQ Outlook bridge. The APP_PASSWORD is correctly referenced from a K8s secret (secretKeyRef), but the APP_ID is plaintext in a public repo. The OutlookAdapter.ts uses this ID in the OAuth2 flow against `login.microsoftonline.com/common/oauth2/v2.0/authorize`. Combined with the callback URL `https://$DOMAIN/oauth2/callback` also in the manifest, this reveals the full OAuth app registration.
+impact: LOW-MEDIUM — Client IDs alone don't grant access (secrets are needed), but they reveal the registered Azure AD app identity and callback URL. Combined with other findings, enables targeted phishing or OAuth misconfiguration attacks against the Microsoft Graph API integration (Contacts.ReadWrite scope).
+verify_steps: 1) Verify the APP_ID is registered in Azure AD under sipgate's tenant. 2) Check if the OAuth app has excessive scopes beyond Contacts.ReadWrite. 3) Confirm the redirect_uri validation is strict.
+[HYP] Hardcoded JWT Signing Key in Ganeti Control Center Example Config
+class: SECRET
+asset: sipgate/gnt-cc/api/config.example.yaml:9
+confidence: 85
+reasoning: The `config.example.yaml` ships with `jwtSigningKey: "weNFEWFWKJEnfWknfewlkjenfFE"` — a hardcoded JWT signing key. The `config.go:176` enforces that this key must be set (panics if empty). If any deployment copies this example config without changing the JWT key, all JWT tokens are forgeable. The config also contains hardcoded example passwords: `admin`/`admin` for builtin users and `gnt-cc`/`gnt-cc` for Ganeti RAPI cluster credentials.
+impact: MEDIUM — JWT forgery enables full authentication bypass for the Ganeti Control Center (VM management). The example passwords (`admin`/`admin`, `gnt-cc`/`gnt-cc`) may be used in dev/staging deployments.
+verify_steps: 1) Check if any running gnt-cc instances use the example JWT signing key. 2) Verify the JWT signing key is overridden via environment variable or config file in production. 3) Confirm the example passwords are not used in any deployment.
+[HYP] Hardcoded Mixpanel Analytics Tokens in Windows Fax Client
+class: SECRET
+asset: sipgate/sipgate-win-faxdrucker/SipgateFaxdrucker/Properties/Settings.settings:24-28
+confidence: 80
+reasoning: Two Mixpanel project tokens are hardcoded in plaintext: `MixpanelToken: ba6490d191f97adf977a1293a1084b53` (production) and `MixpanelTokenDebug: 5e2eedfb2db9a53766edab1380f6017e` (debug). These are Mixpanel project write tokens that allow anyone to send arbitrary analytics events to sipgate's Mixpanel project. The tokens are in a public repo and shipped as default values in the App.config.
+impact: LOW — Mixpanel write tokens can be used to inject fake analytics data or pollute sipgate's analytics dashboards. Cannot be used to read existing data.
+verify_steps: 1) Check if these Mixpanel tokens are still active by sending a test event. 2) Verify the Mixpanel project associated with these tokens is not used for security-sensitive metrics.
+[HYP] Hardcoded S3 Bucket URL for Auto-Update in Windows Fax Client
+class: MISCONFIG
+asset: sipgate/sipgate-win-faxdrucker/SipgateFaxdrucker/Properties/Settings.settings:18-20
+confidence: 75
+reasoning: The auto-update mechanism fetches version manifests from `sipgate-faxdrucker.s3.eu-central-1.amazonaws.com/version.xml` (and version32.xml). This reveals the S3 bucket name and region used for distributing softphone installers. Combined with the previously found `sipgate-desktop-app.s3.eu-central-1.amazonaws.com` bucket (which is publicly listable), this confirms a pattern of using public S3 buckets for software distribution without integrity verification in the client.
+impact: LOW — Information disclosure of S3 bucket name. If the S3 bucket allows writes or the XML is fetched over HTTP without signature verification, an attacker could distribute malicious updates (requires MITM or S3 misconfiguration).
+verify_steps: 1) Check if `sipgate-faxdrucker.s3.eu-central-1.amazonaws.com` is publicly listable like the desktop-app bucket. 2) Verify the client validates update signatures/checksums. 3) Confirm the update mechanism uses HTTPS.
+[HYP] Hardcoded Keycloak Client ID for sipgate-faxdrucker-win
+class: SECRET
+asset: sipgate/sipgate-win-faxdrucker/SipgateFaxdrucker/App.config:22-24
+confidence: 75
+reasoning: The OAuth client ID `sipgate_faxdrucker_win` is hardcoded in the application settings. This is the registered Keycloak client in the `sipgate-apps` realm at `login.sipgate.com`. The DEBUG build also hardcodes `login.dev.sipgate.com` as the Keycloak base URL, confirming the dev Keycloak instance. The client uses OAuth2 authorization code flow with scopes: `faxlines:read sessions:fax:write history:read groups:faxlines:read offline_access contacts:read balance:read`.
+impact: LOW — Client IDs alone don't grant access. However, the combination of client ID + known scopes + realm name enables targeted attacks against the sipgate Keycloak realm.
+verify_steps: 1) Verify the client ID is registered in sipgate's Keycloak realm `sipgate-apps`. 2) Check if the client has excessive scopes. 3) Verify the dev Keycloak instance at `login.dev.sipgate.com` is not accessible from the internet.
+[HYP] Hardcoded Internal Redis Endpoint in 7 Additional CLINQ Bridge Deployments
+class: MISCONFIG
+asset: sipgate/clinq-bridge-{activecampaign,weclapp,vincere,outlook,pipeliner,1sales,moco}/k8s/template/deployment.yml:47
+confidence: 95
+reasoning: Seven CLINQ bridge deployment manifests hardcode `REDIS_URL: rediss://10.37.248.211:6378` — internal RFC-1918 IP with TLS Redis on non-standard port 6378. While some of these repos were previously scanned, these are newly confirmed instances: clinq-bridge-activecampaign, clinq-bridge-weclapp, clinq-bridge-vincere are NEW repos not in prior scan results. The vincere deployment also exposes the OAuth callback URL `https://vincere.bridge.clinq.com/oauth2/callback`.
+impact: HIGH — Exposes internal Redis endpoint across additional deployment targets. Aids lateral movement or targeted SSRF if any internal-facing service is reachable.
+verify_steps: 1) Confirm `10.37.248.211:6378` resolves from any sipgate GCP VPC. 2) Verify GCP project `clinq-services` zone `europe-west3` still hosts this Redis. 3) Confirm `rediss://` TLS termination.
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
