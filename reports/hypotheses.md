@@ -1729,3 +1729,11 @@
 - LEARN: ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: 7th consecutive cycle stable — OPTIONS 204, ACAO evil.example+creds, allow-headers byte-identical on /v2
 - LEARN: ACCEPTED INFO @ api.sipgate.com/v2 (GET): endpoint index (5481 B, 72 URLs) identical to all prior cycles — no new undocumented paths, no shape drift.
 - LEARN: ACCEPTED INFO @ api.sipgate.com: x-b3-traceid (Zipkin) + vary:origin still leaked on 200+error paths — descriptive header only, OOS standalone (per KB).
+
+## RANKED HYPOTHESES 2026-09-14 19:38:59 UTC
+- [50] api.sipgate.com/v2/authorization/token: /v2/authorization/token is a miswired OIDC client-credentials token proxy — the sole edge-escaping app-plane route (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: `OPTIONS https://api.sipgate.com/v2/doc/oauth2-redirect.html` (Origin: https://evil.example, ACRM POST) + `GET https://api.sipgate.com/v2` once, ≤0.5rps 
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/crm-bridge: GET → HTML 404 "Resource not found" while OPTIONS → 204 edge allow-list — undocumented sibling is a CORS-configur
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2: endpoint index identical (5481 B, 72 URLs, 8th cycle, authorizationTokenUrl advertised); /v2/restrictions + /v2/callrestrict
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 ACAO evil.example+ACAC true + GET 200 (2690 B) — arbitrary-origin credential reflection
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 96,931 (+24,708), api_key_forbidden 21 — FB-JWT gate live/incrementing; SSRF pr
