@@ -785,3 +785,17 @@ www.sipgate.de
 - NEW grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via `/api/health`
 - NEW api.sipgate.com/v2/doc/oauth2-redirect.html: still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS
 - NEW api.sipgate.com/v2: unauthenticated JSON endpoint-index (72 URLs, 5481 B) byte-identical across cycles, includes undocumented `/v2/authorization/token`, `/v2/crm-bridge`, `/v2/users/{userId}/role` abs
+
+## 2026-09-15 16:46:41 UTC
+- NEW app.dev.sipgate.com: JS bundle rotated to `main-D3QVZ6EX.js` (5.74MB); 17 hardcoded internal host:port pairs persist including NEW prod subdomains `admin.live.sipgate.net` (CNAME→helpdesk.live.sipgate
+- NEW integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests 109,393` (+12,462 vs prior 96,931); live Firebase-JWT validator confirmed, per-replica counter incrementing; auth-mechanism drift (spe
+- NEW share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed; subdomain-takeover candidate
+- NEW *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing `x-provider-url,key`; data GET 401, header does NOT bypass nginx gate (re-confirmed)
+- NEW team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP `frame-ancestors` includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01)
+- NEW sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested (H
+- NEW grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via `/api/health`
+- NEW api.sipgate.com/v2/doc/oauth2-redirect.html: still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS
+- NEW api.sipgate.com/v2: unauthenticated JSON endpoint-index (72 URLs, 5481 B) byte-identical across cycles, includes undocumented `/v2/authorization/token`, `/v2/crm-bridge`, `/v2/users/{userId}/role` abs
+- CHANGED api.sipgate.com/v2/authorization/token: OPTIONS returned 404 (was 204 for 9 consecutive cycles) — drift signal
+- CHANGED app.dev.sipgate.com: bundle rotated to `main-D3QVZ6EX.js` (5.74MB); same 17 hardcoded host:port pairs persist; zero `x-sipgate-*` header names in source
+- CHANGED integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 109,393 (+12,462 vs prior 96,931); live FB-JWT gate incrementing
