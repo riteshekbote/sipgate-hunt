@@ -4216,3 +4216,40 @@ testability: HUMAN_ONLY
 [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 101,732 (+4,801); api_key_forbidden 27→21 back-to-back → per-replica counter variance reconfirmed; FB-JWT gate live.
 [LEARN] ACCEPTED INFO @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: 439 keys, IsTruncated=false, all LastModified ≤2024-06-11 → bucket inventory unchanged, no artifact drift; write path still untested (HUMAN sign-off required).
 [RISK] sipgate: 84 — all three survivors status-quo (token anomaly flat 9th cycle; swagger CORS amplifier intact but no exec primitive; integration apiUrl SSRF behind live incrementing FB-JWT gate); S3 bucket confirmed non-drifting; no new high-value class, no gate bypass, no credentials used. HIGH-conditional only on token POST transition or a gate-bypass; drift re-probe next cycle.
+## 2026-09-15 06:14:36 UTC [target] (model bigpickle)
+[PRIO] api.sipgate.com/v2/authorization/token,8.55,a=8,b=10,t=9,g=10,c=6,f=6
+[PRIO] integration.sipgate.com users.integrations.create,7.00,a=7,b=8,t=8,g=3,c=8,f=8
+[PRIO] api.sipgate.com/v2/doc/oauth2-redirect.html (swagger chain),7.00,a=5,b=8,t=7,g=10,c=5,f=7
+[HYP] /v2/authorization/token is a miswired OIDC client-credentials token proxy — sole edge-escaping app-plane route
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token (POST-only, index-advertised, absent from 144-op swagger)
+confidence: 50
+reasoning: 9th consecutive flat cycle — OPTIONS 204 + ACAO evil.example+ACAC; allow-headers are the uniform edge CORS vocabulary, byte-identical on the oauth2-redirect.html static asset → reflection is route-agnostic, not token-mint evidence; crm-bridge sibling proven inert non-route; GET/HEAD/password 404; index byte-identical 5481 B; metrics gate untouched by this route.
+evidence_needed: POST status transition 500→200 (mint, AUTH_HELPED only) or →401/400 (upstream Keycloak restored).
+verify_steps: PASSIVE drift — OPTIONS /v2/authorization/token + GET /v2 + GET /metrics once, spaced >1s, ≤0.5rps; POST stays deferred (never valid creds).
+impact: restored OIDC proxy on api origin with contacts/sms/account/balance/payment scope set = ATO-class; currently anomaly-level, HIGH-conditional on transition.
+testability: PASSIVE
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF
+class: SSRF
+asset: integration.sipgate.com (spec: /oauth2/redirect+/oauth2/callback no-security vs app-403; apiUrl free-form)
+confidence: 55
+reasoning: FB-JWT gate live/incrementing (101,732; multi-replica variance api_key 27→21 reconfirmed); GCP 169.254.169.254 if apiUrl is server-fetched post-auth; no apiUrl allowlist documented.
+evidence_needed: valid FB JWT → POST create with apiUrl=169.254.169.254 → observed outbound fetch/metadata read.
+verify_steps: AUTH_HELPED — passive gate-status re-check each cycle (403-stable).
+impact: GCP metadata/project secrets on gate bypass; HIGH conditional.
+testability: AUTH_HELPED
+[HYP] Swagger-UI attacker-spec shell on api origin
+class: XSS
+asset: api.sipgate.com/v2/doc/?url= (oauth2-redirect.html OPTIONS 204 ACAO-evil+ACAC re-confirmed live)
+confidence: 45
+reasoning: unallowlisted url=; swagger-ui 5.x implicit extreme-scope client; doc page live; CORS-amplifier precondition intact; no exec primitive demonstrable statically (KB REJECT opener callback).
+evidence_needed: attacker markup in api-origin DOM or Authorize-popup interception in fresh Chromium.
+verify_steps: HUMAN_ONLY (data: spec via url=); not passive-verifiable.
+impact: CRITICAL with exec primitive; currently LOW-MEDIUM.
+testability: HUMAN_ONLY
+[PARKED] OAuth implicit redirect / Keycloak HS256 / chatbot WS / MCP-SSE / oauth2/clients 500-on-UUID: KB-REJECTED and unchanged across cycles. No new drops — all three survivors retain their confidences with unchanged preconditions.
+[FINAL] survivors ranked: 1) token proxy (50, PASSIVE) 2) integration apiUrl SSRF (55, AUTH_HELPED) 3) swagger-url shell (45, HUMAN_ONLY).
+[NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin: https://evil.example, Access-Control-Request-Method: POST), then `GET https://api.sipgate.com/v2` (index sha256 re-check), then `GET https://integration.sipgate.com/metrics` — 10th-cycle drift watch, spaced >1s, ≤0.5rps; a POST-status transition on the token route is the only HIGH-conditional trigger (POST itself stays deferred, never valid creds).
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: 9th cycle flat, byte-identical context — allow-header set (x-sipgate-client/fingerprint/hubspot-utk/was-nq-request) shared with oauth2-redirect.html static asset → route-agnostic edge CORS vocabulary, still no token-mint-specific signal.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 101,732 (+4,801); api_key 27→21 → per-replica counter variance, FB-JWT gate live; SSRF precondition intact.
+[RISK] sipgate: 84 — all three survivors status-quo (token anomaly flat 9th cycle; swagger CORS amplifier intact but no exec primitive; integration apiUrl SSRF behind live incrementing FB-JWT gate); bucket non-drifting; no new high-value class, no gate bypass, no credentials used. HIGH-conditional only on token POST transition or a gate-bypass; drift re-probe next cycle.
