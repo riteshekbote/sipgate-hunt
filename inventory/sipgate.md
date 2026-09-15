@@ -751,3 +751,10 @@ www.sipgate.de
 - CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); write path NOT tested
 - CHANGED grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via /api/health
 - CHANGED share1.sipgate.cloud: dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN — takeover candidate
+
+## 2026-09-15 01:21:33 UTC
+- NEW api.sipgate.com/v2/authorization/token: 8th consecutive cycle stable — undocumented POST-only endpoint returns CONSTANT 500 "OK" for client_credentials/refresh_token; OPTIONS reveals MCP/SSE headers (
+- NEW api.sipgate.com/v2/crm-bridge: GET → HTML 404 "Resource not found" while OPTIONS → 204 with byte-identical credential-bearing allow-list (X-Sipgate-Token-Id/Secret + MCP/SSE + X-Sipgate-Enforce-No-NQ 
+- CHANGED app.dev.sipgate.com: bundle rotated to main-CcRiP8Tk.js (5.74MB, 27 hardcoded sipgate host refs incl integration.sipgate.cloud); zero x-sipgate-* header names in source → public SPA not the X-Sipgate-
+- CHANGED integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 96,931 (+24,708), api_key_forbidden 21 — FB-JWT gate live/incrementing; SSRF precondition intact
+- CHANGED share1.sipgate.cloud: dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN confirmed — takeover candidate

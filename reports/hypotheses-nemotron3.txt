@@ -1,16 +1,9 @@
-## 2026-09-14 22:48:37 UTC [target] (model nemotron3)
-[NEW] api.sipgate.com/v2/authorization/token: undocumented POST-only endpoint returns CONSTANT 500 "OK" for client_credentials/refresh_token (8th consecutive cycle stable), OPTIONS reveals MCP/SSE headers (MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID) + credential-bearing headers (X-Sipgate-Token-Id/Secret) on API origin
-[NEW] api.sipgate.com/v2 (GET): unauthenticated JSON endpoint-index (72 URLs, 5481 B) stable across 8 cycles, includes undocumented /v2/authorization/token, /v2/crm-bridge, /v2/users/{userId}/role absent from 144-op swagger
-[NEW] api.sipgate.com/v2/crm-bridge: GET → HTML 404 "Resource not found" while OPTIONS → 204 with identical credential-bearing allow-list — CORS-configured non-route, not app-plane reachable
-[NEW] api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 ACAO:evil.example + ACAC:true + GET 200 (2690 B) — arbitrary-origin credential reflection on Swagger-UI implicit redirect asset persists
-[CHANGED] app.dev.sipgate.com: bundle rotated to main-CcRiP8Tk.js (5.74MB, 27 hardcoded sipgate host refs incl integration.sipgate.cloud); zero x-sipgate-* header names in source
+## 2026-09-15 01:21:23 UTC [target] (model nemotron3)
+[NEW] api.sipgate.com/v2/authorization/token: 8th consecutive cycle stable — undocumented POST-only endpoint returns CONSTANT 500 "OK" for client_credentials/refresh_token; OPTIONS reveals MCP/SSE headers (MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID) + credential-bearing headers (X-Sipgate-Token-Id/Secret) on API origin; CONTROL to real Keycloak token endpoint returns proper 401
+[NEW] api.sipgate.com/v2/crm-bridge: GET → HTML 404 "Resource not found" while OPTIONS → 204 with byte-identical credential-bearing allow-list (X-Sipgate-Token-Id/Secret + MCP/SSE + X-Sipgate-Enforce-No-NQ + X-INSTANA-*) — CORS-configured non-route, not app-plane reachable
+[CHANGED] app.dev.sipgate.com: bundle rotated to main-CcRiP8Tk.js (5.74MB, 27 hardcoded sipgate host refs incl integration.sipgate.cloud); zero x-sipgate-* header names in source → public SPA not the X-Sipgate-Token-Id/Secret source
 [CHANGED] integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 96,931 (+24,708), api_key_forbidden 21 — FB-JWT gate live/incrementing; SSRF precondition intact
-[CHANGED] *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate (re-confirmed)
-[CHANGED] mock.integration.sipgate.cloud: ungated Express twin, /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — x-provider-url does NOT parameterize fetch (re-confirmed)
-[CHANGED] team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 + SERVERID rotation (team-web01/team-web02/team-web03)
-[CHANGED] sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); write path NOT tested
-[CHANGED] grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via /api/health
-[CHANGED] share1.sipgate.cloud: dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN — takeover candidate
+[CHANGED] share1.sipgate.cloud: dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN confirmed — takeover candidate
 [PRIO] api.sipgate.com/v2/authorization/token, 7.75, attack_surface=8 business_value=9 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=10
 [PRIO] app.dev.sipgate.com, 7.45, attack_surface=8 business_value=6 tech_exposure=8 gate_ease=10 cloud_surface=5 freshness=10
 [PRIO] integration.sipgate.com, 7.10, attack_surface=7 business_value=8 tech_exposure=8 gate_ease=3 cloud_surface=7 freshness=9
@@ -20,7 +13,6 @@
 [PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com, 5.85, attack_surface=4 business_value=7 tech_exposure=5 gate_ease=10 cloud_surface=9 freshness=7
 [PRIO] mock.integration.sipgate.cloud, 5.60, attack_surface=5 business_value=4 tech_exposure=6 gate_ease=10 cloud_surface=6 freshness=8
 [PRIO] share1.sipgate.cloud, 5.40, attack_surface=3 business_value=4 tech_exposure=7 gate_ease=10 cloud_surface=5 freshness=7
-[PRIO] chatbot.dev.sipgate.com, 5.30, attack_surface=5 business_value=4 tech_exposure=5 gate_ease=10 cloud_surface=6 freshness=8
 [HYP] Miswired OIDC Token Proxy on API Origin Enables Client-Credentials Theft
 class: AUTH
 asset: api.sipgate.com/v2/authorization/token

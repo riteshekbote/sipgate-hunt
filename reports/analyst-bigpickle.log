@@ -29106,3 +29106,154 @@ HTTP 200 size 515
 [93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting
 [0m✗ [0mgrep -i -E "firebase_jwt_forbidden|api_key_forbidden|rate_limit" /tmp/metrics.txt | head -5; echo "---"; cat /tmp/metrics.txt | head -20 failed
 [91m[1mError: [0mThe user rejected permission to use this specific tool call.
+===== ANALYST bigpickle 2026-09-15 01:21:33 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mls -la /home/runner/work/sipgate-hunt/sipgate-hunt
+total 548
+drwxr-xr-x 12 runner runner   4096 Sep 15 01:17 .
+drwxr-xr-x  3 runner runner   4096 Sep 15 01:17 ..
+drwxr-xr-x  7 runner runner   4096 Sep 15 01:17 .git
+drwxr-xr-x  3 runner runner   4096 Sep 15 01:17 .github
+-rw-r--r--  1 runner runner   1755 Sep 15 01:17 README.md
+-rw-r--r--  1 runner runner     32 Sep 15 01:17 analyst-out.txt
+-rw-r--r--  1 runner runner 235576 Sep 15 01:17 analyst-prompt.txt
+-rw-r--r--  1 runner runner 231759 Sep 15 01:17 ctx.txt
+drwxr-xr-x  2 runner runner   4096 Sep 15 01:17 inventory
+drwxr-xr-x  2 runner runner   4096 Sep 15 01:17 knowledge
+drwxr-xr-x  2 runner runner   4096 Sep 15 01:17 leads
+-rw-r--r--  1 runner runner   2436 Sep 15 01:17 probe-results.md
+drwxr-xr-x  2 runner runner   4096 Sep 15 01:17 recon-notes
+drwxr-xr-x  2 runner runner   4096 Sep 15 01:17 reports
+drwxr-xr-x  2 runner runner   4096 Sep 15 01:17 reposcan-raw
+-rw-r--r--  1 runner runner   3230 Sep 15 01:17 scope.yml
+drwxr-xr-x  2 runner runner   4096 Sep 15 01:17 scripts
+-rw-r--r--  1 runner runner     33 Sep 15 01:17 state_bigpickle.json
+-rw-r--r--  1 runner runner     33 Sep 15 01:17 state_laguna.json
+-rw-r--r--  1 runner runner     33 Sep 15 01:17 state_ling3.json
+-rw-r--r--  1 runner runner     33 Sep 15 01:17 state_longcat.json
+-rw-r--r--  1 runner runner     33 Sep 15 01:17 state_mimo.json
+-rw-r--r--  1 runner runner     33 Sep 15 01:17 state_nemotron3.json
+drwxr-xr-x  2 runner runner   4096 Sep 15 01:17 triage
+[0m
+[0m$ [0mcurl -s -o /dev/null -D - -X OPTIONS "https://api.sipgate.com/v2/doc/oauth2-redirect.html" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" --max-time 20 | head -30
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Tue, 15 Sep 2026 01:18:09 GMT
+[0m
+[0m$ [0msleep 1; curl -s -o /tmp/v2index.txt -w "HTTP %{http_code} size=%{size_download}\n" "https://api.sipgate.com/v2" --max-time 20; head -c 400 /tmp/v2index.txt
+HTTP 200 size=5481
+{"accountUrl":"https://api.sipgate.com/v2/account","accountVerifiedUrl":"https://api.sipgate.com/v2/account/verified","addressUrl":"https://api.sipgate.com/v2/addresses/{addressId}","addressesUrl":"https://api.sipgate.com/v2/addresses","addressNumbersUrl":"https://api.sipgate.com/v2/addresses/{addressId}/numbers","authorizationOauthClientsUrl":"https://api.sipgate.com/v2/authorization/oauth2/clien
+[0m
+[0m$ [0msleep 1; sha256sum /tmp/v2index.txt; curl -s -o /dev/null -D - "https://integration.sipgate.com/metrics" --max-time 20 | head -5; echo ---; curl -s "https://integration.sipgate.com/metrics" --max-time 20 | grep -E "forbidden_requests" | head -5
+0d872a0f4c101d16ea4d502b5e4322faad5dbfd80161c3c4b8de62d3313fe65c  /tmp/v2index.txt
+HTTP/1.1 200 OK
+access-control-allow-origin: *
+content-length: 515
+content-type: text/plain; version=0.0.4; charset=utf-8
+date: Tue, 15 Sep 2026 01:18:19 GMT
+---
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 27
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/metrics" --max-time 20 | grep -E "^firebase_jwt_forbidden_requests|^api_key_forbidden_requests|^rate_limit"
+api_key_forbidden_requests 21
+firebase_jwt_forbidden_requests 101732
+rate_limit_forbidden_requests 2205
+[0m
+[0m$ [0msleep 1; curl -s -o /dev/null -D - -X OPTIONS "https://api.sipgate.com/v2/authorization/token" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" --max-time 20 | head -12
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Tue, 15 Sep 2026 01:18:31 GMT
+[0m
+[0m$ [0msleep 1; curl -s "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?list-type=2&max-keys=1000" --max-time 25 | grep -oE "<LastModified>[^<]+|<Key>[^<]+" | tail -8
+<Key>sipgate-softphone.AppImage
+<LastModified>2024-06-11T09:45:33.000Z
+<Key>sipgate-softphone.dmg
+<LastModified>2024-06-11T09:45:32.000Z
+<Key>sipgate-softphone.exe
+<LastModified>2024-06-11T09:45:32.000Z
+<Key>sipgate-softphone.zip
+<LastModified>2024-06-11T09:45:33.000Z
+[0m
+[0m$ [0mcurl -s "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?list-type=2&max-keys=1000" --max-time 25 | grep -cE "<Key>"; curl -s "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?list-type=2&max-keys=1000" --max-time 25 | grep -cE "<IsTruncated>true"
+1
+0
+[0m
+[0m$ [0mcurl -s "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?list-type=2&max-keys=2000" --max-time 25 | grep -c "<Key>"; curl -s "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?list-type=2&max-keys=2000" --max-time 25 | grep -cE "<KeyCount>[0-9]+"
+1
+1
+[0m
+[0m$ [0mcurl -s "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?list-type=2&max-keys=2000" --max-time 25 | grep -oE "<Key>[^<]+" | wc -l; curl -s "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?list-type=2&max-keys=2000" --max-time 25 | grep -oE "<IsTruncated>[a-z]+" | sort -u
+439
+<IsTruncated>false
+[0m
+STEP 1 — DELTA
+- CHANGED `integration.sipgate.com/metrics`: `firebase_jwt_forbidden_requests` 101,732 (+4,801 vs 96,931); `api_key_forbidden` 27 then 21 on back-to-back fetches — replica-counter variance reconfirmed, FB-JWT gate live.
+- CHANGED allow-headers vocabulary: token route AND oauth2-redirect.html now serve the fuller uniform edge set incl `x-sipgate-client`, `x-sipgate-fingerprint`, `x-sipgate-hubspot-utk`, `x-sipgate-version`, `x-sipgate-was-nq-request` — richer but still route-agnostic CORS reflection.
+- NO new assets; index (5481 B, sha256 `0d872a0f…`), token OPTIONS 204 ACAO-evil (9th cycle), oauth2-redirect OPTIONS 204 ACAO-evil, S3 bucket (439 keys, ≥2024-06-11) all flat.
+
+STEP 2 — PRIORITIZE
+[PRIO] api.sipgate.com/v2/authorization/token,8.55,a=8,b=10,t=9,g=10,c=6,f=6
+[PRIO] api.sipgate.com/v2/doc/oauth2-redirect.html (swagger chain),7.00,a=5,b=8,t=7,g=10,c=5,f=7
+[PRIO] integration.sipgate.com users.integrations.create,7.00,a=7,b=8,t=8,g=3,c=8,f=8
+
+STEP 3 — HYPOTHESES
+[HYP] /v2/authorization/token is a miswired OIDC client-credentials token proxy — sole edge-escaping app-plane route
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token (POST-only, index-advertised, absent from 144-op swagger)
+confidence: 50
+reasoning: 9th consecutive flat cycle — OPTIONS 204 + ACAO evil.example+ACAC; allow-headers now the fuller uniform edge set (x-sipgate-client/fingerprint/hubspot-utk/was-nq-request) identical on oauth2-redirect.html static asset → CORS reflection confirmed route-agnostic, not route-specific token-mint evidence; crm-bridge sibling already proven inert non-route; GET/HEAD/password 404; index byte-identical 5481 B; metrics gate untouched by this route.
+evidence_needed: POST status transition 500→200 (mint; AUTH_HELPED only) or →401/400 (upstream Keycloak restored).
+verify_steps: PASSIVE drift — OPTIONS /v2/authorization/token + GET /v2 + GET /metrics once, ≤0.5rps; POST stays deferred (never send valid creds).
+impact: restored OIDC proxy on api origin with contacts/sms/account/balance/payment scope set = ATO-class; currently anomaly-level, HIGH-conditional on transition.
+testability: PASSIVE
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF (carry-forward, unchanged)
+class: SSRF
+asset: integration.sipgate.com (spec /oauth2/redirect + /oauth2/callback no-security vs app-403; users.integrations.create apiUrl free-form)
+confidence: 55
+reasoning: FB-JWT gate still live/incrementing (+4,801, multi-replica variance api_key 27→21); GCP 169.254.169.254 if apiUrl server-fetched post-auth; no apiUrl allowlist documented.
+evidence_needed: valid FB JWT → POST create with apiUrl=169.254.169.254 → observed outbound fetch/metadata read.
+verify_steps: AUTH_HELPED — passive gate-status re-check each cycle (403-stable).
+impact: GCP metadata/project secrets on gate bypass; HIGH conditional.
+testability: AUTH_HELPED
+[HYP] Swagger-UI attacker-spec shell on api origin (carry-forward, unchanged)
+class: XSS
+asset: api.sipgate.com/v2/doc/?url= (oauth2-redirect.html OPTIONS 204 ACAO-evil+ACAC re-confirmed this cycle)
+confidence: 45
+reasoning: unallowlisted url=; swagger-ui 5.x implicit extreme-scope client; doc page live; CORS-reflection amplifier input intact; no exec primitive demonstrable statically (KB REJECT opener callback).
+evidence_needed: attacker markup in api-origin DOM or Authorize-popup interception in fresh Chromium.
+verify_steps: HUMAN_ONLY (data: spec via url=); not passive-verifiable.
+impact: CRITICAL with exec primitive; currently LOW-MEDIUM.
+testability: HUMAN_ONLY
+
+STEP 4 — SELF-CRITIQUE
+[PARKED] OAuth implicit redirect / Keycloak HS256 / chatbot WS / MCP-SSE / oauth2/clients 500-on-UUID: KB-REJECTED and unchanged across cycles. Dropped.
+[PARKED] swagger-url shell kept at 45 as 3rd survivor — precondition intact but no passive path to confirmation (HUMAN_ONLY).
+[FINAL] survivors ranked: 1) token proxy (50, PASSIVE) 2) integration apiUrl SSRF (55, AUTH_HELPED) 3) swagger-url shell (45, HUMAN_ONLY).
+
+STEP 5 — NEXT ACTION
+[NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin: https://evil.example, ACRM POST) + `GET https://api.sipgate.com/v2` + `GET https://integration.sipgate.com/metrics`, spaced >1s, ≤0.5rps — 10th-cycle drift watch; a POST-status transition on the token route is the only HIGH-conditional trigger (POST itself stays deferred, never valid creds).
+
+STEP 6 — LEARNING
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: 9th consecutive cycle flat — OPTIONS 204 ACAO evil.example+ACAC; allow-headers now the fuller uniform edge set (incl x-sipgate-client/fingerprint/hubspot-utk/was-nq-request) identical on the oauth2-redirect.html static asset → route-agnostic CORS vocabulary, no token-mint-specific evidence.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2: endpoint index 5481 B, sha256 `0d872a0f…`, 72 URLs — byte-identical across cycles, no new undocumented paths.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 101,732 (+4,801); api_key_forbidden 27→21 back-to-back → per-replica counter variance reconfirmed; FB-JWT gate live.
+[LEARN] ACCEPTED INFO @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: 439 keys, IsTruncated=false, all LastModified ≤2024-06-11 → bucket inventory unchanged, no artifact drift; write path still untested (HUMAN sign-off required).
+
+STEP 7 — RISK
+[RISK] sipgate: 84 — all three survivors status-quo (token anomaly flat 9th cycle; swagger CORS amplifier intact but no exec primitive; integration apiUrl SSRF behind live incrementing FB-JWT gate); S3 bucket confirmed non-drifting; no new high-value class, no gate bypass, no credentials used. HIGH-conditional only on token POST transition or a gate-bypass; drift re-probe next cycle.
