@@ -799,3 +799,5 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/authorization/token: OPTIONS returned 404 (was 204 for 9 consecutive cycles) — drift signal
 - CHANGED app.dev.sipgate.com: bundle rotated to `main-D3QVZ6EX.js` (5.74MB); same 17 hardcoded host:port pairs persist; zero `x-sipgate-*` header names in source
 - CHANGED integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 109,393 (+12,462 vs prior 96,931); live FB-JWT gate incrementing
+
+## 2026-09-15 20:25:38 UTC

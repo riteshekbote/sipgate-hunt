@@ -21706,3 +21706,57 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: 85 — high-value OAuth implicit flow (login.sipgate.com third-party realm) + arbitrary-origin CORS with credentials on API (api.sipgate.com/v2/*) + live dev SPA leaking prod internal topology + NEW prod subdomains in dev bundle (admin.live/dev.sipgate.net) + integration platform spec-behavior drift with SSRF parameter (integration.sipgate.com users.integrations.create apiUrl) + 94-host CRM adapter fleet with SSRF headers behind single nginx gate (*.integration.sipgate.cloud) + dangling subdomain takeover candidate (share1.sipgate.cloud) + publicly listable S3 bucket with stale artifacts (sipgate-desktop-app.s3) + live Grafana internet-exposed (grafana.sipgate.cloud) + miswired OIDC token proxy on API origin (api.sipgate.com/v2/authorization/token) — multiple chainable high-severity vectors across auth, SSRF, info-disclosure, and takeover classes; active development (bundle rotation, new prod subdomains in dev config) increases regression risk
+===== ANALYST nemotron3 2026-09-15 20:25:38 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mls -la
+total 580
+drwxr-xr-x 12 runner runner   4096 Sep 15 20:05 .
+drwxr-xr-x  3 runner runner   4096 Sep 15 20:05 ..
+drwxr-xr-x  7 runner runner   4096 Sep 15 20:05 .git
+drwxr-xr-x  3 runner runner   4096 Sep 15 20:05 .github
+-rw-r--r--  1 runner runner   1755 Sep 15 20:05 README.md
+-rw-r--r--  1 runner runner     43 Sep 15 20:05 analyst-out.txt
+-rw-r--r--  1 runner runner 253601 Sep 15 20:05 analyst-prompt.txt
+-rw-r--r--  1 runner runner 249784 Sep 15 20:05 ctx.txt
+drwxr-xr-x  2 runner runner   4096 Sep 15 20:05 inventory
+drwxr-xr-x  2 runner runner   4096 Sep 15 20:05 knowledge
+drwxr-xr-x  2 runner runner   4096 Sep 15 20:05 leads
+-rw-r--r--  1 runner runner   2552 Sep 15 20:05 probe-results.md
+drwxr-xr-x  2 runner runner   4096 Sep 15 20:05 recon-notes
+drwxr-xr-x  2 runner runner   4096 Sep 15 20:05 reports
+drwxr-xr-x  2 runner runner   4096 Sep 15 20:05 reposcan-raw
+-rw-r--r--  1 runner runner   3230 Sep 15 20:05 scope.yml
+drwxr-xr-x  2 runner runner   4096 Sep 15 20:05 scripts
+-rw-r--r--  1 runner runner     33 Sep 15 20:05 state_bigpickle.json
+-rw-r--r--  1 runner runner     33 Sep 15 20:05 state_laguna.json
+-rw-r--r--  1 runner runner     33 Sep 15 20:05 state_ling3.json
+-rw-r--r--  1 runner runner     33 Sep 15 20:05 state_longcat.json
+-rw-r--r--  1 runner runner     33 Sep 15 20:05 state_mimo.json
+-rw-r--r--  1 runner runner     33 Sep 15 20:05 state_nemotron3.json
+drwxr-xr-x  2 runner runner   4096 Sep 15 20:05 triage
+[0m
+[0m→ [0mRead scope.yml
+[0m→ [0mRead inventory/sipgate.md
+[0m→ [0mRead state_nemotron3.json
+[0m
+[0m$ [0mls -la leads/
+total 1628
+drwxr-xr-x  2 runner runner   4096 Sep 15 20:05 .
+drwxr-xr-x 12 runner runner   4096 Sep 15 20:05 ..
+-rw-r--r--  1 runner runner 641135 Sep 15 20:05 lead-bigpickle.md
+-rw-r--r--  1 runner runner   4233 Sep 15 20:05 lead-laguna.md
+-rw-r--r--  1 runner runner   4150 Sep 15 20:05 lead-ling3.md
+-rw-r--r--  1 runner runner   4316 Sep 15 20:05 lead-longcat.md
+-rw-r--r--  1 runner runner     18 Sep 15 20:05 lead-mimo.md
+-rw-r--r--  1 runner runner 907255 Sep 15 20:05 lead-nemotron3.md
+-rw-r--r--  1 runner runner  74531 Sep 15 20:05 reposcan-sipgate.md
+[0m
+[0m→ [0mRead leads/lead-nemotron3.md
+[0m→ [0mRead leads/lead-nemotron3.md[90m [offset=364][0m
+[0m
+[0m$ [0mwc -l leads/lead-nemotron3.md
+4772 leads/lead-nemotron3.md
+[0m
+[0m→ [0mRead leads/lead-nemotron3.md[90m [offset=4500][0m
