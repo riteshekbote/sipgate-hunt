@@ -563,3 +563,5 @@
 - 2026-09-15 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 109,393 (+12,462); api_key_forbidden 21 — FB-JWT gate live; per-replica counter variance; SSRF precondition intact.
 - 2026-09-15 ACCEPTED INFO @ app.dev.sipgate.com: bundle rotated to main-D3QVZ6EX.js; same 17 hardcoded host:port pairs; zero x-sipgate-* headers — public SPA not the token-id/secret source.
 - 2026-09-15 ACCEPTED INFO @ api.sipgate.com/v2: endpoint index 5481 B byte-identical across cycles; 72 URLs; no new undocumented paths.
+- 2026-09-15 ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: 10th consecutive cycle flat — OPTIONS 204 restored with ACAO evil.example+ACAC; allow-header vocabulary unchanged incl credential-bearing names + MCP/SSE; nemotron3-observed 404 confirmed transient edge jitter, not routing/hardening change.
+- 2026-09-15 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 16,611 (+2,931); api_key_forbidden 21→3 back-to-back → per-replica counter variance reconfirmed; FB-JWT gate live; SSRF precondition intact.

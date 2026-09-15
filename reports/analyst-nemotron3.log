@@ -21760,3 +21760,250 @@ drwxr-xr-x 12 runner runner   4096 Sep 15 20:05 ..
 4772 leads/lead-nemotron3.md
 [0m
 [0m→ [0mRead leads/lead-nemotron3.md[90m [offset=4500][0m
+===== ANALYST nemotron3 2026-09-15 23:01:55 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code}" "https://app.dev.sipgate.com/assets/main-D3QVZ6EX.js" --max-time 10
+200
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-D3QVZ6EX.js" --max-time 10 | head -c 50000
+<!doctype html>
+<html lang="" translate="no">
+	<head>
+		<meta charset="utf-8" />
+		<title>sipgate</title>
+
+		<!-- Make the page behave sensibly on mobile devices -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<!-- Vendor-specific configs -->
+		<link rel="manifest" href="/site.webmanifest" />
+		<meta name="msapplication-config" content="/browserconfig.xml" />
+
+		<!-- Prevent chrome from auto-translating our page -->
+		<meta name="google" content="notranslate" />
+
+		<!-- Colors for menu bars etc. -->
+		<meta name="theme-color" content="#000000" />
+		<meta name="msapplication-TileColor" content="#000000" />
+		<meta name="msapplication-navbutton-color" content="#000000" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="#000000" />
+
+		<!-- Allow adding to homescreen -->
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+
+		<!-- Prevent browser from making phonenumbers clickable -->
+		<meta name="format-detection" content="telephone=no" />
+
+		<!-- Authenticated app: keep out of search indexes and archives -->
+		<meta name="robots" content="noindex, nofollow, noarchive" />
+
+		<!-- Icons -->
+		<link rel="icon" sizes="16x16 32x32" href="/favicons/favicon.ico" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
+		<link rel="apple-touch-icon" href="/favicons/apple/apple-touch-icon.png" />
+
+		<!-- Font Preloading -->
+		<link
+			rel="preload"
+			href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin=""
+		/>
+
+		<script>
+			if (!/^app\.local/.test(window.location.hostname)) {
+				console.log(
+					'%cStop!',
+					'color:red; font-size:60px; font-weight: bold; -webkit-text-stroke: 1px black;'
+				);
+				console.log(
+					'%cThis is a browser feature intended for developers. If someone told you to copy and paste something here, it is a scam and will give them access to your sipgate account.',
+					'font-size: 18px;'
+				);
+				console.log(
+					'%cDas ist eine Funktion, welche für Entwickler vorgesehen ist. Falls Ihnen jemand gesagt hat, hier etwas hin zu kopieren und auszuführen, ist das eine Falle. Derjenige kann danach Zugriff auf ihr sipgate Konto erhalten',
+					'font-size: 18px;'
+				);
+			}
+		</script>
+
+		<script>
+			(function () {
+				try {
+					localStorage.setItem('test', 'test');
+					localStorage.removeItem('test');
+				} catch (e) {
+					window.location.href = '/yunocookie.html';
+				}
+			})();
+		</script>
+
+		<style>#root,body,html{height:100%;margin:0;padding:0;width:100%}@media print{#root,body,html{height:auto}}noscript{align-items:center;display:flex;font-family:sans-serif;height:100%;justify-content:center;text-align:center}noscript p{margin-bottom:4rem}</style>
+
+		<style>@keyframes loading-animation-grow{0%{stroke-dasharray:2.8225 138.3041}50%{stroke-dasharray:21.1689 119.9576}to{stroke-dasharray:2.8225 138.3041}}@keyframes loading-animation-move{0%{stroke-dashoffset:1.4112}to{stroke-dashoffset:-139.7153}}#loading-animation{--logo-width:50px;--fadeout-animation:0.35s;align-items:center;background-color:#fff;bottom:0;display:none;justify-content:center;left:0;opacity:1;position:fixed;right:0;top:0;transition:opacity var(--fadeout-animation) cubic-bezier(.685,.03,.695,.99);z-index:10000000}.script #loading-animation{display:flex}#loading-animation.exit{opacity:0}#loading-animation .background{display:none}#loading-animation .content{align-items:center;display:flex;height:100%;justify-content:center;position:absolute;width:100%}#loading-animation .content .logo{display:none}#loading-animation .content svg{width:var(--logo-width)}#loading-animation .content svg .spinner{stroke:#000;animation:loading-animation-grow 1.2s cubic-bezier(.355,.005,.315,.8) infinite,loading-animation-move 1.2s cubic-bezier(.355,.005,.315,1) infinite}</style>
+		<script type="module" crossorigin src="/assets/main-kMRXGLPt.js" integrity="sha384-mmyrqasTtMXFhHgJBEpt5igEYSpSMd+ZJhX/jJL3kh7IXA6QNQetqrgM3CwG9sFL"></script>
+		<link rel="modulepreload" crossorigin href="/assets/chunk-CernVdwh.js" integrity="sha384-uILkyZ2n65/hJcSSKTdDrDMN87YYUWqO34RrNDsCwjm27WNsBDwfxqdzYohmf1o/">
+		<link rel="modulepreload" crossorigin href="/assets/preload-helper-rov5CBGT.js" integrity="sha384-8InSgMswcsm3QCJHLGMdkfiCGDIpbPF6GICb5tM0n57hnytd/rkZ2MYqDXXGpKOn">
+		<link rel="modulepreload" crossorigin href="/assets/datetime-Cn-FNaHe.js" integrity="sha384-SLwk2ljke25ZZc4rEdT1/FULRoEzLrDjr8lM7gADPG6xCWwrMYLV3JRaXZembDTj">
+		<link rel="modulepreload" crossorigin href="/assets/alertManager-DelxzD-O.js" integrity="sha384-x8Qs2uAD/xGE4kr1tNcnxjJg5XIn9BBucTDgNx3lj2XKzRlnIbB8x3VoL/7I+954">
+		<link rel="modulepreload" crossorigin href="/assets/selectors-Cs7uAxEQ.js" integrity="sha384-kkCu8bcrCWp4V3NjubzkyKLMBxbr1RiHUGsb0bnmVR+9uWtN/d90tttYyQfeDTGM">
+		<link rel="modulepreload" crossorigin href="/assets/types-DTpQfpK1.js" integrity="sha384-oNh9z85vLiHxxN+BAhqOtVeGm1yKgVk4hkz1pqBXszddcsVN3J2jtetFmubS3WBP">
+		<link rel="modulepreload" crossorigin href="/assets/aria-id-CNzcc1wy.js" integrity="sha384-cIakr2c0nm9cvZCXgTqALM7wbA4EY8RA0f3P6Un1pctGbrvY6eAE4zw2hnj5oQV3">
+		<link rel="modulepreload" crossorigin href="/assets/environment-BUWH2W2Z.js" integrity="sha384-rktOFEMx2aE34zMJE/8uHBDum88mwHaqWii/vwg/NnN5b0vA2knGgxgxgFoVzPUL">
+		<link rel="modulepreload" crossorigin href="/assets/merge-refs-BG0WSHp1.js" integrity="sha384-DpJ6isbVJeSkpNdRxPEqOUgPklMJJVLo9ug24JSBe+VFRongB1IyD1VRpb0x4+Yj">
+		<link rel="stylesheet" crossorigin href="/assets/main-D2CdVAJ1.css" integrity="sha384-eL9Yyd03gLbfbrWuY3g2a5eljxs65StXPg1OVo5QxPzkgendBACVVb9z8SpKdG9j">
+	</head>
+
+	<body>
+		<script>
+			document.body.classList.add('script');
+		</script>
+
+		<div id="root">
+			<noscript>
+				<div>
+					<h1>JavaScript aktivieren oder installieren!</h1>
+					<p>
+						Um die Web-App nutzen zu können, müssen Sie
+						<a href="http://enable-javascript.com/de" target="_blank"
+							>JavaScript in Ihrem Browser aktivieren.</a
+						>
+					</p>
+
+					<h1>Enable or install JavaScript!</h1>
+					<p>
+						In order to use the web-app, you have to enable
+						<a href="http://enable-javascript.com/en" target="_blank"
+							>JavaScript in your browser.</a
+						>
+					</p>
+				</div>
+			</noscript>
+		</div>
+
+		<div id="overlay-portal"></div>
+
+		<div id="loading-animation">
+			<div class="background"></div>
+
+			<div class="content">
+				<img
+					class="logo"
+					src="data:image/png;base64,
+                        iVBORw0KGgoAAAANSUhEUgAAAGUAAACUCAYAAACKsudzAAAACXBIWXMAABYlAAAWJQFJUiTwAAAM
+                        +0lEQVR42u2dPagkWRXHz62q2VnHXXeZYXZ1d/wYZVlXdAJXUBRERMHAQEQMDMRgQQwEwURMBCPB
+                        yESMRCPFxMBMA8HESDAyMDAQURBRRHd2nNd1j1NulZw98z/n3vrqd/u9W9B0d3VVd9X53f/5ulXv
+                        BWamupS1hBOCstWBhgrlfAGcJKSSoJRwIKFCKQNEcYDOC8opZRfhokM55VQvXDQoFynvDhcBykUs
+                        hMKpQrkMVWk4JSiXqU0QTgHKZe3bhBKh1CbaRmC2glKBbAhmCygVyMZg1kKpQHYAswZKBbITmKVQ
+                        KpAdwVQoBYJZAqUC2RnMXCgVSGFQKpAjgalQCgSTC6UCKQxKBXJkMBVKgWBSUCqQCqWCSUGpQCqU
+                        CiYFpQKpUCqUCqVwMAhKBVKh1KVCOQEwGkoFUqHUpUI5ETAVSuFQKpAC3VeFUmBKXKGcM4wKpVAg
+                        FUqBQCqUwmBUKIUCqVAKBFKhFAajQikUSIVSGIwKpVAgFUqBQCqUwmBUKIUCqVAKBFKhLFu68bmv
+                        UMpYrowKkY97Fcr5LI+Mz414lmD+XaEcd7lqgJgeE6h/7gGlgnl4edSAoNcNS/vg8bcKZb/ldQl3
+                        ZUGaXv+lQtl2uZbpriQE9PzHCmWb5fVKHRoOKcOjbVqx7g9bQLmsYB7LcFdT3JCKIAEnAKDD9r+v
+                        UOYvjydANGr0B8NlBQB12O93Fco8GMFwV3q0EwDTODGmFeuHDsBv10K5DGCeWBk3OkNdLXg97f+b
+                        CsVenlSxgEB21RixpAUwW2O/AOD+ukJ5GEYwQAQnbjSOi5LbtJmp8q+WQrloYK6rEa4DM4oblmE7
+                        pR5LZe1oQw3tlxUK0Q0QK4IRrBsRpJH7QbFjCuYMoKCkYfjs50uhnDqYG4nWiA7gnaGeThmbAKjG
+                        CfCNysSm7/7ZZYNyMyNuIBhBjfIA3FSjEgCtAgIq0aobPv/pUiinBuamk+qiAN0CtaDKPahA3hrK
+                        Q+6xBaCm7/jJUiinAuapRNyQxtEjXNcgVgsFuTZyADVGp2Da/8cXGcrTRkalX7dGUNcpLTn1R2sk
+                        Di1QkaVYORB+uBRKqWDeaLgrbdDOGMmdMYIDCNABBHupLJ2REXCVqC3z/YsE5U3GaG2UETpDLdI4
+                        nRGULfVY2RcZamjFcSPFfm8plJLAPANSztYYmVdA7EDtdrk/KyBIfY2oTQjEKyvoM2jXfHcNlPMG
+                        8yzIlnSx1qrPEIDOGPmoTmkIz6NIeCEBQ8ci7e6+sxbKeYG55bihKT50oB/lBWsvdQ4OjAb0xRqQ
+                        AOiYpTM2Ekr+9looxwRzS43ETlXaCE5jpLOo0rZmFRsQI4Ix6kkNmA702lDRKSF+awsoxwDzFmD4
+                        zgHRqqyoES7GUwORPZNoBXkNojEyL1kfMYhb03F/8xSg3FYBXKawE5gOKKFTStCGJZAVeZV/BOlu
+                        q2obMjrHXm8MXUP2jS2g7AHn7SB7ahUQaZAriZHfApfFoP2BsqJuhOKpCMWbAKYEUDeaVdb29S2h
+                        bAXmOaWEVkAJQClWkzHV5kBwgtF28VRAxoi3lIHAyN/52tZQ1oJ5p1BEI2A0ChIK1p0DIBCeW2ej
+                        MUlq5HcAXgNUw06LhUA3WcalabB9dQ8oS8C8ICAMz1eBm9KjvgWVeev0mZChkbtpjOyICE8LNyDl
+                        tWIJJToE0+Mr5/2vz98zHthVUG+QEdDRnAeDyrwBoxG5K0sJLI6DMpSI+mIo3hD4LbnPl/eCkoJz
+                        ZzzhR4QRpeGvKKNLt9Ml0k89Z8EqhuiWSlAuzXNllgKsK2MslXhX8H9pbygIzIuj0a+omkMHd92O
+                        6AAIXQM0zsl6RZ9uSDIY5S2IR60DDiUE5ECdXn/xGFCGm2mGO51+8eDxA5U9aRidcitNxvwFiiNk
+                        +PtGuSNUDFpVeDDiDPqcE8fSGINoWPfS3lD+M+b5w/PfHzx+RK9eiX6fXr2RszPkr31uBxRBxomT
+                        MQIt/y5HfgDdX912jyrWoNgSjToGZWT6fL6wJ5TDeHA8QnjlwePP9OrFaIN6Xh7XSzenb4OWymEw
+                        wkjEAQZ+nQhfwUJgOwKpLYFWPoHv0gqy3FYwsjX5/vN7QJlAsHh/GAEMIP40quVfo1sb1p+Jk5/2
+                        68VIjcaJ6dil6w9WRmXlKnSVHwxYVnZlvbfAEVCI3vdzW0OJwkASSj+CGdzY3QePv46Pl0cFDVDu
+                        CXUFATeCyaRopLdRnTAD4wYABW2vVYXmUhrDwJ4SrcE17f/ZraBEkG2xMG4/Pt8fjT+A+cf4fHdc
+                        d2+Ew+PztB+LR1C/pQeAPB4rwHPCjYUEHHLilHZ91vcT2G7a5jNbQImJNHga7XE09v1REXeF+5ri
+                        y33xeS+U0yvYpJRIavTLQNsLw7LhToIR1xqQPgcAt1H7I/XluLzh9afXQokZtQkLMJOx+9GVSYW8
+                        ImLP2fj6TADp6bV/ekO6NwLqlCfaG/UJeq/jEymX1zjr2Ans6PcQ9E+tmQ7mGVW8jA0HoYD7AsIU
+                        V3qxrhfPBwUiKgg6wWA1SuW2wTlelFZb27CjJlSvsKEW+fqTay+c4BlQpDGjcEtnom45A0qJ4jUr
+                        5RzEb/TAhelBEWYMJG1kNlyUZ2QC39EYA2Byt5/Y4hIjzux3ITCsYLDI0qSrO4jtogBwUJBIpcGs
+                        XF1K+Tr9JqA6FA/YqJuCkwGi2Dbs9/EtLludA4UUDJ0ynwkwZ8JlSRi9gsEiu7NcmB4U0i0xgKnj
+                        iQat3VcAcS04cSs4RefHtrjqnmcCZBVjpHoOwsAHFX+ien8A7kun0QRij5W6swJhHb9VtKa2a5yu
+                        gwT50S3u5OIFEDWYIFTQKzC9UsmkFFbbRmF06cp6I0PToDgR0FF8oUQmF4xkw6tfPrLVjag8c18G
+                        7oQMI/dALWgbHatkHDk4QZ+dIjg4cdTKyjzlMHBfev8Pb/HHDXihulAQ1q6MlMG1aqIK9FIZ+jd0
+                        Oq2VwI4RdXodQbrMoIsgW0YNUBxycR/a4g/mzIGCTpTBaJUQCACREM4UPFb761omgj6dl1larR2U
+                        BFj1ipWOa9f1wf+9OQKUkHBflAAjDa2BRGM9K5BIMVa6zAkwWl0NOH4UK9hJIKb1H0BQtnJfIXMf
+                        dnpY0TE0Sql7w1XpQG+lzjFxTijYsxGbyOi3kaOYYbv3bwFlTePMUwoZMSAaKmLgvhjEGgLzNXqq
+                        wDomyw1FI00mp1YJ4LuH5X0lQEFwvNSZlFqiAYBB14AAMKQQb6ogp6MRMu2iQb74/w9WpMRre/4p
+                        KNqt9PTw5BdSkd4HQdUKRDHNUw3PMD4Zcyv6O99bAhTrZClTLWy4KxIZGRt1i3RfvVG7sJF1xYwC
+                        cw6gKVm4sxbKVnPInJHBacMGJ9aQCvDkqCICd8UOgOgMppBIqcmYm5me77yG1II2y5aT+rlQrEJT
+                        Z2HawMjloe+KBhxr6tmKNcFwc5RIi9+9Bsoe1yNxZhFnGSwCd8Oi20zO9tb3WlPOXrrMoCZBWVgE
+                        anlXLpSlLZS91ZIyZDRcVA4QNoI/G4MnKJc6NxYP+73wUKDJhLLnZZScWYRGI13NMXIERWnMhJyr
+                        FjLa//p9VNX+86cCxdouGp1dNuoQcgBEYHBOdBusjnLKnVkd4+dhSpYxyRVp32UOFHYyIc5ociLD
+                        xQQYcuKZ1WbhRB9w+uy5pVD2BjMnbnHCaJaicqAQUBBShqcWdgacnmp+h1m8nCgUz2Be3dFnpNpW
+                        TMn57WDYDfW6bq+FsicYTuT61nFwAlbMiBFkVPvRCNwx0afzjlee1223zC8IypZq8eDlujF22kA8
+                        A4re723J3svM675iIVByRzE7NQ45tU9IpMcMlG3VMXrdW7eGsgeYNVC8qj84qrBGurfeW5dzbMPy
+                        5qwu5cJrieNOQOY2Q1NxxUqPKZFaU6JwZKOK91zarezWcWFQci+8yFGLlzlZ+/eZ35uzXr5+do5R
+                        1twKEY8EJWQGek8tBOqYMMNdpYI7mvSaPn9mrlH2uj9lresKC3tlqanlnO1TqpiTDg/L08eGshQM
+                        bwSTnWPxLsrgDNcTE/03Snz/IiBbQVkCZi8oc5TCRuBeohb0e08tPcEt7w6ORwCSchlM6fmZVBIQ
+                        jIQhdWWL3P7mmpPb65btY0DJcWG0QDmpzMq7z/PGFkbc6y9OxB2BpFxHzFRWylURzbtq8vpWxtvz
+                        z4DEI0HhTNeWUhBnfoZgXd/ScHv/wZy4AxDLgCGzoMt1U6lUelqe3Npox/jTUrJS3qtfZhk5ZLqv
+                        XMXI10/sZaxjQdkaTOoO5NwRTzOATM9v2NtQx4SyJZwcpeQG+hQU+f7xYxjoPKBsASdnZjI30Ott
+                        0BzIY8c0zHlCWQNnrlIIxJlUdnjtvAxSApQlgLz5/NQEVMp9XTtvI5QGJQcQumh6DZRHSzvxkqGg
+                        5eCoA6W/aN3V0k/y1KBciuW/eIY5UXJah2MAAAAASUVORK5CYII="
+				/>
+
+				<svg viewBox="0 0 52 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<g
+						class="spinner"
+						stroke-linecap="round"
+						stroke-dasharray="2.8225 138.3041"
+						stroke-dashoffset="1.4112"
+					>
+						<path
+							d="
+                                M 26.2718 3.3269
+                                C 20.9237 3.32665 15.7247 5.08954 11.4798 8.34261
+                                C 7.23494 11.5957 4.18091 16.1575 2.79062 21.3216
+                                C 1.40032 26.4858 1.75132 31.9643 3.78927 36.9088
+                                C 5.82722 41.8534 9.43843 45.9881 14.0638 48.6729
+                                L 38.4798 30.9339
+                                L 50.0468 22.5339
+                                C 48.8768 17.0968 45.8789 12.2248 41.5527 8.72986
+                                C 37.2265 5.23488 31.8333 3.32797 26.2718 3.3269
+                                V 3.3269Z
+                            "
+						/>
+
+						<path
+							x="0"
+							y="40"
+							d="
+                                M 26.2718 3.3269
+                                C 20.9237 3.32665 15.7247 5.08954 11.4798 8.34261
+                                C 7.23494 11.5957 4.18091 16.1575 2.79062 21.3216
+                                C 1.40032 26.4858 1.75132 31.9643 3.78927 36.9088
+                                C 5.82722 41.8534 9.43843 45.9881 14.0638 48.6729
+                                L 38.4798 30.9339
+                                L 50.0468 22.5339
+                                C 48.8768 17.0968 45.8789 12.2248 41.5527 8.72986
+                                C 37.2265 5.23488 31.8333 3.32797 26.2718 3.3269
+                                V 3.3269Z
+                            "
+							transform="rotate(-180 26 40)"
+						/>
+					</g>
+				</svg>
+			</div>
+		</div>
+
+		<audio id="audio"></audio>
+		<!-- Smoketest - OK -->
+	</body>
+</html>
+[0m
+[91m[1mError: [0m{"message":"Streaming response failed: [502] Upstream error from Nvidia: Service temporarily overloaded","type":"server_error"}

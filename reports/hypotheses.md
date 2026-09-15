@@ -1858,3 +1858,9 @@
 ## RANKED HYPOTHESES 2026-09-15 20:25:38 UTC
 - [52] api.sipgate.com/v2/authorization/token: /v2/authorization/token is a miswired OIDC client-credentials token proxy — sole edge-escaping app-plane route (from art/lead_bigpickle.txt)
 - NEXT(hypotheses-bigpickle.txt): PROBE: 3-probe drift set next cycle — `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin https://evil.example, ACRM POST) + `GET https://api.sipga
+
+## RANKED HYPOTHESES 2026-09-15 23:01:55 UTC
+- [52] api.sipgate.com/v2/authorization/token: /v2/authorization/token is a miswired OIDC client-credentials token proxy — sole edge-escaping app-plane route (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: 3-probe drift set next cycle — `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin https://evil.example, ACRM POST, ≥1.5s spacing) + `GET ht
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: 10th consecutive cycle flat — OPTIONS 204 restored with ACAO evil.example+ACAC; allow-header vocabulary 
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 16,611 (+2,931); api_key_forbidden 21→3 back-to-back → per-replica counter vari
