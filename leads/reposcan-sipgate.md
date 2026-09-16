@@ -806,3 +806,47 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-16 06:40:54 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-16 12:25:17 UTC
+[HYP] Non-constant-time webhook token comparison in flow-io
+class: SECRET
+asset: flow-io/app/api/sipgate/webhook/[orgId]/route.ts:28
+confidence: 85
+reasoning: verifyWebhookSignature() compares x-api-token header against SIPGATE_WEBHOOK_TOKEN using JavaScript strict equality (===). This is not constant-time; an attacker can measure response-time differentials to recover the token character-by-character. The HMAC-SHA256 branch (line 42) correctly uses crypto.subtle but the fast-path token branch does not.
+impact: Medium — timing side-channel on webhook authentication token; exploitable if attacker can make many requests and measure latency
+verify_steps: Confirm SIPGATE_WEBHOOK_TOKEN is set in production env; check if the endpoint is internet-facing; measure response-time variance across requests
+[HYP] Webhook signature verification bypass in non-production
+class: MISCONFIG
+asset: flow-io/app/api/sipgate/webhook/[orgId]/route.ts:35
+confidence: 70
+reasoning: When SIPGATE_WEBHOOK_SECRET is unset and NODE_ENV !== 'production', verifyWebhookSignature() returns true unconditionally — all requests are accepted without any authentication. If production is misconfigured (e.g. NODE_ENV not set or set to 'development'), all webhook requests pass through unsigned.
+impact: High — complete webhook authentication bypass; allows forged telephony events (session_start, user_speak) leading to unauthorized AI agent invocations
+verify_steps: Check production NODE_ENV; verify SIPGATE_WEBHOOK_SECRET or SIPGATE_WEBHOOK_TOKEN are set; check if the endpoint is exposed externally
+[HYP] Open redirect via unvalidated returnTo parameter in MCP OAuth
+class: SSRF
+asset: flow-io/app/api/mcp/oauth/start/route.ts:36
+confidence: 60
+reasoning: The returnTo query parameter is accepted from user input, stored in mcp_oauth_states table, and used in the callback to construct redirect URLs via `${getAppUrl()}${target}`. No validation restricts returnTo to a relative path on the same origin. An attacker could supply returnTo=//evil.com/path which, depending on browser URL resolution, may redirect to an external domain after OAuth completion.
+impact: Low-Medium — post-OAuth redirect to attacker-controlled URL; could be chained with OAuth token theft
+verify_steps: Check if returnTo is validated server-side before redirect; verify getAppUrl() prefix prevents protocol-relative URLs from escaping origin
+[HYP] Hardcoded Supabase SECRET_KEY_BASE and DB_ENC_KEY in docker-compose
+class: SECRET
+asset: flow-io/docker-compose.yml:127-128
+confidence: 90
+reasoning: The Supabase realtime service has hardcoded values: SECRET_KEY_BASE=UpNVntn3cDxHJpq99YMc1T1AQgQpc8kfYTuRgBiYa15BLrx8etQoXz3gZv1/u2oq and DB_ENC_KEY=supabaseencryptedkey. These are real values (not placeholders) baked into the docker-compose.yml shipped with the repo. Any self-hosted deployment that doesn't override these defaults inherits them, meaning multiple independent deployments share the same signing keys.
+impact: Medium — shared SECRET_KEY_BASE across self-hosted deployments enables cross-instance session forgery; DB_ENC_KEY is a weak static key for realtime's internal encryption
+verify_steps: Check if these are overridden in production env; verify they match Supabase's documented defaults; confirm whether production deployments use the bundled docker-compose
+[HYP] Hardcoded Express session secret in demo webapp
+class: SECRET
+asset: rest-api-examples/webapp-nodejs/index.js:46
+confidence: 80
+reasoning: The Express session middleware uses secret: 'sipgate-rest-api-demo' — a static, public, hardcoded value. While this is an example repo, it demonstrates a pattern that developers may copy into production code. The session cookie (maxAge 60s) is signed with this known secret, enabling session forgery.
+impact: Low — demo-only code, but pattern risk if copied to production
+verify_steps: Confirm this file is not used in any production deployment; check if any forked/derived code uses this pattern
+[HYP] Hardcoded password in voicemail example .env.dist
+class: SECRET
+asset: rest-api-examples/new-voicemails-nodejs/.env.dist:2
+confidence: 50
+reasoning: .env.dist contains PASSWORD=87654321 as a sample credential. This file is designed to be copied to .env. If a developer copies it without changing the password, the hardcoded value becomes a real credential in use. The numeric pattern is weak and guessable.
+impact: Low — example file only; but demonstrates weak-password pattern
+verify_steps: Check if any deployment uses this exact password; verify .env is in .gitignore
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
