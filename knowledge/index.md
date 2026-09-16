@@ -585,3 +585,4 @@
 - 2026-09-16 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 25,131 (+8,520); api_key_forbidden 6 → per-replica counter variance reconfirmed; FB-JWT gate live; SSRF precondition intact.
 - 2026-09-16 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 25,239 (+8,608), api_key_forbidden 6 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
 - 2026-09-16 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 68,736 (+43,497), api_key_forbidden 6 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+- 2026-09-16 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 99,327 (+30,591), api_key_forbidden 7 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)

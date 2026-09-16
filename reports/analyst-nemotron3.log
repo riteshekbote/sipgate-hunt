@@ -22727,3 +22727,302 @@ testability: AUTH_HELPED
 ### STEP 7 — RISK
 
 [RISK] sipgate: 85 — high-value OAuth implicit flow (login.sipgate.com third-party realm) + arbitrary-origin CORS with credentials on API (api.sipgate.com/v2/*) + live dev SPA leaking prod internal topology + NEW prod subdomains in dev bundle (admin.live/dev.sipgate.net) + integration platform spec-behavior drift with SSRF parameter (integration.sipgate.com users.integrations.create apiUrl) + 94-host CRM adapter fleet with SSRF headers behind single nginx gate (*.integration.sipgate.cloud) + dangling subdomain takeover candidate (share1.sipgate.cloud) + publicly listable S3 bucket with stale artifacts (sipgate-desktop-app.s3) + live Grafana internet-exposed (grafana.sipgate.cloud) + miswired OIDC token proxy on API origin (api.sipgate.com/v2/authorization/token) — multiple chainable high-severity vectors across auth, SSRF, info-disclosure, and takeover classes; active development (bundle rotation, new prod subdomains in dev config) increases regression risk
+===== ANALYST nemotron3 2026-09-16 16:39:46 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mcurl -s -I "https://app.dev.sipgate.com/assets/main-Bx31IKGa.js" 2>&1 | head -20
+HTTP/2 200 
+cache-control: max-age=3600
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk wss://ws-eu.pusher.com stats.pusher.com sentry.io api-iam.intercom.io nexus-websocket-a.intercom.io nexus-websocket-b.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io *.zopim.com *.zdassets.com *.zendesk.com wss://*.zopim.com https://amp.sipgate.de *.instana.io https://status.sipgate.de/ https://integration.sipgate.cloud https://docs.google.com *.didww.com/v3/public_keys; script-src 'unsafe-eval' 'unsafe-inline' 'self' stats.pusher.com connect.facebook.com connect.facebook.net *.cloudfront.net www.google-analytics.com *.google.com www.googletagmanager.com www.googleadservices.com sjs.bizographics.com bat.bing.com snap.licdn.com *.doubleclick.net *.linkedin.com secure.adnxs.com js.intercomcdn.com widget.intercom.io data: *.zopim.com *.zdassets.com *.instana.io; style-src 'unsafe-inline' 'self' *.google.com *.googleapis.com static.sipgate.com data: blob: *.zdassets.com; font-src 'self' fonts.intercomcdn.com js.intercomcdn.com static.sipgate.com data: *.zdassets.com *.zopim.com; frame-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com https://player.vimeo.com *.zdassets.com *.zopim.com; child-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com; worker-src 'self' blob:; img-src *.googleusercontent.com *.facebook.com 'self' *.gstatic.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net www.google-analytics.com *.googleapis.com *.doubleclick.net *.google.com *.google.de bat.bing.com *.linkedin.com secure.adnxs.com js.intercomcdn.com downloads.intercomcdn.com static.intercomassets.com data: *.zopim.com *.zdassets.com *.zopim.io; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net js.intercomcdn.com blob: *.zopim.com data: *.zdassets.com; frame-ancestors 'self' *.sipgate.com *.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa;
+content-type: text/html; charset=utf-8
+cross-origin-opener-policy: same-origin-allows-popups
+etag: "e5adf3239ef88f5c64e8458f270c1c09f706d753e2efc7b41d8f215dcaefd053"
+last-modified: Wed, 16 Sep 2026 12:53:36 GMT
+strict-transport-security: max-age=31556926
+x-content-type-options: nosniff
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/* https://*.sipgate.com/* https://*.sipgate.de/* https://*.sipgate.co.uk/*
+x-xss-protection: 1; mode=block
+accept-ranges: bytes
+date: Wed, 16 Sep 2026 16:34:48 GMT
+x-served-by: cache-dfw-kdfw8210096-DFW
+x-cache: MISS
+x-cache-hits: 0
+x-timer: S1789576488.174581,VS0,VE184
+vary: x-fh-requested-host, accept-encoding
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
+content-length: 14544
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-Bx31IKGa.js" 2>&1 | head -100
+<!doctype html>
+<html lang="" translate="no">
+	<head>
+		<meta charset="utf-8" />
+		<title>sipgate</title>
+
+		<!-- Make the page behave sensibly on mobile devices -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<!-- Vendor-specific configs -->
+		<link rel="manifest" href="/site.webmanifest" />
+		<meta name="msapplication-config" content="/browserconfig.xml" />
+
+		<!-- Prevent chrome from auto-translating our page -->
+		<meta name="google" content="notranslate" />
+
+		<!-- Colors for menu bars etc. -->
+		<meta name="theme-color" content="#000000" />
+		<meta name="msapplication-TileColor" content="#000000" />
+		<meta name="msapplication-navbutton-color" content="#000000" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="#000000" />
+
+		<!-- Allow adding to homescreen -->
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+
+		<!-- Prevent browser from making phonenumbers clickable -->
+		<meta name="format-detection" content="telephone=no" />
+
+		<!-- Authenticated app: keep out of search indexes and archives -->
+		<meta name="robots" content="noindex, nofollow, noarchive" />
+
+		<!-- Icons -->
+		<link rel="icon" sizes="16x16 32x32" href="/favicons/favicon.ico" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
+		<link rel="apple-touch-icon" href="/favicons/apple/apple-touch-icon.png" />
+
+		<!-- Font Preloading -->
+		<link
+			rel="preload"
+			href="https://static.sipgate.com/fonts/px-grotesk/px-grotesk-regular.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin=""
+		/>
+
+		<script>
+			if (!/^app\.local/.test(window.location.hostname)) {
+				console.log(
+					'%cStop!',
+					'color:red; font-size:60px; font-weight: bold; -webkit-text-stroke: 1px black;'
+				);
+				console.log(
+					'%cThis is a browser feature intended for developers. If someone told you to copy and paste something here, it is a scam and will give them access to your sipgate account.',
+					'font-size: 18px;'
+				);
+				console.log(
+					'%cDas ist eine Funktion, welche für Entwickler vorgesehen ist. Falls Ihnen jemand gesagt hat, hier etwas hin zu kopieren und auszuführen, ist das eine Falle. Derjenige kann danach Zugriff auf ihr sipgate Konto erhalten',
+					'font-size: 18px;'
+				);
+			}
+		</script>
+
+		<script>
+			(function () {
+				try {
+					localStorage.setItem('test', 'test');
+					localStorage.removeItem('test');
+				} catch (e) {
+					window.location.href = '/yunocookie.html';
+				}
+			})();
+		</script>
+
+		<style>#root,body,html{height:100%;margin:0;padding:0;width:100%}@media print{#root,body,html{height:auto}}noscript{align-items:center;display:flex;font-family:sans-serif;height:100%;justify-content:center;text-align:center}noscript p{margin-bottom:4rem}</style>
+
+		<style>@keyframes loading-animation-grow{0%{stroke-dasharray:2.8225 138.3041}50%{stroke-dasharray:21.1689 119.9576}to{stroke-dasharray:2.8225 138.3041}}@keyframes loading-animation-move{0%{stroke-dashoffset:1.4112}to{stroke-dashoffset:-139.7153}}#loading-animation{--logo-width:50px;--fadeout-animation:0.35s;align-items:center;background-color:#fff;bottom:0;display:none;justify-content:center;left:0;opacity:1;position:fixed;right:0;top:0;transition:opacity var(--fadeout-animation) cubic-bezier(.685,.03,.695,.99);z-index:10000000}.script #loading-animation{display:flex}#loading-animation.exit{opacity:0}#loading-animation .background{display:none}#loading-animation .content{align-items:center;display:flex;height:100%;justify-content:center;position:absolute;width:100%}#loading-animation .content .logo{display:none}#loading-animation .content svg{width:var(--logo-width)}#loading-animation .content svg .spinner{stroke:#000;animation:loading-animation-grow 1.2s cubic-bezier(.355,.005,.315,.8) infinite,loading-animation-move 1.2s cubic-bezier(.355,.005,.315,1) infinite}</style>
+		<script type="module" crossorigin src="/assets/main-C3GgLskx.js" integrity="sha384-KV0iYP9v4FIfqNlmWMSEMTLNEON/jmcZg13kJD/ltUqlDVTCHZZqdSaLWcYoNr92"></script>
+		<link rel="modulepreload" crossorigin href="/assets/chunk-CernVdwh.js" integrity="sha384-uILkyZ2n65/hJcSSKTdDrDMN87YYUWqO34RrNDsCwjm27WNsBDwfxqdzYohmf1o/">
+		<link rel="modulepreload" crossorigin href="/assets/preload-helper-rov5CBGT.js" integrity="sha384-8InSgMswcsm3QCJHLGMdkfiCGDIpbPF6GICb5tM0n57hnytd/rkZ2MYqDXXGpKOn">
+		<link rel="modulepreload" crossorigin href="/assets/datetime-Cn-FNaHe.js" integrity="sha384-SLwk2ljke25ZZc4rEdT1/FULRoEzLrDjr8lM7gADPG6xCWwrMYLV3JRaXZembDTj">
+		<link rel="modulepreload" crossorigin href="/assets/alertManager-BdWDg4D_.js" integrity="sha384-LqgeJxXvsUjUMnY2c+A3yYh0KEVNMxdXvAmblmhn6SD64BFX3DtvE3jIi3eKzaWn">
+		<link rel="modulepreload" crossorigin href="/assets/selectors-Cs7uAxEQ.js" integrity="sha384-kkCu8bcrCWp4V3NjubzkyKLMBxbr1RiHUGsb0bnmVR+9uWtN/d90tttYyQfeDTGM">
+		<link rel="modulepreload" crossorigin href="/assets/types-DTpQfpK1.js" integrity="sha384-oNh9z85vLiHxxN+BAhqOtVeGm1yKgVk4hkz1pqBXszddcsVN3J2jtetFmubS3WBP">
+		<link rel="modulepreload" crossorigin href="/assets/aria-id-CNzcc1wy.js" integrity="sha384-cIakr2c0nm9cvZCXgTqALM7wbA4EY8RA0f3P6Un1pctGbrvY6eAE4zw2hnj5oQV3">
+		<link rel="modulepreload" crossorigin href="/assets/environment-BUWH2W2Z.js" integrity="sha384-rktOFEMx2aE34zMJE/8uHBDum88mwHaqWii/vwg/NnN5b0vA2knGgxgxgFoVzPUL">
+		<link rel="modulepreload" crossorigin href="/assets/merge-refs-BG0WSHp1.js" integrity="sha384-DpJ6isbVJeSkpNdRxPEqOUgPklMJJVLo9ug24JSBe+VFRongB1IyD1VRpb0x4+Yj">
+		<link rel="stylesheet" crossorigin href="/assets/main-BdDyZ1Mh.css" integrity="sha384-ugZKvQ09uJEDaRQxRswaHEYXeGCPVVLMV+EW5wR1LQlMG1J7B4qhOqA5svb92Kn1">
+	</head>
+
+	<body>
+		<script>
+			document.body.classList.add('script');
+		</script>
+
+		<div id="root">
+			<noscript>
+				<div>
+					<h1>JavaScript aktivieren oder installieren!</h1>
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-C3GgLskx.js" 2>&1 | head -200
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_0ab127bcd0014ftPu9GorwuPIy
+
+  0% {
+    left: -35%;
+    right: 100%;
+  }
+
+  60% {
+    left: 100%;
+    right: -90%;
+  }
+
+  100% {
+    left: 100%;
+    right: -90%;
+  }
+`,indeterminate1Animation=typeof indeterminate1Keyframe==`string`?null:css`
+        animation: ${indeterminate1Keyframe} 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+      `,indeterminate2Keyframe=keyframes`
+  0% {
+    left: -200%;
+    right: 100%;
+  }
+
+  60% {
+    left: 107%;
+    right: -8%;
+  }
+
+  100% {
+    left: 107%;
+    right: -8%;
+  }
+`,indeterminate2Animation=typeof indeterminate2Keyframe==`string`?null:css`
+        animation: ${indeterminate2Keyframe} 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) 1.15s infinite;
+      `,bufferKeyframe=keyframes`
+  0% {
+    opacity: 1;
+    background-position: 0 -23px;
+  }
+
+  60% {
+    opacity: 0;
+    background-position: 0 -23px;
+  }
+
+  100% {
+    opacity: 1;
+    background-position: -200px -23px;
+  }
+`,bufferAnimation=typeof bufferKeyframe==`string`?null:css`
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-C3GgLskx.js" 2>&1 | grep -oE '(api|app|payment|team-de|team-uk|integration|admin|login|helpdesk)\.(dev|live|local)\.sipgate\.(com|net):[0-9]{1,5}' | sort -u
+api.local.sipgate.com:3396
+app.local.sipgate.com:3443
+payment.local.sipgate.com:8080
+team-de.local.sipgate.com:10443
+team-uk.local.sipgate.com:10443
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-C3GgLskx.js" 2>&1 | grep -oE '(admin|helpdesk)\.(dev|live)\.sipgate\.net' | sort -u
+admin.dev.sipgate.net
+admin.live.sipgate.net
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-C3GgLskx.js" 2>&1 | grep -oE 'integration\.(dev|live)\.sipgate\.(com|cloud)' | sort -u
+integration.dev.sipgate.com
+[0m
+[0m$ [0mcurl -s -X OPTIONS "https://api.sipgate.com/v2/authorization/token" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" -i 2>&1 | head -30
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Wed, 16 Sep 2026 16:36:03 GMT
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/metrics" 2>&1 | grep -E 'firebase_jwt|api_key'
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 7
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 99327
+[0m
+### STEP 1 — DELTA
+[NEW] app.dev.sipgate.com: JS bundle rotated to `main-C3GgLskx.js` (from `main-Bx31IKGa.js`); 17 hardcoded internal host:port pairs persist including NEW prod subdomains `admin.live.sipgate.net`/`admin.dev.sipgate.net` (CNAME→helpdesk.live/dev.sipgate.net), `integration.dev.sipgate.com`, and `.local` hosts (api:3396, app:3443, payment:8080, team-de/team-uk:10443)
+[CHANGED] api.sipgate.com/v2/authorization/token: OPTIONS 204 with ACAO:evil.example+ACAC:true + allow-headers including MCP/SSE (MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID) and credential-bearing headers (X-Sipgate-Token-Id/Secret, X-Sipgate-Client/Fingerprint/Hubspot-utk/Was-Nq-Request); POST client_credentials/refresh_token returns constant 500 "OK" (11th+ cycle)
+[CHANGED] integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests 99,327` (+30,591 vs prior 68,736), `api_key_forbidden 7` — live Firebase-JWT validator confirmed, per-replica counter incrementing; auth-mechanism drift (spec Keycloak vs runtime Firebase)
+[CHANGED] api.sipgate.com/v2 (GET, Accept: application/json): unauthenticated JSON endpoint-index (72 URLs, 5481 B, sha256 `0d872a0f...`) byte-identical across cycles, includes undocumented `/v2/authorization/token`, `/v2/crm-bridge`, `/v2/users/{userId}/role` absent from 144-op swagger
+[CHANGED] *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing `x-provider-url,key`; data GET 401, header does NOT bypass nginx gate (re-confirmed)
+[CHANGED] mock.integration.sipgate.cloud: ungated Express twin, `/contacts` 200 (~8MB synthetic), ACAO:* + ACAC:true + `allow-headers: x-provider-*` — `x-provider-url` does NOT parameterize fetch (re-confirmed)
+[CHANGED] team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP `frame-ancestors` includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/team-web02/team-web03)
+[CHANGED] sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested (HUMAN sign-off required)
+[CHANGED] grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via `/api/health` (re-confirmed)
+[CHANGED] share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN — subdomain-takeover candidate
+[CHANGED] api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + `x-b3-traceid` leak)
+[CHANGED] login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+[CHANGED] api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 with identical allow-header vocabulary (byte-identical to /v2/authorization/token) + ACAO:evil.example+ACAC:true — Swagger-UI implicit redirect inherits API.v2 permissive CORS
+
+### STEP 2 — PRIORITIZE
+[PRIO] app.dev.sipgate.com,8.20,attack_surface=9 business_value=7 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=10
+[PRIO] api.sipgate.com/v2/authorization/token,7.75,attack_surface=8 business_value=9 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=10
+[PRIO] integration.sipgate.com,7.10,attack_surface=7 business_value=8 tech_exposure=7 gate_ease=6 cloud_surface=7 freshness=8
+[PRIO] *.integration.sipgate.cloud (94 hosts),6.85,attack_surface=8 business_value=6 tech_exposure=8 gate_ease=6 cloud_surface=9 freshness=8
+[PRIO] grafana.sipgate.cloud,5.95,attack_surface=6 business_value=5 tech_exposure=6 gate_ease=4 cloud_surface=8 freshness=8
+[PRIO] team-uk.live.sipgate.com + team-de.live.sipgate.com,5.70,attack_surface=6 business_value=4 tech_exposure=7 gate_ease=8 cloud_surface=5 freshness=8
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,5.40,attack_surface=5 business_value=3 tech_exposure=5 gate_ease=10 cloud_surface=4 freshness=6
+[PRIO] share1.sipgate.cloud,4.85,attack_surface=4 business_value=3 tech_exposure=4 gate_ease=10 cloud_surface=8 freshness=6
+
+### STEP 3 — HYPOTHESES
+[HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References
+class: SSRF
+asset: app.dev.sipgate.com
+confidence: 90
+reasoning: Live dev SPA on Fastly CDN serves production-identical JS bundle (main-C3GgLskx.js, 5.74MB) with 17 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10.73.71) and admin.dev.sipgate.net (CNAME→helpdesk.dev.sipgate.net, 217.116.120.148); multiple .local hosts resolve to 127.0.0.1 confirming internal-only references; bundle rotates frequently (freshness=10); no IP restriction on dev SPA; internal ports 3396, 3443, 8080, 10443 exposed in config; integration.dev.sipgate.com newly alive with HTTPS 403 + ACAO:*
+evidence_needed: HTTP response from newly extracted prod subdomains (admin.live.sipgate.net, admin.dev.sipgate.net) showing live services on non-standard ports (8080, 8443, 3396, 3443, 10443); proof of SSRF via dev SPA proxy/chaining or XSS on dev SPA to pivot to internal hosts; DNS resolution showing RFC1918 IPs for any .local hosts
+verify_steps: GET https://app.dev.sipgate.com/assets/main-C3GgLskx.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve all *.dev.sipgate.net, *.live.sipgate.net, *.dev.sipgate.com hosts; probe discovered hosts for HTTP responses on ports 80/443/3396/3443/8080/10443 (read-only, ≤1 rps); test for SSRF via any proxy/chaining endpoints in dev SPA
+impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, team-uk.local, integration.dev, admin.live, helpdesk.live); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface + prod subdomain exposure in dev bundle)
+testability: PASSIVE
+
+[HYP] Integration Platform Spec-Behavior Drift with SSRF Parameter in users.integrations.create
+class: SSRF
+asset: integration.sipgate.com
+confidence: 80
+reasoning: PROD "Platypus" integration platform exposes full 26-op OpenAPI spec at /swagger/swagger-ui-init.js; spec declares /oauth2/redirect + /oauth2/callback with NO security requirement yet all external requests return app-403 (Firebase-JWT gate) — spec-vs-behavior drift; users.integrations.create accepts free-form apiUrl parameter (documented SSRF surface); CORS allow-origin:* on all responses; auth-mechanism drift confirmed (spec says Keycloak, runtime uses Firebase-JWT per /metrics firebase_jwt_forbidden_requests 99,327); Firebase token source not in public bundles (swagger-ui-init.js, app.dev main bundle)
+evidence_needed: Valid Firebase JWT for integration.sipgate.com (AUTH_HELPED) to test users.integrations.create with apiUrl pointing to internal metadata (169.254.169.254) or internal hosts; confirmation that apiUrl parameter triggers outbound fetch from server-side; proof that OAuth2 callback/redirect endpoints are actually unguarded when accessed with valid token
+verify_steps: GET https://integration.sipgate.com/swagger/swagger-ui-init.js — fetch embedded spec, confirm users.integrations.create apiUrl parameter; GET https://integration.sipgate.com/metrics — confirm firebase_jwt_forbidden_requests counter increments (live Firebase validator); with valid token (AUTH_HELPED): POST /api/users/integrations with apiUrl=http://169.254.169.254/latest/meta-data/ — observe SSRF; GET /oauth2/callback?code=test&state=test with valid token — observe if code exchange works
+impact: If Firebase JWT obtained (AUTH_HELPED), SSRF via apiUrl parameter could reach cloud metadata (169.254.169.254) or internal services; spec-vs-behavior drift on OAuth endpoints may indicate auth bypass; severity HIGH if creds obtained, MEDIUM as recon
+testability: AUTH_HELPED
+
+[HYP] Miswired OIDC Token Proxy on API Origin Enables Client-Credentials Theft
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 75
+reasoning: Undocumented POST-only endpoint (index-advertised, absent from 144-op swagger) returns CONSTANT 500 "OK" for client_credentials/refresh_token grants for 11+ consecutive cycles; OPTIONS on sibling /v2/crm-bridge reveals MCP/SSE headers (MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID) + credential-bearing headers (X-Sipgate-Token-Id/Secret) on API origin; CONTROL request to real Keycloak token endpoint returns proper 401 — indicates degraded/miswired OIDC proxy that may accept crafted client assertions or leak token issuance logic; OPTIONS drift (404→204) suggests configuration instability
+evidence_needed: Valid client_id/client_secret pair for third-party realm to test client_credentials grant against this proxy; confirmation that 500 response body contains token or structured error detail; proof that X-Sipgate-Token-Id/Secret headers are accepted as authentication
+verify_steps: OPTIONS https://api.sipgate.com/v2/crm-bridge -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type,x-sipgate-token-id,x-sipgate-token-secret" — confirm MCP/SSE + credential allow-headers; POST https://api.sipgate.com/v2/authorization/token -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=client_credentials&client_id=test&client_secret=test" — observe 500 body structure; POST with valid third-party realm credentials (AUTH_HELPED) — observe if token issued
+impact: If proxy accepts client_credentials with valid creds, attacker with stolen client secret gets API tokens bypassing Keycloak directly; miswired proxy may expose internal token format or validation logic; severity HIGH if creds obtained, MEDIUM as recon
+testability: AUTH_HELPED
+
+### STEP 4 — SELF-CRITIQUE
+[PARKED] Miswired OIDC Token Proxy on API Origin Enables Client-Credentials Theft: confidence 75 but requires valid client credentials (AUTH_HELPED) for full validation; 500 response may be generic error not token leak; credential acquisition path unknown; OPTIONS instability (404→204) reduces confidence in stable misconfiguration
+[FINAL] 1. Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References (confidence 90, PASSIVE) — highest freshness, concrete verify_steps, live rotating bundle with NEW prod subdomains in dev config
+[FINAL] 2. Integration Platform Spec-Behavior Drift with SSRF Parameter (confidence 80, AUTH_HELPED) — live 26-op spec with documented SSRF parameter; auth-mechanism drift confirmed; requires token acquisition
+
+### STEP 5 — NEXT ACTION
+[NEXT] PROBE: GET https://admin.live.sipgate.net:8443 — probe NEW prod subdomain from dev bundle for live HTTPS service on non-standard port (read-only, ≤1 rps)
+
+### STEP 6 — LEARNING
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth gap, chain-dependent for full exploitation
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as same-origin-XSS amplifier
+[LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+[LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct gate tier from apex Firebase-JWT
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 99,327 (+30,591), api_key_forbidden 7 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation
+[LEARN] ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stale since 2024-06-11); ACL/policy reads denied; write path NOT tested (HUMAN sign-off required)
+[LEARN] ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list endpoint 404, individual endpoints 404 — prior 500-on-UUID authz-drift signal not reproducible; endpoint may be removed
+[LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, token persists to localStorage before navigation — fragment never forwarded off-origin (per KB, consistent across cycles)
+[LEARN] REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reachable flawed verifier (per KB)
+[LEARN] REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live credential exposure (per KB)
+[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
+[LEARN] REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
+[LEARN] REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+
+### STEP 7 — RISK
+[RISK] sipgate: 85 — high-value OAuth implicit flow (login.sipgate.com third-party realm) + arbitrary-origin CORS with credentials on API (api.sipgate.com/v2/*) + live dev SPA leaking prod internal topology + NEW prod subdomains in dev bundle (admin.live/dev.sipgate.net) + integration platform spec-behavior drift with SSRF parameter (integration.sipgate.com users.integrations.create apiUrl) + 94-host CRM adapter fleet with SSRF headers behind single nginx gate (*.integration.sipgate.cloud) + dangling subdomain takeover candidate (share1.sipgate.cloud) + publicly listable S3 bucket with stale artifacts (sipgate-desktop-app.s3) + live Grafana internet-exposed (grafana.sipgate.cloud) + miswired OIDC token proxy on API origin (api.sipgate.com/v2/authorization/token) — multiple chainable high-severity vectors across auth, SSRF, info-disclosure, and takeover classes; active development (bundle rotation, new prod subdomains in dev config) increases regression risk
