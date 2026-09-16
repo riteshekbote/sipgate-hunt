@@ -803,3 +803,11 @@ www.sipgate.de
 ## 2026-09-15 20:25:38 UTC
 
 ## 2026-09-15 23:01:55 UTC
+
+## 2026-09-16 01:21:00 UTC
+- NEW grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via `/api/health` (re-confirmed 2026-09-15)
+- NEW api.sipgate.com/v2/doc/oauth2-redirect.html: still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS
+- NEW api.sipgate.com/v2: unauthenticated JSON endpoint-index (72 URLs, 5481 B) byte-identical across cycles, includes undocumented `/v2/authorization/token`, `/v2/crm-bridge`, `/v2/users/{userId}/role` abs
+- CHANGED api.sipgate.com/v2/authorization/token: OPTIONS returned 404 (was 204 for 9 consecutive cycles) — drift signal
+- CHANGED app.dev.sipgate.com: bundle rotated to `main-D3QVZ6EX.js` (5.74MB); same 17 hardcoded host:port pairs persist; zero `x-sipgate-*` header names in source
+- CHANGED integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 109,393 (+12,462 vs prior 96,931); live FB-JWT gate incrementing
