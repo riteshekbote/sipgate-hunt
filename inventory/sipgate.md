@@ -825,3 +825,18 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + `x-b3-traceid` leak)
 - CHANGED login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
 - CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS
+
+## 2026-09-16 11:56:47 UTC
+- NEW app.dev.sipgate.com: JS bundle rotated to `main-Bx31IKGa.js` (5.74MB); 17 hardcoded internal host:port pairs persist including NEW prod subdomains `admin.live.sipgate.net` (CNAME→helpdesk.live.sipgate
+- NEW api.sipgate.com/v2/authorization/token: OPTIONS returns 204 with ACAO:evil.example+ACAC:true + allow-headers including MCP/SSE (MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID) and credential-bear
+- NEW api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS returns 204 with identical allow-header vocabulary (byte-identical to /v2/authorization/token) + ACAO:evil.example+ACAC:true — Swagger-UI implicit 
+- NEW integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests 68,736` (+43,497 vs prior 25,239), `api_key_forbidden_requests 6` — live Firebase-JWT validator confirmed, per-replica counter increme
+- NEW *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 gate + ACAO:* CORS preflight allowing `x-provider-url,x-provider-key`; data GET 401, header does NOT bypass nginx gate (re-confirme
+- NEW mock.integration.sipgate.cloud: ungated Express twin, `/contacts` 200 (~8MB synthetic), ACAO:* + ACAC:true + `allow-headers: x-provider-*` — `x-provider-url` does NOT parameterize fetch (re-confirmed)
+- NEW team-de.live.sipgate.com + team-uk.live.sipgate.com: CSP `frame-ancestors` includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/team-web02
+- NEW sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested (H
+- NEW grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via `/api/health` (re-confirmed)
+- NEW share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed — subdomain-takeover candidate
+- CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + `x-b3-traceid` leak)
+- CHANGED login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+- CHANGED api.sipgate.com/v2 (GET, Accept: application/json): unauthenticated JSON endpoint-index (72 URLs, 5481 B, sha256 `0d872a0f...`) byte-identical across cycles, includes undocumented `/v2/authorization/t
