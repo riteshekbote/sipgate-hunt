@@ -855,3 +855,5 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + `x-b3-traceid` leak)
 - CHANGED login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
 - CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 with identical allow-header vocabulary (byte-identical to /v2/authorization/token) + ACAO:evil.example+ACAC:true — Swagger-UI implicit redirect
+
+## 2026-09-16 20:04:23 UTC

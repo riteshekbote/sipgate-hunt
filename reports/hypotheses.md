@@ -1951,3 +1951,7 @@
 - LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
 - LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+
+## RANKED HYPOTHESES 2026-09-16 20:04:23 UTC
+- [55] integration.sipgate.com: users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin evil.example, ACRM POST) — 204=intact / 404=hardening; then `GET https://api.sipgate.com
