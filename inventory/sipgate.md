@@ -857,3 +857,5 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 with identical allow-header vocabulary (byte-identical to /v2/authorization/token) + ACAO:evil.example+ACAC:true — Swagger-UI implicit redirect
 
 ## 2026-09-16 20:04:23 UTC
+
+## 2026-09-16 22:49:22 UTC
