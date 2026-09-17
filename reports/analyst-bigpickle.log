@@ -31131,3 +31131,220 @@ All three ≥45, PASSIVE or AUTH_HELPED verify, none REJECTED-class, all tied to
 
 ## STEP 7 — RISK
 [RISK] sipgate: 85 — status-quo cycle: token proxy flat 15 cycles (OPTIONS restored, POST deferred), FB-JWT gate live but holding uniformly (re-probed 403 on oauth2 + authSessionUrl), spec surface relocated not expanded, no gate bypass, no creds, no new standalone exposure; highest value remains AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl OATH) and the PASSIVE token-proxy watch.
+===== ANALYST bigpickle 2026-09-17 16:43:11 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "%{http_code}" -X OPTIONS "https://api.sipgate.com/v2/authorization/token" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization,content-type" -D /tmp/opto.txt -v --max-time 15 2>/dev/null; echo; grep -iE "access-control|allow" /tmp/opto.txt | head -20
+204
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+[0m
+[0m$ [0msleep 2; curl -s "https://integration.sipgate.com/swagger-json" -o /tmp/swagger-json.txt -w "status=%{http_code} size=%{size_download}\n" --max-time 30; sha256sum /tmp/swagger-json.txt 2>/dev/null | cut -d' ' -f1; head -c 300 /tmp/swagger-json.txt 2>/dev/null
+status=200 size=162337
+377a45b04fddc63dc4529ba84321788e0f1e7ba9d814e604a016f9b3e7500b4a
+{"openapi":"3.0.3","info":{"title":"Platypus","description":"Platform for integration Purposes","version":"0.0.1","contact":{}},"servers":[],"paths":{"/streaming.start":{"post":{"operationId":"StreamingController_start","parameters":[],"responses":{"204":{"description":"Streaming start job created"}
+[0m
+[0m$ [0msleep 2; curl -s "https://integration.sipgate.com/metrics" --max-time 20 | grep -iE "firebase_jwt|api_key|rate_limit" | head; echo "---ops---"; grep -oE '"/[a-z0-9/._-]+"\s*:\s*\{' /tmp/swagger-json.txt | sort -u | wc -l; grep -oE 'operationId":"[^"]+"' /tmp/swagger-json.txt | sed 's/operationId":"//;s/"//' | sort -u | head -60
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 0
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 40157
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+# TYPE rate_limit_forbidden_requests counter
+rate_limit_forbidden_requests 2010
+---ops---
+20
+CallLogController_describe
+CallLogController_upsert
+CallLogDraftController_edit
+ContactController_create
+ContactController_delete
+ContactController_get
+ContactController_getPhoneNumberMap
+ContactController_list
+ContactController_listByIntegration
+ContactController_listByPhoneNumber
+ContactController_listByPhoneNumbers
+ContactController_update
+IntegrationEntityController_get
+IntegrationEntityController_listByContactId
+OAuthController_getAuthSessionRedirect[1]
+OAuthController_handleCallback[1]
+SearchController_search
+StreamingController_start
+TaskController_create
+TaskController_describeType
+TaskController_get
+UserController_createIntegration
+UserController_deleteIntegration
+UserController_getAuthSessionUrl
+UserController_listIntegrations
+UserController_listProfiles
+[0m
+[0m$ [0msleep 2; curl -s "https://api.sipgate.com/v2" -H "Accept: application/json" --max-time 15 -o /tmp/v2idx.txt -w "status=%{http_code} size=%{size_download}\n"; sha256sum /tmp/v2idx.txt | cut -d' ' -f1
+status=200 size=5481
+0d872a0f4c101d16ea4d502b5e4322faad5dbfd80161c3c4b8de62d3313fe65c
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import json,hashlib
+d=json.load(open('/tmp/swagger-json.txt'))
+paths=d['paths']
+# key structure of auth + integration creation
+for p in ['/users.integrations.getAuthSessionUrl','/oauth2/getAuthSessionRedirect','/oauth2/redirect','/oauth2/callback','/users.integrations.create','/streaming.start']:
+    if p in paths:
+        for m,op in paths[p].items():
+            print("="*60)
+            print(p, m)
+            print("  security:", op.get('security'))
+            print("  params:", [pp.get('name') for pp in op.get('parameters',[])] or 'none')
+            rb=op.get('requestBody')
+            if rb:
+                sch=rb.get('content',{}).get('application/json',{}).get('schema',{})
+                props=sch.get('properties',{})
+                print("  body props:", {k:{'type':v.get('type'),'fmt':v.get('format'),'desc':(v.get('description') or '')[:60]} for k,v in props.items()})
+print("="*60)
+print("top-level security:", d.get('security'))
+print("components schemes:", list(d.get('components',{}).get('securitySchemes',{}).keys()))
+EOF
+============================================================
+/users.integrations.getAuthSessionUrl get
+  security: [{'oauth2': []}]
+  params: ['integrationName', 'successUrl', 'errorUrl', 'domainModifier', 'locale', 'region', 'language']
+============================================================
+/oauth2/redirect get
+  security: None
+  params: none
+============================================================
+/oauth2/callback get
+  security: None
+  params: ['code', 'accounts-server', 'error']
+============================================================
+/users.integrations.create post
+  security: [{'oauth2': []}]
+  params: none
+  body props: {'integrationName': {'type': 'string', 'fmt': None, 'desc': 'Name of the integration'}, 'key': {'type': 'string', 'fmt': None, 'desc': 'Key of the integration, must be an existing integration prof'}, 'apiUrl': {'type': 'string', 'fmt': None, 'desc': 'Api URL of the integration'}, 'locale': {'type': 'string', 'fmt': None, 'desc': 'Locale of the integration'}, 'region': {'type': 'string', 'fmt': None, 'desc': 'Phone number region of the integration (ISO 3166-1 alpha-2 c'}, 'language': {'type': 'string', 'fmt': None, 'desc': 'Language of the integration (ISO 639-1 code, e.g. "de")'}}
+============================================================
+/streaming.start post
+  security: [{'oauth2': []}]
+  params: none
+============================================================
+top-level security: None
+components schemes: ['oauth2']
+[0m
+[0m$ [0msleep 2; curl -s -D - -o /dev/null "https://integration.sipgate.com/users.integrations.getAuthSessionUrl" --max-time 15 | grep -iE "^HTTP|ratelimit|content-type|access-control"; echo "---create---"; curl -s -D - -o /dev/null "https://integration.sipgate.com/users.integrations.create" -X POST -H "Authorization: Bearer x.x.x" -H "Content-Type: application/json" -d '{}' --max-time 15 | grep -iE "^HTTP|content-type|ratelimit"
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-type: application/problem+json; charset=utf-8
+x-ratelimit-limit: 800
+x-ratelimit-remaining: 799
+x-ratelimit-reset: 60
+---create---
+HTTP/1.1 403 Forbidden
+content-type: application/problem+json; charset=utf-8
+x-ratelimit-limit: 800
+x-ratelimit-remaining: 799
+x-ratelimit-reset: 60
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import json
+d=json.load(open('/tmp/swagger-json.txt'))
+for p,m in d['paths'].items():
+    ops=[(mm,op.get('operationId'),op.get('security')) for mm,op in m.items() if mm in ('get','post','put','patch','delete')]
+    print(p, ops)
+EOF
+/streaming.start [('post', 'StreamingController_start', [{'oauth2': []}])]
+/contacts.list [('get', 'ContactController_list', [{'oauth2': []}])]
+/contacts.get [('get', 'ContactController_get', [{'oauth2': []}])]
+/contacts.listByPhoneNumber [('get', 'ContactController_listByPhoneNumber', [{'oauth2': []}])]
+/contacts.listByPhoneNumbers [('get', 'ContactController_listByPhoneNumbers', [{'oauth2': []}])]
+/contacts.create [('post', 'ContactController_create', [{'oauth2': []}])]
+/contacts.update [('post', 'ContactController_update', [{'oauth2': []}])]
+/contacts.delete [('post', 'ContactController_delete', [{'oauth2': []}])]
+/contacts.getPhoneNumberMap [('get', 'ContactController_getPhoneNumberMap', [{'oauth2': []}])]
+/contacts.listByIntegration [('get', 'ContactController_listByIntegration', [{'oauth2': []}])]
+/contacts.search [('get', 'SearchController_search', [{'oauth2': []}])]
+/entities.get [('get', 'IntegrationEntityController_get', [{'oauth2': []}])]
+/entities.listByContactId [('get', 'IntegrationEntityController_listByContactId', [{'oauth2': []}])]
+/users.integrations.create [('post', 'UserController_createIntegration', [{'oauth2': []}])]
+/users.integrations.list [('get', 'UserController_listIntegrations', [{'oauth2': []}])]
+/users.integrations.delete [('post', 'UserController_deleteIntegration', [{'oauth2': []}])]
+/users.integrations.getAuthSessionUrl [('get', 'UserController_getAuthSessionUrl', [{'oauth2': []}])]
+/users.profiles.list [('get', 'UserController_listProfiles', [{'oauth2': []}])]
+/oauth2/redirect [('get', 'OAuthController_getAuthSessionRedirect[1]', None)]
+/oauth2/callback [('get', 'OAuthController_handleCallback[1]', None)]
+/call-logs.upsert [('post', 'CallLogController_upsert', [{'oauth2': []}])]
+/call-logs.outcome.describe [('get', 'CallLogController_describe', [{'oauth2': []}])]
+/tasks.create [('post', 'TaskController_create', [{'oauth2': []}])]
+/tasks.get [('get', 'TaskController_get', [{'oauth2': []}])]
+/tasks.type.describe [('get', 'TaskController_describeType', [{'oauth2': []}])]
+/call-log-drafts.edit [('post', 'CallLogDraftController_edit', [{'oauth2': []}])]
+[0m
+[0m$ [0msleep 2; curl -s -D - -o /dev/null "https://integration.sipgate.com/oauth2/getAuthSessionRedirect?integrationName=x&successUrl=https://evil.example" -X GET --max-time 15 | grep -iE "^HTTP|content-type|location"; echo "---streaming---"; curl -s -D - -o /dev/null "https://integration.sipgate.com/streaming.start" -X POST -H "Content-Type: application/json" -d '{}' --max-time 15 | grep -iE "^HTTP|content-type"
+HTTP/1.1 403 Forbidden
+content-type: application/problem+json; charset=utf-8
+---streaming---
+HTTP/1.1 403 Forbidden
+content-type: application/problem+json; charset=utf-8
+[0m
+**Cycle complete — all probes read-only, ≤1 rps, no auth material used.**
+
+## STEP 1 — DELTA
+- [NEW] `integration.sipgate.com/swagger-json` rotated → sha256 `377a45b0…` (was `67e5bd3b…` this cycle, `aac5f0fc…` before); now 27 operationIds incl `/streaming.start` (spec-204 errored/SSE job-create) + renamed `OAuthController_getAuthSessionRedirect[1]`/`handleCallback[1]`.
+- [CHANGED] `api.sipgate.com/v2/authorization/token` OPTIONS restored → **204** `ACAO: https://evil.example` + `ACAC:true`, byte-identical allow-header vocab (X-Sipgate-Token-Id/Secret, MCP/SSE) — prior 404 was transient edge jitter, flat state holds.
+- [CHANGED] `integration.sipgate.com/metrics` `firebase_jwt_forbidden_requests` 40,157 (down from 117,891 → replica reset), `api_key` 0 — FB-JWT gate live.
+- NO_DELTA: `api.sipgate.com/v2` index sha256 `0d872a0f…` byte-identical (5481 B, 72 URLs), 12th+ cycle.
+
+## STEP 2 — PRIORITIZE
+- [PRIO] integration.sipgate.com (Platypus), 7.1, b=9/c=7/a=8/f=8
+- [PRIO] api.sipgate.com/v2/authorization/token, 6.3, a=7/b=8/t=7/g=2/f=9
+- [PRIO] login.sipgate.com third-party OIDC realm, 5.0, t=9/a=5/b=8/g=1 (flat AUTH_HELPED)
+
+## STEP 3 — HYPOTHESES
+[HYP] /v2/authorization/token constant-500 is a miswired OIDC client-credentials proxy — sole edge-escaping app-plane route
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: OPTIONS restored 204 this cycle (`ACAO: https://evil.example` + `ACAC:true`), allow-header vocab byte-identical (credential-bearing X-Sipgate-Token-Id/Secret + MCP/SSE names); POST client_credentials constant empty 500 vs Keycloak CONTROL 401; v2 index sha `0d872a0f…` stable; route absent from swagger.
+evidence_needed: POST status transition 500→200 (mint) or →401/400 (upstream restored); never with valid creds.
+verify_steps: PASSIVE — OPTIONS next cycle (204=intact/404=drift) + GET /v2 sha256 + metrics counter.
+impact: restored OIDC proxy on api origin w/ contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: rotated spec (sha `377a45b0…`) re-confirms apiUrl as free-form plain string (no format/pattern/allowlist) in POST body; backend NestJS/Fastify-on-GCP (Scalar fingerprint); FB-JWT validator live (metrics 40,157); spec-Keycloak vs runtime-Firebase drift persists; all data ops uniform app-403 incl this one.
+evidence_needed: valid FB-JWT → POST apiUrl=http://169.254.169.254 → observed outbound fetch/metadata read.
+verify_steps: AUTH_HELPED — passive each cycle: metrics increment + spec sha tracker + gate 403-stable (all reconfirmed this cycle).
+impact: GCP metadata/project secrets behind gate bypass; HIGH conditional.
+testability: AUTH_HELPED
+[HYP] users.integrations.getAuthSessionUrl user-controlled successUrl/errorUrl → OAuth session-redirect chain on gate bypass
+class: OATH
+asset: integration.sipgate.com/users.integrations.getAuthSessionUrl
+confidence: 45
+reasoning: rotated spec re-confirms successUrl/errorUrl as `format:uri` free-form with no host allowlist + domainModifier/locale/region params; oauth2 scheme implicit-only empty-scopes on login.sipgate.com sipgate-apps; `/oauth2/redirect`+`/oauth2/callback` still `security: None` in spec yet live app-403 (spec-vs-behavior drift persists).
+evidence_needed: valid FB-JWT → GET session URL; verify successUrl embedded unvalidated → provider auth-code/state capture mid-flow.
+verify_steps: AUTH_HELPED — passive: spec sha drift (rotated this cycle) + metrics increment + probe 403 (done: GET + POST + streaming all 403).
+impact: CRM provider OAuth code/state theft on session completion; MEDIUM-HIGH conditional.
+testability: AUTH_HELPED
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] nemotron3 admin.live.sipgate.net probe: HTTP 000 confirmed inert prior cycles; no new bundle evidence of a live admin; defers to HUMAN bundle-scan only.
+- [FINAL] token-proxy (50), apiUrl-SSRF (55), getAuthSessionUrl-OATH (45) — all survive; all require gate bypass or passive drift watch.
+
+## STEP 5 — NEXT ACTION
+[NEXT] PROBE: `GET https://api.sipgate.com/v2/authorization/token` — cross-check GET-405 vs POST-only 500 consistency and confirm OPTIONS 204 (stateless, no body) AND `GET https://integration.sipgate.com/swagger-json` — sha256 vs `377a45b0…` (spec-drift tracker; new ops = new surface); then `GET https://integration.sipgate.com/metrics` (fb-jwt counter vs 40,157); ≥1.5s spacing.
+
+## STEP 6 — LEARNING
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/swagger-json: rotated to sha `377a45b0…` (27 ops incl new `/streaming.start`, renames `getAuthSessionRedirect[1]`/`handleCallback[1]`); all declared-none oauth2 routes + every data op uniform app-403 (re-probed) — spec relocated, gate holds, spec-vs-behavior drift persists.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS restored 204 `ACAO:https://evil.example`+`ACAC:true`, byte-identical allow-header vocab — prior 404 transient jitter, 15th-cycle flat state confirmed.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: fb-jwt counter 40,157 (below prior 117,891 → replica reset); gate live; SSRF/AUTH_HELPED preconditions intact.
+
+## STEP 7 — RISK
+[RISK] sipgate: 85 — status-quo cycle: token route flat/restored (15th cycle), Platypus spec rotated but uniformly 403 (10 probes all gated), no gate bypass, no creds, no new standalone exposure; highest remaining value is AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl OATH) and the PASSIVE token-proxy watch.

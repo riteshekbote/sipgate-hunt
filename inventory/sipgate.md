@@ -885,3 +885,9 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + x-b3-traceid leak)
 - CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 ACAO:evil.example+ACAC:true + allow-headers byte-identical to /v2/authorization/token (MCP/SSE + credential-bearing headers)
 - CHANGED login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+
+## 2026-09-17 16:43:11 UTC
+- NEW app.dev.sipgate.com: JS bundle rotated to `main-CL-MmSlB.js` (from `main-Bt5gzUgC.js` 2026-09-17); 11 hardcoded internal host:port pairs persist including NEW prod subdomains `admin.live.sipgate.net` 
+- CHANGED api.sipgate.com/v2/authorization/token: OPTIONS now returns 404 (was stable 204 for 11+ cycles); POST client_credentials still returns constant 500 "OK"; undocumented, index-advertised, absent from 14
+- CHANGED integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 40009 (down from 117,891); `api_key_forbidden_requests` 1 — live Firebase-JWT validator confirmed, per-replica counter variance recon
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 200 with ACAO:evil.example + ACAC:true + allow-headers byte-identical to /v2/authorization/token 404 OPTIONS (MCP/SSE + credential-bearing headers)

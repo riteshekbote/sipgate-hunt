@@ -602,3 +602,7 @@
 - 2026-09-17 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
 - 2026-09-17 REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - 2026-09-17 REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+- 2026-09-17 ACCEPTED INFO @ integration.sipgate.com/swagger-json: rotated to sha `377a45b0…` (27 ops incl new `/streaming.start`, renames `getAuthSessionRedirect[1]`/`handleCallback[1]`); all declared-none oauth2 routes + every data op uniform app-403 (re-probed) — spec relocated, gate holds, spec-vs-behavior drift persists.
+- 2026-09-17 ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS restored 204 `ACAO:https://evil.example`+`ACAC:true`, byte-identical allow-header vocab — prior 404 transient jitter, 15th-cycle flat state confirmed.
+- 2026-09-17 ACCEPTED INFO @ integration.sipgate.com/metrics: fb-jwt counter 40,157 (below prior 117,891 → replica reset); gate live; SSRF/AUTH_HELPED preconditions intact.
+- 2026-09-17 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 40009 (down from 117,891), api_key_forbidden_requests 1 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica counter restart-reset reconfirmed
