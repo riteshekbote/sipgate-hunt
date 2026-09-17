@@ -871,3 +871,5 @@ reasoning: cands.txt contains "no org candidates" and scope.yml has github_orgs:
 impact: N/A - cannot produce findings without target repos
 verify_steps: N/A
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-17 19:40:42 UTC
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
