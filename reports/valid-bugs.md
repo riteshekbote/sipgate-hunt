@@ -32,3 +32,17 @@
   - **Verdict: VALID**
   - **Verdict: VALID**
   - | **VALID** | 4 | api.sipgate.com CORS, app.dev.sipgate.com dev SPA, S3 bucket, Redis endpoint in public repos, Kong command injection |
+
+- 12 lead(s) marked VALID at 2026-09-17 16:44:34 UTC
+  - **Verdict: VALID**
+  - **Verdict: VALID** (chain with #1)
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - **Verdict: VALID**
+  - | 1 | Kong JWT `kid` command injection (RCE) | **VALID** | 9.8 | P0 |
+  - | 2 | Kong JWT secondary injection + key rotation bug | **VALID** | 7.5 | P0 (combine with #1) |
+  - | 4 | share1.sipgate.cloud subdomain takeover | **VALID** | 6.5 | P1 |
+  - | 5 | api.sipgate.com CORS arbitrary-origin + credentials | **VALID** | 5.3–7.5 | P1 |
+  - | 6 | Desktop-app S3 bucket listable | **VALID** | 5.3 | P1 |
+  - | 7 | app.dev.sipgate.com dev SPA info leak | **VALID** | 5.3 | P2 |
