@@ -2052,3 +2052,28 @@
 - LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
 - LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+
+## RANKED HYPOTHESES 2026-09-17 22:46:21 UTC
+- [85] api.sipgate.com/v2/authorization/token: Miswired OIDC Token Proxy on API Origin Enables Client-Credentials Theft (from art/lead_nemotron3.txt)
+- [50] api.sipgate.com/v2/authorization/token: /v2/authorization/token constant-500 is a miswired OIDC client-credentials proxy — sole edge-escaping app-plane route (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-bigpickle.txt): PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin `https://evil.example`, `Access-Control-Request-Method: POST`) — 204=intact / 404=harden
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://app.dev.sipgate.com/assets/main-CL-MmSlB.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve admin.live.sipgate.
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS 204 `ACAO:https://evil.example`+`ACAC:true`, byte-identical allow-header vocab (X-Sipgate-Token-
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 49,769 (+3,035), `api_key_forbidden_requests` 0 — FB-JWT gate live/incrementi
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/swagger-json: GET 200, sha `377a45b0…` (162337 B) unchanged — post-rotation spec stable, 27-op surface (incl `/streaming
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth g
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as sa
+- LEARN: REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+- LEARN: ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} 
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 46734 (down from 117,891, up from 40009) — live Firebase-JWT validator + auth-m
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in produ
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stal
+- LEARN: ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list endpoint 404, individual endpoints 404 — prior 500-on-UUID authz-drift signal not reprodu
+- LEARN: REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, token persists to localStorage before na
+- LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reacha
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live cr
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
+- LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
+- LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy

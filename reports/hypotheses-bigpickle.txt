@@ -1,30 +1,33 @@
-## 2026-09-17 19:53:18 UTC [target] (model bigpickle)
-[HYP] /v2/authorization/token constant-500 is a miswired OIDC client-credentials proxy — sole edge-escaping app-plane route (16th cycle flat)
+## 2026-09-17 22:45:43 UTC [target] (model bigpickle)
+[HYP] /v2/authorization/token constant-500 is a miswired OIDC client-credentials proxy — sole edge-escaping app-plane route
 class: AUTH
 asset: api.sipgate.com/v2/authorization/token
 confidence: 50
-reasoning: OPTIONS 204 restored with `ACAO:https://evil.example`+`ACAC:true`, allow-header vocab byte-identical incl credential-bearing X-Sipgate-Token-Id/Secret + MCP/SSE names; GET/METHOD-mismatch → 404 HTML; POST client_credentials → constant empty 500 (proxy-miswire) vs Keycloak CONTROL 401; v2 index sha `0d872a0f…` stable 16th cycle.
+reasoning: OPTIONS 204 `ACAO:https://evil.example`+`ACAC:true` (probed this cycle), allow-header vocab byte-identical incl X-Sipgate-Token-Id/Secret + MCP/SSE; POST client_credentials constant empty 500 vs Keycloak CONTROL 401; GET/METHOD-mismatch 404; v2 index sha `0d872a0f…` stable 17th cycle, route absent from swagger.
 evidence_needed: POST status transition 500→200 (mint) or →401/400 (upstream restored); never with valid creds.
-verify_steps: PASSIVE — OPTIONS next cycle (204=intact/404=drift) + GET /v2 sha256 + metrics counter.
+verify_steps: PASSIVE — OPTIONS next cycle (204=intact/404=drift) + GET /v2 sha256 + metrics.
 impact: restored OIDC token-mint proxy on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
 testability: PASSIVE
 [HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass
 class: SSRF
 asset: integration.sipgate.com/users.integrations.create
 confidence: 55
-reasoning: swagger-json sha `377a45b0…` unchanged, re-confirms `apiUrl` free-form string on POST body (no format/pattern/allowlist); NestJS/Fastify on GCP; FB-JWT validator live (metrics 46,490, +6,481); spec-Keycloak vs runtime-Firebase drift persists; all data ops uniform app-403 incl this one.
-evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254 → observed outbound fetch/metadata read.
-verify_steps: AUTH_HELPED — passive each cycle: metrics increment + spec sha tracker + gate 403-stable (all reconfirmed this cycle).
+reasoning: swagger-json sha `377a45b0…` unchanged (probed 200) re-confirms `apiUrl` free-form POST field (no format/pattern/allowlist); NestJS/Fastify on GCP; FB-JWT validator live (metrics 49,769, +3,035); spec-Keycloak vs runtime-Firebase drift persists; data ops uniform app-403.
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254 → observed outbound metadata fetch.
+verify_steps: AUTH_HELPED — passive each cycle: metrics increment + spec sha tracker + gate 403-stable.
 impact: GCP metadata/project secrets behind gate bypass; HIGH conditional.
 testability: AUTH_HELPED
 [HYP] users.integrations.getAuthSessionUrl user-controlled successUrl/errorUrl → OAuth session-redirect chain on gate bypass
 class: OATH
 asset: integration.sipgate.com/users.integrations.getAuthSessionUrl
 confidence: 45
-reasoning: swagger-json unchanged (`377a45b0…`) re-confirms successUrl/errorUrl `format:uri` free-form no host allowlist; implicit-only oauth2 scheme on login.sipgate.com sipgate-apps; `/oauth2/redirect`+`/oauth2/callback` security=None in spec yet live app-403 (spec-vs-behavior drift persists).
+reasoning: spec unchanged (`377a45b0…`) re-confirms successUrl/errorUrl `format:uri` free-form no host allowlist; implicit-only oauth2 on login.sipgate.com sipgate-apps; `/oauth2/redirect`+`/oauth2/callback` declared security=None yet live app-403 (spec-vs-behavior drift persists).
 evidence_needed: valid FB-JWT → GET session URL; verify successUrl embedded unvalidated → provider auth-code/state capture mid-flow.
-verify_steps: AUTH_HELPED — passive: spec sha drift + metrics increment + 403-stable (done this cycle).
+verify_steps: AUTH_HELPED — passive: spec sha drift + metrics increment + 403-stable.
 impact: CRM provider OAuth code/state theft on session completion; MEDIUM-HIGH conditional.
 testability: AUTH_HELPED
-[NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin `https://evil.example`, `Access-Control-Request-Method: POST`) — 204=intact / 404=hardening; then `GET https://integration.sipgate.com/swagger-json` (sha256 vs `377a45b0…`) and `GET https://integration.sipgate.com/metrics` (fb-jwt vs 46,490); ≥1.5s spacing.
-[RISK] sipgate: 85 — status-quo cycle: token proxy flat/restored (16th cycle, jitter resolved), swagger spec unchanged, FB-JWT gate live but uniformly holding (metrics up, no bypass), no creds, no new standalone exposure; highest remaining value is AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl OATH) and the PASSIVE token-proxy watch.
+[NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin `https://evil.example`, `Access-Control-Request-Method: POST`) — 204=intact / 404=hardening; then `GET https://integration.sipgate.com/swagger-json` (sha256 vs `377a45b0…`) and `GET https://integration.sipgate.com/metrics` (fb-jwt vs 49,769); ≥1.5s spacing.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS 204 `ACAO:https://evil.example`+`ACAC:true`, byte-identical allow-header vocab (X-Sipgate-Token-Id/Secret + MCP/SSE) — 17th-cycle flat state, no routing/hardening change.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 49,769 (+3,035), `api_key_forbidden_requests` 0 — FB-JWT gate live/incrementing; per-replica counter variance reconfirmed; SSRF/AUTH_HELPED preconditions intact.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/swagger-json: GET 200, sha `377a45b0…` (162337 B) unchanged — post-rotation spec stable, 27-op surface (incl `/streaming.start`) unchanged, apiUrl/successUrl primitives re-confirmed.
+[RISK] sipgate: 85 — status-quo cycle: token proxy flat 17th cycle (204 intact, constant 500), Platypus spec stable post-rotation with uniform app-403 (probes reconfirmed), FB-JWT gate live (49,769) but no bypass, no creds, no new standalone exposure; highest remaining value is AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl OATH) + the PASSIVE token-proxy watch.

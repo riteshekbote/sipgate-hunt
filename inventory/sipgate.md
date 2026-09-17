@@ -903,3 +903,14 @@ www.sipgate.de
 - CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP `frame-ancestors` still includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/team
 - CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path 
 - CHANGED share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed — subdomain-takeover candidate
+
+## 2026-09-17 22:46:21 UTC
+- NEW api.sipgate.com/v2/authorization/token OPTIONS: 404 → 204 (restored) with ACAO:evil.example+ACAC:true, MCP/SSE + credential-bearing allow-headers byte-identical to oauth2-redirect.html
+- NEW app.dev.sipgate.com JS bundle: main-Bt5gzUgC.js → main-CL-MmSlB.js (5.74MB), hardcoded hosts 17→11 (still includes admin.live.sipgate.net, admin.dev.sipgate.net)
+- NEW grafana.sipgate.cloud: Grafana 11.5.1 → 13.2.2 (commit 1bea008f7e), internet-exposed on AWS LB
+- NEW integration.sipgate.com: Swagger-UI → Scalar API Reference, OpenAPI spec rotated (new SHA, 27 ops incl /streaming.start), users.integrations.create apiUrl SSRF parameter persists
+- NEW integration.dev.sipgate.com: HTTPS 403+ACAO* → TCP timeout (dead)
+- CHANGED integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 117,891 → 40,009 → 46,734 (per-replica restart-reset variance reconfirmed)
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors still includes app.local.sipgate.com:3443, SERVERID rotation
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale 2024-06-11, versioning disabled)
+- CHANGED share1.sipgate.cloud: dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN confirmed
