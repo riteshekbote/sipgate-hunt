@@ -606,3 +606,4 @@
 - 2026-09-17 ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS restored 204 `ACAO:https://evil.example`+`ACAC:true`, byte-identical allow-header vocab — prior 404 transient jitter, 15th-cycle flat state confirmed.
 - 2026-09-17 ACCEPTED INFO @ integration.sipgate.com/metrics: fb-jwt counter 40,157 (below prior 117,891 → replica reset); gate live; SSRF/AUTH_HELPED preconditions intact.
 - 2026-09-17 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 40009 (down from 117,891), api_key_forbidden_requests 1 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica counter restart-reset reconfirmed
+- 2026-09-17 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 46734 (down from 117,891, up from 40009) — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica counter restart-reset reconfirmed

@@ -891,3 +891,15 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/authorization/token: OPTIONS now returns 404 (was stable 204 for 11+ cycles); POST client_credentials still returns constant 500 "OK"; undocumented, index-advertised, absent from 14
 - CHANGED integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 40009 (down from 117,891); `api_key_forbidden_requests` 1 — live Firebase-JWT validator confirmed, per-replica counter variance recon
 - CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 200 with ACAO:evil.example + ACAC:true + allow-headers byte-identical to /v2/authorization/token 404 OPTIONS (MCP/SSE + credential-bearing headers)
+
+## 2026-09-17 20:00:13 UTC
+- NEW app.dev.sipgate.com: JS bundle rotated to `main-CL-MmSlB.js` (5.74MB, etag `5d6990517...`); 11 hardcoded internal host:port pairs (down from 17), still includes NEW prod subdomains `admin.live.sipgate
+- NEW grafana.sipgate.cloud: Grafana version upgraded from 11.5.1 → 13.2.2 (commit `1bea008f7e`); internet-exposed on AWS LB (3.33.226.160), login-gated, no anonymous
+- NEW integration.sipgate.com: Swagger-UI replaced with Scalar API Reference; OpenAPI spec rotated (new SHA, 27 ops incl `/streaming.start`); `users.integrations.create` still accepts free-form `apiUrl` (SS
+- NEW integration.dev.sipgate.com: HTTPS no longer responds (TCP timeout on 217.116.121.180); was previously 403 + `ACAO:*`; HTTP 301 → HTTPS but HTTPS hangs
+- CHANGED api.sipgate.com/v2/authorization/token: OPTIONS now 204 (was 404 per leads) with `ACAO:evil.example` + `ACAC:true`; allow-headers byte-identical to oauth2-redirect.html (MCP/SSE: `MCP-Protocol-Version
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 with byte-identical allow-header vocabulary to /v2/authorization/token; inherits API.v2 permissive CORS
+- CHANGED integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 46734 (down from 117,891, up from 40009) — per-replica counter variance reconfirmed (restart-reset behavior); live Firebase-JWT valid
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP `frame-ancestors` still includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/team
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path 
+- CHANGED share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed — subdomain-takeover candidate

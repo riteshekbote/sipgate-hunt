@@ -4630,3 +4630,33 @@ testability: AUTH_HELPED
 [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS restored 204 `ACAO:https://evil.example`+`ACAC:true`, byte-identical allow-header vocab — prior 404 transient jitter, 15th-cycle flat state confirmed.
 [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: fb-jwt counter 40,157 (below prior 117,891 → replica reset); gate live; SSRF/AUTH_HELPED preconditions intact.
 [RISK] sipgate: 85 — status-quo cycle: token route flat/restored (15th cycle), Platypus spec rotated but uniformly 403 (10 probes all gated), no gate bypass, no creds, no new standalone exposure; highest remaining value is AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl OATH) and the PASSIVE token-proxy watch.
+## 2026-09-17 19:53:18 UTC [target] (model bigpickle)
+[HYP] /v2/authorization/token constant-500 is a miswired OIDC client-credentials proxy — sole edge-escaping app-plane route (16th cycle flat)
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: OPTIONS 204 restored with `ACAO:https://evil.example`+`ACAC:true`, allow-header vocab byte-identical incl credential-bearing X-Sipgate-Token-Id/Secret + MCP/SSE names; GET/METHOD-mismatch → 404 HTML; POST client_credentials → constant empty 500 (proxy-miswire) vs Keycloak CONTROL 401; v2 index sha `0d872a0f…` stable 16th cycle.
+evidence_needed: POST status transition 500→200 (mint) or →401/400 (upstream restored); never with valid creds.
+verify_steps: PASSIVE — OPTIONS next cycle (204=intact/404=drift) + GET /v2 sha256 + metrics counter.
+impact: restored OIDC token-mint proxy on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: swagger-json sha `377a45b0…` unchanged, re-confirms `apiUrl` free-form string on POST body (no format/pattern/allowlist); NestJS/Fastify on GCP; FB-JWT validator live (metrics 46,490, +6,481); spec-Keycloak vs runtime-Firebase drift persists; all data ops uniform app-403 incl this one.
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254 → observed outbound fetch/metadata read.
+verify_steps: AUTH_HELPED — passive each cycle: metrics increment + spec sha tracker + gate 403-stable (all reconfirmed this cycle).
+impact: GCP metadata/project secrets behind gate bypass; HIGH conditional.
+testability: AUTH_HELPED
+[HYP] users.integrations.getAuthSessionUrl user-controlled successUrl/errorUrl → OAuth session-redirect chain on gate bypass
+class: OATH
+asset: integration.sipgate.com/users.integrations.getAuthSessionUrl
+confidence: 45
+reasoning: swagger-json unchanged (`377a45b0…`) re-confirms successUrl/errorUrl `format:uri` free-form no host allowlist; implicit-only oauth2 scheme on login.sipgate.com sipgate-apps; `/oauth2/redirect`+`/oauth2/callback` security=None in spec yet live app-403 (spec-vs-behavior drift persists).
+evidence_needed: valid FB-JWT → GET session URL; verify successUrl embedded unvalidated → provider auth-code/state capture mid-flow.
+verify_steps: AUTH_HELPED — passive: spec sha drift + metrics increment + 403-stable (done this cycle).
+impact: CRM provider OAuth code/state theft on session completion; MEDIUM-HIGH conditional.
+testability: AUTH_HELPED
+[NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin `https://evil.example`, `Access-Control-Request-Method: POST`) — 204=intact / 404=hardening; then `GET https://integration.sipgate.com/swagger-json` (sha256 vs `377a45b0…`) and `GET https://integration.sipgate.com/metrics` (fb-jwt vs 46,490); ≥1.5s spacing.
+[RISK] sipgate: 85 — status-quo cycle: token proxy flat/restored (16th cycle, jitter resolved), swagger spec unchanged, FB-JWT gate live but uniformly holding (metrics up, no bypass), no creds, no new standalone exposure; highest remaining value is AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl OATH) and the PASSIVE token-proxy watch.

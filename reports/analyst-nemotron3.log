@@ -23634,3 +23634,1211 @@ testability: AUTH_HELPED
 **STEP 7 — RISK**
 
 [RISK] sipgate: 87 — high-value OAuth implicit flow (login.sipgate.com third-party realm) + arbitrary-origin CORS with credentials on API (api.sipgate.com/v2/*) + live dev SPA leaking prod internal topology + NEW prod subdomains in dev bundle (admin.live/dev.sipgate.net) + integration platform spec-behavior drift with SSRF parameter (integration.sipgate.com users.integrations.create apiUrl) + 94-host CRM adapter fleet with SSRF headers behind single nginx gate (*.integration.sipgate.cloud) + dangling subdomain takeover candidate (share1.sipgate.cloud) + publicly listable S3 bucket with stale artifacts (sipgate-desktop-app.s3) + live Grafana internet-exposed (grafana.sipgate.cloud) + miswired OIDC token proxy on API origin (api.sipgate.com/v2/authorization/token) — multiple chainable high-severity vectors across auth, SSRF, info-disclosure, and takeover classes; active development (bundle rotation, new prod subdomains in dev config, OPTIONS drift on token proxy) increases regression risk
+===== ANALYST nemotron3 2026-09-17 20:00:13 UTC =====
+[0m
+> build · nemotron-3-ultra-free
+[0m
+[0m$ [0mcurl -s -I "https://app.dev.sipgate.com/assets/main-CL-MmSlB.js" 2>&1 | head -20
+HTTP/2 200 
+cache-control: max-age=3600
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk wss://ws-eu.pusher.com stats.pusher.com sentry.io api-iam.intercom.io nexus-websocket-a.intercom.io nexus-websocket-b.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io *.zopim.com *.zdassets.com *.zendesk.com wss://*.zopim.com https://amp.sipgate.de *.instana.io https://status.sipgate.de/ https://integration.sipgate.cloud https://docs.google.com *.didww.com/v3/public_keys; script-src 'unsafe-eval' 'unsafe-inline' 'self' stats.pusher.com connect.facebook.com connect.facebook.net *.cloudfront.net www.google-analytics.com *.google.com www.googletagmanager.com www.googleadservices.com sjs.bizographics.com bat.bing.com snap.licdn.com *.doubleclick.net *.linkedin.com secure.adnxs.com js.intercomcdn.com widget.intercom.io data: *.zopim.com *.zdassets.com *.instana.io; style-src 'unsafe-inline' 'self' *.google.com *.googleapis.com static.sipgate.com data: blob: *.zdassets.com; font-src 'self' fonts.intercomcdn.com js.intercomcdn.com static.sipgate.com data: *.zdassets.com *.zopim.com; frame-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com https://player.vimeo.com *.zdassets.com *.zopim.com; child-src https://www.facebook.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.google.com; worker-src 'self' blob:; img-src *.googleusercontent.com *.facebook.com 'self' *.gstatic.com *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net www.google-analytics.com *.googleapis.com *.doubleclick.net *.google.com *.google.de bat.bing.com *.linkedin.com secure.adnxs.com js.intercomcdn.com downloads.intercomcdn.com static.intercomassets.com data: *.zopim.com *.zdassets.com *.zopim.io; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net js.intercomcdn.com blob: *.zopim.com data: *.zdassets.com; frame-ancestors 'self' *.sipgate.com *.google.com chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa;
+content-type: text/javascript; charset=utf-8
+cross-origin-opener-policy: same-origin-allows-popups
+etag: "5d69905174342a253b548a419107e79fa7b9612ed30d198d1d3c584760e55126"
+last-modified: Thu, 17 Sep 2026 14:39:24 GMT
+strict-transport-security: max-age=31556926
+x-content-type-options: nosniff
+x-frame-options: ALLOW-FROM chrome-extension://jaemdlgbgkndaldpkoacdhdiegopjofa/* https://*.sipgate.com/* https://*.sipgate.de/* https://*.sipgate.co.uk/*
+x-xss-protection: 1; mode=block
+accept-ranges: bytes
+date: Thu, 17 Sep 2026 19:52:28 GMT
+x-served-by: cache-chi-kmdw8640035-CHI
+x-cache: MISS
+x-cache-hits: 0
+x-timer: S1789674748.601380,VS0,VE723
+vary: x-fh-requested-host, accept-encoding
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
+content-length: 5748026
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-CL-MmSlB.js" 2>&1 | head -c 50000
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/exceljs.min-D6L1m8XT.js","assets/chunk-CernVdwh.js","assets/widget-DZX518Hp.js","assets/WebBlfView-vh08k4qI.js","assets/WebBlfView-DBTJOySX.css","assets/BlocklistView-Cia-M0DF.js","assets/hooks-DK4TKUXR.js","assets/PersonalSettingsView-DunLB3Uo.js","assets/UserSettingsView-BipII4_q.js","assets/datetime-Cn-FNaHe.js","assets/costCenters-gCUP58Wr.js","assets/OfflineForwardingsSettings-CFFVYbGa.js","assets/hooks-DR6pSE-a.js","assets/hooks-KqcMEUgI.js","assets/country-formatter-DInL5t9P.js","assets/voicemail-7sklRnAh.js","assets/ChannelSmReceivingSimSettingsSection-jhpO0WIK.js","assets/UserSettingsView-nFlUIwBU.css","assets/PersonalAccessToken-DhhK91A6.js","assets/PersonalAccessToken-ClNTnG0w.css","assets/UserNotificationsView-LW--Ca_R.js","assets/hooks-Bk6fFJb-2.js","assets/utils-Cy3lBgu7.js","assets/selectors-Cs7uAxEQ.js","assets/UserNotificationsView-BouYSbwH.css","assets/NeoUserNotificationsView-D2vE8M0J.js","assets/neoNotifications-DBsPssHF.js","assets/NeoUserNotificationsView-CA2DYrBB.css","assets/UserView-D3nJfRV1.js","assets/TariffManagementWrapper-DdNk4Xri.js","assets/StackedBarGraph-B1o_8lQT.js","assets/Path-BKlWEoO3.js","assets/Path-C5ROTcpm.css","assets/dates-mTBgXaDx.js","assets/StackedBarGraph-ufrKLGTX.css","assets/CurrentBooking-Cle-JIwJ.js","assets/Booking-BsCY-8La.js","assets/Booking-CSjfEcqj.css","assets/productLanguageKeys-D-lW5gPG.js","assets/dates-DPkvWBCn.js","assets/mobileInfoMessageLanguageKeys-CZ9b3V3Y.js","assets/TariffManagementWrapper-nnBK2AFw.css","assets/RoutingGraphTooltip-C5C_05oh.js","assets/dist-BWhAwUTm.js","assets/string-OlM8Hqgm.js","assets/RoutingGraphTooltip-DzUrLeVA.css","assets/CtaCommand-Czvb2_JY.js","assets/CtaCommand-BlBZuUpm.css","assets/EventTour-DGkymoyL.js","assets/ChannelVoiceboxAccessWidget-D6L1SexC.js","assets/DragAndDropProvider-CJmg9HZG.js","assets/StatelessAudioPlayer-BqX08Sfm.js","assets/StatelessAudioPlayer-CaJ_c5qn.css","assets/ExternalDeviceIcon-D0-KyNP0.js","assets/ViewTimeTracks-BuSi0a1c.js","assets/helpers-B4MUFjmr.js","assets/ViewTimeTracks-HSv9s7s8.css","assets/SimIcon-ClYvSHwp.js","assets/helpers-B139D_vq.js","assets/frontdeskTopics-CqyGXCGx.js","assets/selectors-C42etJEK.js","assets/utils-C0JE2ZTE.js","assets/hooks-XqpBZToJ.js","assets/hooks-CNLBJ0x0.js","assets/aria-id-CNzcc1wy.js","assets/merge-refs-BG0WSHp1.js","assets/util-00WusAM0.js","assets/DragAndDropProvider-DcAX0IFz.css","assets/Widget-C2LxofIp.js","assets/Widget-1pvT0MIE.css","assets/ChannelVoiceboxAccessWidget-Dsnddmoa.css","assets/DragAndDropWidget-GUqeGUFi.js","assets/DragAndDropWidget-BzRmCfbN.css","assets/UserChannelRoutingCard-DF9D9jDp.js","assets/RoutingCardTabs-BzVbBjCu.js","assets/DeviceDropdownValue-uCLUEAAi.js","assets/activeTimesUtils-BcO0Vod9.js","assets/DeviceDropdownValue-BcHKcI7Y.css","assets/DeviceDropdownSettingsGroup-CP31mlRD.js","assets/DeviceDropdownSettingsGroup-Dj-nKGaY.css","assets/useConfirmDeleteAdditionalSim-RwCO6uM6.js","assets/useConfirmDeleteDevice-BEmHaUdp.js","assets/ActiveTimesInfoDropdown-BviP-pEl.js","assets/NumberColumn-WmfuAbda.js","assets/PhoneNumberIcon-BMgcwW4N.js","assets/NumberColumn-CN-J7h-O.css","assets/ActiveTimesInfoDropdown-DwYJgp6I.css","assets/call-recorder-CoiiA8Hj.js","assets/hooks-CV2qqWAS.js","assets/RoutingCardTabs-CpR0dk9q.css","assets/DeviceCard-DsKIp0Z0.js","assets/DeviceCard-Df3whYJO.css","assets/GroupFaxRoutingCard-BpzD_T9e.js","assets/FaxRoutingGraph-DXw9I_eU.js","assets/FaxRoutingGraph-BM2XMM0j.css","assets/GroupFaxRoutingCard-J5op0imJ.css","assets/UserChannelRoutingCard-lrhn3yQZ.css","assets/DeviceTable-CWYB2EJh.js","assets/DeviceTable-CEDb7B3v.css","assets/AppsAndDevicesView-CUpX4L3z.js","assets/MobileDeviceTable-_684e_XY.js","assets/MobileDeviceTable-CKBrBE-N.css","assets/neoPbxOnly-f_E9yCY1.js","assets/AppsAndDevicesView-DVQocswR.css","assets/mobile-device-CI2JMJzM.js","assets/PandaTwoColumnLayout-DdcYELLC.js","assets/PandaTwoColumnLayout-D7Gfma26.css","assets/selectors-DtBM2UG9.js","assets/PersonalChannelReactFlowGraph-DoV6J5c6.js","assets/UserView-CYmgSYuJ.css","assets/UsersOverview-Cngz-uzq.js","assets/DirectdialsMetaCell-CSPYI6Rt.js","assets/DirectdialsMetaCell-C0txtVv1.css","assets/IconWithTextCell-Bkqbt9aY.js","assets/IconWithTextCell-BKF-QMrn.css","assets/PhonenumbersMetaCell-Dxc8neGL.js","assets/PhonenumbersMetaCell.module-7M0Vaz-L.js","assets/PhonenumbersMetaCell-BJ7q4PIo.css","assets/Skeleton-BffRd44E.js","assets/Skeleton-BS0n-Gtu.css","assets/UsersOverview-yYjQ76wa.css","assets/FaxLinesOverview-DZk3raRw.js","assets/UserAvatarStack-7m-OJ5H9.js","assets/restrictionGuard-BBRDiDYG.js","assets/FaxLineDetailView-Bp7qjxNz.js","assets/RedirectFrom-BSGPOg5K.js","assets/FaxLineDetailView-D1nTO6jd.css","assets/ApiClientView-5FdMSVRh.js","assets/CopySectionEntry-lnn342V9.js","assets/CopySectionEntry-CP-vnifJ.css","assets/TrunksOverviewContainer-CxhtwUta.js","assets/contingent-Y1lC8qrq.js","assets/TrunkView-BNtE6wKB.js","assets/TreeList-CXsnaC3L.js","assets/utils-DMdzzG5h.js","assets/TreeList-Bg8dm27p.css","assets/hooks-CgLtt1Yb.js","assets/TrunkView-Bsl3R0Fv.css","assets/MinuteContingentsView-DOQyPGvc.js","assets/selectors-lLpT-BFk.js","assets/types-CZaifXp4.js","assets/LocationsView-BxXhYBrr.js","assets/LocationsView-FGwK269Z.css","assets/GroupsOverview-Dw9tm7To.js","assets/GroupView-CnalYrz2.js","assets/memoize-one.esm-D0M31BGy.js","assets/GroupGreetingDropdown.module-B7nPYH2R.js","assets/GroupGreetingDropdown-Du3prDVN.css","assets/GroupView-DVhuX_Iy.css","assets/UnlinkedDevicesOverview-C8tg-SuI.js","assets/ChannelsOverview-StGbeVeb.js","assets/ChannelView-TvxXVSA8.js","assets/useConfirmDeleteChannel-D-j-IqDq.js","assets/contactCenterShortCallThreshold-BGBCU8yt.js","assets/contactCenterStatisticTargets-CZTdThtb.js","assets/util-Bs4MNwDL.js","assets/ChannelReactFlowGraph-BrKsw4RC.js","assets/useTimeSetNameSlimNode-ivtoGOBa.js","assets/useConfirmDeleteChannel-rPcZQj5D.css","assets/ChannelLiveStatisticsView-Nuj0IHG7.js","assets/channelStatistics-BIqeaWMn.js","assets/useDialogSafeQueryParams-CzWkj_7C.js","assets/channelStatistics-DXNMkSH3.css","assets/ChannelLiveStatisticsView-CGTLikQS.css","assets/ChannelView-EL5zjCk2.css","assets/TeamLeadDashboard-5V2AxfEk.js","assets/TeamLeadDashboard-h5YAEE3Z.css","assets/MyChannelsOverview-Dq_2iL7u.js","assets/MyChannelView-CsNqKKiq.js","assets/entitySettings-B3-uWgMl.js","assets/MyChannelView-B17ySwpL.css","assets/UnlinkedDeviceView-Bfkv3rMc.js","assets/UnlinkedDeviceView-B-1CIT1b.css","assets/AdminDevicePoolLayout-BKs1IZ-c.js","assets/hooks-CKamua1h.js","assets/AdminDevicePoolLayout-Cnah7mpZ.css","assets/TeamView-DnsV3Am4.js","assets/Iframe-Cdi02Kyd.js","assets/Iframe-DkBqCxUL.css","assets/TeamView-DUCLe5wv.css","assets/MicrosoftTeamsIntegrationView-DIlzIsdp.js","assets/ListItem-DthnI3gE.js","assets/ListItem-6r0wLNg3.css","assets/ListItemText-BSk1qXRX.js","assets/ListItemText-BwbijSy_.css","assets/MicrosoftTeamsIntegrationView-DSojdMYL.css","assets/HardwareView-CcYN2xig.js","assets/HardwareView-Czm_xt-J.css","assets/DevicePoolLayout-3POzxMIH.js","assets/DevicePoolLayout-D3rDUJeP.css","assets/DevicePoolsOverview-r1PKbZak.js","assets/DevicePoolsOverview-cMmDFj1_.css","assets/AccountManagementOverview-V_BCggG4.js","assets/useOpenAgentCreation-DEeFITlb.js","assets/NegativeBalanceBanner-QRkrwBVX.js","assets/NegativeBalanceBanner-BhAhpWFh.css","assets/Empty_State_dark-DSMkbCpq.js","assets/AccountManagementOverview-D3iVV0be.css","assets/UserRoutingView-9Wsk8noS.js","assets/UserRoutingView-4n7loaWK.css","assets/ConferenceRoomOverview-BAsxtX7w.js","assets/ConferenceRoomView-G3diGZwm.js","assets/ConferenceRoomView-tnTT-Q0m.css","assets/IvrsOverview-BiDN5ybz.js","assets/SamlSsoOverview-B4dN-aHV.js","assets/SamlSsoOverview-Cq5A0toO.css","assets/TelephonySettingsView-BgFioQch.js","assets/transferCallerId-BEbQ3lAK.js","assets/AdministrationView-Cn0AOEyR.js","assets/PaymentCard-C7aaPSmz.js","assets/PaymentCard-BdkRqz89.css","assets/selectors-Ba0cVOAj.js","assets/AdministrationView-D5vfnaRx.css","assets/AffiliateView-DGmBEWq2.js","assets/AffiliateView-BNPqv1bx.css","assets/MandatesView-WlKTB36o.js","assets/MandatesView-BKFLq6YB.css","assets/SipgateIoView-Dez0c0UJ.js","assets/option-name-DJTevZiI.js","assets/SipgateIoView-PbEctTnI.css","assets/IvrDetailView-DXro5wPC.js","assets/IvrKeyForwardingHelpers-D_ukdVID.js","assets/IvrDetailView-B8-kRhHq.css","assets/PhonenumbersOverview-DJys2TRE.js","assets/PhonenumbersOverview-ir5mZZhH.css","assets/IntegrationsOverview-7ycY3Sxt.js","assets/IntegrationsView-Dq-Xga4f.js","assets/ContactIntegrationsSection-aW_Ou0Gk.js","assets/sipgateIntegration-DGzzQCN_.js","assets/ContactIntegrationsSection-OR26dCq6.css","assets/AdminIntegrationsOverview-cKrt72V3.js","assets/helpdeskCatalog-C9IICY53.js","assets/IntegrationDetailView-Sgc8AY8r.js","assets/HelpdeskOauthCallbackView-BZ7nIaUP.js","assets/UserContactsOverview-PoZMCyCh.js","assets/ContactsOverview-DWq56XWD.js","assets/ContactsOverview-BhDPlrW9.css","assets/SharedContactsOverview-BXD-7lQa.js","assets/ContactView-5SEU9omJ.js","assets/ContactView-DCJz6mEG.css","assets/UserAreaAppsAndDevicesView-DTMu-r3E.js","assets/FrontDeskOverview-wDBE7xdE.js","assets/FrontDeskView-C3sd3JXW.js","assets/storePlaybooks-DTrtEAkX.js","assets/alertManager-BdWDg4D_.js","assets/inlineSectionForms-CyU9k9rF.js","assets/inlineSectionForms-cjAdxqah.css","assets/FrontDeskView-DCABRVPH.css","assets/FrontDeskMinutePackagesView-Dpxv0ftS.js","assets/AiAgentAnalysis-q4NnQl2Y.js","assets/Heatmap-CCYbtzsk.js","assets/preload-helper-rov5CBGT.js","assets/CategoricalChart-FloM5PMt.js","assets/BarChart-DaBHEYRN.js","assets/utils-DBeVKzCe.js","assets/BarChart-C44-q-Qn.css","assets/Heatmap-hQihMzqM.css","assets/DonutChart-BisP2Qc7.js","assets/DonutChart-B_K118Xv.css","assets/PanelTriggerButtons-D2a4XysB.js","assets/filterQuery-DPjUDVAc.js","assets/standardVariableMapping-Cxhj_Zer.js","assets/PanelTriggerButtons-1qEPvnrA.css","assets/CustomToolbar-CjdXd3nT.js","assets/AiAgentAnalysis-CpnOr3cS.css","assets/AiFlowOverview-B11p_mfx.js","assets/AiFlowAccessGuard-Dft6whxP.js","assets/AiFlowOverview-m7p03nP7.css","assets/AiFlowMinutePackagesView-DVrjyxBR.js","assets/AiFlowView-Cf3G_K-g.js","assets/utils-Dibq4e_V.js","assets/AiFlowView-CtN0V2nI.css","assets/ContactCenterChannelsOverview-CWFzUaAd.js","assets/ContactCenterChannelView-DeQZ2XOW.js","assets/ContactCenterChannelView-qge1dR7w.css","assets/LiveMonitoringView-CxA-_LIv.js","assets/StatisticsFilterParams-BfgvgnRr.js","assets/StatisticsFilterParams-ublgXbli.css","assets/targetReached-DYXaR8vQ.js","assets/targetReached-BA-d_ngv.css","assets/InformationDropdown-DJeUCsAh.js","assets/InformationDropdown-C7MRer1D.css","assets/LiveMonitoringView-CD8AdGyR.css","assets/StatisticsDashboard-BBkqnhlX.js","assets/contactCenterCallEventColumns-C6pPAoMU.js","assets/contactCenterCallEventColumns-fRAUgii1.css","assets/StatisticsDashboard-Dp02NcH_.css","assets/CoachingDashboard-sXVVJKYj.js","assets/coachingTargetValues-Cb6aqov4.js","assets/CoachingDashboard-C6dCfcDJ.css","assets/ContactCenterMinutePackagesView-xgjrvrvB.js","assets/contactCenterManagement-BZU8uKkC.js","assets/ContactCenterMinutePackagesView-CZ0akfJ3.css","assets/CiDatahubView-BatXzm_U.js","assets/CiActivationBanner-C1AlvL9a.js","assets/useCiBookingState-C9-DcI3T.js","assets/CiAnalyticsView-BZm-BAXj.js","assets/variables-BdhsvEVz.js","assets/CiAnalyticsView-CMJOYYhL.css","assets/CiNotificationsView-Doa_vgMb.js","assets/VariablesView-BCkKIEye.js","assets/dataTypeMapping-Bh0x0UIt.js","assets/dataTypeMapping-DEbmqDd6.css","assets/VariablesView-BFaSYHy1.css","assets/settings-HwMatl2q.js","assets/ciEventRetention-CqJeYtjF.js","assets/settings-B_eC1Grj.css","assets/webhooks-DraxYqBx.js","assets/useWebhookEntities-Bul37_ou.js","assets/webhooks-BK8NQ-W1.css","assets/DialogWrapper-CsbwQkuB.js","assets/Form-1KbmW2ab.js","assets/environment-BUWH2W2Z.js","assets/DialogWrapper-DoG6JOWk.css","assets/WebphoneWrapper-De8i0tEs.js","assets/WebphoneWrapper-B1qHzdj-.css","assets/ExternalPresenceRedirectView-Bq-7qCsI.js","assets/ExternalPresenceLayout-D3g8xXYu.js","assets/ExternalPresenceLayout-D7ncAz4v.css","assets/ExternalPresenceCallbackView-DNJPSuOM.js"])))=>i.map(i=>d[i]);
+import{a as __toCommonJS,i as __require,n as __esmMin,o as __toESM,r as __exportAll,t as __commonJSMin}from"./chunk-CernVdwh.js";import{t as __vitePreload}from"./preload-helper-rov5CBGT.js";import{r as isProductionEnvironment,t as getWorkspaceUrl}from"./environment-BUWH2W2Z.js";import{i as Duration$1,n as Info$1,r as Interval,t as DateTime}from"./datetime-Cn-FNaHe.js";import{n as isErrorBase,t as hasError$1}from"./types-DTpQfpK1.js";import{a as sortUsersByName,t as getUser}from"./selectors-Cs7uAxEQ.js";import{t as appAlertManager}from"./alertManager-BdWDg4D_.js";import{t as mergeRefs$1}from"./merge-refs-BG0WSHp1.js";import{t as ariaId$1}from"./aria-id-CNzcc1wy.js";(function(){let s=document.createElement(`link`).relList;if(s&&s.supports&&s.supports(`modulepreload`))return;for(let s of document.querySelectorAll(`link[rel="modulepreload"]`))p(s);new MutationObserver(s=>{for(let u of s)if(u.type===`childList`)for(let s of u.addedNodes)s.tagName===`LINK`&&s.rel===`modulepreload`&&p(s)}).observe(document,{childList:!0,subtree:!0});function u(s){let u={};return s.integrity&&(u.integrity=s.integrity),s.referrerPolicy&&(u.referrerPolicy=s.referrerPolicy),s.crossOrigin===`use-credentials`?u.credentials=`include`:s.crossOrigin===`anonymous`?u.credentials=`omit`:u.credentials=`same-origin`,u}function p(s){if(s.ep)return;s.ep=!0;let p=u(s);fetch(s.href,p)}})();function formatProdErrorMessage$1(s){return`Minified Redux error #${s}; visit https://redux.js.org/Errors?code=${s} for the full message or use the non-minified dev environment for full errors. `}var symbol_observable_default=typeof Symbol==`function`&&Symbol.observable||`@@observable`,randomString=()=>Math.random().toString(36).substring(7).split(``).join(`.`),actionTypes_default={INIT:`@@redux/INIT${randomString()}`,REPLACE:`@@redux/REPLACE${randomString()}`,PROBE_UNKNOWN_ACTION:()=>`@@redux/PROBE_UNKNOWN_ACTION${randomString()}`};function isPlainObject$6(s){if(typeof s!=`object`||!s)return!1;let u=s;for(;Object.getPrototypeOf(u)!==null;)u=Object.getPrototypeOf(u);return Object.getPrototypeOf(s)===u||Object.getPrototypeOf(s)===null}function createStore$3(s,u,p){if(typeof s!=`function`)throw Error(formatProdErrorMessage$1(2));if(typeof u==`function`&&typeof p==`function`||typeof p==`function`&&typeof arguments[3]==`function`)throw Error(formatProdErrorMessage$1(0));if(typeof u==`function`&&p===void 0&&(p=u,u=void 0),p!==void 0){if(typeof p!=`function`)throw Error(formatProdErrorMessage$1(1));return p(createStore$3)(s,u)}let m=s,h=u,_=new Map,v=_,y=0,x=!1;function S(){v===_&&(v=new Map,_.forEach((s,u)=>{v.set(u,s)}))}function C(){if(x)throw Error(formatProdErrorMessage$1(3));return h}function w(s){if(typeof s!=`function`)throw Error(formatProdErrorMessage$1(4));if(x)throw Error(formatProdErrorMessage$1(5));let u=!0;S();let p=y++;return v.set(p,s),function(){if(u){if(x)throw Error(formatProdErrorMessage$1(6));u=!1,S(),v.delete(p),_=null}}}function T(s){if(!isPlainObject$6(s))throw Error(formatProdErrorMessage$1(7));if(s.type===void 0)throw Error(formatProdErrorMessage$1(8));if(typeof s.type!=`string`)throw Error(formatProdErrorMessage$1(17));if(x)throw Error(formatProdErrorMessage$1(9));try{x=!0,h=m(h,s)}finally{x=!1}return(_=v).forEach(s=>{s()}),s}function E(s){if(typeof s!=`function`)throw Error(formatProdErrorMessage$1(10));m=s,T({type:actionTypes_default.REPLACE})}function D(){let s=w;return{subscribe(u){if(typeof u!=`object`||!u)throw Error(formatProdErrorMessage$1(11));function p(){let s=u;s.next&&s.next(C())}return p(),{unsubscribe:s(p)}},[symbol_observable_default](){return this}}}return T({type:actionTypes_default.INIT}),{dispatch:T,subscribe:w,getState:C,replaceReducer:E,[symbol_observable_default]:D}}function assertReducerShape(s){Object.keys(s).forEach(u=>{let p=s[u];if(p(void 0,{type:actionTypes_default.INIT})===void 0)throw Error(formatProdErrorMessage$1(12));if(p(void 0,{type:actionTypes_default.PROBE_UNKNOWN_ACTION()})===void 0)throw Error(formatProdErrorMessage$1(13))})}function combineReducers(s){let u=Object.keys(s),p={};for(let m=0;m<u.length;m++){let h=u[m];typeof s[h]==`function`&&(p[h]=s[h])}let m=Object.keys(p),h;try{assertReducerShape(p)}catch(s){h=s}return function(s={},u){if(h)throw h;let _=!1,v={};for(let h=0;h<m.length;h++){let y=m[h],x=p[y],S=s[y],C=x(S,u);if(C===void 0)throw u&&u.type,Error(formatProdErrorMessage$1(14));v[y]=C,_||=C!==S}return _||=m.length!==Object.keys(s).length,_?v:s}}function compose$1(...s){return s.length===0?s=>s:s.length===1?s[0]:s.reduce((s,u)=>(...p)=>s(u(...p)))}function applyMiddleware(...s){return u=>(p,m)=>{let h=u(p,m),_=()=>{throw Error(formatProdErrorMessage$1(15))},v={getState:h.getState,dispatch:(s,...u)=>_(s,...u)};return _=compose$1(...s.map(s=>s(v)))(h.dispatch),{...h,dispatch:_}}}function isAction$1(s){return isPlainObject$6(s)&&`type`in s&&typeof s.type==`string`}var NOTHING=Symbol.for(`immer-nothing`),DRAFTABLE=Symbol.for(`immer-draftable`),DRAFT_STATE=Symbol.for(`immer-state`);function die(s,...u){throw Error(`[Immer] minified error nr: ${s}. Full error at: https://bit.ly/3cXEKWf`)}var O=Object,getPrototypeOf$1=O.getPrototypeOf,CONSTRUCTOR=`constructor`,PROTOTYPE=`prototype`,CONFIGURABLE=`configurable`,ENUMERABLE=`enumerable`,WRITABLE=`writable`,VALUE=`value`,isDraft=s=>!!s&&!!s[DRAFT_STATE];function isDraftable(s){return s?isPlainObject$5(s)||isArray$3(s)||!!s[DRAFTABLE]||!!s[CONSTRUCTOR]?.[DRAFTABLE]||isMap$1(s)||isSet$1(s):!1}var objectCtorString$1=O[PROTOTYPE][CONSTRUCTOR].toString(),cachedCtorStrings=new WeakMap;function isPlainObject$5(s){if(!s||!isObjectish(s))return!1;let u=getPrototypeOf$1(s);if(u===null||u===O[PROTOTYPE])return!0;let p=O.hasOwnProperty.call(u,CONSTRUCTOR)&&u[CONSTRUCTOR];if(p===Object)return!0;if(!isFunction$8(p))return!1;let m=cachedCtorStrings.get(p);return m===void 0&&(m=Function.toString.call(p),cachedCtorStrings.set(p,m)),m===objectCtorString$1}function original(s){return isDraft(s)||die(15,s),s[DRAFT_STATE].base_}function each(s,u,p=!0){getArchtype(s)===0?(p?Reflect.ownKeys(s):O.keys(s)).forEach(p=>{u(p,s[p],s)}):s.forEach((p,m)=>u(m,p,s))}function getArchtype(s){let u=s[DRAFT_STATE];return u?u.type_:isArray$3(s)?1:isMap$1(s)?2:isSet$1(s)?3:0}var has=(s,u,p=getArchtype(s))=>p===2?s.has(u):O[PROTOTYPE].hasOwnProperty.call(s,u),get$3=(s,u,p=getArchtype(s))=>p===2?s.get(u):s[u],set$2=(s,u,p,m=getArchtype(s))=>{m===2?s.set(u,p):m===3?s.add(p):s[u]=p};function is$7(s,u){return s===u?s!==0||1/s==1/u:s!==s&&u!==u}var isArray$3=Array.isArray,isMap$1=s=>s instanceof Map,isSet$1=s=>s instanceof Set,isObjectish=s=>typeof s==`object`,isFunction$8=s=>typeof s==`function`,isBoolean$1=s=>typeof s==`boolean`;function isArrayIndex(s){let u=+s;return Number.isInteger(u)&&String(u)===s}var getProxyDraft=s=>isObjectish(s)?s?.[DRAFT_STATE]:null,latest=s=>s.copy_||s.base_,getFinalValue=s=>s.modified_?s.copy_:s.base_;function shallowCopy(s,u){if(isMap$1(s))return new Map(s);if(isSet$1(s))return new Set(s);if(isArray$3(s))return Array[PROTOTYPE].slice.call(s);let p=isPlainObject$5(s);if(u===!0||u===`class_only`&&!p){let u=O.getOwnPropertyDescriptors(s);delete u[DRAFT_STATE];let p=Reflect.ownKeys(u);for(let m=0;m<p.length;m++){let h=p[m],_=u[h];_[WRITABLE]===!1&&(_[WRITABLE]=!0,_[CONFIGURABLE]=!0),(_.get||_.set)&&(u[h]={[CONFIGURABLE]:!0,[WRITABLE]:!0,[ENUMERABLE]:_[ENUMERABLE],[VALUE]:s[h]})}return O.create(getPrototypeOf$1(s),u)}else{let u=getPrototypeOf$1(s);if(u!==null&&p)return{...s};let m=O.create(u);return O.assign(m,s)}}function freeze$1(s,u=!1){return isFrozen(s)||isDraft(s)||!isDraftable(s)?s:(getArchtype(s)>1&&O.defineProperties(s,{set:dontMutateMethodOverride,add:dontMutateMethodOverride,clear:dontMutateMethodOverride,delete:dontMutateMethodOverride}),O.freeze(s),u&&each(s,(s,u)=>{freeze$1(u,!0)},!1),s)}function dontMutateFrozenCollections(){die(2)}var dontMutateMethodOverride={[VALUE]:dontMutateFrozenCollections};function isFrozen(s){return s===null||!isObjectish(s)?!0:O.isFrozen(s)}var PluginMapSet=`MapSet`,PluginPatches=`Patches`,PluginArrayMethods=`ArrayMethods`,plugins={};function getPlugin(s){let u=plugins[s];return u||die(0,s),u}var isPluginLoaded=s=>!!plugins[s];function loadPlugin(s,u){plugins[s]||(plugins[s]=u)}var currentScope,getCurrentScope=()=>currentScope,createScope=(s,u)=>({drafts_:[],parent_:s,immer_:u,canAutoFreeze_:!0,unfinalizedDrafts_:0,handledSet_:new Set,processedForPatches_:new Set,mapSetPlugin_:isPluginLoaded(PluginMapSet)?getPlugin(PluginMapSet):void 0,arrayMethodsPlugin_:isPluginLoaded(PluginArrayMethods)?getPlugin(PluginArrayMethods):void 0});function usePatchesInScope(s,u){u&&(s.patchPlugin_=getPlugin(PluginPatches),s.patches_=[],s.inversePatches_=[],s.patchListener_=u)}function revokeScope(s){leaveScope(s),s.drafts_.forEach(revokeDraft),s.drafts_=null}function leaveScope(s){s===currentScope&&(currentScope=s.parent_)}var enterScope=s=>currentScope=createScope(currentScope,s);function revokeDraft(s){let u=s[DRAFT_STATE];u.type_===0||u.type_===1?u.revoke_():u.revoked_=!0}function processResult(s,u){u.unfinalizedDrafts_=u.drafts_.length;let p=u.drafts_[0];if(s!==void 0&&s!==p){p[DRAFT_STATE].modified_&&(revokeScope(u),die(4)),isDraftable(s)&&(s=finalize(u,s));let{patchPlugin_:m}=u;m&&m.generateReplacementPatches_(p[DRAFT_STATE].base_,s,u)}else s=finalize(u,p);return maybeFreeze(u,s,!0),revokeScope(u),u.patches_&&u.patchListener_(u.patches_,u.inversePatches_),s===NOTHING?void 0:s}function finalize(s,u){if(isFrozen(u))return u;let p=u[DRAFT_STATE];if(!p)return handleValue(u,s.handledSet_,s);if(!isSameScope(p,s))return u;if(!p.modified_)return p.base_;if(!p.finalized_){let{callbacks_:u}=p;if(u)for(;u.length>0;)u.pop()(s);generatePatchesAndFinalize(p,s)}return p.copy_}function maybeFreeze(s,u,p=!1){!s.parent_&&s.immer_.autoFreeze_&&s.canAutoFreeze_&&freeze$1(u,p)}function markStateFinalized(s){s.finalized_=!0,s.scope_.unfinalizedDrafts_--}var isSameScope=(s,u)=>s.scope_===u,EMPTY_LOCATIONS_RESULT=[];function updateDraftInParent(s,u,p,m){let h=latest(s),_=s.type_;if(m!==void 0&&get$3(h,m,_)===u){set$2(h,m,p,_);return}if(!s.draftLocations_){let u=s.draftLocations_=new Map;each(h,(s,p)=>{if(isDraft(p)){let m=u.get(p)||[];m.push(s),u.set(p,m)}})}let v=s.draftLocations_.get(u)??EMPTY_LOCATIONS_RESULT;for(let s of v)set$2(h,s,p,_)}function registerChildFinalizationCallback(s,u,p){s.callbacks_.push(function(m){let h=u;if(!h||!isSameScope(h,m))return;m.mapSetPlugin_?.fixSetContents(h);let _=getFinalValue(h);updateDraftInParent(s,h.draft_??h,_,p),generatePatchesAndFinalize(h,m)})}function generatePatchesAndFinalize(s,u){if(s.modified_&&!s.finalized_&&(s.type_===3||s.type_===1&&s.allIndicesReassigned_||(s.assigned_?.size??0)>0)){let{patchPlugin_:p}=u;if(p){let m=p.getPath(s);m&&p.generatePatches_(s,m,u)}markStateFinalized(s)}}function handleCrossReference(s,u,p){let{scope_:m}=s;if(isDraft(p)){let h=p[DRAFT_STATE];isSameScope(h,m)&&h.callbacks_.push(function(){prepareCopy(s),updateDraftInParent(s,p,getFinalValue(h),u)})}else isDraftable(p)&&s.callbacks_.push(function(){let h=latest(s);s.type_===3?h.has(p)&&handleValue(p,m.handledSet_,m):get$3(h,u,s.type_)===p&&m.drafts_.length>1&&(s.assigned_.get(u)??!1)===!0&&s.copy_&&handleValue(get$3(s.copy_,u,s.type_),m.handledSet_,m)})}function handleValue(s,u,p){return!p.immer_.autoFreeze_&&p.unfinalizedDrafts_<1||isDraft(s)||u.has(s)||!isDraftable(s)||isFrozen(s)?s:(u.add(s),each(s,(m,h)=>{if(isDraft(h)){let u=h[DRAFT_STATE];isSameScope(u,p)&&(set$2(s,m,getFinalValue(u),s.type_),markStateFinalized(u))}else isDraftable(h)&&handleValue(h,u,p)}),s)}function createProxyProxy(s,u){let p=isArray$3(s),m={type_:+!!p,scope_:u?u.scope_:getCurrentScope(),modified_:!1,finalized_:!1,assigned_:void 0,parent_:u,base_:s,draft_:null,copy_:null,revoke_:null,isManual_:!1,callbacks_:void 0},h=m,_=objectTraps;p&&(h=[m],_=arrayTraps);let{revoke:v,proxy:y}=Proxy.revocable(h,_);return m.draft_=y,m.revoke_=v,[y,m]}var objectTraps={get(s,u){if(u===DRAFT_STATE)return s;let p=s.scope_.arrayMethodsPlugin_,m=s.type_===1&&typeof u==`string`;if(m&&p?.isArrayOperationMethod(u))return p.createMethodInterceptor(s,u);let h=latest(s);if(!has(h,u,s.type_))return readPropFromProto(s,h,u);let _=h[u];if(s.finalized_||!isDraftable(_)||m&&s.operationMethod&&p?.isMutatingArrayMethod(s.operationMethod)&&isArrayIndex(u))return _;if(_===peek$1(s.base_,u)){prepareCopy(s);let p=s.type_===1?+u:u,m=createProxy(s.scope_,_,s,p);return s.copy_[p]=m}return _},has(s,u){return u in latest(s)},ownKeys(s){return Reflect.ownKeys(latest(s))},set(s,u,p){let m=getDescriptorFromProto(latest(s),u);if(m?.set)return m.set.call(s.draft_,p),!0;if(!s.modified_){let m=peek$1(latest(s),u),h=m?.[DRAFT_STATE];if(h&&h.base_===p)return s.copy_[u]=p,s.assigned_.set(u,!1),!0;if(is$7(p,m)&&(p!==void 0||has(s.base_,u,s.type_)))return!0;prepareCopy(s),markChanged(s)}return s.copy_[u]===p&&(p!==void 0||u in s.copy_)||Number.isNaN(p)&&Number.isNaN(s.copy_[u])?!0:(s.copy_[u]=p,s.assigned_.set(u,!0),handleCrossReference(s,u,p),!0)},deleteProperty(s,u){return prepareCopy(s),peek$1(s.base_,u)!==void 0||u in s.base_?(s.assigned_.set(u,!1),markChanged(s)):s.assigned_.delete(u),s.copy_&&delete s.copy_[u],!0},getOwnPropertyDescriptor(s,u){let p=latest(s),m=Reflect.getOwnPropertyDescriptor(p,u);return m&&{[WRITABLE]:!0,[CONFIGURABLE]:s.type_!==1||u!==`length`,[ENUMERABLE]:m[ENUMERABLE],[VALUE]:p[u]}},defineProperty(){die(11)},getPrototypeOf(s){return getPrototypeOf$1(s.base_)},setPrototypeOf(){die(12)}},arrayTraps={};for(let s in objectTraps){let u=objectTraps[s];arrayTraps[s]=function(){let s=arguments;return s[0]=s[0][0],u.apply(this,s)}}arrayTraps.deleteProperty=function(s,u){return arrayTraps.set.call(this,s,u,void 0)},arrayTraps.set=function(s,u,p){return objectTraps.set.call(this,s[0],u,p,s[0])};function peek$1(s,u){let p=s[DRAFT_STATE];return(p?latest(p):s)[u]}function readPropFromProto(s,u,p){let m=getDescriptorFromProto(u,p);return m?VALUE in m?m[VALUE]:m.get?.call(s.draft_):void 0}function getDescriptorFromProto(s,u){if(!(u in s))return;let p=getPrototypeOf$1(s);for(;p;){let s=Object.getOwnPropertyDescriptor(p,u);if(s)return s;p=getPrototypeOf$1(p)}}function markChanged(s){s.modified_||(s.modified_=!0,s.parent_&&markChanged(s.parent_))}function prepareCopy(s){s.copy_||=(s.assigned_=new Map,shallowCopy(s.base_,s.scope_.immer_.useStrictShallowCopy_))}var Immer2=class{constructor(s){this.autoFreeze_=!0,this.useStrictShallowCopy_=!1,this.useStrictIteration_=!1,this.produce=(s,u,p)=>{if(isFunction$8(s)&&!isFunction$8(u)){let p=u;u=s;let m=this;return function(s=p,...h){return m.produce(s,s=>u.call(this,s,...h))}}isFunction$8(u)||die(6),p!==void 0&&!isFunction$8(p)&&die(7);let m;if(isDraftable(s)){let h=enterScope(this),_=createProxy(h,s,void 0),v=!0;try{m=u(_),v=!1}finally{v?revokeScope(h):leaveScope(h)}return usePatchesInScope(h,p),processResult(m,h)}else if(!s||!isObjectish(s)){if(m=u(s),m===void 0&&(m=s),m===NOTHING&&(m=void 0),this.autoFreeze_&&freeze$1(m,!0),p){let u=[],h=[];getPlugin(PluginPatches).generateReplacementPatches_(s,m,{patches_:u,inversePatches_:h}),p(u,h)}return m}else die(1,s)},this.produceWithPatches=(s,u)=>{if(isFunction$8(s))return(u,...p)=>this.produceWithPatches(u,u=>s(u,...p));let p,m;return[this.produce(s,u,(s,u)=>{p=s,m=u}),p,m]},isBoolean$1(s?.autoFreeze)&&this.setAutoFreeze(s.autoFreeze),isBoolean$1(s?.useStrictShallowCopy)&&this.setUseStrictShallowCopy(s.useStrictShallowCopy),isBoolean$1(s?.useStrictIteration)&&this.setUseStrictIteration(s.useStrictIteration)}createDraft(s){isDraftable(s)||die(8),isDraft(s)&&(s=current(s));let u=enterScope(this),p=createProxy(u,s,void 0);return p[DRAFT_STATE].isManual_=!0,leaveScope(u),p}finishDraft(s,u){let p=s&&s[DRAFT_STATE];(!p||!p.isManual_)&&die(9);let{scope_:m}=p;return usePatchesInScope(m,u),processResult(void 0,m)}setAutoFreeze(s){this.autoFreeze_=s}setUseStrictShallowCopy(s){this.useStrictShallowCopy_=s}setUseStrictIteration(s){this.useStrictIteration_=s}shouldUseStrictIteration(){return this.useStrictIteration_}applyPatches(s,u){let p;for(p=u.length-1;p>=0;p--){let m=u[p];if(m.path.length===0&&m.op===`replace`){s=m.value;break}}p>-1&&(u=u.slice(p+1));let m=getPlugin(PluginPatches).applyPatches_;return isDraft(s)?m(s,u):this.produce(s,s=>m(s,u))}};function createProxy(s,u,p,m){let[h,_]=isMap$1(u)?getPlugin(PluginMapSet).proxyMap_(u,p):isSet$1(u)?getPlugin(PluginMapSet).proxySet_(u,p):createProxyProxy(u,p);return(p?.scope_??getCurrentScope()).drafts_.push(h),_.callbacks_=p?.callbacks_??[],_.key_=m,p&&m!==void 0?registerChildFinalizationCallback(p,_,m):_.callbacks_.push(function(s){s.mapSetPlugin_?.fixSetContents(_);let{patchPlugin_:u}=s;_.modified_&&u&&u.generatePatches_(_,[],s)}),h}function current(s){return isDraft(s)||die(10,s),currentImpl(s)}function currentImpl(s){if(!isDraftable(s)||isFrozen(s))return s;let u=s[DRAFT_STATE],p,m=!0;if(u){if(!u.modified_)return u.base_;u.finalized_=!0,p=shallowCopy(s,u.scope_.immer_.useStrictShallowCopy_),m=u.scope_.immer_.shouldUseStrictIteration()}else p=shallowCopy(s,!0);return each(p,(s,u)=>{set$2(p,s,currentImpl(u))},m),u&&(u.finalized_=!1),p}function enablePatches(){let s=16;function u(s,m=[]){if(s.key_!==void 0){let u=s.parent_.copy_??s.parent_.base_,p=getProxyDraft(get$3(u,s.key_)),h=get$3(u,s.key_);if(h===void 0||h!==s.draft_&&h!==s.base_&&h!==s.copy_||p!=null&&p.base_!==s.base_)return null;let _=s.parent_.type_===3,v;if(_){let u=s.parent_;v=Array.from(u.drafts_.keys()).indexOf(s.key_)}else v=s.key_;if(!(_&&u.size>v||has(u,v)))return null;m.push(v)}if(s.parent_)return u(s.parent_,m);m.reverse();try{p(s.copy_,m)}catch{return null}return m}function p(s,u){let p=s;for(let s=0;s<u.length-1;s++){let m=u[s];if(p=get$3(p,m),!isObjectish(p)||p===null)throw Error(`Cannot resolve path at '${u.join(`/`)}'`)}return p}let m=`replace`,h=`add`,_=`remove`;function v(s,u,p){if(s.scope_.processedForPatches_.has(s))return;s.scope_.processedForPatches_.add(s);let{patches_:m,inversePatches_:h}=p;switch(s.type_){case 0:case 2:return x(s,u,m,h);case 1:return y(s,u,m,h);case 3:return S(s,u,m,h)}}function y(s,u,p,h){let{base_:v,assigned_:y}=s,x=s.copy_;x.length<v.length&&([v,x]=[x,v],[p,h]=[h,p]);let S=s.allIndicesReassigned_===!0;for(let s=0;s<v.length;s++){let _=x[s],C=v[s];if((S||y?.get(s.toString()))&&_!==C){let v=_?.[DRAFT_STATE];if(v&&v.modified_)continue;let y=u.concat([s]);p.push({op:m,path:y,value:E(_)}),h.push({op:m,path:y,value:E(C)})}}for(let s=v.length;s<x.length;s++){let m=u.concat([s]);p.push({op:`add`,path:m,value:E(x[s])})}for(let s=x.length-1;v.length<=s;--s){let p=u.concat([s]);h.push({op:_,path:p})}}function x(s,u,p,h){let{base_:v,copy_:y,type_:x}=s;each(s.assigned_,(s,S)=>{let C=get$3(v,s,x),w=get$3(y,s,x),T=S?has(v,s)?m:`add`:_;if(C===w&&T===m)return;let D=u.concat(s);p.push(T===_?{op:T,path:D}:{op:T,path:D,value:E(w)}),h.push(T===`add`?{op:_,path:D}:T===_?{op:`add`,path:D,value:E(C)}:{op:m,path:D,value:E(C)})})}function S(s,u,p,m){let{base_:h,copy_:v}=s,y=0;h.forEach(s=>{if(!v.has(s)){let h=u.concat([y]);p.push({op:_,path:h,value:s}),m.unshift({op:`add`,path:h,value:s})}y++}),y=0,v.forEach(s=>{if(!h.has(s)){let h=u.concat([y]);p.push({op:`add`,path:h,value:s}),m.unshift({op:_,path:h,value:s})}y++})}function C(s,u,p){let{patches_:h,inversePatches_:_}=p;h.push({op:m,path:[],value:u===NOTHING?void 0:u}),_.push({op:m,path:[],value:s})}function w(s,u){return u.forEach(u=>{let{path:p,op:h}=u,v=s;for(let s=0;s<p.length-1;s++){let u=getArchtype(v),m=p[s];typeof m!=`string`&&typeof m!=`number`&&(m=``+m),(u===0||u===1)&&(m===`__proto__`||m===CONSTRUCTOR)&&die(19),isFunction$8(v)&&m===PROTOTYPE&&die(19),v=get$3(v,m),isObjectish(v)||die(18,p.join(`/`))}let y=getArchtype(v),x=T(u.value),S=p[p.length-1];switch(h){case m:switch(y){case 2:return v.set(S,x);case 3:die(16);default:return v[S]=x}case`add`:switch(y){case 1:return S===`-`?v.push(x):v.splice(S,0,x);case 2:return v.set(S,x);case 3:return v.add(x);default:return v[S]=x}case _:switch(y){case 1:return v.splice(S,1);case 2:return v.delete(S);case 3:return v.delete(u.value);default:return delete v[S]}default:die(17,h)}}),s}function T(s){if(!isDraftable(s))return s;if(isArray$3(s))return s.map(T);if(isMap$1(s))return new Map(Array.from(s.entries()).map(([s,u])=>[s,T(u)]));if(isSet$1(s))return new Set(Array.from(s).map(T));let u=Object.create(getPrototypeOf$1(s));for(let p in s)u[p]=T(s[p]);return has(s,DRAFTABLE)&&(u[DRAFTABLE]=s[DRAFTABLE]),u}function E(s){return isDraft(s)?T(s):s}loadPlugin(PluginPatches,{applyPatches_:w,generatePatches_:v,generateReplacementPatches_:C,getPath:u})}var immer=new Immer2,produce=immer.produce,produceWithPatches=immer.produceWithPatches.bind(immer),applyPatches=immer.applyPatches.bind(immer),NOT_FOUND=Symbol(`NOT_FOUND`);function assertIsFunction(s,u=`expected a function, instead received ${typeof s}`){if(typeof s!=`function`)throw TypeError(u)}function assertIsObject(s,u=`expected an object, instead received ${typeof s}`){if(typeof s!=`object`)throw TypeError(u)}function assertIsArrayOfFunctions(s,u=`expected all items to be functions, instead received the following types: `){if(!s.every(s=>typeof s==`function`)){let p=s.map(s=>typeof s==`function`?`function ${s.name||`unnamed`}()`:typeof s).join(`, `);throw TypeError(`${u}[${p}]`)}}var ensureIsArray=s=>Array.isArray(s)?s:[s];function getDependencies(s){let u=Array.isArray(s[0])?s[0]:s;return assertIsArrayOfFunctions(u,`createSelector expects all input-selectors to be functions, but received the following types: `),u}function collectInputSelectorResults(s,u){let p=[],{length:m}=s;for(let h=0;h<m;h++)p.push(s[h].apply(null,u));return p}function createSingletonCache(s){let u;return{get(p){return u&&s(u.key,p)?u.value:NOT_FOUND},put(s,p){u={key:s,value:p}},getEntries(){return u?[u]:[]},clear(){u=void 0}}}function createLruCache(s,u){let p=[];function m(s){let m=p.findIndex(p=>u(s,p.key));if(m>-1){let s=p[m];return m>0&&(p.splice(m,1),p.unshift(s)),s.value}return NOT_FOUND}function h(u,h){m(u)===NOT_FOUND&&(p.unshift({key:u,value:h}),p.length>s&&p.pop())}function _(){return p}function v(){p=[]}return{get:m,put:h,getEntries:_,clear:v}}var referenceEqualityCheck=(s,u)=>s===u;function createCacheKeyComparator(s){return function(u,p){if(u===null||p===null||u.length!==p.length)return!1;let{length:m}=u;for(let h=0;h<m;h++)if(!s(u[h],p[h]))return!1;return!0}}function lruMemoize(s,u){let{equalityCheck:p=referenceEqualityCheck,maxSize:m=1,resultEqualityCheck:h}=typeof u==`object`?u:{equalityCheck:u},_=createCacheKeyComparator(p),v=0,y=m<=1?createSingletonCache(_):createLruCache(m,_);function x(){let u=y.get(arguments);if(u===NOT_FOUND){if(u=s.apply(null,arguments),v++,h){let s=y.getEntries().find(s=>h(s.value,u));s&&(u=s.value,v!==0&&v--)}y.put(arguments,u)}return u}return x.clearCache=()=>{y.clear(),x.resetResultsCount()},x.resultsCount=()=>v,x.resetResultsCount=()=>{v=0},x}var StrongRef=class{constructor(s){this.value=s}deref(){return this.value}},Ref=typeof WeakRef<`u`?WeakRef:StrongRef,UNTERMINATED=0,TERMINATED=1;function createCacheNode(){return{s:UNTERMINATED,v:void 0,o:null,p:null}}function weakMapMemoize(s,u={}){let p=createCacheNode(),{resultEqualityCheck:m}=u,h,_=0;function v(){let u=p,{length:v}=arguments;for(let s=0,p=v;s<p;s++){let p=arguments[s];if(typeof p==`function`||typeof p==`object`&&p){let s=u.o;s===null&&(u.o=s=new WeakMap);let m=s.get(p);m===void 0?(u=createCacheNode(),s.set(p,u)):u=m}else{let s=u.p;s===null&&(u.p=s=new Map);let m=s.get(p);m===void 0?(u=createCacheNode(),s.set(p,u)):u=m}}let y=u,x;if(u.s===TERMINATED)x=u.v;else if(x=s.apply(null,arguments),_++,m){let s=h?.deref?.()??h;s!=null&&m(s,x)&&(x=s,_!==0&&_--),h=typeof x==`object`&&x||typeof x==`function`?new Ref(x):x}return y.s=TERMINATED,y.v=x,x}return v.clearCache=()=>{p=createCacheNode(),v.resetResultsCount()},v.resultsCount=()=>_,v.resetResultsCount=()=>{_=0},v}function createSelectorCreator(s,...u){let p=typeof s==`function`?{memoize:s,memoizeOptions:u}:s,m=(...s)=>{let u=0,m=0,h,_={},v=s.pop();typeof v==`object`&&(_=v,v=s.pop()),assertIsFunction(v,`createSelector expects an output function after the inputs, but received: [${typeof v}]`);let{memoize:y,memoizeOptions:x=[],argsMemoize:S=weakMapMemoize,argsMemoizeOptions:C=[],devModeChecks:w={}}={...p,..._},T=ensureIsArray(x),E=ensureIsArray(C),D=getDependencies(s),A=y(function(){return u++,v.apply(null,arguments)},...T),j=S(function(){m++;let s=collectInputSelectorResults(D,arguments);return h=A.apply(null,s),h},...E);return Object.assign(j,{resultFunc:v,memoizedResultFunc:A,dependencies:D,dependencyRecomputations:()=>m,resetDependencyRecomputations:()=>{m=0},lastResult:()=>h,recomputations:()=>u,resetRecomputations:()=>{u=0},memoize:y,argsMemoize:S})};return Object.assign(m,{withTypes:()=>m}),m}var createSelector$5=createSelectorCreator(weakMapMemoize),createStructuredSelector=Object.assign((s,u=createSelector$5)=>{assertIsObject(s,`createStructuredSelector expects first argument to be an object where each property is a selector, instead received a ${typeof s}`);let p=Object.keys(s);return u(p.map(u=>s[u]),(...s)=>s.reduce((s,u,m)=>(s[p[m]]=u,s),{}))},{withTypes:()=>createStructuredSelector});function createThunkMiddleware(s){return({dispatch:u,getState:p})=>m=>h=>typeof h==`function`?h(u,p,s):m(h)}var thunk=createThunkMiddleware(),withExtraArgument=createThunkMiddleware,createDraftSafeSelectorCreator=(...s)=>{let u=createSelectorCreator(...s),p=Object.assign((...s)=>{let p=u(...s),m=(s,...u)=>p(isDraft(s)?current(s):s,...u);return Object.assign(m,p),m},{withTypes:()=>p});return p},createDraftSafeSelector=createDraftSafeSelectorCreator(weakMapMemoize),composeWithDevTools=typeof window<`u`&&window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__?window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__:function(){if(arguments.length!==0)return typeof arguments[0]==`object`?compose$1:compose$1.apply(null,arguments)};typeof window<`u`&&window.__REDUX_DEVTOOLS_EXTENSION__&&window.__REDUX_DEVTOOLS_EXTENSION__;var hasMatchFunction=s=>s&&typeof s.match==`function`;function createAction$1(s,u){function p(...p){if(u){let m=u(...p);if(!m)throw Error(formatProdErrorMessage(0));return{type:s,payload:m.payload,...`meta`in m&&{meta:m.meta},...`error`in m&&{error:m.error}}}return{type:s,payload:p[0]}}return p.toString=()=>`${s}`,p.type=s,p.match=u=>isAction$1(u)&&u.type===s,p}function isFSA(s){return isAction$1(s)&&Object.keys(s).every(isValidKey)}function isValidKey(s){return[`type`,`payload`,`error`,`meta`].indexOf(s)>-1}var Tuple=class s extends Array{constructor(...u){super(...u),Object.setPrototypeOf(this,s.prototype)}static get[Symbol.species](){return s}concat(...s){return super.concat.apply(this,s)}prepend(...u){return u.length===1&&Array.isArray(u[0])?new s(...u[0].concat(this)):new s(...u.concat(this))}};function freezeDraftable(s){return isDraftable(s)?produce(s,()=>{}):s}function getOrInsertComputed$1(s,u,p){return s.has(u)?s.get(u):s.set(u,p(u)).get(u)}function isBoolean(s){return typeof s==`boolean`}var buildGetDefaultMiddleware=()=>function(s){let{thunk:u=!0,immutableCheck:p=!0,serializableCheck:m=!0,actionCreatorCheck:h=!0}=s??{},_=new Tuple;return u&&(isBoolean(u)?_.push(thunk):_.push(withExtraArgument(u.extraArgument))),_},SHOULD_AUTOBATCH=`RTK_autoBatch`,prepareAutoBatched=()=>s=>({payload:s,meta:{[SHOULD_AUTOBATCH]:!0}}),createQueueWithTimer=s=>u=>{setTimeout(u,s)},autoBatchEnhancer=(s={type:`raf`})=>u=>(...p)=>{let m=u(...p),h=!0,_=!1,v=!1,y=new Set,x=s.type===`tick`?queueMicrotask:s.type===`raf`?typeof window<`u`&&window.requestAnimationFrame?window.requestAnimationFrame:createQueueWithTimer(10):s.type===`callback`?s.queueNotification:createQueueWithTimer(s.timeout),S=()=>{v=!1,_&&(_=!1,y.forEach(s=>s()))};return Object.assign({},m,{subscribe(s){let u=m.subscribe(()=>h&&s());return y.add(s),()=>{u(),y.delete(s)}},dispatch(s){try{return h=!s?.meta?.[SHOULD_AUTOBATCH],_=!h,_&&(v||(v=!0,x(S))),m.dispatch(s)}finally{h=!0}}})},buildGetDefaultEnhancers=s=>function(u){let{autoBatch:p=!0}=u??{},m=new Tuple(s);return p&&m.push(autoBatchEnhancer(typeof p==`object`?p:void 0)),m};function configureStore(s){let u=buildGetDefaultMiddleware(),{reducer:p=void 0,middleware:m,devTools:h=!0,duplicateMiddlewareCheck:_=!0,preloadedState:v=void 0,enhancers:y=void 0}=s||{},x;if(typeof p==`function`)x=p;else if(isPlainObject$6(p))x=combineReducers(p);else throw Error(formatProdErrorMessage(1));let S;S=typeof m==`function`?m(u):u();let C=compose$1;h&&(C=composeWithDevTools({trace:!1,...typeof h==`object`&&h}));let w=buildGetDefaultEnhancers(applyMiddleware(...S)),T=typeof y==`function`?y(w):w(),E=C(...T);return createStore$3(x,v,E)}function executeReducerBuilderCallback(s){let u={},p=[],m,h={addCase(s,p){let m=typeof s==`string`?s:s.type;if(!m)throw Error(formatProdErrorMessage(28));if(m in u)throw Error(formatProdErrorMessage(29));return u[m]=p,h},addAsyncThunk(s,m){return m.pending&&(u[s.pending.type]=m.pending),m.rejected&&(u[s.rejected.type]=m.rejected),m.fulfilled&&(u[s.fulfilled.type]=m.fulfilled),m.settled&&p.push({matcher:s.settled,reducer:m.settled}),h},addMatcher(s,u){return p.push({matcher:s,reducer:u}),h},addDefaultCase(s){return m=s,h}};return s(h),[u,p,m]}function isStateFunction(s){return typeof s==`function`}function createReducer(s,u){let[p,m,h]=executeReducerBuilderCallback(u),_;if(isStateFunction(s))_=()=>freezeDraftable(s());else{let u=freezeDraftable(s);_=()=>u}function v(s=_(),u){let v=[p[u.type],...m.filter(({matcher:s})=>s(u)).map(({reducer:s})=>s)];return v.filter(s=>!!s).length===0&&(v=[h]),v.reduce((s,p)=>{if(p)if(isDraft(s)){let m=p(s,u);return m===void 0?s:m}else if(isDraftable(s))return produce(s,s=>p(s,u));else{let m=p(s,u);if(m===void 0){if(s===null)return s;throw Error(`A case reducer on a non-draftable value must not return undefined`)}return m}return s},s)}return v.getInitialState=_,v}var matches$1=(s,u)=>hasMatchFunction(s)?s.match(u):s(u);function isAnyOf(...s){return u=>s.some(s=>matches$1(s,u))}function isAllOf(...s){return u=>s.every(s=>matches$1(s,u))}function hasExpectedRequestMetadata(s,u){if(!s||!s.meta)return!1;let p=typeof s.meta.requestId==`string`,m=u.indexOf(s.meta.requestStatus)>-1;return p&&m}function isAsyncThunkArray(s){return typeof s[0]==`function`&&`pending`in s[0]&&`fulfilled`in s[0]&&`rejected`in s[0]}function isPending(...s){return s.length===0?s=>hasExpectedRequestMetadata(s,[`pending`]):isAsyncThunkArray(s)?isAnyOf(...s.map(s=>s.pending)):isPending()(s[0])}function isRejected(...s){return s.length===0?s=>hasExpectedRequestMetadata(s,[`rejected`]):isAsyncThunkArray(s)?isAnyOf(...s.map(s=>s.rejected)):isRejected()(s[0])}function isRejectedWithValue(...s){let u=s=>s&&s.meta&&s.meta.rejectedWithValue;return s.length===0||isAsyncThunkArray(s)?isAllOf(isRejected(...s),u):isRejectedWithValue()(s[0])}function isFulfilled(...s){return s.length===0?s=>hasExpectedRequestMetadata(s,[`fulfilled`]):isAsyncThunkArray(s)?isAnyOf(...s.map(s=>s.fulfilled)):isFulfilled()(s[0])}function isAsyncThunkAction(...s){return s.length===0?s=>hasExpectedRequestMetadata(s,[`pending`,`fulfilled`,`rejected`]):isAsyncThunkArray(s)?isAnyOf(...s.flatMap(s=>[s.pending,s.rejected,s.fulfilled])):isAsyncThunkAction()(s[0])}var urlAlphabet=`ModuleSymbhasOwnPr-0123456789ABCDEFGHNRVfgctiUvz_KqYTJkLxpZXIjQW`,nanoid=(s=21)=>{let u=``,p=s;for(;p--;)u+=urlAlphabet[Math.random()*64|0];return u},commonProperties=[`name`,`message`,`stack`,`code`],RejectWithValue=class{constructor(s,u){this.payload=s,this.meta=u}_type},FulfillWithMeta=class{constructor(s,u){this.payload=s,this.meta=u}_type},miniSerializeError=s=>{if(typeof s==`object`&&s){let u={};for(let p of commonProperties)typeof s[p]==`string`&&(u[p]=s[p]);return u}return{message:String(s)}},externalAbortMessage=`External signal was aborted`,createAsyncThunk$1=(()=>{function s(s,u,p){let m=createAction$1(s+`/fulfilled`,(s,u,p,m)=>({payload:s,meta:{...m||{},arg:p,requestId:u,requestStatus:`fulfilled`}})),h=createAction$1(s+`/pending`,(s,u,p)=>({payload:void 0,meta:{...p||{},arg:u,requestId:s,requestStatus:`pending`}})),_=createAction$1(s+`/rejected`,(s,u,m,h,_)=>({payload:h,error:(p&&p.serializeError||miniSerializeError)(s||`Rejected`),meta:{..._||{},arg:m,requestId:u,rejectedWithValue:!!h,requestStatus:`rejected`,aborted:s?.name===`AbortError`,condition:s?.name===`ConditionError`}}));function v(s,{signal:v}={}){return(y,x,S)=>{let C=p?.idGenerator?p.idGenerator(s):nanoid(),w=new AbortController,T,E;function D(s){E=s,w.abort()}v&&(v.aborted?D(externalAbortMessage):v.addEventListener(`abort`,()=>D(externalAbortMessage),{once:!0}));let A=async function(){let v;try{let _=p?.condition?.(s,{getState:x,extra:S});if(isThenable(_)&&(_=await _),_===!1||w.signal.aborted)throw{name:`ConditionError`,message:`Aborted due to condition callback returning false.`};let A=new Promise((s,u)=>{T=()=>{u({name:`AbortError`,message:E||`Aborted`})},w.signal.addEventListener(`abort`,T,{once:!0})});y(h(C,s,p?.getPendingMeta?.({requestId:C,arg:s},{getState:x,extra:S}))),v=await Promise.race([A,Promise.resolve(u(s,{dispatch:y,getState:x,extra:S,requestId:C,signal:w.signal,abort:D,rejectWithValue:(s,u)=>new RejectWithValue(s,u),fulfillWithValue:(s,u)=>new FulfillWithMeta(s,u)})).then(u=>{if(u instanceof RejectWithValue)throw u;return u instanceof FulfillWithMeta?m(u.payload,C,s,u.meta):m(u,C,s)})])}catch(u){v=u instanceof RejectWithValue?_(null,C,s,u.payload,u.meta):_(u,C,s)}finally{T&&w.signal.removeEventListener(`abort`,T)}return p&&!p.dispatchConditionRejection&&_.match(v)&&v.meta.condition||y(v),v}();return Object.assign(A,{abort:D,requestId:C,arg:s,unwrap(){return A.then(unwrapResult)}})}}return Object.assign(v,{pending:h,rejected:_,fulfilled:m,settled:isAnyOf(_,m),typePrefix:s})}return s.withTypes=()=>s,s})();function unwrapResult(s){if(s.meta&&s.meta.rejectedWithValue)throw s.payload;if(s.error)throw s.error;return s.payload}function isThenable(s){return typeof s==`object`&&!!s&&typeof s.then==`function`}var asyncThunkSymbol=Symbol.for(`rtk-slice-createasyncthunk`);function getType(s,u){return`${s}/${u}`}function buildCreateSlice({creators:s}={}){let u=s?.asyncThunk?.[asyncThunkSymbol];return function(s){let{name:p,reducerPath:m=p}=s;if(!p)throw Error(formatProdErrorMessage(11));let h=(typeof s.reducers==`function`?s.reducers(buildReducerCreators()):s.reducers)||{},_=Object.keys(h),v={sliceCaseReducersByName:{},sliceCaseReducersByType:{},actionCreators:{},sliceMatchers:[]},y={addCase(s,u){let p=typeof s==`string`?s:s.type;if(!p)throw Error(formatProdErrorMessage(12));if(p in v.sliceCaseReducersByType)throw Error(formatProdErrorMessage(13));return v.sliceCaseReducersByType[p]=u,y},addMatcher(s,u){return v.sliceMatchers.push({matcher:s,reducer:u}),y},exposeAction(s,u){return v.actionCreators[s]=u,y},exposeCaseReducer(s,u){return v.sliceCaseReducersByName[s]=u,y}};_.forEach(m=>{let _=h[m],v={reducerName:m,type:getType(p,m),createNotation:typeof s.reducers==`function`};isAsyncThunkSliceReducerDefinition(_)?handleThunkCaseReducerDefinition(v,_,y,u):handleNormalReducerDefinition(v,_,y)});function x(){let[u={},p=[],m=void 0]=typeof s.extraReducers==`function`?executeReducerBuilderCallback(s.extraReducers):[s.extraReducers],h={...u,...v.sliceCaseReducersByType};return createReducer(s.initialState,s=>{for(let u in h)s.addCase(u,h[u]);for(let u of v.sliceMatchers)s.addMatcher(u.matcher,u.reducer);for(let u of p)s.addMatcher(u.matcher,u.reducer);m&&s.addDefaultCase(m)})}let S=s=>s,C=new Map,w=new WeakMap,T;function E(s,u){return T||=x(),T(s,u)}function D(){return T||=x(),T.getInitialState()}function A(u,p=!1){function m(s){let h=s[u];return h===void 0&&p&&(h=getOrInsertComputed$1(w,m,D)),h}function h(u=S){return getOrInsertComputed$1(getOrInsertComputed$1(C,p,()=>new WeakMap),u,()=>{let m={};for(let[h,_]of Object.entries(s.selectors??{}))m[h]=wrapSelector(_,u,()=>getOrInsertComputed$1(w,u,D),p);return m})}return{reducerPath:u,getSelectors:h,get selectors(){return h(m)},selectSlice:m}}let j={name:p,reducer:E,actions:v.actionCreators,caseReducers:v.sliceCaseReducersByName,getInitialState:D,...A(m),injectInto(s,{reducerPath:u,...p}={}){let h=u??m;return s.inject({reducerPath:h,reducer:E},p),{...j,...A(h,!0)}}};return j}}function wrapSelector(s,u,p,m){function h(h,..._){let v=u(h);return v===void 0&&m&&(v=p()),s(v,..._)}return h.unwrapped=s,h}var createSlice=buildCreateSlice();function buildReducerCreators(){function s(s,u){return{_reducerDefinitionType:`asyncThunk`,payloadCreator:s,...u}}return s.withTypes=()=>s,{reducer(s){return Object.assign({[s.name](...u){return s(...u)}}[s.name],{_reducerDefinitionType:`reducer`})},preparedReducer(s,u){return{_reducerDefinitionType:`reducerWithPrepare`,prepare:s,reducer:u}},asyncThunk:s}}function handleNormalReducerDefinition({type:s,reducerName:u,createNotation:p},m,h){let _,v;if(`reducer`in m){if(p&&!isCaseReducerWithPrepareDefinition(m))throw Error(formatProdErrorMessage(17));_=m.reducer,v=m.prepare}else _=m;h.addCase(s,_).exposeCaseReducer(u,_).exposeAction(u,v?createAction$1(s,v):createAction$1(s))}function isAsyncThunkSliceReducerDefinition(s){return s._reducerDefinitionType===`asyncThunk`}function isCaseReducerWithPrepareDefinition(s){return s._reducerDefinitionType===`reducerWithPrepare`}function handleThunkCaseReducerDefinition({type:s,reducerName:u},p,m,h){if(!h)throw Error(formatProdErrorMessage(18));let{payloadCreator:_,fulfilled:v,pending:y,rejected:x,settled:S,options:C}=p,w=h(s,_,C);m.exposeAction(u,w),v&&m.addCase(w.fulfilled,v),y&&m.addCase(w.pending,y),x&&m.addCase(w.rejected,x),S&&m.addMatcher(w.settled,S),m.exposeCaseReducer(u,{fulfilled:v||noop$19,pending:y||noop$19,rejected:x||noop$19,settled:S||noop$19})}function noop$19(){}function getInitialEntityState(){return{ids:[],entities:{}}}function createInitialStateFactory(s){function u(u={},p){let m=Object.assign
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-CL-MmSlB.js" 2>&1 | grep -oE '(https?://[a-z0-9.-]+\.(sipgate\.(com|de|net|co\.uk)|local\.sipgate\.(com|de))(:[0-9]+)?)' | sort -u
+https://admin.dev.sipgate.net
+https://admin.live.sipgate.net
+https://amp.sipgate.de
+https://api.dev.sipgate.com
+https://api.local.sipgate.com:3396
+https://api.sipgate.com
+https://app.dev.sipgate.com
+https://app.local.sipgate.com:3443
+https://app.sipgate.com
+https://chatbot.dev.sipgate.com
+https://chatbot.sipgate.com
+https://info.sipgate.de
+https://integration.dev.sipgate.com
+https://login.dev.sipgate.com
+https://login.sipgate.com
+https://payment.dev.sipgate.com
+https://payment.local.sipgate.com:8080
+https://payment.sipgate.com
+https://static.sipgate.com
+https://status.sipgate.de
+https://team-de.dev.sipgate.com
+https://team-de.live.sipgate.com
+https://team-de.local.sipgate.com:10443
+https://team-uk.dev.sipgate.com
+https://team-uk.live.sipgate.com
+https://team-uk.local.sipgate.com:10443
+https://www.sipgate.de
+[0m
+[0m$ [0mcurl -s -X OPTIONS "https://api.sipgate.com/v2/authorization/token" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" -I 2>&1
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Thu, 17 Sep 2026 19:52:49 GMT
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/metrics" 2>&1 | grep -E '(firebase_jwt|api_key)' | head -5
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 1
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/metrics" 2>&1 | grep "firebase_jwt_forbidden_requests " | grep -v HELP | grep -v TYPE
+firebase_jwt_forbidden_requests 46734
+[0m
+[0m$ [0mcurl -s -X OPTIONS "https://api.sipgate.com/v2/doc/oauth2-redirect.html" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" -I 2>&1
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Thu, 17 Sep 2026 19:53:30 GMT
+[0m
+[0m$ [0mcurl -s -H "Accept: application/json" "https://api.sipgate.com/v2" 2>&1 | head -c 2000
+{"accountUrl":"https://api.sipgate.com/v2/account","accountVerifiedUrl":"https://api.sipgate.com/v2/account/verified","addressUrl":"https://api.sipgate.com/v2/addresses/{addressId}","addressesUrl":"https://api.sipgate.com/v2/addresses","addressNumbersUrl":"https://api.sipgate.com/v2/addresses/{addressId}/numbers","authorizationOauthClientsUrl":"https://api.sipgate.com/v2/authorization/oauth2/clients","authorizationOauthClientUrl":"https://api.sipgate.com/v2/authorization/oauth2/clients/{clientId}","authorizationTokenUrl":"https://api.sipgate.com/v2/authorization/token","balanceUrl":"https://api.sipgate.com/v2/balance","getCallRestrictionsUrl":"https://api.sipgate.com/v2/callrestrictions","callRestrictionsUrl":"https://api.sipgate.com/v2/{userId}/callrestrictions/{restriction}","contactsUrl":"https://api.sipgate.com/v2/contacts","crmBridgeUrl":"https://api.sipgate.com/v2/crm-bridge","internalContactsUrl":"https://api.sipgate.com/v2/contacts/internal","deviceCallerIdUrl":"https://api.sipgate.com/v2/devices/{deviceId}/callerid","deviceUrl":"https://api.sipgate.com/v2/devices/{deviceId}","devicesTariffAnnouncementUrl":"https://api.sipgate.com/v2/devices/{deviceId}/tariffannouncement","devicesSingleRowDisplayUrl":"https://api.sipgate.com/v2/devices/{deviceId}/singlerowdisplay","deviceSimOrdersUrl":"https://api.sipgate.com/v2/{userId}/devices/{deviceId}/sim/orders","faxlinesUrl":"https://api.sipgate.com/v2/{userId}/faxlines","faxlineUrl":"https://api.sipgate.com/v2/{userId}/faxlines/{faxlineId}","faxlineNumbersUrl":"https://api.sipgate.com/v2/{userId}/faxlines/{faxlineId}/numbers","groupsUrl":"https://api.sipgate.com/v2/groups","groupDetailUrl":"https://api.sipgate.com/v2/groups/{groupId}","groupUserUrl":"https://api.sipgate.com/v2/groups/{groupId}/users","groupDevicesUrl":"https://api.sipgate.com/v2/groups/{groupId}/devices","groupNumbersUrl":"https://api.sipgate.com/v2/groups/{groupId}/numbers","historyEntryUrl":"https://api.sipgate.com/v2/history/{entryId}","historyUrl
+[0m
+[0m$ [0mcurl -s -I "https://admin.live.sipgate.net" --max-time 5 2>&1 | head -10
+(no output)
+[0m
+[0m$ [0mcurl -s -I "https://admin.live.sipgate.net" --max-time 10 2>&1 | head -15
+(no output)
+[0m
+[0m$ [0mdig +short admin.live.sipgate.net 2>&1
+helpdesk.live.sipgate.net.
+217.10.73.71
+[0m
+[0m$ [0mdig +short admin.dev.sipgate.net 2>&1
+helpdesk.dev.sipgate.net.
+217.116.120.148
+[0m
+[0m$ [0mdig +short share1.sipgate.cloud 2>&1
+nx38603.your-storageshare.de.
+[0m
+[0m$ [0mdig +short nx38603.your-storageshare.de 2>&1
+(no output)
+[0m
+[0m$ [0mcurl -s -I "https://grafana.sipgate.cloud/api/health" --max-time 10 2>&1 | head -10
+HTTP/2 200 
+date: Thu, 17 Sep 2026 19:54:37 GMT
+content-type: application/json; charset=UTF-8
+cache-control: no-store
+x-content-type-options: nosniff
+x-xss-protection: 1; mode=block
+[0m
+[0m$ [0mcurl -s "https://grafana.sipgate.cloud/api/health" 2>&1
+{
+  "database": "ok",
+  "version": "13.2.2",
+  "commit": "1bea008f7e4e858b6824c9e364d608bd4d10b13a"
+}
+[0m
+[0m$ [0mcurl -s -I "https://team-uk.live.sipgate.com" --max-time 10 2>&1 | grep -i content-security-policy
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk *.google-analytics.com stats.g.doubleclick.net bat.bing.com; script-src 'unsafe-eval' 'unsafe-inline' 'self' data: accounts.google.com apis.google.com *.google-analytics.com www.googletagmanager.com bat.bing.com consentmanager.mgr.consensu.org cdn.consentmanager.net a.delivery.consentmanager.net www.sipgate.de app.sipgate.com cdn.consentmanager.mgr.consensu.org; style-src 'unsafe-inline' 'self' static.sipgate.com data: blob: cdn.consentmanager.mgr.consensu.org; font-src 'self' static.sipgate.com www.sipgateteam.de www.sipgate.de data:; frame-src accounts.google.com *.sipgate.com *.sipgate.de *.sipgate.co.uk; frame-ancestors 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk app.local.sipgate.com:3443 *.googletagmanager.com; child-src *.sipgate.com *.sipgate.de *.sipgate.co.uk; img-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net data: www.google-analytics.com bat.bing.com consentmanager.mgr.consensu.org cdn.consentmanager.mgr.consensu.org a.delivery.consentmanager.net www.google.com/ads/ www.google.de/ads/ www.googletagmanager.com; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net blob:
+[0m
+[0m$ [0mcurl -s -I "https://team-de.live.sipgate.com" --max-time 10 2>&1 | grep -i content-security-policy | head -1
+content-security-policy: default-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net; connect-src 'self' *.sipgate.com *.sipgate.com:3396 *.sipgate.net *.sipgate.de *.sipgate.co.uk https://static.sipgate.com wss://*.sipgate.com wss://*.sipgate.de wss://*.sipgate.net wss://*.sipgate.co.uk *.google-analytics.com stats.g.doubleclick.net bat.bing.com; script-src 'unsafe-eval' 'unsafe-inline' 'self' data: accounts.google.com apis.google.com *.google-analytics.com www.googletagmanager.com bat.bing.com consentmanager.mgr.consensu.org cdn.consentmanager.net a.delivery.consentmanager.net www.sipgate.de app.sipgate.com cdn.consentmanager.mgr.consensu.org; style-src 'unsafe-inline' 'self' static.sipgate.com data: blob: cdn.consentmanager.mgr.consensu.org; font-src 'self' static.sipgate.com www.sipgateteam.de www.sipgate.de data:; frame-src accounts.google.com *.sipgate.com *.sipgate.de *.sipgate.co.uk; frame-ancestors 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk app.local.sipgate.com:3443 *.googletagmanager.com; child-src *.sipgate.com *.sipgate.de *.sipgate.co.uk; img-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net data: www.google-analytics.com bat.bing.com consentmanager.mgr.consensu.org cdn.consentmanager.mgr.consensu.org a.delivery.consentmanager.net www.google.com/ads/ www.google.de/ads/ www.googletagmanager.com; media-src 'self' *.sipgate.com *.sipgate.de *.sipgate.co.uk *.sipgate.net blob:
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/swagger/swagger-ui-init.js" 2>&1 | head -c 5000
+<!doctype html>
+<html>
+  <head>
+    <title>Scalar API Reference</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1" />
+    <style type="text/css">
+      /* Custom Theme */
+      
+      
+      /* basic theme */
+      .light-mode {
+        --scalar-color-1: #1b1b1b;
+        --scalar-color-2: #757575;
+        --scalar-color-3: #8e8e8e;
+        --scalar-color-accent: #e0234d;
+        --scalar-background-1: #fff;
+        --scalar-background-2: #f6f6f6;
+        --scalar-background-3: #e7e7e7;
+        --scalar-background-accent: #8ab4f81f;
+        --scalar-border-color: rgba(0, 0, 0, 0.1);
+      }
+      .dark-mode {
+        --scalar-color-1: rgba(255, 255, 255, 1);
+        --scalar-color-2: #b2bac2;
+        --scalar-color-3: #6e748b;
+        --scalar-color-accent: #e0234d;
+        --scalar-background-1: #11131e;
+        --scalar-background-2: #1c2132;
+        --scalar-background-3: #2f354a;
+        --scalar-background-accent: #8ab4f81f;
+        --scalar-border-color: rgba(255, 255, 255, 0.1);
+      }
+      /* Document Sidebar */
+      .light-mode .t-doc__sidebar,
+      .dark-mode .t-doc__sidebar {
+        --scalar-sidebar-background-1: var(--scalar-background-1);
+        --scalar-sidebar-item-hover-color: currentColor;
+        --scalar-sidebar-item-hover-background: var(--scalar-background-2);
+        --scalar-sidebar-item-active-background: var(--scalar-background-3);
+        --scalar-sidebar-border-color: var(--scalar-border-color);
+        --scalar-sidebar-color-1: var(--scalar-color-1);
+        --scalar-sidebar-color-2: var(--scalar-color-2);
+        --scalar-sidebar-color-active: var(--scalar-color-1);
+        --scalar-sidebar-search-background: var(--scalar-background-2);
+        --scalar-sidebar-search-border-color: var(--scalar-background-2);
+        --scalar-sidebar-search-color: var(--scalar-color-3);
+      }
+      
+      /* advanced */
+      .light-mode {
+        --scalar-button-1: rgb(49 53 56);
+        --scalar-button-1-color: #fff;
+        --scalar-button-1-hover: rgb(28 31 33);
+        --scalar-color-green: #069061;
+        --scalar-color-red: #ef0006;
+        --scalar-color-yellow: #edbe20;
+        --scalar-color-blue: #0082d0;
+        --scalar-color-orange: #fb892c;
+        --scalar-color-purple: #5203d1;
+        --scalar-scrollbar-color: rgba(0, 0, 0, 0.18);
+        --scalar-scrollbar-color-active: rgba(0, 0, 0, 0.36);
+      }
+      .dark-mode {
+        --scalar-button-1: #f6f6f6;
+        --scalar-button-1-color: #000;
+        --scalar-button-1-hover: #e7e7e7;
+        --scalar-color-green: #30beb0;
+        --scalar-color-red: #e91e63;
+        --scalar-color-yellow: #ffc90d;
+        --scalar-color-blue: #2cb6f6;
+        --scalar-color-orange: #ff5656;
+        --scalar-color-purple: #6223e0;
+        --scalar-scrollbar-color: rgba(255, 255, 255, 0.24);
+        --scalar-scrollbar-color-active: rgba(255, 255, 255, 0.48);
+      }
+      
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <!-- Load the Scalar API Reference -->
+    <script type="module">
+      import { createApiReference } from 'https://cdn.jsdelivr.net/npm/@scalar/api-reference/esm.js'
+
+      createApiReference('#app', {
+        "_integration": "nestjs",
+        "withFastify": true,
+        "url": "/swagger-json",
+        "showDeveloperTools": "never",
+        "authentication": {
+          "preferredSecurityScheme": "oauth2",
+          "securitySchemes": {
+            "oauth2": {
+              "flows": {
+                "implicit": {
+                  "x-scalar-client-id": "platypus-swagger",
+                  "authorizationUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth"
+                }
+              }
+            }
+          }
+        },
+        "plugins": [() => ({
+                name: 'preserve-swagger-oauth-redirect',
+                extensions: [],
+                hooks: {
+                    onInit({ config }) {
+                        const redirectUri = `${window.location.origin}/swagger/oauth2-redirect.html`;
+                        config.oauth2RedirectUri = redirectUri;
+                        config.authentication.securitySchemes.oauth2.flows.implicit['x-scalar-redirect-uri'] = redirectUri;
+                    },
+                },
+            })]
+      })
+    </script>
+  </body>
+</html>
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/swagger-json" 2>&1 | head -c 3000
+{"openapi":"3.0.3","info":{"title":"Platypus","description":"Platform for integration Purposes","version":"0.0.1","contact":{}},"servers":[],"paths":{"/streaming.start":{"post":{"operationId":"StreamingController_start","parameters":[],"responses":{"204":{"description":"Streaming start job created"}},"security":[{"oauth2":[]}],"summary":"Start streaming for all connected integrations of a user","tags":["streaming"]}},"/contacts.list":{"get":{"operationId":"ContactController_list","parameters":[{"name":"page","required":false,"in":"query","deprecated":true,"description":"Use pageToken instead","schema":{"type":"number"}},{"name":"limit","required":false,"in":"query","description":"Maximum number of contacts to return","schema":{"example":10000,"type":"number"}},{"name":"pageToken","required":false,"in":"query","description":"Token for the next page of results","schema":{"format":"base64","type":"string"}},{"name":"scope","required":false,"in":"query","description":"The scope to search in all | team (sipgate account members) | contacts)","schema":{"example":"team","type":"string","enum":["all","team","contacts"]}}],"responses":{"200":{"description":"The active contact objects and ids of deleted contacts along with the next pagination cursor.","content":{"application/json":{"schema":{"type":"object","properties":{"list":{"description":"List of contacts","type":"array","items":{"type":"object","properties":{"id":{"type":"string","description":"ID of the contact","example":"123456"},"source":{"type":"string","description":"Source of the contact","example":"HUBSPOT"},"name":{"type":"string","description":"Full name of the contact, should be used if integration uses combined first and last name","example":"Hans Wurst","nullable":true},"firstName":{"type":"string","description":"First name of the contact, should be used if integration uses separate first and last name","example":"Hans","nullable":true},"lastName":{"type":"string","description":"Last name of the contact, should be used if integration uses separate first and last name","example":"Wurst","nullable":true},"email":{"type":"string","description":"Email address of the contact","example":"test@test.de ","nullable":true},"organization":{"type":"string","nullable":true,"description":"Organization of the contact","example":"Wurst GmbH"},"type":{"enum":["contacts","deals","companies","tickets","leads","accounts","opportunities","cases","contacts_folder","users","tasks","building_objects","building_objects_leads"],"type":"string","description":"Type the contact has in CRM","example":"contacts","nullable":true},"contactUrl":{"type":"string","description":"URL to the contact in CRM","example":"https://crm.com/contact/123456","nullable":true},"avatarUrl":{"type":"string","nullable":true,"description":"URL to the avatar of the contact","example":"https://crm.com/avatar/123456"},"readonly":{"type":"boolean","description":"Flag if the contact is readonly","example":false,"nullable":true},"phoneNumbers":{"d
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/swagger-json" 2>&1 | grep -A 30 '"users.integrations.create"'
+(no output)
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/swagger-json" 2>&1 | grep -i "integration" | head -30
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_0b0f055ef001CgcJP8Pv4VFxKM
+
+(no output)
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/swagger-json" 2>&1 | grep -oE '"apiUrl"|"create"' | head -20
+"apiUrl"
+"apiUrl"
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/swagger-json" 2>&1 | python3 -c "import sys, json; d=json.load(sys.stdin); print(json.dumps([(k,v) for k,v in d['paths'].items() if 'integration' in k.lower()], indent=2))"
+[
+  [
+    "/contacts.listByIntegration",
+    {
+      "get": {
+        "deprecated": true,
+        "description": "\n        @deprecated This endpoint is deprecated and will be removed in a future version.\n        We only use it in the clinq mobile app and the clinq mobile app is deprecated.\n      ",
+        "operationId": "ContactController_listByIntegration",
+        "parameters": [
+          {
+            "name": "integrationName",
+            "required": true,
+            "in": "query",
+            "description": "Name of the integration to fetch contacts from",
+            "schema": {
+              "example": "HUBSPOT",
+              "type": "string"
+            }
+          },
+          {
+            "name": "timestamp",
+            "required": false,
+            "in": "query",
+            "description": "Timestamp to filter contacts",
+            "schema": {
+              "example": 1634567890000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "deprecated": true,
+            "description": "Number of contacts to skip",
+            "schema": {
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of contacts to return",
+            "schema": {
+              "example": 10000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageToken",
+            "required": false,
+            "in": "query",
+            "description": "Token for the next page of results",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The contacts from the specified integration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number",
+                      "description": "Total number of contacts",
+                      "example": 42
+                    },
+                    "contacts": {
+                      "description": "List of contacts",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "ID of the contact",
+                            "example": "123456"
+                          },
+                          "source": {
+                            "type": "string",
+                            "description": "Source of the contact",
+                            "example": "HUBSPOT"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Full name of the contact, should be used if integration uses combined first and last name",
+                            "example": "Hans Wurst",
+                            "nullable": true
+                          },
+                          "firstName": {
+                            "type": "string",
+                            "description": "First name of the contact, should be used if integration uses separate first and last name",
+                            "example": "Hans",
+                            "nullable": true
+                          },
+                          "lastName": {
+                            "type": "string",
+                            "description": "Last name of the contact, should be used if integration uses separate first and last name",
+                            "example": "Wurst",
+                            "nullable": true
+                          },
+                          "email": {
+                            "type": "string",
+                            "description": "Email address of the contact",
+                            "example": "test@test.de ",
+                            "nullable": true
+                          },
+                          "organization": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Organization of the contact",
+                            "example": "Wurst GmbH"
+                          },
+                          "type": {
+                            "enum": [
+                              "contacts",
+                              "deals",
+                              "companies",
+                              "tickets",
+                              "leads",
+                              "accounts",
+                              "opportunities",
+                              "cases",
+                              "contacts_folder",
+                              "users",
+                              "tasks",
+                              "building_objects",
+                              "building_objects_leads"
+                            ],
+                            "type": "string",
+                            "description": "Type the contact has in CRM",
+                            "example": "contacts",
+                            "nullable": true
+                          },
+                          "contactUrl": {
+                            "type": "string",
+                            "description": "URL to the contact in CRM",
+                            "example": "https://crm.com/contact/123456",
+                            "nullable": true
+                          },
+                          "avatarUrl": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "URL to the avatar of the contact",
+                            "example": "https://crm.com/avatar/123456"
+                          },
+                          "readonly": {
+                            "type": "boolean",
+                            "description": "Flag if the contact is readonly",
+                            "example": false,
+                            "nullable": true
+                          },
+                          "phoneNumbers": {
+                            "description": "Phone numbers of the contact",
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string",
+                                  "description": "Label for the phone number, only lables compatible to CRM should be used ",
+                                  "example": "Mobile"
+                                },
+                                "type": {
+                                  "enum": [
+                                    "DIRECT_DIAL",
+                                    "STANDARD"
+                                  ],
+                                  "type": "string",
+                                  "description": "Type of the phone number"
+                                },
+                                "e164": {
+                                  "type": "string",
+                                  "description": "E164 formatted phone number",
+                                  "example": "+49123456789"
+                                },
+                                "localized": {
+                                  "type": "string",
+                                  "description": "Localized formatted phone number",
+                                  "example": "+49 1234 56789"
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "type",
+                                "e164",
+                                "localized"
+                              ]
+                            }
+                          },
+                          "relatesTo": {
+                            "description": "Entities the contact relates to",
+                            "nullable": true,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "enum": [
+                                    "contacts",
+                                    "deals",
+                                    "companies",
+                                    "tickets",
+                                    "leads",
+                                    "accounts",
+                                    "opportunities",
+                                    "cases",
+                                    "contacts_folder",
+                                    "users",
+                                    "tasks",
+                                    "building_objects",
+                                    "building_objects_leads"
+                                  ],
+                                  "type": "string",
+                                  "description": "The type of the entity",
+                                  "example": "deals"
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "example": "HUBSPOT"
+                                },
+                                "id": {
+                                  "type": "string",
+                                  "example": "1234"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "source",
+                                "id"
+                              ]
+                            }
+                          },
+                          "isTeam": {
+                            "type": "boolean",
+                            "description": "Flag if the contact is part of the user`s sipgate account",
+                            "example": true,
+                            "nullable": true
+                          },
+                          "priority": {
+                            "type": "number",
+                            "description": "Priority of the contact. Contacts with higher priority are returned first",
+                            "example": "1",
+                            "nullable": true
+                          },
+                          "scope": {
+                            "enum": [
+                              "PRIVATE",
+                              "SHARED",
+                              "INTERNAL"
+                            ],
+                            "type": "string",
+                            "description": "Scope of the contact on integration side",
+                            "example": "PRIVATE",
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "source",
+                          "phoneNumbers"
+                        ]
+                      }
+                    },
+                    "deletedIds": {
+                      "description": "List of deleted contact IDs",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "description": "Cursor for the next page of results",
+                      "example": "/contacts.listByIntegration?integrationName=HUBSPOT&timestamp=1634567890000&limit=100&offset=100",
+                      "nullable": true
+                    },
+                    "nextPageToken": {
+                      "type": "string",
+                      "description": "Next page token",
+                      "example": "1234",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "count",
+                    "contacts",
+                    "deletedIds"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The timestamp is stale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "https://sipgatede.notion.site/Stale-Timestamp-Error"
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Stale Timestamp Error"
+                    },
+                    "type": {
+                      "type": "string",
+                      "example": "Timestamp 1612345678 is older than the cutoff of 1623456789 (14 days)"
+                    },
+                    "translationKey": {
+                      "type": "string",
+                      "example": "STALE_TIMESTAMP"
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "title",
+                    "type",
+                    "translationKey"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "summary": "Get contacts from a specific integration",
+        "tags": [
+          "contacts"
+        ]
+      }
+    }
+  ],
+  [
+    "/users.integrations.create",
+    {
+      "post": {
+        "operationId": "UserController_createIntegration",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "integrationName": {
+                    "type": "string",
+                    "description": "Name of the integration",
+                    "example": "HUBSPOT"
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "Key of the integration, must be an existing integration profile key",
+                    "example": "some-key"
+                  },
+                  "apiUrl": {
+                    "type": "string",
+                    "description": "Api URL of the integration",
+                    "example": "https://api.example.com"
+                  },
+                  "locale": {
+                    "type": "string",
+                    "description": "Locale of the integration",
+                    "example": "de-DE",
+                    "deprecated": true
+                  },
+                  "region": {
+                    "type": "string",
+                    "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+                    "example": "DE"
+                  },
+                  "language": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 2,
+                    "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+                    "example": "de"
+                  }
+                },
+                "required": [
+                  "integrationName",
+                  "key"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The integration was added to the user"
+          },
+          "400": {
+            "description": "The integration could not be added to the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179"
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Integration exception"
+                    },
+                    "type": {
+                      "type": "string",
+                      "example": "Invalid Integration (MOCK)"
+                    },
+                    "integrationName": {
+                      "type": "string",
+                      "example": "MOCK"
+                    },
+                    "translationKey": {
+                      "type": "string",
+                      "example": "INVALID_INTEGRATION",
+                      "enum": [
+                        "INTEGRATION_NOT_CONNECTED",
+                        "INVALID_INTEGRATION",
+                        "INTEGRATION_ALREADY_CONNECTED",
+                        "INTEGRATION_DID_NOT_PROVIDE_GRANT_CODE",
+                        "INVALID_CREDENTIALS"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "title",
+                    "type",
+                    "integrationName",
+                    "translationKey"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "summary": "Add an integration to the user",
+        "tags": [
+          "users"
+        ]
+      }
+    }
+  ],
+  [
+    "/users.integrations.list",
+    {
+      "get": {
+        "operationId": "UserController_listIntegrations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns the list of integrations for the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "list": {
+                      "description": "List of connected integrations",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "Name of the integration",
+                            "example": "HUBSPOT"
+                          },
+                          "authenticationRequired": {
+                            "type": "boolean",
+                            "description": "is authentication required for this integration",
+                            "example": true
+                          },
+                          "region": {
+                            "type": "string",
+                            "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+                            "example": "DE",
+                            "nullable": true
+                          },
+                          "language": {
+                            "type": "string",
+                            "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+                            "example": "de",
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "authenticationRequired"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "list"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "summary": "List all integrations for the user",
+        "tags": [
+          "users"
+        ]
+      }
+    }
+  ],
+  [
+    "/users.integrations.delete",
+    {
+      "post": {
+        "operationId": "UserController_deleteIntegration",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "integrationName": {
+                    "type": "string",
+                    "description": "Name of the integration",
+                    "example": "HUBSPOT"
+                  }
+                },
+                "required": [
+                  "integrationName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The integration was removed from the user"
+          },
+          "400": {
+            "description": "The integration could not be removed from the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179"
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Integration exception"
+                    },
+                    "type": {
+                      "type": "string",
+                      "example": "Invalid Integration (MOCK)"
+                    },
+                    "integrationName": {
+                      "type": "string",
+                      "example": "MOCK"
+                    },
+                    "translationKey": {
+                      "type": "string",
+                      "example": "INVALID_INTEGRATION",
+                      "enum": [
+                        "INTEGRATION_NOT_CONNECTED",
+                        "INVALID_INTEGRATION",
+                        "INTEGRATION_ALREADY_CONNECTED",
+                        "INTEGRATION_DID_NOT_PROVIDE_GRANT_CODE",
+                        "INVALID_CREDENTIALS"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "title",
+                    "type",
+                    "integrationName",
+                    "translationKey"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "summary": "Remove an integration from the user",
+        "tags": [
+          "users"
+        ]
+      }
+    }
+  ],
+  [
+    "/users.integrations.getAuthSessionUrl",
+    {
+      "get": {
+        "operationId": "UserController_getAuthSessionUrl",
+        "parameters": [
+          {
+            "name": "integrationName",
+            "required": true,
+            "in": "query",
+            "description": "Name of the integration",
+            "schema": {
+              "example": "HUBSPOT",
+              "type": "string"
+            }
+          },
+          {
+            "name": "successUrl",
+            "required": true,
+            "in": "query",
+            "description": "URL to redirect the user after the authentication process",
+            "schema": {
+              "format": "uri",
+              "example": "https://example.com/welcome?integration=SALESFORCE",
+              "type": "string"
+            }
+          },
+          {
+            "name": "errorUrl",
+            "required": true,
+            "in": "query",
+            "description": "URL to redirect the user after the authentication process with error",
+            "schema": {
+              "format": "uri",
+              "example": "https://example.com/error?integration=SALESFORCE&message=FORBIDDENMESSAGE",
+              "type": "string"
+            }
+          },
+          {
+            "name": "domainModifier",
+            "required": false,
+            "in": "query",
+            "description": "User specific URL or subdomain",
+            "schema": {
+              "example": "https://example.com or mycompany.crm.com or mycompany",
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "required": false,
+            "in": "query",
+            "description": "Locale of the integration",
+            "deprecated": true,
+            "schema": {
+              "example": "de-DE",
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "required": false,
+            "in": "query",
+            "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)",
+            "schema": {
+              "example": "DE",
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "required": false,
+            "in": "query",
+            "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")",
+            "schema": {
+              "minLength": 2,
+              "maxLength": 2,
+              "example": "de",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns an url to initiate the auth session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "description": "URL to redirect the user after the authentication process",
+                      "example": "https://crm.example.com/auth/session"
+                    }
+                  },
+                  "required": [
+                    "url"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The auth session URL could not be created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179"
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Integration exception"
+                    },
+                    "type": {
+                      "type": "string",
+                      "example": "Invalid Integration (MOCK)"
+                    },
+                    "integrationName": {
+                      "type": "string",
+                      "example": "MOCK"
+                    },
+                    "translationKey": {
+                      "type": "string",
+                      "example": "INVALID_INTEGRATION",
+                      "enum": [
+                        "INTEGRATION_NOT_CONNECTED",
+                        "INVALID_INTEGRATION",
+                        "INTEGRATION_ALREADY_CONNECTED",
+                        "INTEGRATION_DID_NOT_PROVIDE_GRANT_CODE",
+                        "INVALID_CREDENTIALS"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "title",
+                    "type",
+                    "integrationName",
+                    "translationKey"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "summary": "Get a new auth session URL for the integration",
+        "tags": [
+          "users"
+        ]
+      }
+    }
+  ]
+]
+[0m
+[0m$ [0mcurl -s -I "https://integration.dev.sipgate.com" --max-time 10 2>&1 | head -15
+(no output)
+[0m
+[0m$ [0mcurl -s -I "https://integration.dev.sipgate.com" --max-time 15 2>&1 | head -15
+(no output)
+[0m
+[0m$ [0mdig +short integration.dev.sipgate.com 2>&1
+217.116.121.180
+[0m
+[0m$ [0mcurl -s -I "http://integration.dev.sipgate.com" --max-time 10 2>&1 | head -15
+HTTP/1.1 301 Moved Permanently
+content-length: 0
+location: https://integration.dev.sipgate.com/
+[0m
+[0m$ [0mcurl -s -I "https://integration.dev.sipgate.com" --max-time 25 2>&1 | head -20
+(no output)
+[0m
+[0m$ [0mcurl -s -I "https://mock.integration.sipgate.cloud/health" --max-time 10 2>&1 | head -10
+HTTP/2 200 
+date: Thu, 17 Sep 2026 19:56:57 GMT
+content-type: text/plain; charset=utf-8
+content-length: 2
+x-powered-by: Express
+vary: Origin, Accept-Encoding
+access-control-allow-credentials: true
+etag: W/"2-nOO9QiTIwXgNtWtBJezz8kv3SLc"
+strict-transport-security: max-age=15724800; includeSubDomains
+access-control-allow-origin: *
+[0m
+[0m$ [0mcurl -s "https://sipgate-desktop-app.s3.eu-central-1.amazonaws.com/?versions" 2>&1 | head -c 2000
+<?xml version="1.0" encoding="UTF-8"?>
+<ListVersionsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>sipgate-desktop-app</Name><Prefix></Prefix><KeyMarker></KeyMarker><VersionIdMarker></VersionIdMarker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Version><Key>app-web-1.0.0.dmg</Key><VersionId>null</VersionId><IsLatest>true</IsLatest><LastModified>2020-05-04T06:27:43.000Z</LastModified><ETag>&quot;ed25e2812e3d30c8b416067321007f70-15&quot;</ETag><Size>76223734</Size><StorageClass>STANDARD</StorageClass></Version><Version><Key>app-web-1.0.0.dmg.blockmap</Key><VersionId>null</VersionId><IsLatest>true</IsLatest><LastModified>2020-05-04T06:27:43.000Z</LastModified><ETag>&quot;29f293410a41d0ddf210474933a12d3e&quot;</ETag><Size>79517</Size><StorageClass>STANDARD</StorageClass></Version><Version><Key>app-web-1.0.0.zip</Key><VersionId>null</VersionId><IsLatest>true</IsLatest><LastModified>2020-05-04T06:28:04.000Z</LastModified><ETag>&quot;6b6b55804cdf8bfe3af656b6001d2b51-15&quot;</ETag><Size>73743961</Size><StorageClass>STANDARD</StorageClass></Version><Version><Key>app-web-1.0.1.dmg</Key><VersionId>null</VersionId><IsLatest>true</IsLatest><LastModified>2020-05-06T13:17:15.000Z</LastModified><ETag>&quot;73879aa6759c38bdd2a21ccaf90bc7fc-15&quot;</ETag><Size>76223356</Size><StorageClass>STANDARD</StorageClass></Version><Version><Key>app-web-1.0.1.dmg.blockmap</Key><VersionId>null</VersionId><IsLatest>true</IsLatest><LastModified>2020-05-06T13:17:15.000Z</LastModified><ETag>&quot;ab03baf7be216a9063a248580e2c5798&quot;</ETag><Size>80426</Size><StorageClass>STANDARD</StorageClass></Version><Version><Key>app-web-1.0.1.zip</Key><VersionId>null</VersionId><IsLatest>true</IsLatest><LastModified>2020-05-06T13:17:36.000Z</LastModified><ETag>&quot;f20aa328a9220b1e58b031d9cb0b5752-15&quot;</ETag><Size>73738358</Size><StorageClass>STANDARD</StorageClass></Version><Version><Key>app-web-1.0.2.dmg</Key><VersionId>null</VersionId><IsLatest>true</IsLatest><LastModified>20
+[0m
+Now I have all the current surface data. Let me compile the structured output.
+
+---
+
+**STEP 1 — DELTA**
+
+[NEW] app.dev.sipgate.com: JS bundle rotated to `main-CL-MmSlB.js` (5.74MB, etag `5d6990517...`); 11 hardcoded internal host:port pairs (down from 17), still includes NEW prod subdomains `admin.live.sipgate.net` (CNAME→helpdesk.live.sipgate.net, 217.10.73.71) and `admin.dev.sipgate.net` (CNAME→helpdesk.dev.sipgate.net, 217.116.120.148); .local hosts resolve to RFC1918/loopback
+
+[NEW] grafana.sipgate.cloud: Grafana version upgraded from 11.5.1 → 13.2.2 (commit `1bea008f7e`); internet-exposed on AWS LB (3.33.226.160), login-gated, no anonymous
+
+[NEW] integration.sipgate.com: Swagger-UI replaced with Scalar API Reference; OpenAPI spec rotated (new SHA, 27 ops incl `/streaming.start`); `users.integrations.create` still accepts free-form `apiUrl` (SSRF surface); `/oauth2/redirect` + `/oauth2/callback` declared no-security but app-403 gated
+
+[NEW] integration.dev.sipgate.com: HTTPS no longer responds (TCP timeout on 217.116.121.180); was previously 403 + `ACAO:*`; HTTP 301 → HTTPS but HTTPS hangs
+
+[CHANGED] api.sipgate.com/v2/authorization/token: OPTIONS now 204 (was 404 per leads) with `ACAO:evil.example` + `ACAC:true`; allow-headers byte-identical to oauth2-redirect.html (MCP/SSE: `MCP-Protocol-Version`, `Mcp-Session-Id`, `Last-Event-ID` + credential-bearing `X-Sipgate-Token-Id`, `X-Sipgate-Token-Secret`); POST `client_credentials` still constant 500 "OK"; undocumented, index-advertised, absent from 144-op swagger
+
+[CHANGED] api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 with byte-identical allow-header vocabulary to /v2/authorization/token; inherits API.v2 permissive CORS
+
+[CHANGED] integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 46734 (down from 117,891, up from 40009) — per-replica counter variance reconfirmed (restart-reset behavior); live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase)
+
+[CHANGED] team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP `frame-ancestors` still includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/team-web02/team-web03)
+
+[CHANGED] sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path NOT tested
+
+[CHANGED] share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed — subdomain-takeover candidate
+
+---
+
+**STEP 2 — PRIORITIZE**
+
+[PRIO] api.sipgate.com/v2/authorization/token,8.95,attack_surface=9 business_value=9 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=10
+[PRIO] app.dev.sipgate.com,8.45,attack_surface=9 business_value=7 tech_exposure=9 gate_ease=10 cloud_surface=6 freshness=10
+[PRIO] integration.sipgate.com,7.60,attack_surface=8 business_value=8 tech_exposure=8 gate_ease=6 cloud_surface=7 freshness=8
+[PRIO] *.integration.sipgate.cloud (94 hosts),7.30,attack_surface=8 business_value=6 tech_exposure=8 gate_ease=6 cloud_surface=9 freshness=8
+[PRIO] team-uk.live.sipgate.com + team-de.live.sipgate.com,6.10,attack_surface=6 business_value=4 tech_exposure=7 gate_ease=8 cloud_surface=5 freshness=8
+[PRIO] grafana.sipgate.cloud,5.90,attack_surface=6 business_value=5 tech_exposure=6 gate_ease=4 cloud_surface=8 freshness=8
+[PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,5.30,attack_surface=5 business_value=3 tech_exposure=5 gate_ease=10 cloud_surface=4 freshness=6
+[PRIO] share1.sipgate.cloud,5.30,attack_surface=4 business_value=3 tech_exposure=4 gate_ease=10 cloud_surface=8 freshness=6
+
+---
+
+**STEP 3 — HYPOTHESES**
+
+[HYP] Miswired OIDC Token Proxy on API Origin Enables Client-Credentials Theft
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 80
+reasoning: Undocumented POST-only endpoint (index-advertised, absent from 144-op swagger) returns CONSTANT 500 "OK" for client_credentials/refresh_token grants for 12+ consecutive cycles; OPTIONS reflects arbitrary origin with credentials (ACAO: evil.example + ACAC:true) and exposes MCP/SSE headers (MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID) + credential-bearing headers (X-Sipgate-Token-Id, X-Sipgate-Token-Secret) on API origin; CONTROL request to real Keycloak token endpoint returns proper 401 — indicates degraded/miswired OIDC proxy that may accept crafted client assertions or leak token issuance logic; OPTIONS drift (204→404→204) suggests configuration instability
+evidence_needed: Valid client_id/client_secret pair for third-party realm to test client_credentials grant against this proxy; confirmation that 500 response body contains token or structured error detail; proof that X-Sipgate-Token-Id/Secret headers are accepted as authentication
+verify_steps: OPTIONS https://api.sipgate.com/v2/authorization/token -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type,x-sipgate-token-id,x-sipgate-token-secret" — confirm MCP/SSE + credential allow-headers on 204; POST https://api.sipgate.com/v2/authorization/token -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=client_credentials&client_id=test&client_secret=test" — observe 500 body "OK"; POST with valid third-party realm credentials (AUTH_HELPED) — observe if token issued
+impact: If proxy accepts client_credentials with valid creds, attacker with stolen client secret gets API tokens bypassing Keycloak directly; miswired proxy may expose internal token format or validation logic; severity HIGH if creds obtained, MEDIUM as recon
+testability: AUTH_HELPED
+
+[HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References
+class: SSRF
+asset: app.dev.sipgate.com
+confidence: 92
+reasoning: Live dev SPA on Fastly CDN serves production-identical JS bundle (main-CL-MmSlB.js, 5.74MB) with 11 hardcoded internal host:port pairs including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net, 217.10.73.71) and admin.dev.sipgate.net (CNAME→helpdesk.dev.sipgate.net, 217.116.120.148); multiple .local hosts resolve to 127.0.0.1 confirming internal-only references; bundle rotates frequently (freshness=10); no IP restriction on dev SPA; internal ports 3396, 3443, 8080, 10443 exposed in config; integration.dev.sipgate.com now HTTPS-inert (TCP timeout)
+evidence_needed: HTTP response from newly extracted prod subdomains (admin.live.sipgate.net, admin.dev.sipgate.net) showing live services on non-standard ports (8080, 8443, 3396, 3443); proof of SSRF via dev SPA proxy/chaining or XSS on dev SPA to pivot to internal hosts; DNS resolution showing RFC1918 IPs for any .local hosts
+verify_steps: GET https://app.dev.sipgate.com/assets/main-CL-MmSlB.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve all *.dev.sipgate.net, *.live.sipgate.net, *.dev.sipgate.com hosts; probe discovered hosts for HTTP responses on ports 80/443/3396/3443/8080/10443 (read-only, ≤1 rps); test for SSRF via any proxy/chaining endpoints in dev SPA
+impact: Infrastructure info disclosure enabling targeted SSRF/lateral movement against internal services (api.local, payment.local, team-de.local, team-uk.local, integration.dev, admin.live, helpdesk.live); severity MEDIUM-HIGH (reconnaissance multiplier for internal attack surface + prod subdomain exposure in dev bundle)
+testability: PASSIVE
+
+[HYP] Integration Platform Spec-Behavior Drift with SSRF Parameter in users.integrations.create
+class: SSRF
+asset: integration.sipgate.com
+confidence: 82
+reasoning: PROD "Platypus" integration platform exposes full 27-op OpenAPI spec at /swagger-json via Scalar UI; spec declares /oauth2/redirect + /oauth2/callback with NO security requirement yet all external requests return app-403 (Firebase-JWT gate) — spec-vs-behavior drift; users.integrations.create accepts free-form apiUrl parameter (documented SSRF surface); CORS allow-origin:* on all responses; auth-mechanism drift confirmed (spec says Keycloak, runtime uses Firebase-JWT per /metrics firebase_jwt_forbidden_requests 46734); Firebase token source not in public bundles (Scalar UI, app.dev main bundle)
+evidence_needed: Valid Firebase JWT for integration.sipgate.com (AUTH_HELPED) to test users.integrations.create with apiUrl pointing to internal metadata (169.254.169.254) or internal hosts; confirmation that apiUrl parameter triggers outbound fetch from server-side; proof that OAuth2 callback/redirect endpoints are actually unguarded when accessed with valid token
+verify_steps: GET https://integration.sipgate.com/swagger-json — fetch embedded spec, confirm users.integrations.create apiUrl parameter; GET https://integration.sipgate.com/metrics — confirm firebase_jwt_forbidden_requests counter increments (live Firebase validator); with valid token (AUTH_HELPED): POST /api/users/integrations with apiUrl=http://169.254.169.254/latest/meta-data/ — observe SSRF; GET /oauth2/callback?code=test&state=test with valid token — observe if code exchange works
+impact: If Firebase JWT obtained (AUTH_HELPED), SSRF via apiUrl parameter could reach cloud metadata (169.254.169.254) or internal services; spec-vs-behavior drift on OAuth endpoints may indicate auth bypass; severity HIGH if creds obtained, MEDIUM as recon
+testability: AUTH_HELPED
+
+---
+
+**STEP 4 — SELF-CRITIQUE**
+
+[PARKED] None — all three hypotheses have confidence ≥80, concrete verify_steps, and testability ratings allowing progression.
+
+[FINAL] 1. Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References (confidence 92, PASSIVE) — highest freshness, concrete verify_steps, live rotating bundle with NEW prod subdomains in dev config
+[FINAL] 2. Integration Platform Spec-Behavior Drift with SSRF Parameter (confidence 82, AUTH_HELPED) — live 27-op spec with documented SSRF parameter; auth-mechanism drift confirmed; requires token acquisition
+[FINAL] 3. Miswired OIDC Token Proxy on API Origin Enables Client-Credentials Theft (confidence 80, AUTH_HELPED) — OPTIONS drift after 11+ stable cycles + constant 500 + MCP/SSE + credential-bearing CORS headers; requires valid client creds
+
+---
+
+**STEP 5 — NEXT ACTION**
+
+[NEXT] PROBE: GET https://app.dev.sipgate.com/assets/main-CL-MmSlB.js — fetch current JS bundle, extract all hardcoded host:port pairs (already done, confirmed 11 hosts incl 2 NEW prod subdomains); DNS-resolve admin.live.sipgate.net, admin.dev.sipgate.net for live services on 80/443/3396/3443/8080/10443; probe helpdesk.live/dev.sipgate.net on same ports
+
+---
+
+**STEP 6 — LEARNING**
+
+[LEARN] ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth gap, chain-dependent for full exploitation
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as same-origin-XSS amplifier
+[LEARN] REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+[LEARN] ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} SSRF inputs; distinct gate tier from apex Firebase-JWT
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 46734 (down from 117,891, up from 40009) — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica counter restart-reset reconfirmed
+[LEARN] ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation
+[LEARN] ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stale since 2024-06-11); ACL/policy reads denied; write path NOT tested (HUMAN sign-off required)
+[LEARN] ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+[LEARN] REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment stays same-origin; unconditional opener callback inert cross-origin
+[LEARN] REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list endpoint 404, individual endpoints 404 — prior 500-on-UUID authz-drift signal not reproducible; endpoint may be removed
+[LEARN] REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, token persists to localStorage before navigation — fragment never forwarded off-origin (per KB, consistent across cycles)
+[LEARN] REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reachable flawed verifier (per KB)
+[LEARN] REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live credential exposure (per KB)
+[LEARN] REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
+[LEARN] REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
+[LEARN] REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+
+---
+
+**STEP 7 — RISK**
+
+[RISK] sipgate: 87 — high-value OAuth implicit flow (login.sipgate.com third-party realm) + arbitrary-origin CORS with credentials on API (api.sipgate.com/v2/*) + live dev SPA leaking prod internal topology + NEW prod subdomains in dev bundle (admin.live/dev.sipgate.net) + integration platform spec-behavior drift with SSRF parameter (integration.sipgate.com users.integrations.create apiUrl) + 94-host CRM adapter fleet with SSRF headers behind single nginx gate (*.integration.sipgate.cloud) + dangling subdomain takeover candidate (share1.sipgate.cloud) + publicly listable S3 bucket with stale artifacts (sipgate-desktop-app.s3) + live Grafana internet-exposed (grafana.sipgate.cloud v13.2.2) + miswired OIDC token proxy on API origin (api.sipgate.com/v2/authorization/token) — multiple chainable high-severity vectors across auth, SSRF, info-disclosure, and takeover classes; active development (bundle rotation, new prod subdomains in dev config, OPTIONS drift on token proxy, Grafana version upgrade, Scalar UI migration) increases regression risk
