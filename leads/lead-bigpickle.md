@@ -4536,3 +4536,4 @@ impact: CRITICAL with exec primitive; currently LOW-MEDIUM.
 testability: HUMAN_ONLY
 [NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin evil.example, ACRM POST) — 204=intact / 404=hardening drift; then `GET https://api.sipgate.com/v2` (sha256 vs `0d872a0f…`) and `GET https://integration.sipgate.com/metrics` (counter); ≥1.5s spacing.
 [RISK] sipgate: 85 — all survivors status-quo; token route flat 13 cycles (OPTIONS intact, POST deferred, never valid creds); FB-JWT gate incrementing (+3,256 this cycle) without bypass; swagger CORS amplifier alive without exec primitive; S3 write path still HUMAN-gated; grafana/share1 unchanged. HIGH-conditional only on token POST transition or an FB-JWT gate bypass; no new high-value class demonstrated this cycle.
+## 2026-09-17 01:13:54 UTC [target] (model bigpickle)

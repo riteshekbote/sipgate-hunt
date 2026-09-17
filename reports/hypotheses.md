@@ -1959,3 +1959,5 @@
 ## RANKED HYPOTHESES 2026-09-16 22:49:22 UTC
 - [50] api.sipgate.com/v2/authorization/token: /v2/authorization/token constant-500 is a miswired OIDC client-credentials proxy — sole edge-escaping app-plane route (from art/lead_bigpickle.txt)
 - NEXT(hypotheses-bigpickle.txt): PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin evil.example, ACRM POST) — 204=intact / 404=hardening drift; then `GET https://api.sipga
+
+## RANKED HYPOTHESES 2026-09-17 01:15:05 UTC
