@@ -862,3 +862,12 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-17 11:46:51 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-17 16:00:55 UTC
+[HYP] No candidate repos configured for source-code audit
+class: MISCONFIG
+asset: cands.txt / scope.yml
+confidence: 100
+reasoning: cands.txt contains "no org candidates" and scope.yml has github_orgs: none-configured. There are zero candidate public GitHub repositories from sipgate GmbH available for secret/credential scanning.
+impact: N/A - cannot produce findings without target repos
+verify_steps: N/A
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
