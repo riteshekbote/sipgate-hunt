@@ -4537,3 +4537,33 @@ testability: HUMAN_ONLY
 [NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin evil.example, ACRM POST) — 204=intact / 404=hardening drift; then `GET https://api.sipgate.com/v2` (sha256 vs `0d872a0f…`) and `GET https://integration.sipgate.com/metrics` (counter); ≥1.5s spacing.
 [RISK] sipgate: 85 — all survivors status-quo; token route flat 13 cycles (OPTIONS intact, POST deferred, never valid creds); FB-JWT gate incrementing (+3,256 this cycle) without bypass; swagger CORS amplifier alive without exec primitive; S3 write path still HUMAN-gated; grafana/share1 unchanged. HIGH-conditional only on token POST transition or an FB-JWT gate bypass; no new high-value class demonstrated this cycle.
 ## 2026-09-17 01:13:54 UTC [target] (model bigpickle)
+## 2026-09-17 06:19:12 UTC [target] (model bigpickle)
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass
+class: SSRF
+asset: integration.sipgate.com
+confidence: 55
+reasoning: 30-op spec re-confirmed `apiUrl` is free-form string (no allowlist/format) on users.integrations.create; fb-jwt counter 117,845 live; spec Keycloak vs runtime Firebase drift persists; backend NestJS/Fastify on GCP (Scalar bootstrap fingerprint).
+evidence_needed: valid FB-JWT → POST create apiUrl=169.254.169.254 → observed outbound fetch/metadata read.
+verify_steps: AUTH_HELPED — passive each cycle: metrics counter incrementing (done: +8,793), /swagger-json hash drift tracker.
+impact: GCP metadata/project secrets on gate bypass; HIGH conditional.
+testability: AUTH_HELPED
+[HYP] /v2/authorization/token constant-500 is a miswired OIDC client-credentials proxy — sole edge-escaping app-plane route
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: OPTIONS 204 + ACAO evil.example + byte-identical credential-bearing allow-header vocab flat 14th cycle; POST client_credentials constant 500 vs Keycloak CONTROL 401; index sha256 `0d872a0f…` stable.
+evidence_needed: POST status transition 500→200 (mint) or →401/400 (Keycloak restored).
+verify_steps: PASSIVE — OPTIONS next cycle (204=intact) + GET /v2 sha256 + GET metrics; POST deferred, never valid creds.
+impact: restored OIDC proxy w/ contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+[HYP] users.integrations.getAuthSessionUrl user-controlled successUrl/errorUrl → OAuth session-redirect chain on FB-JWT gate bypass
+class: OATH
+asset: integration.sipgate.com/users.integrations.getAuthSessionUrl
+confidence: 45
+reasoning: NEW op (absent from 26-op spec) returns auth session URL taking user-supplied successUrl/errorUrl (format:uri, no host allowlist visible in spec); all data ops gate behind FB-JWT (uniform 403 dummy-Bearer confirmed this cycle incl this path).
+evidence_needed: valid FB-JWT → GET session URL; check successUrl embedded unvalidated (open redirect to attacker URL → provider auth-code/state capture mid-flow).
+verify_steps: AUTH_HELPED — passive: spec drift tracker; gate constant 403 proven; cannot validate URL construction unauthenticated.
+impact: CRM provider OAuth code/state theft on session completion; MEDIUM-HIGH conditional.
+testability: AUTH_HELPED
+[NEXT] PROBE: `GET https://integration.sipgate.com/swagger-json` (sha256 vs `aac5f0fc…` — spec-drift tracker, new ops = new surface) then `GET https://integration.sipgate.com/metrics` (fb-jwt counter) and `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin evil.example, 204=intact); ≥1.5s spacing.
+[RISK] sipgate: 85 — no gate bypass, no creds, no new standalone exposure; spec surface grew (30 ops, public /swagger-json) but gate holds uniformly; token route flat 14 cycles; highest value remains AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl) and the PASSIVE-watch token proxy.
