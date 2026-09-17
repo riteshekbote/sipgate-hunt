@@ -873,3 +873,15 @@ www.sipgate.de
 - CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + x-b3-traceid leak)
 - CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 ACAO:evil.example+ACAC:true + allow-headers byte-identical to /v2/authorization/token (MCP/SSE + credential-bearing headers)
 - CHANGED login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts
+
+## 2026-09-17 11:58:39 UTC
+- NEW api.sipgate.com/v2/authorization/token OPTIONS now returns 404 (was stable 204 for 11+ cycles); POST client_credentials still returns constant 500 "OK"
+- NEW app.dev.sipgate.com JS bundle rotated to main-Bt5gzUgC.js (5.74MB); 17 hardcoded internal host:port pairs persist including NEW prod subdomains admin.live.sipgate.net (CNAME→helpdesk.live.sipgate.net,
+- CHANGED integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 117,891 (+18,498 vs prior 99,327); api_key_forbidden 7; live Firebase-JWT validator confirmed, per-replica counter incrementing; auth-m
+- CHANGED api.sipgate.com/v2 index (GET, Accept: application/json): 72 URLs, 5481 B, sha256 `0d872a0f...` byte-identical across cycles; includes undocumented /v2/authorization/token, /v2/crm-bridge, /v2/users/{
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web01/team-web02/team-
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled); ACL/policy reads denied; write path 
+- CHANGED grafana.sipgate.cloud: live Grafana 11.5.1 on AWS LB (3.33.226.160), login-gated, version leaked via /api/health
+- CHANGED api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints (evil.com reflected + ACAC:true + x-b3-traceid leak)
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: OPTIONS 204 ACAO:evil.example+ACAC:true + allow-headers byte-identical to /v2/authorization/token (MCP/SSE + credential-bearing headers)
+- CHANGED login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS256/HS384/HS512, PKCE plain, DCR gated by Trusted Hosts

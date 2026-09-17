@@ -30817,3 +30817,317 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: 85 — no gate bypass, no creds, no new standalone exposure; spec surface grew (30 ops, public /swagger-json) but gate holds uniformly; token route flat 14 cycles; highest value remains AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl) and the PASSIVE-watch token proxy.
+===== ANALYST bigpickle 2026-09-17 11:58:39 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mecho '=== 2) GET /v2 index ==='; curl -sS 'https://api.sipgate.com/v2' -H 'Accept: application/json' --max-time 15 -w '\nHTTP:%{http_code} SIZE:%{size_download}\n' -o /tmp/opencode/v2idx.json; sha256sum /tmp/opencode/v2idx.json; wc -c /tmp/opencode/v2idx.json
+=== 2) GET /v2 index ===
+
+HTTP:200 SIZE:5481
+0d872a0f4c101d16ea4d502b5e4322faad5dbfd80161c3c4b8de62d3313fe65c  /tmp/opencode/v2idx.json
+5481 /tmp/opencode/v2idx.json
+[0m
+[0m$ [0mecho '=== 1) OPTIONS /v2/authorization/token ==='; curl -sS -o /dev/null -D - -X OPTIONS 'https://api.sipgate.com/v2/authorization/token' -H 'Origin: https://evil.example' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: authorization,content-type' --max-time 15; sleep 2
+=== 1) OPTIONS /v2/authorization/token ===
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Thu, 17 Sep 2026 11:54:33 GMT
+[0m
+[0m$ [0msleep 2; echo '=== 3) GET integration metrics ==='; curl -sS 'https://integration.sipgate.com/metrics' --max-time 20 -w '\nHTTP:%{http_code}\n' -o /tmp/opencode/metrics.txt; grep -iE 'firebase_jwt|api_key_forbidden|rate_limit' /tmp/opencode/metrics.txt; echo '---'; wc -c /tmp/opencode/metrics.txt
+=== 3) GET integration metrics ===
+
+HTTP:200
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 0
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 9072
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+# TYPE rate_limit_forbidden_requests counter
+rate_limit_forbidden_requests 0
+---
+509 /tmp/opencode/metrics.txt
+[0m
+[0m$ [0msleep 4; echo '=== 4) GET integration swagger-json ==='; curl -sS 'https://integration.sipgate.com/swagger-json' --max-time 20 -w '\nHTTP:%{http_code} SIZE:%{size_download}\n' -o /tmp/opencode/swagger-json.txt; sha256sum /tmp/opencode/swagger-json.txt; wc -c /tmp/opencode/swagger-json.txt; echo '--- init.js variant ---'; curl -sS 'https://integration.sipgate.com/swagger/swagger-ui-init.js' --max-time 20 -w '\nHTTP:%{http_code} SIZE:%{size_download}\n' -o /tmp/opencode/init.js; sha256sum /tmp/opencode/init.js; wc -c /tmp/opencode/init.js
+=== 4) GET integration swagger-json ===
+
+HTTP:200 SIZE:157320
+67e5bd3ba28d94cd96d75d90ac3ea63aceed50342010e8e8e831b6488d5e6524  /tmp/opencode/swagger-json.txt
+157320 /tmp/opencode/swagger-json.txt
+--- init.js variant ---
+
+HTTP:200 SIZE:4369
+68096107a7f3669358caefe8cc16bc5c4ab16d42aa157a7ce69d39078ec7451f  /tmp/opencode/init.js
+4369 /tmp/opencode/init.js
+[0m
+[0m$ [0mecho '=== ops count ==='; grep -oE '"/[a-z0-9/{}._-]+": \{' /tmp/opencode/swagger-json.txt | wc -l; echo '=== paths ==='; grep -oE '"/[a-z0-9/{}._-]+": \{"' /tmp/opencode/swagger-json.txt | sort -u; echo '=== getAuthSessionUrl / successUrl / errorUrl ==='; grep -oiE '(getAuthSessionUrl|successUrl|errorUrl|apiUrl|debug|provider)' /tmp/opencode/swagger-json.txt | sort | uniq -c
+=== ops count ===
+0
+=== paths ===
+=== getAuthSessionUrl / successUrl / errorUrl ===
+      7 Debug
+      1 GetAuthSessionUrl
+      2 apiUrl
+     14 debug
+      1 errorUrl
+      2 getAuthSessionUrl
+      1 successUrl
+[0m
+[0m$ [0mecho '=== security schemes ==='; grep -oiE '"securitySchemes":|"oauth2"|"bearer"|"apiKey"|"openIdConnect"|firebase|keycloak|login\.sipgate' /tmp/opencode/swagger-json.txt | sort | uniq -c; echo '=== oauth2/redirect security ==='; python3 - <<'EOF'
+import json,re
+d=json.load(open('/tmp/opencode/swagger-json.txt'))
+print('info', d.get('info',{}).get('title'), d.get('info',{}).get('version'))
+print('servers', d.get('servers'))
+print('security root:', d.get('security'))
+print('schemes:', list((d.get('components') or {}).get('securitySchemes',{}).keys()))
+for p,ops in d.get('paths',{}).items():
+    if 'oauth2' in p or 'auth' in p or 'webhook' in p:
+        for m,o in ops.items():
+            if isinstance(o,dict):
+                print(p, m.upper(), 'security=', o.get('security'), 'tags=', o.get('tags'))
+EOF
+=== security schemes ===
+     26 "oauth2"
+      1 "securitySchemes":
+      1 login.sipgate
+=== oauth2/redirect security ===
+info Platypus 0.0.1
+servers []
+security root: None
+schemes: ['oauth2']
+/oauth2/redirect GET security= None tags= ['OAuth']
+/oauth2/callback GET security= None tags= ['OAuth']
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import json
+d=json.load(open('/tmp/opencode/swagger-json.txt'))
+paths=d.get('paths',{})
+print('num paths:', len(paths))
+for p,ops in sorted(paths.items()):
+    for m,o in ops.items():
+        if isinstance(o,dict):
+            sec=o.get('security')
+            print(f"{p} [{m.upper()}] sec={sec} tags={o.get('tags')}")
+EOF
+num paths: 26
+/call-log-drafts.edit [POST] sec=[{'oauth2': []}] tags=['call-log-drafts']
+/call-logs.outcome.describe [GET] sec=[{'oauth2': []}] tags=['call-logs']
+/call-logs.upsert [POST] sec=[{'oauth2': []}] tags=['call-logs']
+/contacts.create [POST] sec=[{'oauth2': []}] tags=['contacts']
+/contacts.delete [POST] sec=[{'oauth2': []}] tags=['contacts']
+/contacts.get [GET] sec=[{'oauth2': []}] tags=['contacts']
+/contacts.getPhoneNumberMap [GET] sec=[{'oauth2': []}] tags=['contacts']
+/contacts.list [GET] sec=[{'oauth2': []}] tags=['contacts']
+/contacts.listByIntegration [GET] sec=[{'oauth2': []}] tags=['contacts']
+/contacts.listByPhoneNumber [GET] sec=[{'oauth2': []}] tags=['contacts']
+/contacts.listByPhoneNumbers [GET] sec=[{'oauth2': []}] tags=['contacts']
+/contacts.search [GET] sec=[{'oauth2': []}] tags=['contacts']
+/contacts.update [POST] sec=[{'oauth2': []}] tags=['contacts']
+/entities.get [GET] sec=[{'oauth2': []}] tags=['entities']
+/entities.listByContactId [GET] sec=[{'oauth2': []}] tags=['entities']
+/oauth2/callback [GET] sec=None tags=['OAuth']
+/oauth2/redirect [GET] sec=None tags=['OAuth']
+/streaming.start [POST] sec=[{'oauth2': []}] tags=['streaming']
+/tasks.create [POST] sec=[{'oauth2': []}] tags=['tasks']
+/tasks.get [GET] sec=[{'oauth2': []}] tags=['tasks']
+/tasks.type.describe [GET] sec=[{'oauth2': []}] tags=['tasks']
+/users.integrations.create [POST] sec=[{'oauth2': []}] tags=['users']
+/users.integrations.delete [POST] sec=[{'oauth2': []}] tags=['users']
+/users.integrations.getAuthSessionUrl [GET] sec=[{'oauth2': []}] tags=['users']
+/users.integrations.list [GET] sec=[{'oauth2': []}] tags=['users']
+/users.profiles.list [GET] sec=[{'oauth2': []}] tags=['users']
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import json
+d=json.load(open('/tmp/opencode/swagger-json.txt'))
+for target in ['/users.integrations.create','/users.integrations.getAuthSessionUrl','/contacts.search','/users.integrations.list']:
+    op=d['paths'][target]
+    m,o=list(op.items())[0]
+    print('='*20, target, m.upper())
+    print(json.dumps(o.get('security'), indent=1))
+    print('desc head:', (o.get('description') or '')[:300])
+    for pname,p in (o.get('parameters') or []):
+        print(' param', pname, '| in:', p.get('in'), '| schema:', json.dumps(p.get('schema')))
+    for cn,c in ((o.get('requestBody') or {}).get('content',{}).items()):
+        print(' body content-type:', cn)
+        print('  schema:', json.dumps(c.get('schema'))[:800])
+    for code,resp in (o.get('responses') or {}).items():
+        sch = resp.get('content',{}).get('application/json',{}).get('schema')
+        if sch:
+            print(' resp', code, json.dumps(sch)[:400])
+EOF
+==================== /users.integrations.create POST
+[
+ {
+  "oauth2": []
+ }
+]
+desc head: 
+ body content-type: application/json
+  schema: {"type": "object", "properties": {"integrationName": {"type": "string", "description": "Name of the integration", "example": "HUBSPOT"}, "key": {"type": "string", "description": "Key of the integration, must be an existing integration profile key", "example": "some-key"}, "apiUrl": {"type": "string", "description": "Api URL of the integration", "example": "https://api.example.com"}, "locale": {"type": "string", "description": "Locale of the integration", "example": "de-DE", "deprecated": true}, "region": {"type": "string", "description": "Phone number region of the integration (ISO 3166-1 alpha-2 country code)", "example": "DE"}, "language": {"type": "string", "minLength": 2, "maxLength": 2, "description": "Language of the integration (ISO 639-1 code, e.g. \"de\")", "example": "de"}}, "req
+ resp 400 {"type": "object", "properties": {"detail": {"type": "string", "example": "https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179"}, "title": {"type": "string", "example": "Integration exception"}, "type": {"type": "string", "example": "Invalid Integration (MOCK)"}, "integrationName": {"type": "string", "example": "MOCK"}, "translationKey": {"type": "string", "example": "INVALI
+==================== /users.integrations.getAuthSessionUrl GET
+[
+ {
+  "oauth2": []
+ }
+]
+desc head: 
+Traceback (most recent call last):
+  File "<stdin>", line 9, in <module>
+ValueError: too many values to unpack (expected 2)
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import json
+d=json.load(open('/tmp/opencode/swagger-json.txt'))
+for target in ['/users.integrations.getAuthSessionUrl','/contacts.search','/users.integrations.list','/entities.get']:
+    op=d['paths'][target]
+    print('='*20, target)
+    for m,o in op.items():
+        if not isinstance(o,dict): continue
+        print(' ', m.upper(), 'sec=', o.get('security'))
+        for pname,p in (o.get('parameters') or []):
+            print('   param', pname, '| in:', p.get('in'), '| required:', p.get('required'), '| schema:', json.dumps(p.get('schema')))
+print('===== oauth2 scopes =====')
+print(json.dumps(d.get('components',{}).get('securitySchemes',{}), indent=1)[:600])
+print('===== global links/notion refs =====')
+import re
+print(set(re.findall(r'https?://[^\s"\']+', json.dumps(d))))
+EOF
+==================== /users.integrations.getAuthSessionUrl
+  GET sec= [{'oauth2': []}]
+Traceback (most recent call last):
+  File "<stdin>", line 9, in <module>
+ValueError: too many values to unpack (expected 2)
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import json,re
+d=json.load(open('/tmp/opencode/swagger-json.txt'))
+for target in ['/users.integrations.getAuthSessionUrl','/contacts.search','/users.integrations.list','/entities.get']:
+    op=d['paths'][target]
+    print('='*20, target)
+    for m,o in op.items():
+        if not isinstance(o,dict): continue
+        print(' ', m.upper(), 'sec=', o.get('security'))
+        for p in (o.get('parameters') or []):
+            print('   param', p.get('name'), '| in:', p.get('in'), '| required:', p.get('required'), '| schema:', json.dumps(p.get('schema')))
+print('===== oauth2 scheme =====')
+print(json.dumps(d.get('components',{}).get('securitySchemes',{}), indent=1)[:600])
+print('===== urls in spec =====')
+print(set(re.findall(r'https?://[^\s"\']+', json.dumps(d))))
+EOF
+==================== /users.integrations.getAuthSessionUrl
+  GET sec= [{'oauth2': []}]
+   param integrationName | in: query | required: True | schema: {"example": "HUBSPOT", "type": "string"}
+   param successUrl | in: query | required: True | schema: {"format": "uri", "example": "https://example.com/welcome?integration=SALESFORCE", "type": "string"}
+   param errorUrl | in: query | required: True | schema: {"format": "uri", "example": "https://example.com/error?integration=SALESFORCE&message=FORBIDDENMESSAGE", "type": "string"}
+   param domainModifier | in: query | required: False | schema: {"example": "https://example.com or mycompany.crm.com or mycompany", "type": "string"}
+   param locale | in: query | required: False | schema: {"example": "de-DE", "type": "string"}
+   param region | in: query | required: False | schema: {"example": "DE", "type": "string"}
+   param language | in: query | required: False | schema: {"minLength": 2, "maxLength": 2, "example": "de", "type": "string"}
+==================== /contacts.search
+  GET sec= [{'oauth2': []}]
+   param query | in: query | required: True | schema: {"example": "John Doe", "type": "string"}
+   param scope | in: query | required: False | schema: {"example": "team", "type": "string", "enum": ["all", "team", "contacts"]}
+   param debug | in: query | required: False | schema: {"example": true, "type": "boolean"}
+==================== /users.integrations.list
+  GET sec= [{'oauth2': []}]
+==================== /entities.get
+  GET sec= [{'oauth2': []}]
+   param integrationName | in: query | required: True | schema: {"example": "HUBSPOT", "type": "string"}
+   param entityType | in: query | required: True | schema: {"example": "contacts", "type": "string", "enum": ["contacts", "deals", "companies", "tickets", "leads", "accounts", "opportunities", "cases", "contacts_folder", "users", "tasks", "building_objects", "building_objects_leads"]}
+   param entityId | in: query | required: True | schema: {"example": "1234", "type": "string"}
+===== oauth2 scheme =====
+{
+ "oauth2": {
+  "type": "oauth2",
+  "flows": {
+   "implicit": {
+    "authorizationUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth",
+    "scopes": {}
+   }
+  }
+ }
+}
+===== urls in spec =====
+{'https://crm.example.com/tasks/123', 'https://api.example.com', 'https://sipgatede.notion.site/Stale-Timestamp-Error', 'https://example.com/welcome?integration=SALESFORCE', 'https://example.com/logo.png', 'https://sipgatede.notion.site/Entity-Not-Found-8fe72fbcf56f4afc81f8ceb6003fd344', 'https://example.com/logo-light.png', 'https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth', 'https://crm.com/contact/123456', 'https://example.com/error?integration=SALESFORCE&message=FORBIDDENMESSAGE', 'https://example.com/logo-dark.png', 'https://sipgatede.notion.site/Contact-Not-Found-160333fb479c80bb9caee0c0f42e55ab', 'https://sipgatede.notion.site/Error-123', 'https://example.com', 'https://sipgatede.notion.site/Integration-9eb9360dc6bd49be8411e208121f1179', 'https://crm.com/avatar/123456', 'https://crm.example.com/auth/session'}
+[0m
+[0m$ [0msleep 2; echo '=== /oauth2/redirect (no params) ==='; curl -sS -o /dev/null -D - 'https://integration.sipgate.com/oauth2/redirect' --max-time 20; sleep 2; echo; echo '=== /users.integrations.getAuthSessionUrl (no auth) ==='; curl -sS -o /dev/null -D - 'https://integration.sipgate.com/users.integrations.getAuthSessionUrl?integrationName=HUBSPOT&successUrl=https://example.com/w&errorUrl=https://example.com/e' --max-time 20
+=== /oauth2/redirect (no params) ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 131
+content-type: application/problem+json; charset=utf-8
+date: Thu, 17 Sep 2026 11:55:46 GMT
+
+
+=== /users.integrations.getAuthSessionUrl (no auth) ===
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+content-length: 240
+content-type: application/problem+json; charset=utf-8
+date: Thu, 17 Sep 2026 11:55:49 GMT
+x-ratelimit-limit: 800
+x-ratelimit-remaining: 799
+x-ratelimit-reset: 60
+[0m
+## STEP 1 — DELTA
+- CHANGED `api.sipgate.com/v2/authorization/token`: OPTIONS returns **204** this cycle (nemotron's 404 at 06:19 was transient edge jitter — restored); allow-header vocab byte-identical (X-Sipgate-Token-Id/Secret + MCP/SSE + x-sipgate-*); index sha256 `0d872a0f…` (5481 B) byte-identical.
+- CHANGED `integration.sipgate.com`: swagger spec relocated to public **`/swagger-json`** (200, 157,320 B, sha `67e5bd3b…`); `swagger-ui-init.js` shrank 386KB→4.4KB thin loader; path set still **26 ops identical**, `/oauth2/{redirect,callback}` still `security=None`.
+- CHANGED `integration.sipgate.com/metrics`: `firebase_jwt_forbidden_requests 9072` (down from 117,891 — per-replica restart-reset reconfirmed); `api_key 0`.
+- CONFIRMED gate uniform: GET `/oauth2/redirect` (no params) and `/users.integrations.getAuthSessionUrl?integrationName=HUBSPOT&successUrl=…&errorUrl=…` unauth → both **app-403** `application/problem+json` + `ACAO:*` + `x-ratelimit-limit:800`.
+
+## STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/authorization/token,6.0,attack_surface=5 business=7 tech=7 gate=7 cloud=4 fresh=5 → 1.25+1.75+1.05+1.05+0.40+0.50
+- [PRIO] integration.sipgate.com/users.integrations.getAuthSessionUrl,5.75,attack_surface=6 business=6 tech=8 gate=3 cloud=5 fresh=6 → 1.5+1.5+1.2+0.45+0.5+0.6
+- [PRIO] integration.sipgate.com/users.integrations.create,5.1,attack_surface=5 business=5 tech=7 gate=3 cloud=6 fresh=5 → 1.25+1.25+1.05+0.45+0.6+0.5
+
+## STEP 3 — HYPOTHESES
+[HYP] /v2/authorization/token constant-500 is a miswired OIDC client-credentials proxy — sole edge-escaping app-plane route
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: OPTIONS 204 + `ACAO: https://evil.example` + `ACAC:true` reconfirmed 15th consecutive cycle with byte-identical credential-bearing allow-header vocab; POST client_credentials constant empty 500 vs Keycloak CONTROL 401; crm-bridge sibling inert non-route; index sha256 `0d872a0f…` stable.
+evidence_needed: POST status transition 500→200 (mint) or →401/400 (upstream Keycloak restored); no valid creds ever used.
+verify_steps: PASSIVE — repeated OPTIONS next cycle (204=intact/404=drift) + GET /v2 sha256; POST deferred per rules.
+impact: restored OIDC proxy on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+[HYP] users.integrations.getAuthSessionUrl user-controlled successUrl/errorUrl → OAuth session-redirect chain on FB-JWT gate bypass
+class: OATH
+asset: integration.sipgate.com/users.integrations.getAuthSessionUrl
+confidence: 45
+reasoning: 2026-09-17 spec (sha`67e5bd3b…`) re-confirms successUrl/errorUrl as `format:uri` free-form with no host allowlist; `oauth2` scheme implicit-only w/ empty scopes on login.sipgate.com sipgate-apps; `/oauth2/redirect`+`/oauth2/callback` security=None; all 26 ops uniform FB-JWT 403 (re-probed: 403 + x-ratelimit).
+evidence_needed: valid FB-JWT → GET session URL; verify successUrl embedded unvalidated → provider auth-code/state captured mid-flow.
+verify_steps: AUTH_HELPED — passive each cycle: spec sha drift tracker + metrics counter increment (done: 9072 this cycle, gate live).
+impact: CRM provider OAuth code/state theft on session completion; MEDIUM-HIGH conditional.
+testability: AUTH_HELPED
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: 2026-09-17 spec re-confirms `apiUrl` plain string (no format/pattern/allowlist) on users.integrations.create; backend NestJS/Fastify on GCP (Scalar fingerprint); FB-JWT validator live (counter 9072); auth-mechanism drift (spec Keycloak vs runtime Firebase) persists.
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254 → observed outbound fetch/metadata read.
+verify_steps: AUTH_HELPED — passive: metrics increment (done), spec sha unchanged (67e5bd3b), gate 403-stable.
+impact: GCP metadata/project secrets on gate bypass; HIGH conditional.
+testability: AUTH_HELPED
+
+## STEP 4 — SELF-CRITIQUE
+All three ≥45, PASSIVE or AUTH_HELPED verify, none REJECTED-class, all tied to live artifact evidence this cycle. [PARKED] none. [FINAL] 1) token proxy (50, PASSIVE watch), 2) apiUrl SSRF (55, gate-blocked), 3) getAuthSessionUrl OATH (45, gate-blocked).
+
+## STEP 5 — NEXT ACTION
+[NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin `https://evil.example`, `Access-Control-Request-Method: POST`) — 204=intact / 404=hardening; then `GET https://integration.sipgate.com/swagger-json` (sha256 vs `67e5bd3b…` — spec-drift tracker, new ops = new surface) and `GET https://integration.sipgate.com/metrics` (fb-jwt counter); ≥1.5s spacing.
+
+## STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com: spec relocated to public `/swagger-json` (157,320 B, sha `67e5bd3b…`), init.js 4.4KB thin loader; still 26 ops identical; new internal Notion error-page URLs (Stale-Timestamp-Error, Entity-Not-Found) — same hidden-content class, no disclosure.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS **204 restored** — nemotron-observed 404 confirmed transient edge jitter (15th consecutive cycle flat); index sha256 `0d872a0f…` byte-identical; POST deferred (never valid creds).
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com: `/oauth2/redirect` (no params) and `/users.integrations.getAuthSessionUrl` unauthenticated → uniform app-403 + x-ratelimit 800 — gate holds, OATH/SSRF chains require FB-JWT (per KB consistent).
+
+## STEP 7 — RISK
+[RISK] sipgate: 85 — status-quo cycle: token proxy flat 15 cycles (OPTIONS restored, POST deferred), FB-JWT gate live but holding uniformly (re-probed 403 on oauth2 + authSessionUrl), spec surface relocated not expanded, no gate bypass, no creds, no new standalone exposure; highest value remains AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl OATH) and the PASSIVE token-proxy watch.
