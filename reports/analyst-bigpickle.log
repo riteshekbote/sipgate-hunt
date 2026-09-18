@@ -31727,3 +31727,16 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 - [RISK] sipgate: 85 — status-quo: token proxy flat 19th cycle (204 intact, POST constant 500), Platypus spec stable (`377a45b0…`) with uniform 403, FB-JWT live (57,882) but no bypass, no creds; highest remaining value is AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl OATH) + the PASSIVE token-proxy watch.
+===== ANALYST bigpickle 2026-09-18 11:37:19 UTC =====
+[0m
+> build · big-pickle
+[0m
+[93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting
+[0m✗ [0mcurl -sS -o /tmp/tok_headers.txt -D - -X OPTIONS "https://api.sipgate.com/v2/authorization/token" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" --max-time 15 2>&1 | head -25; echo "---BODY---"; cat /tmp/tok_headers.txt 2>/dev/null failed
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.
+[0m
+[0m$ [0mcurl -sS -o /tmp/spec.json -w "HTTP %{http_code}\n" "https://integration.sipgate.com/swagger-json" --max-time 15; sha256sum /tmp/spec.json; wc -c /tmp/spec.json
+HTTP 200
+377a45b04fddc63dc4529ba84321788e0f1e7ba9d814e604a016f9b3e7500b4a  /tmp/spec.json
+162337 /tmp/spec.json
+[0m

@@ -4754,3 +4754,4 @@ evidence_needed: valid FB-JWT → session URL; successUrl unvalidated → provid
 verify_steps: AUTH_HELPED — passive: spec sha drift + metrics increment + 403-stable.
 impact: CRM provider OAuth code/state theft mid-flow; MEDIUM-HIGH conditional.
 testability: AUTH_HELPED
+## 2026-09-18 11:30:45 UTC [target] (model bigpickle)

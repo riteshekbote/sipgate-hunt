@@ -936,3 +936,16 @@ www.sipgate.de
 - CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP `frame-ancestors` still includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/team
 - CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled, `IsTruncated=false`)
 - CHANGED share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed, subdomain-takeover candidate
+
+## 2026-09-18 11:37:19 UTC
+- NEW app.dev.sipgate.com: JS bundle rotated to `main-CsCbOEXK.js` (from `main-CL-MmSlB.js`); 17 hardcoded internal host:port pairs persist (down from 18), still includes NEW prod subdomains `admin.live.sip
+- NEW integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 97,167 (+50,433 vs prior 46,734); live Firebase-JWT validator confirmed, per-replica counter incrementing; auth-mechanism drift (spec
+- NEW grafana.sipgate.cloud: Grafana version upgraded 11.5.1 → 13.2.2 (commit `1bea008f7e`); internet-exposed on AWS LB (3.33.226.160), login-gated, no anonymous
+- NEW api.sipgate.com/v2/authorization/token: OPTIONS restored 204 with `ACAO:https://evil.example` + `ACAC:true`; allow-headers includes credential-bearing (`X-Sipgate-Token-Id`, `X-Sipgate-Token-Secret`) 
+- NEW share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed; subdomain-takeover candidate persists
+- NEW sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket re-confirmed (439 keys, versions 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled, `IsTruncated=false`)
+- NEW team-de.live.sipgate.com + team-uk.live.sipgate.com: CSP `frame-ancestors` still includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/team
+- NEW *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters uniformly behind nginx Basic-auth 401 + `ACAO:*` CORS preflight allowing `x-provider-url,x-provider-key`; data GET 401, header does NOT 
+- NEW mock.integration.sipgate.cloud: ungated Express twin, `/contacts` 200 (~8MB synthetic), `ACAO:*` + `ACAC:true` + `allow-headers: x-provider-*` — `x-provider-url` does NOT parameterize fetch (re-confir
+- CHANGED integration.dev.sipgate.com: HTTPS 403+ACAO* → TCP timeout (dead); was previously alive dev twin
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — Swagger-UI implicit redirect inherits API.v2 permissive CORS

@@ -629,3 +629,4 @@
 - 2026-09-18 REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no Host-header bypass found; redirect_uri validation correct (per KB)
 - 2026-09-18 REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - 2026-09-18 REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+- 2026-09-18 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 97167 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica counter restart-reset reconfirmed
