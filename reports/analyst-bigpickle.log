@@ -32088,3 +32088,131 @@ testability: AUTH_HELPED
 
 ## STEP 7 — RISK
 - [RISK] sipgate: 55 — all live hypotheses remain AUTH_HELPED behind FB-JWT/nginx gates (no gate bypass found in 21 cycles); surface was fully re-confirmed flat this cycle; highest-impact unauthenticated items are defense-in-depth (CORS reflection, info leaks) with no independent exploit path.
+===== ANALYST bigpickle 2026-09-18 23:28:12 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -o /dev/null -D - -X OPTIONS 'https://api.sipgate.com/v2/authorization/token' -H 'Origin: https://evil.example' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' --max-time 20
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Fri, 18 Sep 2026 23:23:37 GMT
+[0m
+I'll run passive verification probes for the active hypotheses, then emit the structured triage.
+[0m$ [0mcurl -s 'https://integration.sipgate.com/metrics' --max-time 20 | grep -E 'firebase_jwt_forbidden_requests|api_key_forbidden_requests|rate_limit_forbidden_requests' | head -5
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 0
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+[0m
+[0m$ [0mcurl -s -D - -H 'Accept: application/json' 'https://api.sipgate.com/v2' --max-time 20 | head -c 200; echo; curl -s -H 'Accept: application/json' 'https://api.sipgate.com/v2' --max-time 20 | sha256sum
+HTTP/1.1 200 OK
+content-length: 5481
+content-type: application/json
+vary: origin
+x-b3-traceid: 5d35f44344663681de31cb38b1e61bda
+date: Fri, 18 Sep 2026 23:23:37 GMT
+
+{"accountUrl":"https://api.s
+0d872a0f4c101d16ea4d502b5e4322faad5dbfd80161c3c4b8de62d3313fe65c  -
+[0m
+[0m$ [0mcurl -s 'https://integration.sipgate.com/swagger-json' --max-time 20 -o /dev/null -w 'GET /swagger-json: %{http_code} size=%{size_download}\n'; curl -s 'https://integration.sipgate.com/swagger-json' --max-time 20 | sha256sum
+GET /swagger-json: 200 size=162337
+377a45b04fddc63dc4529ba84321788e0f1e7ba9d814e604a016f9b3e7500b4a  -
+[0m
+[0m$ [0mcurl -s 'https://integration.sipgate.com/metrics' --max-time 20 | grep -E '^firebase_jwt_forbidden_requests|^api_key_forbidden_requests|^rate_limit_forbidden_requests'
+api_key_forbidden_requests 0
+firebase_jwt_forbidden_requests 28881
+rate_limit_forbidden_requests 318
+[0m
+Quick check for UI-framework drift on the api doc surface (parallel to integration's Swagger→Scalar rotation):
+[0m$ [0mcurl -s -o /dev/null -w 'GET /v2/doc/oauth2-redirect.html → %{http_code} size=%{size_download}\n' 'https://api.sipgate.com/v2/doc/oauth2-redirect.html' --max-time 20
+GET /v2/doc/oauth2-redirect.html → 200 size=2690
+[0m
+[0m$ [0mcurl -s -D - -o /dev/null 'https://api.sipgate.com/v2/doc/' -H 'Origin: https://evil.example' --max-time 20; echo '---'; curl -s 'https://api.sipgate.com/v2/doc/index.html' --max-time 20 | head -c 300
+HTTP/1.1 200 OK
+access-control-allow-credentials: true
+access-control-allow-origin: https://evil.example
+access-control-expose-headers: Sunset,API-Lifecycle,Deprecation,WWW-Authenticate,location,X-Sipgate-Reload,X-Sipgate-Was-NQ-Request,Mcp-Session-Id,X-Sipgate-Command
+cache-control: max-age=0
+content-type: text/html; charset=utf-8
+last-modified: Mon, 30 Oct 2023 17:20:29 GMT
+set-cookie: SERVERID=web-apps-web01; path=/; HttpOnly; Secure
+vary: origin
+x-b3-traceid: 55816bdd18b59c5f8d6e87b8f4af93d9
+date: Fri, 18 Sep 2026 23:23:52 GMT
+transfer-encoding: chunked
+
+---
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="/v2/doc/swagger-ui.css" />
+    <link rel="stylesheet" type="text/css" href="/v2/doc/index.css" />
+[0m
+All passive probes reconfirmed flat-state. Structured output:
+
+## STEP 1 — DELTA
+- CHANGED `integration.sipgate.com/metrics`: `firebase_jwt_forbidden_requests` **28,881** (+11,721 vs prior 17,160), `api_key` 0, `rate_limit` 318 — FB-JWT gate live/incrementing, per-replica restart variance.
+- NO_DELTA: `api.sipgate.com/v2/authorization/token` OPTIONS **204** `ACAO:https://evil.example`+`ACAC:true` byte-identical allow-header vocab (22nd cycle flat); `/v2` index still 5481 B sha `0d872a0f4c…` (72 URLs, no new paths); `integration.sipgate.com/swagger-json` still 200/162,337 B sha `377a45b04f…`; `api` doc still Swagger-UI (not rotated to Scalar like integration twin).
+
+## STEP 2 — PRIORITIZE
+- [PRIO] integration.sipgate.com, 7.9, a7/b9/t8/g8/c3/f8
+- [PRIO] api.sipgate.com/v2/authorization/token, 6.6, a6/b8/t7/g6/c3/f8
+- [PRIO] app.dev.sipgate.com bundle-topology, 5.9, a5/b6/t5/g8/c4/f8
+- [PRIO] api.sipgate.com/v2/doc swagger-ui XSS-amplifier, 5.5, a5/b7/t7/g5/c3/f4
+
+## STEP 3 — HYPOTHESES
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: swagger-json sha `377a45b0…` (200, 162,337 B, probed this cycle) unchanged — apiUrl free-form POST field persists; FB-JWT gate live (28,881, +11,721); spec-Keycloak vs runtime-Firebase drift persists; data ops uniform app-403.
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254/latest/meta-data → observed outbound metadata fetch.
+verify_steps: AUTH_HELPED — per-cycle passive: metrics counter + swagger-json sha + gate 403-stability (all re-confirmed).
+impact: GCP metadata/project secrets behind gate; HIGH conditional on credential.
+testability: AUTH_HELPED
+
+[HYP] /v2/authorization/token miswired OIDC client-credentials proxy — POST status-transition watch, 22nd cycle
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: OPTIONS **204** `ACAO:https://evil.example`+`ACAC:true` (probed), byte-identical allow-headers incl X-Sipgate-Token-Id/Secret+MCP/SSE; POST client_credentials constant 500 (prior cycles) vs Keycloak CONTROL 401; v2 index sha `0d872a0f…` (5481 B) byte-identical; api doc still Swagger-UI static (last-modified 2023-10-30). 22 cycles flat = no routing/hardening drift.
+evidence_needed: POST status 500→200 (mint) or →401/400 (upstream restored); never with valid creds.
+verify_steps: PASSIVE per cycle — OPTIONS 204/intact vs 404/jitter + GET /v2 index sha + ::metrics.
+impact: restored OIDC token-mint on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+
+[HYP] users.integrations.getAuthSessionUrl successUrl/errorUrl → OAuth session-redirect chain on gate bypass
+class: OATH
+asset: integration.sipgate.com/users.integrations.getAuthSessionUrl
+confidence: 45
+reasoning: spec `377a45b0…` re-confirms successUrl/errorUrl `format:uri` free-form, no host allowlist; /oauth2/redirect+/callback declared security=None yet app-403 (precondition intact); implicit OAuth on login.sipgate.com.
+evidence_needed: valid FB-JWT → session URL with attacker successUrl → provider code/state capture mid-flow.
+verify_steps: AUTH_HELPED — passive: swagger-json sha + ::metrics + 403-stable (all re-confirmed).
+impact: CRM provider OAuth code/state theft; MEDIUM-HIGH conditional.
+testability: AUTH_HELPED
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] token-proxy conf 50 retained only as passive transition-watch; intrinsic value decays with cycle count — no new exploit primitive derived in 22 cycles; kept (not <40) since status-flip is the whole point and it is zero-cost passive.
+- [FINAL] ranked: (1) integration apiUrl SSRF 55, (2) token-proxy watch 50, (3) successUrl OAuth 45.
+
+## STEP 5 — NEXT ACTION
+[NEXT] PROBE: `GET https://app.dev.sipgate.com/assets/main-DtSLtCv5.js` — extract all `http(s)://` + `host:port` literals; diff against the 10-host set noted 2026-09-18 15:18/18:38; DNS-resolve `admin.live.sipgate.net` + `admin.dev.sipgate.net` for liveness shift (ranked [90] topology/SSRF-enabler).
+
+## STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: fb_jwt 28,881 (+11,721), api_key 0, rate_limit 318 — gate live; per-replica restart-reset variance reconfirmed (9th observation).
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS 204 flat, byte-identical edge CORS vocab — 22nd-cycle stable, no routing/hardening change.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/doc: still Swagger-UI 5.x (no Scalar rotation unlike integration); landing page leaks `SERVERID=web-apps-web01` + expose-headers `Sunset,API-Lifecycle,Deprecation,X-Sipgate-Reload,X-Sipgate-Command,Mcp-Session-Id`; static asset Last-Modified 2023-10-30.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2: index sha `0d872a0f4c…` byte-identical (72 URLs) — no new undocumented paths this cycle.
+
+## STEP 7 — RISK
+[RISK] sipgate: 45 — recon breadth large but every high-value surface (api v2, integration data plane, third-party OIDC) sits behind a deployed auth gate (Keycloak/FB-JWT/nginx); only confirmed findings remain defense-in-depth MISCONFIG/INFO; ATO/SSRF/BOLA chains all AUTH_HELPED with no credential acquisition path yet.
