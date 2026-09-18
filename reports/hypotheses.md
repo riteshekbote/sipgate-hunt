@@ -2102,3 +2102,24 @@
 - LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
 - LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
 - LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy
+
+## RANKED HYPOTHESES 2026-09-18 06:05:37 UTC
+- [85] api.sipgate.com/v2/authorization/token: Miswired OIDC Token Proxy on API Origin Enables Client-Credentials Theft (from art/lead_nemotron3.txt)
+- [50] api.sipgate.com/v2/authorization/token: /v2/authorization/token constant-500 is a miswired OIDC client-credentials proxy — check POST status transition this cycle (from art/lead_bigpickle.txt)
+- NEXT(hypotheses-nemotron3.txt): PROBE: GET https://app.dev.sipgate.com/assets/main-CL-MmSlB.js — fetch current JS bundle, extract all hardcoded host:port pairs; DNS-resolve admin.live.sipgate.
+- LEARN: ACCEPTED MISCONFIG @ api.sipgate.com/v2/*: arbitrary-origin CORS reflection with credentials persistent across endpoints; x-b3-traceid leak — defense-in-depth g
+- LEARN: ACCEPTED INFO @ api.sipgate.com/v2/doc/*: swagger-ui 5.x live with implicit-only third-party client sipgate-swagger-ui; extreme scope set; high-value only as sa
+- LEARN: REJECTED SSRF @ mock.integration.sipgate.cloud: proven synthetic twin, no fetch sink observed; x-provider-url header does not parameterize outbound requests
+- LEARN: ACCEPTED MISCONFIG @ *.integration.sipgate.cloud (94 hosts): per-vendor CRM adapters behind nginx Basic-auth 401 with ACAO:* CORS exposing x-provider-{url,key} 
+- LEARN: ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 46734 (down from 117,891, up from 40009) — live Firebase-JWT validator + auth-m
+- LEARN: ACCEPTED MISCONFIG @ team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in produ
+- LEARN: ACCEPTED MISCONFIG @ sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket exposing full softphone installer index (1.3.0–1.17.19, stal
+- LEARN: ACCEPTED AUTH @ login.sipgate.com third-party realm: live OIDC with extreme scopes (contacts/sms/account/balance/payment/authorization:oauth2:clients:write), HS
+- LEARN: REJECTED OATH @ api.sipgate.com/v2/doc/oauth2-redirect.html: Chromium 152 cross-origin popup test confirms SecurityError on window.opener read; token fragment s
+- LEARN: REJECTED AUTH @ api.sipgate.com/v2/authorization/oauth2/clients/: list endpoint 404, individual endpoints 404 — prior 500-on-UUID authz-drift signal not reprodu
+- LEARN: REJECTED OATH @ app.sipgate.com/implicit-auth-redirect: history.replace(external) in React Router resolves same-origin, token persists to localStorage before na
+- LEARN: REJECTED AUTH @ login.sipgate.com Keycloak: realm metadata advertising HS256/PKCE-plain/client_secret_jwt is standard Keycloak config, not affirmative of reacha
+- LEARN: REJECTED SECRET @ api.sipgate.com third-party OAuth: leaked demo client_id/client_secret from rest-api-examples/.npmrc.dist returns invalid_client — not live cr
+- LEARN: REJECTED AUTH @ login.sipgate.com third-party realm: dynamic client registration endpoint gated by Keycloak Trusted Hosts policy (POST → insufficient_scope), no
+- LEARN: REJECTED network DoS @ app.sipgate.com: Out of scope per program policy
+- LEARN: REJECTED SSL/TLS best practice @ login.sipgate.com: Out of scope per program policy

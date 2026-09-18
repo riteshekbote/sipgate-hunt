@@ -925,3 +925,14 @@ www.sipgate.de
 - CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com CSP frame-ancestors still includes app.local.sipgate.com:3443 (internal dev origin) in production portals, SERVERID rotation (team-web01/team-web02/
 - CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled, IsTruncated=false)
 - CHANGED share1.sipgate.cloud dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN confirmed, subdomain-takeover candidate
+
+## 2026-09-18 06:05:37 UTC
+- NEW integration.sipgate.com: Swagger-UI replaced with Scalar API Reference; OpenAPI spec rotated (new SHA, 27 operations incl `/streaming.start`); `users.integrations.create` free-form `apiUrl` SSRF param
+- NEW grafana.sipgate.cloud: Grafana version upgraded 11.5.1 → 13.2.2 (commit `1bea008f7e`); internet-exposed on AWS LB (3.33.226.160), login-gated, no anonymous
+- NEW integration.dev.sipgate.com: HTTPS 403+ACAO* → TCP timeout (dead); was previously alive dev twin
+- CHANGED api.sipgate.com/v2/authorization/token: OPTIONS restored 204 (was 404 last cycle) with `ACAO:https://evil.example`+`ACAC:true`, MCP/SSE headers (`MCP-Protocol-Version`, `Mcp-Session-Id`, `Last-Event-I
+- CHANGED app.dev.sipgate.com: JS bundle rotated `main-Bt5gzUgC.js` → `main-CL-MmSlB.js` (5.74MB, etag `5d6990517...`); hardcoded internal hosts reduced 17→11 but still includes NEW prod subdomains `admin.live.
+- CHANGED integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 117,891 → 40,009 → 46,734 (per-replica restart-reset variance reconfirmed); live Firebase-JWT validator + auth-mechanism drift (spec 
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP `frame-ancestors` still includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/team
+- CHANGED sipgate-desktop-app.s3.eu-central-1.amazonaws.com: publicly listable S3 bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled, `IsTruncated=false`)
+- CHANGED share1.sipgate.cloud: dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed, subdomain-takeover candidate
