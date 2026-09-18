@@ -4783,3 +4783,31 @@ evidence_needed: valid FB-JWT → GET session URL; verify successUrl unvalidated
 verify_steps: AUTH_HELPED — passive: spec sha + metrics + 403-stable.
 impact: CRM provider OAuth code/state theft; MEDIUM-HIGH conditional.
 testability: AUTH_HELPED
+## 2026-09-18 18:36:37 UTC [target] (model bigpickle)
+[HYP] /v2/authorization/token miswired OIDC client-credentials proxy — POST status-transition watch, 20th cycle
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: OPTIONS 204 `ACAO:https://evil.example`+`ACAC:true` (probed 2026-09-18, restored), byte-identical allow-headers incl X-Sipgate-Token-Id/Secret+MCP/SSE; POST client_credentials constant empty 500 vs Keycloak CONTROL 401; swagger-json rotated to Scalar but token proxy untouched; v2 index sha `0d872a0f…` stable.
+evidence_needed: POST status 500→200 (mint) or →401/400 (upstream restored); never with valid creds.
+verify_steps: PASSIVE per cycle — OPTIONS /v2/authorization/token (204/intact, 404/jitter) + GET /v2 (Accept json) index sha + metrics counter.
+impact: restored OIDC token-mint on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: swagger-json sha `377a45b0…` (probed 200, 162,337 B) re-confirms apiUrl free-form POST field; FB-JWT gate live (24,464, +7,304); spec-Keycloak vs runtime-Firebase drift persists; data ops uniform app-403 (root 403, /api-reference 404 re-probed).
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254/latest/meta-data → observed outbound metadata fetch.
+verify_steps: AUTH_HELPED — passive each cycle: metrics + spec sha + gate 403-stable (all re-confirmed).
+impact: GCP metadata/project secrets behind gate; HIGH conditional.
+testability: AUTH_HELPED
+[HYP] users.integrations.getAuthSessionUrl successUrl/errorUrl → OAuth session-redirect chain on gate bypass
+class: OATH
+asset: integration.sipgate.com/users.integrations.getAuthSessionUrl
+confidence: 45
+reasoning: spec `377a45b0…` re-confirms successUrl/errorUrl `format:uri` free-form, no host allowlist; /oauth2/redirect+/callback declared security=None yet app-403; implicit OAuth on login.sipgate.com.
+evidence_needed: valid FB-JWT → session URL with successUrl unvalidated → provider code/state capture mid-flow.
+verify_steps: AUTH_HELPED — passive: spec sha + metrics + 403-stable.
+impact: CRM provider OAuth code/state theft; MEDIUM-HIGH conditional.
+testability: AUTH_HELPED

@@ -963,3 +963,17 @@ www.sipgate.de
 - CHANGED sipgate-desktop-app.s3: publicly listable bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled, IsTruncated=false); ACL/policy reads denied; write path NOT tested
 - CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web01/team-web02/team-
 - CHANGED share1.sipgate.cloud: dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN — subdomain-takeover candidate
+
+## 2026-09-18 18:38:50 UTC
+- NEW app.dev.sipgate.com: JS bundle rotated to `main-DtSLtCv5.js` (from `main-CsCbOEXK.js`); 10 hardcoded internal host:port pairs (down from 17), still includes NEW prod subdomains `admin.live.sipgate.net
+- NEW integration.sipgate.com: Scalar API Reference replaces Swagger-UI; OpenAPI spec rotated (27 ops incl `/streaming.start`); `UsersIntegrations$CreateRequest` still accepts free-form `apiUrl` (SSRF param
+- NEW integration.dev.sipgate.com: HTTPS 403+ACAO* → TCP timeout (dead); was previously alive dev twin
+- NEW grafana.sipgate.cloud: Grafana version upgraded 11.5.1 → 13.2.2 (commit `1bea008f7e`); internet-exposed on AWS LB (3.33.226.160), login-gated, no anonymous
+- CHANGED api.sipgate.com/v2/authorization/token: OPTIONS restored 204 with ACAO:evil.example+ACAC:true, MCP/SSE + credential-bearing headers (X-Sipgate-Token-Id/Secret); POST client_credentials returns constan
+- CHANGED api.sipgate.com/v2/doc/oauth2-redirect.html: still reflects arbitrary Origin with credentials (ACAO: evil.com + ACAC:true) — inherits API.v2 permissive CORS
+- CHANGED integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 17160 (down from 97167, up from 46734) — per-replica counter variance reconfirmed; live Firebase-JWT validator + auth-mechanism drift (
+- CHANGED *.integration.sipgate.cloud (94 hosts): uniform nginx Basic-auth 401 + ACAO:* CORS preflight allowing x-provider-url/key; data GET 401, header does NOT bypass nginx gate
+- CHANGED mock.integration.sipgate.cloud: ungated Express twin, /contacts 200 (~8MB synthetic), ACAO:* + ACAC:true + allow-headers: x-provider-* — x-provider-url does NOT parameterize fetch (re-confirmed)
+- CHANGED sipgate-desktop-app.s3: publicly listable bucket re-confirmed (439 keys, 1.3.0–1.17.19, stale since 2024-06-11, versioning disabled, IsTruncated=false); ACL/policy reads denied; write path NOT tested
+- CHANGED team-uk.live.sipgate.com + team-de.live.sipgate.com: CSP frame-ancestors includes app.local.sipgate.com:3443 (internal dev origin) in production portals; SERVERID rotation (team-web01/team-web02/team-
+- CHANGED share1.sipgate.cloud: dangling CNAME → nx38603.your-storageshare.de (Hetzner StorageShare) → NXDOMAIN — subdomain-takeover candidate
