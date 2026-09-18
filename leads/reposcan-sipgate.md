@@ -887,3 +887,33 @@ TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
 ## REPOSCAN 2026-09-18 20:15:34 UTC
 TARGET_ORG not configured for sipgate; skipping public-org deep scan.
+## REPOSCAN 2026-09-18 22:39:45 UTC
+[HYP] Host header injection / SSRF via unsanitized HTTP_HOST in sipgate-sugarcrm
+class: SSRF
+asset: sipgate-sugarcrm/Files/custom/modules/sipgateio/sipgateio.php:58
+confidence: 45
+reasoning: URL is constructed from unsanitized $_SERVER['HTTP_HOST'] and $_SERVER['REQUEST_URI']
+impact: LOW — code is an unmaintained example integration; real-world exploitability
+verify_steps: (1) Confirm whether sipgate-sugarcrm integration is deployed anywhere
+[HYP] Host header injection in demo.sipgate.io callback URL construction
+class: OTHER
+asset: demo.sipgate.io/server.js:54
+confidence: 35
+reasoning: request.headers.host is used unsanitized in constructing XML callback URLs
+impact: LOW — demo app, likely behind CDN/LB with Host validation.
+verify_steps: (1) Send request with forged Host header to POST / endpoint.
+[HYP] Hardcoded example credentials in sipgateapi-java-example
+class: SECRET
+asset: sipgateapi-java-example/src/sipgateAPI/Client.java:27-28
+confidence: 10
+reasoning: Contains String username = "johndoe@example.org" and password = "password".
+impact: NONE — example placeholder values in archived sample code.
+verify_steps: N/A — not actionable.
+[HYP] Database credential template in ansible-logger config
+class: SECRET
+asset: ansible-logger/ansible-logger-web/config/config.inc.php.dist:6
+confidence: 10
+reasoning: Config template contains $config["db"]["password"] = "secret" as a
+impact: NONE — template with placeholder value, actual config not committed.
+verify_steps: N/A — not actionable.
+TARGET_ORG not configured for sipgate; skipping public-org deep scan.
