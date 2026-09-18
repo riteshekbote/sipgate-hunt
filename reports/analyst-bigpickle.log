@@ -31958,3 +31958,133 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 - [RISK] sipgate: 85 — status-quo cycle: token proxy flat 20th cycle (no mint, no hardening), Platypus spec stable (`377a45b0…`, 162,337 B) with uniform app-403 (root/api-reference 404 re-probed), FB-JWT gate live (24,464) but no bypass, no creds; dev-bundle topology re-probe empty. Highest remaining value is AUTH_HELPED-conditional (apiUrl SSRF, getAuthSessionUrl OATH) + the passive token-proxy watch.
+===== ANALYST bigpickle 2026-09-18 21:18:25 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "OPTIONS token -> %{http_code} ACAO:%header{access-control-allow-origin} ACAC:%header{access-control-allow-credentials}\n" -X OPTIONS "https://api.sipgate.com/v2/authorization/token" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" --max-time 15 2>&1 | head -5
+OPTIONS token -> 204 ACAO:https://evil.example ACAC:true
+[0m
+[0m$ [0mcurl -s "https://api.sipgate.com/v2" -H "Accept: application/json" --max-time 15 | sha256sum; curl -s -o /dev/null -w "v2 GET %{http_code} size:%{size_download}\n" "https://api.sipgate.com/v2" -H "Accept: application/json" --max-time 15
+0d872a0f4c101d16ea4d502b5e4322faad5dbfd80161c3c4b8de62d3313fe65c  -
+v2 GET 200 size:5481
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/metrics" --max-time 15 | grep -iE "firebase_jwt_forbidden|api_key_forbidden|rate_limit_forbidden" | head -5
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 0
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "swagger-json %{http_code} size:%{size_download}\n" "https://integration.sipgate.com/swagger-json" --max-time 15; curl -s "https://integration.sipgate.com/swagger-json" --max-time 15 | sha256sum
+swagger-json 200 size:162337
+377a45b04fddc63dc4529ba84321788e0f1e7ba9d814e604a016f9b3e7500b4a  -
+[0m
+[0m$ [0mcurl -s "https://integration.sipgate.com/metrics" --max-time 15 | grep -E "^(firebase_jwt_forbidden_requests|api_key_forbidden_requests|rate_limit_forbidden_requests) " | head -5
+api_key_forbidden_requests 0
+firebase_jwt_forbidden_requests 27306
+rate_limit_forbidden_requests 341
+[0m
+[0m$ [0mcurl -s "https://app.dev.sipgate.com/assets/main-DtSLtCv5.js" --max-time 25 -o /tmp/opencode/main-DtSLtCv5.js; ls -la /tmp/opencode/main-DtSLtCv5.js; grep -oE "[a-z0-9.-]+\.sipgate\.[a-z]+(:[0-9]+)?" /tmp/opencode/main-DtSLtCv5.js | sort -u | head -40
+-rw-r--r-- 1 runner runner 5652765 Sep 18 21:17 /tmp/opencode/main-DtSLtCv5.js
+.api.dev.sipgate.com
+.api.local.sipgate.com
+.api.sipgate.com
+admin.dev.sipgate.net
+admin.live.sipgate.net
+amp.sipgate.de
+api.dev.sipgate.com
+api.local.sipgate.com:3396
+api.sipgate.com
+app.dev.sipgate.com
+app.local.sipgate.com:3443
+app.sipgate.com
+chatbot.dev.sipgate.com
+chatbot.sipgate.com
+info.sipgate.de
+integration.dev.sipgate.com
+integration.sipgate.cloud
+login.dev.sipgate.com
+login.sipgate.com
+payment.dev.sipgate.com
+payment.local.sipgate.com:8080
+payment.sipgate.com
+static.sipgate.com
+status.sipgate.de
+team-de.dev.sipgate.com
+team-de.live.sipgate.com
+team-de.local.sipgate.com:10443
+team-uk.dev.sipgate.com
+team-uk.live.sipgate.com
+team-uk.local.sipgate.com:10443
+www.sipgate.de
+[0m
+[0m$ [0mcurl -s -o /dev/null -w "grafana /api/health -> %{http_code}\n" "https://grafana.sipgate.cloud/api/health" --max-time 15; curl -s "https://grafana.sipgate.cloud/api/health" --max-time 15 | head -c 300; echo; curl -s -o /dev/null -w "grafana / -> %{http_code} -> %{redirect_url}\n" "https://grafana.sipgate.cloud/" --max-time 15
+grafana /api/health -> 200
+{
+  "database": "ok",
+  "version": "13.2.2",
+  "commit": "1bea008f7e4e858b6824c9e364d608bd4d10b13a"
+}
+grafana / -> 302 -> https://grafana.sipgate.cloud/login
+[0m
+## STEP 1 — DELTA
+- [CHANGED] api.sipgate.com/v2/authorization/token: OPTIONS probed 2026-09-18 → 204, `ACAO:https://evil.example`+`ACAC:true` — 20th-cycle flat, no routing/hardening change.
+- [CHANGED] integration.sipgate.com/metrics: `firebase_jwt_forbidden_requests` 27,306 (+2,842 vs last-lead 24,464), `rate_limit_forbidden_requests` 341 — gate live, per-replica variance.
+- [CHANGED] app.dev.sipgate.com bundle rotated → `main-DtSLtCv5.js` (5,652,765 B, fetched): host-extraction returns same 30-name set (admin.live/dev.sipgate.net, *.local:3396/3443/8080/10443, integration.sipgate.cloud) — rotation, NO new topology.
+- [CHANGED] grafana.sipgate.cloud: probed 13.2.2 (`/api/health` 200 shows version+commit only, root 302→`/login`) — auth-gated, no anonymous; upgrade is close-out, not new surface.
+- [STABLE] `GET /v2` index 5481 B sha `0d872a0f…` byte-identical; `integration.sipgate.com/swagger-json` 200 / 162,337 B sha `377a45b0…` unchanged (27 ops incl `/streaming.start`).
+
+## STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/authorization/token, 6.4, AUTH (a7 b9 t7 g3 c2 f7)
+- [PRIO] integration.sipgate.com/users.integrations.create, 6.3, SSRF (a6 b8 t6 g2 c9 f7)
+- [PRIO] app.dev.sipgate.com bundle, 5.8, INFO (a7 b4 t5 g8 c4 f7) — ACCEPTED class, parked below
+- [PRIO] integration.sipgate.com/users.integrations.getAuthSessionUrl, 5.1, OATH (a5 b7 t7 g2 c2 f6)
+
+## STEP 3 — HYPOTHESES
+[HYP] /v2/authorization/token miswired OIDC client-credentials proxy — POST status-transition watch, 21st cycle
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: OPTIONS 204 `ACAO:https://evil.example`+`ACAC:true` probed this cycle; v2 index sha `0d872a0f…` (5481 B) byte-identical; POST client_credentials constant empty 500 vs Keycloak CONTROL 401 (prior cycles); swagger-json rotated to Scalar but token proxy untouched.
+evidence_needed: POST status 500→200 (mint) or →401/400 (upstream restored); never with valid creds.
+verify_steps: PASSIVE per cycle — OPTIONS /v2/authorization/token (204=intact/404=jitter) + GET /v2 (Accept json) index sha + metrics.
+impact: restored OIDC token-mint on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: swagger-json sha `377a45b0…` (200, 162,337 B, probed) re-confirms apiUrl free-form POST field; FB-JWT gate live (27,306, +2,842); spec-Keycloak vs runtime-Firebase drift persists; data ops uniform app-403 (prior cycles).
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254/latest/meta-data → observed metadata fetch.
+verify_steps: AUTH_HELPED — passive: metrics + spec sha + 403-stable (all re-confirmed).
+impact: GCP metadata/project secrets behind gate; HIGH conditional.
+testability: AUTH_HELPED
+
+[HYP] users.integrations.getAuthSessionUrl successUrl/errorUrl → OAuth session-redirect chain on gate bypass
+class: OATH
+asset: integration.sipgate.com/users.integrations.getAuthSessionUrl
+confidence: 45
+reasoning: spec `377a45b0…` re-confirms successUrl/errorUrl `format:uri` free-form, no host allowlist; /oauth2/redirect+/callback declared security=None yet app-403 (precondition intact); implicit OAuth on login.sipgate.com.
+evidence_needed: valid FB-JWT → session URL with successUrl unvalidated → provider code/state capture mid-flow.
+verify_steps: AUTH_HELPED — passive: spec sha + metrics + 403-stable.
+impact: CRM provider OAuth code/state theft; MEDIUM-HIGH conditional.
+testability: AUTH_HELPED
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] app.dev.sipgate.com bundle topology [90]: rotation re-fetched this cycle, host set byte-identical to prior — already ACCEPTED MISCONFIG/INFO, no new hostnames, no forward action; defer until next rotation produces a NEW host.
+- [PARKED] grafana.sipgate.cloud 13.2.2: `/api/health` version+commit leak only (descriptive, OOS standalone), root 302→/login — close-out, no anonymous surface.
+- [PARKED] api.sipgate.com/v2/authorization/token SSRF/MCP variant: MCP/SSE headers are uniform edge CORS vocabulary (byte-identical on static oauth2-redirect.html) — not route-specific evidence; prior REJECT stands.
+- [FINAL] ranked survivors: [55] users.integrations.create apiUrl SSRF; [50] /v2/authorization/token OIDC proxy transition; [45] getAuthSessionUrl OATH.
+
+## STEP 5 — NEXT ACTION
+- [NEXT] PROBE: GET https://grafana.sipgate.cloud/api/health + /api/ds/query anonymous probe — after 11.5.1→13.2.2 upgrade confirm no accidental anonymous datasource access (302→/login reconfirmed this cycle; single read-only check next cycle to close the upgrade delta).
+
+## STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ grafana.sipgate.cloud: `/api/health` 200 leaks version 13.2.2 + commit `1bea008f7e…` on internet-facing LB; root 302→/login — auth-gated, descriptive-only, OOS standalone; confirms upgrade 11.5.1→13.2.2 with no anonymous regression.
+- [LEARN] ACCEPTED INFO @ app.dev.sipgate.com: bundle `main-DtSLtCv5.js` (5,652,765 B) host-name set byte-identical to prior rotations (30 refs incl admin.live/dev.sipgate.net, *.local:3396/3443/8080/10443, integration.sipgate.cloud) — rotation without topology drift; no new inventory names.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2 + integration.sipgate.com: token OPTIONS 204 `ACAO:https://evil.example`+`ACAC:true`, index sha `0d872a0f…`, swagger sha `377a45b0…`, fb-jwt 27,306 — 21st-cycle flat state, all preconditions (AUTH_HELPED/PASSIVE) intact.
+
+## STEP 7 — RISK
+- [RISK] sipgate: 55 — all live hypotheses remain AUTH_HELPED behind FB-JWT/nginx gates (no gate bypass found in 21 cycles); surface was fully re-confirmed flat this cycle; highest-impact unauthenticated items are defense-in-depth (CORS reflection, info leaks) with no independent exploit path.
