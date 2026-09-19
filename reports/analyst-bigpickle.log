@@ -32216,3 +32216,426 @@ testability: AUTH_HELPED
 
 ## STEP 7 — RISK
 [RISK] sipgate: 45 — recon breadth large but every high-value surface (api v2, integration data plane, third-party OIDC) sits behind a deployed auth gate (Keycloak/FB-JWT/nginx); only confirmed findings remain defense-in-depth MISCONFIG/INFO; ATO/SSRF/BOLA chains all AUTH_HELPED with no credential acquisition path yet.
+===== ANALYST bigpickle 2026-09-19 01:40:48 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mfor h in admin.live.sipgate.net admin.dev.sipgate.net helpdesk.live.sipgate.net helpdesk.dev.sipgate.net team-uk.dev.sipgate.com; do printf "%s -> " "$h"; dig +short "$h" | tr '\n' ' '; echo; done
+admin.live.sipgate.net -> helpdesk.live.sipgate.net. 217.10.73.71 
+admin.dev.sipgate.net -> helpdesk.dev.sipgate.net. 217.116.120.148 
+helpdesk.live.sipgate.net -> 217.10.73.71 
+helpdesk.dev.sipgate.net -> 217.116.120.148 
+team-uk.dev.sipgate.com -> 217.116.121.65
+[0m
+[0m$ [0mcurl -s -o /tmp/opencode/bundle.js -w "HTTP %{http_code} size %{size_download}\n" "https://app.dev.sipgate.com/assets/main-DtSLtCv5.js"; echo "=== host literals ==="; rg -o -i 'https?://[a-z0-9.-]+(:[0-9]+)?' /tmp/opencode/bundle.js | sort -u
+HTTP 200 size 5652765
+=== host literals ===
+/bin/bash: line 1: rg: command not found
+[0m
+[0m$ [0mgrep -oiE 'https?://[a-z0-9.-]+(:[0-9]+)?' /tmp/opencode/bundle.js | sort -u
+http://fb.me
+http://js.pusher.com
+http://localhost
+http://momentjs.com
+http://www.w3.org
+https://admin.dev.sipgate.net
+https://admin.live.sipgate.net
+https://amp.sipgate.de
+https://api.dev.sipgate.com
+https://api.eu.amplitude.com
+https://api.local.sipgate.com:3396
+https://api.sipgate.com
+https://api2.amplitude.com
+https://app.amplitude.com
+https://app.dev.sipgate.com
+https://app.eu.amplitude.com
+https://app.local.sipgate.com:3443
+https://app.sipgate.com
+https://apps.stag2.amplitude.com
+https://base-ui.com
+https://bit.ly
+https://cdn.amplitude.com
+https://chatbot.dev.sipgate.com
+https://chatbot.sipgate.com
+https://css-tricks.com
+https://docs.google.com
+https://eum-blue-saas.instana.io
+https://eum.instana.io
+https://github.com
+https://info.sipgate.de
+https://integration.dev.sipgate.com
+https://integration.sipgate.cloud
+https://js.pusher.com
+https://login.dev.sipgate.com
+https://login.sipgate.com
+https://momentjs.com
+https://mui.com
+https://npms.io
+https://payment.dev.sipgate.com
+https://payment.local.sipgate.com:8080
+https://payment.sipgate.com
+https://pusher.com
+https://reactjs.org
+https://redux-toolkit.js.org
+https://redux.js.org
+https://sr-client-cfg.amplitude.com
+https://sr-client-cfg.eu.amplitude.com
+https://sr-client-cfg.stag2.amplitude.com
+https://static.sipgate.com
+https://status.sipgate.de
+https://team-de.dev.sipgate.com
+https://team-de.live.sipgate.com
+https://team-de.local.sipgate.com:10443
+https://team-uk.dev.sipgate.com
+https://team-uk.live.sipgate.com
+https://team-uk.local.sipgate.com:10443
+https://www.docs.developers.amplitude.com
+https://www.sipgate.de
+[0m
+[0m$ [0mgrep -oE '[a-z0-9.-]+\.(sipgate\.(com|net|cloud|de|io)|live\.sipgate\.net|sipgate\.io)(:[0-9]+)?' /tmp/opencode/bundle.js | sort -u
+.api.dev.sipgate.com
+.api.local.sipgate.com
+.api.sipgate.com
+admin.dev.sipgate.net
+admin.live.sipgate.net
+amp.sipgate.de
+api.dev.sipgate.com
+api.local.sipgate.com:3396
+api.sipgate.com
+app.dev.sipgate.com
+app.local.sipgate.com:3443
+app.sipgate.com
+chatbot.dev.sipgate.com
+chatbot.sipgate.com
+info.sipgate.de
+integration.dev.sipgate.com
+integration.sipgate.cloud
+login.dev.sipgate.com
+login.sipgate.com
+payment.dev.sipgate.com
+payment.local.sipgate.com:8080
+payment.sipgate.com
+static.sipgate.com
+status.sipgate.de
+team-de.dev.sipgate.com
+team-de.live.sipgate.com
+team-de.local.sipgate.com:10443
+team-uk.dev.sipgate.com
+team-uk.live.sipgate.com
+team-uk.local.sipgate.com:10443
+www.sipgate.de
+[0m
+[0m$ [0mecho "== OPTIONS /v2/authorization/token =="; curl -s -X OPTIONS -o /dev/null -D - -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" "https://api.sipgate.com/v2/authorization/token" 2>&1 | grep -iE "HTTP/|access-control|allow-headers" | head -12; sleep 1; echo "== GET /v2 index sha =="; curl -s -H "Accept: application/json" "https://api.sipgate.com/v2" | sha256sum; echo; sleep 1; echo "== swagger-json sha =="; curl -s "https://integration.sipgate.com/swagger-json" | sha256sum; echo; sleep 1; echo "== metrics =="; curl -s "https://integration.sipgate.com/metrics" | grep -E "forbidden_requests|rate_limit" | head -8
+== OPTIONS /v2/authorization/token ==
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+== GET /v2 index sha ==
+0d872a0f4c101d16ea4d502b5e4322faad5dbfd80161c3c4b8de62d3313fe65c  -
+
+== swagger-json sha ==
+377a45b04fddc63dc4529ba84321788e0f1e7ba9d814e604a016f9b3e7500b4a  -
+
+== metrics ==
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 0
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 30270
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+# TYPE rate_limit_forbidden_requests counter
+[0m
+[0m$ [0mecho "== admin.live.sipgate.net =="; curl -sk -o /dev/null -w "HTTP %{http_code} time %{time_total}\n" --max-time 8 https://admin.live.sipgate.net/ 2>&1; sleep 1; echo "== admin.dev.sipgate.net =="; curl -sk -o /dev/null -w "HTTP %{http_code} time %{time_total}\n" --max-time 8 https://admin.dev.sipgate.net/ 2>&1; sleep 1; echo "== integration.sipgate.cloud prod ref in bundle =="; curl -sk -o /dev/null -w "HTTP %{http_code}\n" --max-time 8 https://integration.sipgate.cloud/ 2>&1
+== admin.live.sipgate.net ==
+HTTP 000 time 8.001261
+== admin.dev.sipgate.net ==
+HTTP 000 time 8.001594
+== integration.sipgate.cloud prod ref in bundle ==
+HTTP 403
+[0m
+[0m$ [0mecho "== x-sipgate / token-id / firebase refs in bundle =="; grep -oE 'x-sipgate-[a-z-]+|X-Sipgate-[A-Za-z-]+' /tmp/opencode/bundle.js | sort | uniq -c | sort -rn | head; echo "---"; grep -oE 'AIza[0-9A-Za-z_-]{20,}' /tmp/opencode/bundle.js | head -3; echo "---pushkey---"; grep -oE '"key":"[A-Za-z0-9]{16,30}"' /tmp/opencode/bundle.js | sort -u | head -10
+== x-sipgate / token-id / firebase refs in bundle ==
+      2 X-Sipgate-Version
+      2 X-Sipgate-Client
+      1 x-sipgate-reload
+      1 X-Sipgate-Was-NQ-Request
+---
+---pushkey---
+[0m
+[0m$ [0mecho "== integration.sipgate.cloud apex headers =="; curl -sk -o /dev/null -D - --max-time 8 "https://integration.sipgate.cloud/" 2>&1 | grep -iE "HTTP/|access-control|server:" | head; sleep 1; echo "== dev twin liveness check =="; for h in integration.dev.sipgate.com login.dev.sipgate.com; do printf "%s " "$h"; curl -sk -o /dev/null -w "HTTP %{http_code} t=%{time_total}\n" --max-time 6 "https://$h/" 2>&1; sleep 1; done
+== integration.sipgate.cloud apex headers ==
+HTTP/2 403 
+access-control-allow-origin: *
+== dev twin liveness check ==
+integration.dev.sipgate.com HTTP 403 t=0.703862
+login.dev.sipgate.com HTTP 000 t=6.002673
+[0m
+[0m$ [0mecho "== integration.dev.sipgate.com headers =="; curl -sk -o /dev/null -D - --max-time 8 "https://integration.dev.sipgate.com/" 2>&1 | grep -iE "HTTP/|access-control|content-type|server|location" | head; echo; echo "== TLS issuer =="; echo | timeout 8 openssl s_client -servername integration.dev.sipgate.com -connect integration.dev.sipgate.com:443 2>/dev/null | openssl x509 -noout -issuer -subject -dates 2>/dev/null
+== integration.dev.sipgate.com headers ==
+HTTP/1.1 403 Forbidden
+access-control-allow-origin: *
+
+== TLS issuer ==
+issuer=C = DE, ST = NRW, L = Duesseldorf, O = sipgate GmbH, OU = SRE, CN = sipgate intermediate CA 2025-10-23
+subject=C = DE, ST = NRW, L = Duesseldorf, O = sipgate GmbH, CN = integration.dev.sipgate.com
+notBefore=Aug  6 09:44:00 2026 GMT
+notAfter=Nov  4 09:44:00 2026 GMT
+[0m
+[0m$ [0mecho "== integration.dev specs =="; for p in /swagger-json /swagger.json /v3/api-docs /openapi.json /health /metrics; do printf "%-16s " "$p"; curl -sk -o /tmp/opencode/dev_$(echo $p | tr '/' '_').out -w "HTTP %{http_code} size %{size_download}\n" --max-time 8 "https://integration.dev.sipgate.com$p" 2>&1; sleep 1; done
+== integration.dev specs ==
+/swagger-json    HTTP 200 size 162341
+/swagger.json    HTTP 404 size 134
+/v3/api-docs     HTTP 404 size 132
+/openapi.json    HTTP 404 size 134
+/health          HTTP 404 size 122
+/metrics         HTTP 200 size 506
+[0m
+[0m$ [0mecho "== dev metrics =="; curl -sk "https://integration.dev.sipgate.com/metrics"; echo; echo "== dev auth host refs =="; grep -oE 'login[a-z.]*sipgate[a-z.]*' /tmp/opencode/dev_swagger.json | sort -u; grep -oE 'https?://[a-z0-9.-]+(:[0-9]+)?' /tmp/opencode/dev_swagger.json | sort -u
+== dev metrics ==
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 1
+
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+firebase_jwt_forbidden_requests 4
+
+# HELP rate_limit_forbidden_requests Total number of out of rate limit requests to the API Gateway
+# TYPE rate_limit_forbidden_requests counter
+rate_limit_forbidden_requests 0
+
+== dev auth host refs ==
+login.dev.sipgate.com
+https://api.example.com
+https://crm.com
+https://crm.example.com
+https://example.com
+https://login.dev.sipgate.com
+https://sipgatede.notion.site
+[0m
+[0m$ [0mecho "== dev swagger-json sha =="; curl -sk "https://integration.dev.sipgate.com/swagger-json" | tee /tmp/opencode/dev_swagger.json | sha256sum; wc -c /tmp/opencode/dev_swagger.json; echo; echo "== diff prod vs dev (opIds) =="; curl -s "https://integration.sipgate.com/swagger-json" -o /tmp/opencode/prod_swagger.json; for f in dev_swagger prod_swagger; do echo "--- $f ops ---"; grep -oE '"operationId":"[^"]+"' /tmp/opencode/$f.json | sort; done
+== dev swagger-json sha ==
+eee6e2e2c488f36f19b8b1adb3b4b8487c833e5e37cce827d80710352b218bc4  -
+162341 /tmp/opencode/dev_swagger.json
+
+== diff prod vs dev (opIds) ==
+--- dev_swagger ops ---
+"operationId":"CallLogController_describe"
+"operationId":"CallLogController_upsert"
+"operationId":"CallLogDraftController_edit"
+"operationId":"ContactController_create"
+"operationId":"ContactController_delete"
+"operationId":"ContactController_get"
+"operationId":"ContactController_getPhoneNumberMap"
+"operationId":"ContactController_list"
+"operationId":"ContactController_listByIntegration"
+"operationId":"ContactController_listByPhoneNumber"
+"operationId":"ContactController_listByPhoneNumbers"
+"operationId":"ContactController_update"
+"operationId":"IntegrationEntityController_get"
+"operationId":"IntegrationEntityController_listByContactId"
+"operationId":"OAuthController_getAuthSessionRedirect[1]"
+"operationId":"OAuthController_handleCallback[1]"
+"operationId":"SearchController_search"
+"operationId":"StreamingController_start"
+"operationId":"TaskController_create"
+"operationId":"TaskController_describeType"
+"operationId":"TaskController_get"
+"operationId":"UserController_createIntegration"
+"operationId":"UserController_deleteIntegration"
+"operationId":"UserController_getAuthSessionUrl"
+"operationId":"UserController_listIntegrations"
+"operationId":"UserController_listProfiles"
+--- prod_swagger ops ---
+"operationId":"CallLogController_describe"
+"operationId":"CallLogController_upsert"
+"operationId":"CallLogDraftController_edit"
+"operationId":"ContactController_create"
+"operationId":"ContactController_delete"
+"operationId":"ContactController_get"
+"operationId":"ContactController_getPhoneNumberMap"
+"operationId":"ContactController_list"
+"operationId":"ContactController_listByIntegration"
+"operationId":"ContactController_listByPhoneNumber"
+"operationId":"ContactController_listByPhoneNumbers"
+"operationId":"ContactController_update"
+"operationId":"IntegrationEntityController_get"
+"operationId":"IntegrationEntityController_listByContactId"
+"operationId":"OAuthController_getAuthSessionRedirect[1]"
+"operationId":"OAuthController_handleCallback[1]"
+"operationId":"SearchController_search"
+"operationId":"StreamingController_start"
+"operationId":"TaskController_create"
+"operationId":"TaskController_describeType"
+"operationId":"TaskController_get"
+"operationId":"UserController_createIntegration"
+"operationId":"UserController_deleteIntegration"
+"operationId":"UserController_getAuthSessionUrl"
+"operationId":"UserController_listIntegrations"
+"operationId":"UserController_listProfiles"
+[0m
+[0m$ [0mecho "== dev spec security schemes / oauth =="; grep -oE '"oauth2"[^}]*}' /tmp/opencode/dev_swagger.json | head -c 1200; echo; echo; grep -oE '"authorizationUrl":"[^"]*"|"tokenUrl":"[^"]*"|"redirectUrl":"[^"]*"|"x-oauth2[^,}]*' /tmp/opencode/dev_swagger.json | sort -u | head
+== dev spec security schemes / oauth ==
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":[]}
+"oauth2":{"type":"oauth2","flows":{"implicit":{"authorizationUrl":"https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth","scopes":{}
+
+
+"authorizationUrl":"https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth"
+[0m
+[0m$ [0mecho "== dev gate differential probe =="; for p in "/contacts?integrationId=1&apiKey=x" "/users/integrations" "/oauth2/redirect" "/oauth2/callback?code=x&state=y"; do printf "%-36s " "$p"; curl -sk -o /dev/null -w "HTTP %{http_code}\n" --max-time 8 "https://integration.dev.sipgate.com$p"; sleep 1; done; echo "== prod same paths =="; for p in "/contacts?integrationId=1&apiKey=x" "/users/integrations" "/oauth2/redirect" "/oauth2/callback?code=x&state=y"; do printf "%-36s " "$p"; curl -s -o /dev/null -w "HTTP %{http_code}\n" --max-time 8 "https://integration.sipgate.com$p"; sleep 1; done
+== dev gate differential probe ==
+/contacts?integrationId=1&apiKey=x   HTTP 404
+/users/integrations                  HTTP 404
+/oauth2/redirect                     HTTP 403
+/oauth2/callback?code=x&state=y      HTTP 403
+== prod same paths ==
+/contacts?integrationId=1&apiKey=x   HTTP 404
+/users/integrations                  HTTP 404
+/oauth2/redirect                     HTTP 403
+/oauth2/callback?code=x&state=y      HTTP 403
+[0m
+[0m$ [0mecho "== prod paths from spec =="; grep -oE '"/([a-z0-9/{}._-]+)":\{' /tmp/opencode/prod_swagger.json | sort -u | head -40
+== prod paths from spec ==
+"/call-log-drafts.edit":{
+"/call-logs.outcome.describe":{
+"/call-logs.upsert":{
+"/contacts.create":{
+"/contacts.delete":{
+"/contacts.get":{
+"/contacts.list":{
+"/contacts.search":{
+"/contacts.update":{
+"/entities.get":{
+"/oauth2/callback":{
+"/oauth2/redirect":{
+"/streaming.start":{
+"/tasks.create":{
+"/tasks.get":{
+"/tasks.type.describe":{
+"/users.integrations.create":{
+"/users.integrations.delete":{
+"/users.integrations.list":{
+"/users.profiles.list":{
+[0m
+[0m$ [0mecho "== dev documented-path gate =="; for p in "/contacts.list" "/contacts.search" "/users.integrations.list" "/users.integrations.create" "/tasks.type.describe" "/streaming.start" "/call-logs.upsert"; do printf "%-28s dev: " "$p"; curl -sk -o /dev/null -w "HTTP %{http_code}\n" --max-time 8 "https://integration.dev.sipgate.com$p"; sleep 1; done; echo "== prod same =="; for p in "/contacts.list" "/contacts.search" "/users.integrations.list" "/users.integrations.create" "/tasks.type.describe" "/streaming.start" "/call-logs.upsert"; do printf "%-28s prod: " "$p"; curl -s -o /dev/null -w "HTTP %{http_code}\n" --max-time 8 "https://integration.sipgate.com$p"; sleep 1; done
+== dev documented-path gate ==
+/contacts.list               dev: HTTP 403
+/contacts.search             dev: HTTP 403
+/users.integrations.list     dev: HTTP 403
+/users.integrations.create   dev: HTTP 403
+/tasks.type.describe         dev: HTTP 403
+/streaming.start             dev: HTTP 403
+/call-logs.upsert            dev: HTTP 403
+== prod same ==
+/contacts.list               prod: HTTP 403
+/contacts.search             prod: HTTP 403
+/users.integrations.list     prod: HTTP 403
+/users.integrations.create   prod: HTTP 403
+/tasks.type.describe         prod: HTTP 403
+/streaming.start             prod: HTTP 403
+/call-logs.upsert            prod: HTTP 403
+[0m
+[0m$ [0mdiff <(python3 -m json.tool /tmp/opencode/prod_swagger.json 2>/dev/null) <(python3 -m json.tool /tmp/opencode/dev_swagger.json 2>/dev/null) | grep -vE '^[0-9,acd]+$' | head -30; echo "=== done diff ==="
+<                         "authorizationUrl": "https://login.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth",
+---
+>                         "authorizationUrl": "https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth",
+=== done diff ===
+[0m
+[0m$ [0mecho "== dev OPTIONS /oauth2/redirect evil origin =="; curl -sk -o /dev/null -D - -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" --max-time 8 "https://integration.dev.sipgate.com/oauth2/redirect" 2>&1 | grep -iE "HTTP/|access-control" | head -8; echo; echo "== prod same for control =="; curl -s -o /dev/null -D - -X OPTIONS -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" --max-time 8 "https://integration.sipgate.com/oauth2/redirect" 2>&1 | grep -iE "HTTP/|access-control" | head -8
+== dev OPTIONS /oauth2/redirect evil origin ==
+HTTP/1.1 204 No Content
+access-control-allow-methods: GET,HEAD,POST
+access-control-allow-origin: *
+vary: Access-Control-Request-Headers
+
+== prod same for control ==
+HTTP/1.1 204 No Content
+access-control-allow-methods: GET,HEAD,POST
+access-control-allow-origin: *
+vary: Access-Control-Request-Headers
+[0m
+## STEP 1 — DELTA
+- [CHANGED] `integration.dev.sipgate.com` — ALIVE again (root 403 + `ACAO:*`, `/swagger-json` 200, `/metrics` 200, FB-JWT counter=4); was TCP-timeout dead across 2026-09-17/18 cycles — dev-twin redeploy.
+- [CHANGED] `integration.dev.sipgate.com` TLS — cert now chain-valid under `CN=sipgate intermediate CA 2025-10-23` (subject `integration.dev.sipgate.com`, Aug 6–Nov 4 2026), no longer self-signed.
+- [CHANGED] `integration.dev.sipgate.com/swagger-json` sha `eee6e2e2…` (162,341 B) — byte-identical to prod except `authorizationUrl: login.dev.sipgate.com` (that IdP is HTTP 000-dead); 27-op surface unchanged incl `/streaming.start`.
+- [NO_DELTA] `api.sipgate.com/v2/authorization/token` — OPTIONS 204 `ACAO:https://evil.example`+`ACAC:true`, allow-headers byte-identical (X-Sipgate-Token-Id/Secret, MCP-Protocol-Version/Mcp-Session-Id/Last-Event-ID, X-INSTANA-*); v2 index sha `0d872a0f…` identical.
+- [NO_DELTA] `integration.sipgate.com` — `/swagger-json` sha `377a45b0…` (162,337 B); metrics `firebase_jwt_forbidden_requests 30,270` (per-replica variance band), `api_key 0`.
+- [NO_DELTA] `app.dev.sipgate.com/assets/main-DtSLtCv5.js` (5,652,765 B) — host set stable (10 internal host:port pairs), zero `x-sipgate-token-*`/AIza refs; `admin.live/dev.sipgate.net` still HTTP 000-inert.
+- [NO_DELTA] gate profile dev==prod: `/contacts.list`, `/contacts.search`, `/users.integrations.list`, `/users.integrations.create`, `/streaming.start`, `/call-logs.upsert`, `/oauth2/{redirect,callback}` → uniform 403; OPTIONS `/oauth2/redirect` 204 `ACAO:*` on both.
+
+## STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/authorization/token,6.10,gapless-OIDC-proxy-watch (a7 b9 t7 g3 c1 f5)
+- [PRIO] integration.sipgate.com/users.integrations.create,5.80,apiUrl-metadata-SSRF (a6 b9 t8 g1 c1 f6)
+- [PRIO] integration.dev.sipgate.com dev-twin,4.65,redeploy/no-gate-fully-differential (a5 b6 t5 g1 c1 f9)
+
+## STEP 3 — HYPOTHESES
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF behind FB-JWT gate
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: swagger-json sha `377a45b0…` unchanged this cycle (probed) — `apiUrl` POST field free-form persists; FB-JWT gate live (30,270 counter); data ops uniform 403; runtime auth = Firebase per /metrics, spec declares Keycloak.
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254/latest/meta-data → observed metadata fetch or blind outbound signal.
+verify_steps: AUTH_HELPED — passive: `GET /swagger-json` sha re-hash (377a45b0…/162,337 B) + `GET /metrics` counter delta. No mutating POST without creds.
+impact: GCP project metadata/secrets behind gate; HIGH conditional on credential.
+testability: AUTH_HELPED
+[HYP] /v2/authorization/token miswired OIDC client-credentials proxy — POST status-transition watch
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: 20th cycle flat — OPTIONS 204 `ACAO:https://evil.example`+`ACAC:true`, byte-identical allow-headers incl X-Sipgate-Token-Id/Secret + MCP/SSE; POST client_credentials persists constant 500 (prior cycles) vs real Keycloak CONTROL 401; v2 index sha `0d872a0f…` byte-identical (probed).
+evidence_needed: POST status 500→200 (mint) or →401/400/204 (upstream restored/miswire fixed); never with valid creds.
+verify_steps: PASSIVE per cycle — `OPTIONS /v2/authorization/token` (204=intact/404=jitter) + `GET /v2` (Accept: application/json) index sha + `GET /metrics` → confirmed all three this cycle.
+impact: restored OIDC token-mint on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+[HYP] dev-twin freshly redeployed with distinct low-traffic Firebase validator → volume shift as bypass bellwether
+class: AUTH
+asset: integration.dev.sipgate.com/metrics + /swagger-json
+confidence: 40
+reasoning: dev twin alive again this cycle (swagger-json 200, metrics 200, cert chain-valid); spec identical to prod except dead-login.dev authUrl; runtime gate = Firebase-JWT (dev counter=4 vs prod 30,270). Redeploy cadence mismatch implies dev may drift config-first.
+evidence_needed: dev FB-JWT counter rising with production traffic, or spec sha drift on dev before prod, or any dev data-op status drift from uniform 403.
+verify_steps: PASSIVE — per-cycle `GET /swagger-json` dev sha + `GET /metrics` dev fb-jwt counter + uniform-403 spot check on one data op.
+impact: earlier-access dev plane = config-drift early-warning; token-acquisition still requires Firebase project key (none in any bundle). LOW-MED conditional.
+testability: PASSIVE
+
+## STEP 4 — SELF-CRITIQUE
+- [PARKED] dev-twin Firebase bypass: no webApiKey/AIza anywhere in SPA/spec/metrics → no anonymous-token mint path; passive watch only, downgraded to 40 (kept as drift bellwether, not exploit).
+- [PARKED] app.dev topology SSRF (rank-90 from prior cycle): re-probed bundle — host set unchanged, `admin.live/dev.sipgate.net` still 000-inert → rank-90 overstates live reach; topology is INFO-MISCONFIG only.
+- [FINAL 1] apiUrl→metadata SSRF (55) — AUTH_HELPED, preconditions intact.
+- [FINAL 2] /v2/authorization/token miswired proxy (50) — PASSIVE watch, 20th-cycle flat.
+
+## STEP 5 — NEXT ACTION
+[NEXT] PROBE: re-hash `GET https://integration.dev.sipgate.com/swagger-json` + `GET https://integration.dev.sipgate.com/metrics` (fb-jwt counter) to track dev-twin redeploy-drift cadence; re-probe `OPTIONS https://api.sipgate.com/v2/authorization/token` for 204-stability next cycle.
+
+## STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ integration.dev.sipgate.com: dev twin redeployed alive (root 403 ACAO:*; swagger-json+metrics 200; FB-JWT counter 4), TLS under `sipgate intermediate CA 2025-10-23`; spec byte-identical to prod except dead `login.dev.sipgate.com` authUrl; OPTIONS /oauth2/redirect 204 ACAO:* matches prod — no gate differential.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: 20th-cycle flat — OPTIONS 204 evil.example+ACAC:true; byte-identical allow-header vocab (X-Sipgate-Token-Id/Secret, MCP/SSE, X-INSTANA-*); v2 index sha `0d872a0f…` unchanged.
+
+## STEP 7 — RISK
+[RISK] sipgate: 50 — one net positive (dev-twin redeploy signal) but no new unauthenticated exposure; all high-value planes (api v2, integration data plane, third-party OIDC, vendor cloud tier) remain behind deployed gates; every ATO/SSRF/BOLA chain still AUTH_HELPED with no credential path. The dev/dev.live host family keeps churning liveness — that churn (rapid config rotation, per-replica restart) is the most promising drift-watch surface.

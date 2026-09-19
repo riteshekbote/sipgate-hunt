@@ -1,30 +1,30 @@
-## 2026-09-18 23:24:10 UTC [target] (model bigpickle)
-[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF on FB-JWT gate bypass
+## 2026-09-19 01:40:37 UTC [target] (model bigpickle)
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF behind FB-JWT gate
 class: SSRF
 asset: integration.sipgate.com/users.integrations.create
 confidence: 55
-reasoning: swagger-json sha `377a45b0…` (200, 162,337 B, probed this cycle) unchanged — apiUrl free-form POST field persists; FB-JWT gate live (28,881, +11,721); spec-Keycloak vs runtime-Firebase drift persists; data ops uniform app-403.
-evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254/latest/meta-data → observed outbound metadata fetch.
-verify_steps: AUTH_HELPED — per-cycle passive: metrics counter + swagger-json sha + gate 403-stability (all re-confirmed).
-impact: GCP metadata/project secrets behind gate; HIGH conditional on credential.
+reasoning: swagger-json sha `377a45b0…` unchanged this cycle (probed) — `apiUrl` POST field free-form persists; FB-JWT gate live (30,270 counter); data ops uniform 403; runtime auth = Firebase per /metrics, spec declares Keycloak.
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254/latest/meta-data → observed metadata fetch or blind outbound signal.
+verify_steps: AUTH_HELPED — passive: `GET /swagger-json` sha re-hash (377a45b0…/162,337 B) + `GET /metrics` counter delta. No mutating POST without creds.
+impact: GCP project metadata/secrets behind gate; HIGH conditional on credential.
 testability: AUTH_HELPED
-[HYP] /v2/authorization/token miswired OIDC client-credentials proxy — POST status-transition watch, 22nd cycle
+[HYP] /v2/authorization/token miswired OIDC client-credentials proxy — POST status-transition watch
 class: AUTH
 asset: api.sipgate.com/v2/authorization/token
 confidence: 50
-reasoning: OPTIONS **204** `ACAO:https://evil.example`+`ACAC:true` (probed), byte-identical allow-headers incl X-Sipgate-Token-Id/Secret+MCP/SSE; POST client_credentials constant 500 (prior cycles) vs Keycloak CONTROL 401; v2 index sha `0d872a0f…` (5481 B) byte-identical; api doc still Swagger-UI static (last-modified 2023-10-30). 22 cycles flat = no routing/hardening drift.
-evidence_needed: POST status 500→200 (mint) or →401/400 (upstream restored); never with valid creds.
-verify_steps: PASSIVE per cycle — OPTIONS 204/intact vs 404/jitter + GET /v2 index sha + ::metrics.
+reasoning: 20th cycle flat — OPTIONS 204 `ACAO:https://evil.example`+`ACAC:true`, byte-identical allow-headers incl X-Sipgate-Token-Id/Secret + MCP/SSE; POST client_credentials persists constant 500 (prior cycles) vs real Keycloak CONTROL 401; v2 index sha `0d872a0f…` byte-identical (probed).
+evidence_needed: POST status 500→200 (mint) or →401/400/204 (upstream restored/miswire fixed); never with valid creds.
+verify_steps: PASSIVE per cycle — `OPTIONS /v2/authorization/token` (204=intact/404=jitter) + `GET /v2` (Accept: application/json) index sha + `GET /metrics` → confirmed all three this cycle.
 impact: restored OIDC token-mint on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
 testability: PASSIVE
-[HYP] users.integrations.getAuthSessionUrl successUrl/errorUrl → OAuth session-redirect chain on gate bypass
-class: OATH
-asset: integration.sipgate.com/users.integrations.getAuthSessionUrl
-confidence: 45
-reasoning: spec `377a45b0…` re-confirms successUrl/errorUrl `format:uri` free-form, no host allowlist; /oauth2/redirect+/callback declared security=None yet app-403 (precondition intact); implicit OAuth on login.sipgate.com.
-evidence_needed: valid FB-JWT → session URL with attacker successUrl → provider code/state capture mid-flow.
-verify_steps: AUTH_HELPED — passive: swagger-json sha + ::metrics + 403-stable (all re-confirmed).
-impact: CRM provider OAuth code/state theft; MEDIUM-HIGH conditional.
-testability: AUTH_HELPED
-[NEXT] PROBE: `GET https://app.dev.sipgate.com/assets/main-DtSLtCv5.js` — extract all `http(s)://` + `host:port` literals; diff against the 10-host set noted 2026-09-18 15:18/18:38; DNS-resolve `admin.live.sipgate.net` + `admin.dev.sipgate.net` for liveness shift (ranked [90] topology/SSRF-enabler).
-[RISK] sipgate: 45 — recon breadth large but every high-value surface (api v2, integration data plane, third-party OIDC) sits behind a deployed auth gate (Keycloak/FB-JWT/nginx); only confirmed findings remain defense-in-depth MISCONFIG/INFO; ATO/SSRF/BOLA chains all AUTH_HELPED with no credential acquisition path yet.
+[HYP] dev-twin freshly redeployed with distinct low-traffic Firebase validator → volume shift as bypass bellwether
+class: AUTH
+asset: integration.dev.sipgate.com/metrics + /swagger-json
+confidence: 40
+reasoning: dev twin alive again this cycle (swagger-json 200, metrics 200, cert chain-valid); spec identical to prod except dead-login.dev authUrl; runtime gate = Firebase-JWT (dev counter=4 vs prod 30,270). Redeploy cadence mismatch implies dev may drift config-first.
+evidence_needed: dev FB-JWT counter rising with production traffic, or spec sha drift on dev before prod, or any dev data-op status drift from uniform 403.
+verify_steps: PASSIVE — per-cycle `GET /swagger-json` dev sha + `GET /metrics` dev fb-jwt counter + uniform-403 spot check on one data op.
+impact: earlier-access dev plane = config-drift early-warning; token-acquisition still requires Firebase project key (none in any bundle). LOW-MED conditional.
+testability: PASSIVE
+[NEXT] PROBE: re-hash `GET https://integration.dev.sipgate.com/swagger-json` + `GET https://integration.dev.sipgate.com/metrics` (fb-jwt counter) to track dev-twin redeploy-drift cadence; re-probe `OPTIONS https://api.sipgate.com/v2/authorization/token` for 204-stability next cycle.
+[RISK] sipgate: 50 — one net positive (dev-twin redeploy signal) but no new unauthenticated exposure; all high-value planes (api v2, integration data plane, third-party OIDC, vendor cloud tier) remain behind deployed gates; every ATO/SSRF/BOLA chain still AUTH_HELPED with no credential path. The dev/dev.live host family keeps churning liveness — that churn (rapid config rotation, per-replica restart) is the most promising drift-watch surface.
