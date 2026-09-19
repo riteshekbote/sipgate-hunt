@@ -4932,3 +4932,37 @@ testability: PASSIVE
 [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS 204 restored, ACAO+ACAC intact, POST-500 stable — 22nd-cycle flat state, no routing/hardening change.
 [LEARN] ACCEPTED INFO @ integration.dev.sipgate.com: swagger-json + root HTTP 000 — dev twin remains dead, no canary drift signal this cycle.
 [RISK] sipgate: 50 — net movement flat; one counter increment + dev.twin stay-dead is the only surface delta. All high-value planes (v2 data, integration data plane, vendor cloud tier, third-party OIDC) remain behind deployed auth gates; every ATO/SSRF/BOLA chain still AUTH_HELPED with no credential acquisition path. Highest-probability vector remains a gate-transition event on /v2/authorization/token (unauthenticated, constant watch).
+## 2026-09-19 11:34:05 UTC [target] (model bigpickle)
+[HYP] OIDC client-credentials token proxy miswire on API origin — status-transition watch (24th cycle)
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: OPTIONS probed this cycle = 204, ACAO:https://evil.example + ACAC:true, allow-headers byte-identical (X-Sipgate-Token-Id/Secret + MCP/SSE); POST client_credentials historically constant 500 vs real Keycloak CONTROL 401 → degraded/miswired token proxy; v2 index sha 0d872a0f… byte-identical (probed); 24 cycles flat, no routing drift.
+evidence_needed: POST status →200 (mint) or →401/400 (upstream restored/miswire fixed); never with valid creds.
+verify_steps: PASSIVE — per cycle OPTIONS 204/404 jitter watch + GET /v2 index sha; POST-with-dummy-grant only if program-confirmed tolerated (hover at base flat state).
+impact: restored OIDC token mint on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF behind FB-JWT gate (Scalar-era spec persists field)
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: swagger-json sha 377a45b04fdd… re-probed unchanged — apiUrl POST field free-form persists post-Scalar migration; FB-JWT gate live (40,094, +6,336 this cycle); runtime auth = Firebase per /metrics vs spec Keycloak; data ops uniform app-403.
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254/latest/meta-data → observed metadata fetch/blind outbound signal.
+verify_steps: AUTH_HELPED — passive: swagger-json sha + /metrics counter + uniform-403 spot-check (all re-confirmed this cycle).
+impact: GCP project metadata/secrets behind gate; HIGH conditional on credential.
+testability: AUTH_HELPED
+[HYP] Scalar/spec-rotation + dev-twin death indicate an in-flight deploy train → transient gate-weak window on integration planes
+class: AUTH
+asset: integration.sipgate.com (cutover-window watch) + integration.dev.sipgate.com (dead canary)
+confidence: 40
+reasoning: prod migrated Swagger-UI→Scalar with spec rotation and new /streaming.start while dev twin (integration.dev) went TCP-dead same window; metrics counter restarted at replica level (33,753→40,094 variance) — rolling redeploys observed; config-first drift on dev or gate-removal during cutover is a candidate bellwether.
+evidence_needed: any data-op status drift from uniform app-403, spec sha change, or dev-twin re-alive with distinct gate behavior.
+verify_steps: PASSIVE — per-cycle GET integration.sipgate.com/swagger-json sha + one data-op spot check + GET integration.dev.sipgate.com/swagger-json (000 vs 200).
+impact: earlier-access or misconfigured gate window during deployment = AUTH_HELPED bridge; LOW-MED conditional.
+testability: PASSIVE
+[NEXT] PROBE: `OPTIONS https://api.sipgate.com/v2/authorization/token` (Origin: evil.example) — 204-flat vs 404 jitter is the primary gate-transition signal; secondarily `GET /v2` index sha (0d872a0f…) next cycle.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 40,094 (+6,336), api_key 2, rate_limit 318 — FB-JWT gate live/incrementing; per-replica counter variance reconfirmed; SSRF/AUTH_HELPED preconditions intact.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS 204 ACAO:https://evil.example+ACAC:true, allow-header vocab byte-identical — 24th-cycle flat state, no routing/hardening change.
+[LEARN] ACCEPTED INFO @ integration.sipgate.com/swagger-json: sha `377a45b04fdd…` unchanged — post-Scalar spec stable, apiUrl SSRF field persists.
+[LEARN] ACCEPTED INFO @ api.sipgate.com/v2: index sha `0d872a0f4c10…`/5481 B byte-identical — 72-URL anonymous surface stable, no new undocumented paths.
+[RISK] sipgate: 50 — flat; only counter variance and unchanged flat states this cycle, no new surface or gate transition. All high-value planes (v2 data, integration data plane, vendor cloud tier, third-party OIDC) remain behind deployed gates; every ATO/SSRF/BOLA chain still AUTH_HELPED with no credential path. Highest-probability event remains a gate-transition on /v2/authorization/token (unauthenticated, constant watch); deploy-train cutover (Scalar/dev-twin death) is a secondary drift-watch surface.

@@ -651,3 +651,8 @@
 - 2026-09-19 ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS 204 restored, ACAO+ACAC intact, POST-500 stable — 22nd-cycle flat state, no routing/hardening change.
 - 2026-09-19 ACCEPTED INFO @ integration.dev.sipgate.com: swagger-json + root HTTP 000 — dev twin remains dead, no canary drift signal this cycle.
 - 2026-09-19 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 33758 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica counter restart-reset reconfirmed
+- 2026-09-19 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 40,094 (+6,336), api_key 2, rate_limit 318 — FB-JWT gate live/incrementing; per-replica counter variance reconfirmed; SSRF/AUTH_HELPED preconditions intact.
+- 2026-09-19 ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS 204 ACAO:https://evil.example+ACAC:true, allow-header vocab byte-identical — 24th-cycle flat state, no routing/hardening change.
+- 2026-09-19 ACCEPTED INFO @ integration.sipgate.com/swagger-json: sha `377a45b04fdd…` unchanged — post-Scalar spec stable, apiUrl SSRF field persists.
+- 2026-09-19 ACCEPTED INFO @ api.sipgate.com/v2: index sha `0d872a0f4c10…`/5481 B byte-identical — 72-URL anonymous surface stable, no new undocumented paths.
+- 2026-09-19 ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 40113 — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica counter restart-reset reconfirmed
