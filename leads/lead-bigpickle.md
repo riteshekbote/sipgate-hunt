@@ -4966,3 +4966,33 @@ testability: PASSIVE
 [LEARN] ACCEPTED INFO @ integration.sipgate.com/swagger-json: sha `377a45b04fdd…` unchanged — post-Scalar spec stable, apiUrl SSRF field persists.
 [LEARN] ACCEPTED INFO @ api.sipgate.com/v2: index sha `0d872a0f4c10…`/5481 B byte-identical — 72-URL anonymous surface stable, no new undocumented paths.
 [RISK] sipgate: 50 — flat; only counter variance and unchanged flat states this cycle, no new surface or gate transition. All high-value planes (v2 data, integration data plane, vendor cloud tier, third-party OIDC) remain behind deployed gates; every ATO/SSRF/BOLA chain still AUTH_HELPED with no credential path. Highest-probability event remains a gate-transition on /v2/authorization/token (unauthenticated, constant watch); deploy-train cutover (Scalar/dev-twin death) is a secondary drift-watch surface.
+## 2026-09-19 14:50:22 UTC [target] (model bigpickle)
+[HYP] OIDC client-credentials token proxy miswire on API origin — status-transition watch (25th cycle)
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: probed OPTIONS=204 ACAO:https://evil.example+ACAC:true allow-headers byte-identical (X-Sipgate-Token-Id/Secret + MCP/SSE); POST client_credentials historical constant 500 vs real Keycloak CONTROL 401 → degraded/miswired proxy; v2 index sha 0d872a0f…/5481 B byte-identical (probed); 24 cycles flat.
+evidence_needed: POST status →200 (mint) or →401/400 (upstream restored/miswire fixed); never with valid creds.
+verify_steps: PASSIVE — per-cycle OPTIONS 204/404 jitter + GET /v2 index sha; no POST change expected while flat.
+impact: restored OIDC token mint on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF behind FB-JWT gate
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: prod swagger-json sha 377a45b0… re-probed (post-Scalar 27-op, unchanged) — apiUrl POST field free-form persists; FB-JWT gate live (44,054, +3,941); data ops uniform 403; runtime auth Firebase vs spec Keycloak (/metrics).
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254/latest/meta-data → metadata fetch/blind signal.
+verify_steps: AUTH_HELPED — passive: swagger-json sha + metrics counter + uniform-403 spot check (all re-confirmed).
+impact: GCP project metadata/secrets behind gate; HIGH conditional on credential.
+testability: AUTH_HELPED
+[HYP] Dev-twin re-alive with idle FB-JWT gate + reduced route table = deploy canary; watch for data-op registration order change (404→403→200)
+class: MISCONFIG
+asset: integration.dev.sipgate.com
+confidence: 55
+reasoning: re-alive this cycle (was TCP-000); swagger-json 200 (sha eee6e2e2…, 26-op vs prod 27, login.dev realm, servers=[]); data ops 404 Express "Cannot GET" while oauth2/callback+redirect app-403 (131 B) and root 403 → partial handler mount, gate idle (fb-jwt ≈8). Prior pattern: dev-twin alive-then-dead paralleled prod Swagger-UI→Scalar rotation; dev re-alive may precede next prod deploy-trail.
+evidence_needed: any data-op transition 404→403 (gate first) or 404→200 (handler mounted ahead of gate) = gate-ordering drift window; or spec sha divergence from eee6e2e2….
+verify_steps: PASSIVE — per-cycle GET integration.dev.sipgate.com/{contacts,contacts/search,oauth2/callback} status + swagger-json sha.
+impact: if data handlers mount ahead of the gate during deploy, unauth data-plane (contacts/call-logs PII); LOW-MED conditional, currently no data plane.
+testability: PASSIVE
+[NEXT] PROBE: GET https://integration.dev.sipgate.com/contacts + /contacts/search + /swagger-json (sha eee6e2e2…) next cycle — track 404→403/200 transitions and spec drift as primary canary; secondarily OPTIONS https://api.sipgate.com/v2/authorization/token (Origin: https://evil.example) for gate-transition flat-state.
+[RISK] sipgate: 50 — flat; token-endpoint gate-transition watch still the sole high-probability unauth event; dev-twin re-alive is informational (no data handlers, gate idle). All high-value planes (v2 data, integration data plane, vendor cloud tier, third-party OIDC) remain behind deployed gates; every ATO/SSRF/BOLA chain stays AUTH_HELPED with no credential path.

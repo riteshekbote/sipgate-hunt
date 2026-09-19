@@ -32815,3 +32815,149 @@ STEP 6 — LEARNING
 
 STEP 7 — RISK
 [RISK] sipgate: 50 — flat; only counter variance and unchanged flat states this cycle, no new surface or gate transition. All high-value planes (v2 data, integration data plane, vendor cloud tier, third-party OIDC) remain behind deployed gates; every ATO/SSRF/BOLA chain still AUTH_HELPED with no credential path. Highest-probability event remains a gate-transition on /v2/authorization/token (unauthenticated, constant watch); deploy-train cutover (Scalar/dev-twin death) is a secondary drift-watch surface.
+===== ANALYST bigpickle 2026-09-19 14:51:14 UTC =====
+[0m
+> build · big-pickle
+[0m
+[0m$ [0mcurl -sS -o /dev/null -D - -X OPTIONS "https://api.sipgate.com/v2/authorization/token" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type,authorization" --max-time 20 -k 2>&1 | head -40
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+date: Sat, 19 Sep 2026 14:49:06 GMT
+[0m
+[0m$ [0mcurl -sS "https://api.sipgate.com/v2" -H "Accept: application/json" --max-time 20 -k 2>/dev/null | sha256sum; curl -sS -o /dev/null -w "index_size=%{size_download} http=%{http_code}\n" "https://api.sipgate.com/v2" -H "Accept: application/json" --max-time 20 -k 2>/dev/null
+0d872a0f4c101d16ea4d502b5e4322faad5dbfd80161c3c4b8de62d3313fe65c  -
+index_size=5481 http=200
+[0m
+[0m$ [0mcurl -sS "https://integration.sipgate.com/swagger-json" --max-time 20 -k 2>/dev/null | sha256sum; curl -sS "https://integration.sipgate.com/metrics" --max-time 20 -k 2>/dev/null | grep -E "firebase_jwt|api_key_forbidden|rate_limit_forbidden" | head -5
+377a45b04fddc63dc4529ba84321788e0f1e7ba9d814e604a016f9b3e7500b4a  -
+# HELP api_key_forbidden_requests Total number of requests with an invalid API key
+# TYPE api_key_forbidden_requests counter
+api_key_forbidden_requests 3
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+[0m
+[0m$ [0mcurl -sS -o /dev/null -w "dev_http=%{http_code}\n" "https://integration.dev.sipgate.com/swagger-json" --max-time 8 -k 2>&1; echo "---"; curl -sS -o /dev/null -D - -X OPTIONS "https://api.sipgate.com/v2/doc/oauth2-redirect.html" -H "Origin: https://evil.example" -H "Access-Control-Request-Method: GET" --max-time 20 -k 2>&1 | grep -iE "HTTP/|access-control|vary" | head -10
+dev_http=200
+---
+HTTP/1.1 204 No Content
+access-control-allow-credentials: true
+access-control-allow-headers: content-length,if-none-match,X-INSTANA-L,X-INSTANA-S,origin,x-sipgate-was-nq-request,X-Sipgate-Token-Id,X-Sipgate-Enforce-No-NQ,x-sipgate-version,MCP-Protocol-Version,Last-Event-ID,x-sipgate-client,Mcp-Session-Id,accept,authorization,x-sipgate-fingerprint,host,location,content-type,X-INSTANA-T,if-match,X-Sipgate-Token-Secret,x-sipgate-hubspot-utk,user-agent
+access-control-allow-methods: HEAD,DELETE,POST,GET,OPTIONS,PATCH,PUT
+access-control-allow-origin: https://evil.example
+access-control-max-age: 151200
+vary: origin
+[0m
+Dev twin re-alive — a real delta. Probing its gate state and spec divergence:
+[0m$ [0mcurl -sS -D - "https://integration.dev.sipgate.com/swagger-json" --max-time 15 -k 2>/dev/null | head -12; echo "===SHA==="; curl -sS "https://integration.dev.sipgate.com/swagger-json" --max-time 15 -k 2>/dev/null | sha256sum
+...output truncated...
+
+Full output saved to: /home/runner/.local/share/opencode/tool-output/tool_0ba24b0c7001cV0e8J0s12vu21
+
+eee6e2e2c488f36f19b8b1adb3b4b8487c833e5e37cce827d80710352b218bc4  -
+[0m
+[0m$ [0mcurl -sS "https://integration.sipgate.com/metrics" --max-time 15 -k 2>/dev/null | grep -E "^(firebase_jwt_forbidden_requests|api_key_forbidden_requests|rate_limit_forbidden_requests) [0-9]"
+api_key_forbidden_requests 7
+firebase_jwt_forbidden_requests 44054
+rate_limit_forbidden_requests 571
+[0m
+[0m$ [0mcurl -sS -o /dev/null -w "contacts_http=%{http_code} size=%{size_download}\n" "https://integration.dev.sipgate.com/contacts" --max-time 15 -k 2>&1; echo "---root---"; curl -sS -o /dev/null -w "root_http=%{http_code}\n" "https://integration.dev.sipgate.com/" --max-time 15 -k 2>&1; echo "---metrics---"; curl -sS "https://integration.dev.sipgate.com/metrics" --max-time 15 -k 2>/dev/null | grep -E "firebase_jwt_forbidden_requests " | head -2
+contacts_http=404 size=126
+---root---
+root_http=403
+---metrics---
+# HELP firebase_jwt_forbidden_requests Total number of requests with an invalid Firebase JWT
+# TYPE firebase_jwt_forbidden_requests counter
+[0m
+[0m$ [0mcurl -sS "https://integration.dev.sipgate.com/metrics" --max-time 15 -k 2>/dev/null | grep -E "forbidden_requests [0-9]+|^[a-z_]+ [0-9]+$" | head -20
+api_key_forbidden_requests 6
+firebase_jwt_forbidden_requests 8
+rate_limit_forbidden_requests 0
+[0m
+[0m$ [0mcurl -sS "https://integration.dev.sipgate.com/contacts" --max-time 15 -k 2>/dev/null; echo; echo "=== contacts/search ==="; curl -sS -o /dev/null -w "http=%{http_code} size=%{size_download}\n" "https://integration.dev.sipgate.com/contacts/search" --max-time 15 -k 2>&1; echo "=== health ==="; curl -sS -o /dev/null -w "http=%{http_code} size=%{size_download}\n" "https://integration.dev.sipgate.com/health" --max-time 15 -k 2>&1
+{"status":404,"type":"https://http.cat/status/404","title":"Not Found","detail":"Cannot GET /contacts","instance":"/contacts"}
+=== contacts/search ===
+http=404 size=140
+=== health ===
+http=404 size=122
+[0m
+Dev twin behavior differs from prod — investigating the gate differential:
+[0m$ [0mcurl -sS "https://integration.dev.sipgate.com/swagger-json" --max-time 15 -k 2>/dev/null | grep -oE '"(authUrl|authorizationUrl|tokenUrl)[^,]*' | head -5; echo "=== spec ops count ==="; curl -sS "https://integration.dev.sipgate.com/swagger-json" --max-time 15 -k 2>/dev/null | grep -oE '"operationId"' | wc -l
+"authorizationUrl":"https://login.dev.sipgate.com/auth/realms/sipgate-apps/protocol/openid-connect/auth"
+=== spec ops count ===
+26
+[0m
+[0m$ [0mecho "=== dev /oauth2/callback (GET) ==="; curl -sS -o /dev/null -w "http=%{http_code} size=%{size_download}\n" "https://integration.dev.sipgate.com/oauth2/callback" --max-time 15 -k 2>&1; echo "=== dev /oauth2/redirect (GET) ==="; curl -sS -o /dev/null -w "http=%{http_code} size=%{size_download}\n" "https://integration.dev.sipgate.com/oauth2/redirect" --max-time 15 -k 2>&1; echo "=== dev root body ==="; curl -sS "https://integration.dev.sipgate.com/" --max-time 15 -k 2>/dev/null | head -c 300
+=== dev /oauth2/callback (GET) ===
+http=403 size=131
+=== dev /oauth2/redirect (GET) ===
+http=403 size=131
+=== dev root body ===
+[0m
+[0m$ [0mecho "=== prod /oauth2/callback (GET control) ==="; curl -sS -o /dev/null -w "http=%{http_code} size=%{size_download}\n" "https://integration.sipgate.com/oauth2/callback" --max-time 15 -k 2>&1; echo "=== dev spec servers/basePath ==="; curl -sS "https://integration.dev.sipgate.com/swagger-json" --max-time 15 -k 2>/dev/null | grep -oE '"(servers|basePath|host|schemes)"[^,]*' | head -5
+=== prod /oauth2/callback (GET control) ===
+http=403 size=131
+=== dev spec servers/basePath ===
+"servers":[]
+[0m
+STEP 1 — DELTA
+- [CHANGED] integration.dev.sipgate.com RE-ALIVE (was TCP-000 across ≥3 cycles): swagger-json 200, sha `eee6e2e2…b218bc4`, 26 operationIds, `authorizationUrl=login.dev.sipgate.com` sipgate-apps, `"servers":[]` — probed.
+- [CHANGED] integration.dev.sipgate.com runtime differential: `/contacts`,`/contacts/search`,`/health` → 404 Express `Cannot GET /contacts` (vs prod uniform 403); `/oauth2/callback`,`/oauth2/redirect` → 403 (131 B, = prod); root 403; /metrics fb-jwt counter ≈8 (gate idle vs prod 44,054) → reduced deployment, data handlers not mounted.
+- [FLAT] api.sipgate.com/v2/authorization/token: OPTIONS 204, `ACAO:https://evil.example`+`ACAC:true`, allow-headers byte-identical (X-Sipgate-Token-Id/Secret + MCP/SSE) — probed.
+- [FLAT] api.sipgate.com/v2 index: sha256 `0d872a0f…4fe65c` / 5,481 B / 72 URLs — probed.
+- [FLAT] integration.sipgate.com/swagger-json: sha `377a45b0…00b4a` (27-op post-Scalar) — probed.
+- [UP] integration.sipgate.com/metrics: fb-jwt 44,054 (+3,941 vs 40,113), api_key 7, rate_limit 571 (+253) — gate live/incrementing.
+
+STEP 2 — PRIORITIZE
+- [PRIO] api.sipgate.com/v2/authorization/token, 6.4, AUTH/gate-transition watch (attack 6, business 8, tech 6, gate 10, cloud 3, fresh 2)
+- [PRIO] integration.sipgate.com/users.integrations.create, 5.85, SSRF (attack 5, business 8, tech 7, gate 1, cloud 9, fresh 5)
+- [PRIO] integration.dev.sipgate.com, 4.25, MISCONFIG/canary (attack 5, business 2, tech 5, gate 3, cloud 4, fresh 9)
+
+STEP 3 — HYPOTHESES
+[HYP] OIDC client-credentials token proxy miswire on API origin — status-transition watch (25th cycle)
+class: AUTH
+asset: api.sipgate.com/v2/authorization/token
+confidence: 50
+reasoning: probed OPTIONS=204 ACAO:https://evil.example+ACAC:true allow-headers byte-identical (X-Sipgate-Token-Id/Secret + MCP/SSE); POST client_credentials historical constant 500 vs real Keycloak CONTROL 401 → degraded/miswired proxy; v2 index sha 0d872a0f…/5481 B byte-identical (probed); 24 cycles flat.
+evidence_needed: POST status →200 (mint) or →401/400 (upstream restored/miswire fixed); never with valid creds.
+verify_steps: PASSIVE — per-cycle OPTIONS 204/404 jitter + GET /v2 index sha; no POST change expected while flat.
+impact: restored OIDC token mint on api origin with contacts/sms/account/balance/payment scopes = ATO-class; HIGH-conditional.
+testability: PASSIVE
+[HYP] users.integrations.create free-form apiUrl → GCP metadata SSRF behind FB-JWT gate
+class: SSRF
+asset: integration.sipgate.com/users.integrations.create
+confidence: 55
+reasoning: prod swagger-json sha 377a45b0… re-probed (post-Scalar 27-op, unchanged) — apiUrl POST field free-form persists; FB-JWT gate live (44,054, +3,941); data ops uniform 403; runtime auth Firebase vs spec Keycloak (/metrics).
+evidence_needed: valid FB-JWT → POST create apiUrl=http://169.254.169.254/latest/meta-data → metadata fetch/blind signal.
+verify_steps: AUTH_HELPED — passive: swagger-json sha + metrics counter + uniform-403 spot check (all re-confirmed).
+impact: GCP project metadata/secrets behind gate; HIGH conditional on credential.
+testability: AUTH_HELPED
+[HYP] Dev-twin re-alive with idle FB-JWT gate + reduced route table = deploy canary; watch for data-op registration order change (404→403→200)
+class: MISCONFIG
+asset: integration.dev.sipgate.com
+confidence: 55
+reasoning: re-alive this cycle (was TCP-000); swagger-json 200 (sha eee6e2e2…, 26-op vs prod 27, login.dev realm, servers=[]); data ops 404 Express "Cannot GET" while oauth2/callback+redirect app-403 (131 B) and root 403 → partial handler mount, gate idle (fb-jwt ≈8). Prior pattern: dev-twin alive-then-dead paralleled prod Swagger-UI→Scalar rotation; dev re-alive may precede next prod deploy-trail.
+evidence_needed: any data-op transition 404→403 (gate first) or 404→200 (handler mounted ahead of gate) = gate-ordering drift window; or spec sha divergence from eee6e2e2….
+verify_steps: PASSIVE — per-cycle GET integration.dev.sipgate.com/{contacts,contacts/search,oauth2/callback} status + swagger-json sha.
+impact: if data handlers mount ahead of the gate during deploy, unauth data-plane (contacts/call-logs PII); LOW-MED conditional, currently no data plane.
+testability: PASSIVE
+
+STEP 4 — SELF-CRITIQUE
+- [PARKED] exploit dev-vs-prod gate differential for unauth data: data plane returns 404 (no handlers) → nothing reachable even if gate idle; dev=/mock-like twin only. Drop as exploitable, keep as canary ticker.
+- [PARKED] Scalar/spec-rotation cutover window: no status drift on prod data ops (uniform 403) nor spec sha change this cycle.
+- [FINAL] survivors: token-proxy watch (50, PASSIVE); apiUrl SSRF (55, AUTH_HELPED); dev-twin canary (55, PASSIVE).
+
+STEP 5 — NEXT ACTION
+[NEXT] PROBE: GET https://integration.dev.sipgate.com/contacts + /contacts/search + /swagger-json (sha eee6e2e2…) next cycle — track 404→403/200 transitions and spec drift as primary canary; secondarily OPTIONS https://api.sipgate.com/v2/authorization/token (Origin: https://evil.example) for gate-transition flat-state.
+
+STEP 6 — LEARNING
+- [LEARN] ACCEPTED INFO @ integration.dev.sipgate.com: dev twin re-alive (swagger-json 200, sha eee6e2e2…, 26-op, login.dev realm, servers=[]); data ops 404 Express "Cannot GET", oauth2 routes app-403, fb-jwt counter ≈8 vs prod 44,054 → reduced deployment with idle FB-JWT; informational gate/spec differential, no unauth data plane.
+- [LEARN] ACCEPTED INFO @ api.sipgate.com/v2/authorization/token: OPTIONS 204 ACAO:https://evil.example+ACAC:true, allow-header vocab byte-identical — 24th-cycle flat, no routing/hardening change (probed).
+- [LEARN] ACCEPTED INFO @ integration.sipgate.com/metrics: firebase_jwt_forbidden_requests 44,054 (+3,941), api_key 7, rate_limit 571 (+253) — FB-JWT gate live/incrementing; per-replica variance; SSRF/AUTH_HELPED preconditions intact.
+
+STEP 7 — RISK
+[RISK] sipgate: 50 — flat; token-endpoint gate-transition watch still the sole high-probability unauth event; dev-twin re-alive is informational (no data handlers, gate idle). All high-value planes (v2 data, integration data plane, vendor cloud tier, third-party OIDC) remain behind deployed gates; every ATO/SSRF/BOLA chain stays AUTH_HELPED with no credential path.

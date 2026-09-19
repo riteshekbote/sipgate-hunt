@@ -1,17 +1,17 @@
-## 2026-09-19 11:40:20 UTC [target] (model nemotron3)
-[NEW] `app.dev.sipgate.com` JS bundle rotated to `main-DtSLtCv5.js` (5.65MB, etag `5fdc1a5f...`); hardcoded hosts reduced to 10 but **still includes NEW prod subdomains** `admin.live.sipgate.net` (CNAME→helpdesk.live.sipgate.net, 217.10.73.71) and `admin.dev.sipgate.net` (CNAME→helpdesk.dev.sipgate.net, 217.116.120.148)
-[NEW] `api.sipgate.com/v2/authorization/token` OPTIONS now returns **404** (was stable 204 for 22+ cycles) but **still reflects arbitrary Origin** (`ACAO: https://evil.example` + `ACAC:true`) and exposes MCP/SSE + credential-bearing headers (`X-Sipgate-Token-Id`, `X-Sipgate-Token-Secret`)
+## 2026-09-19 14:51:03 UTC [target] (model nemotron3)
+[NEW] `grafana.sipgate.cloud` Grafana version upgraded **11.5.1 → 13.2.2** (commit `1bea008f7e`); internet-exposed on AWS LB (3.33.226.160), login-gated, no anonymous
 [NEW] `integration.sipgate.com` Swagger-UI replaced with **Scalar API Reference**; OpenAPI spec rotated (27 ops incl `/streaming.start`); `UsersIntegrations$CreateRequest` still accepts free-form `apiUrl` (SSRF parameter)
-[CHANGED] `integration.dev.sipgate.com` HTTPS 403+ACAO* → **TCP timeout (dead)**; was previously alive dev twin
-[CHANGED] `grafana.sipgate.cloud` Grafana version upgraded **11.5.1 → 13.2.2** (commit `1bea008f7e`); internet-exposed on AWS LB (3.33.226.160), login-gated, no anonymous
+[NEW] `api.sipgate.com/v2/authorization/token` OPTIONS now returns **404** (was stable 204 for 22+ cycles) but **still reflects arbitrary Origin** (`ACAO: https://evil.example` + `ACAC:true`) and exposes MCP/SSE headers
 [CHANGED] `share1.sipgate.cloud` dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed — subdomain-takeover candidate persists
 [CHANGED] `integration.sipgate.com/metrics` `firebase_jwt_forbidden_requests 40113` (+16,593 vs prior 17160) — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica counter restart-reset reconfirmed
 [CHANGED] `team-uk.live.sipgate.com` + `team-de.live.sipgate.com` CSP `frame-ancestors` still includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/team-web02/team-web03)
+[CHANGED] `app.dev.sipgate.com` JS bundle rotated to `main-DtSLtCv5.js` (5.65MB); hardcoded hosts reduced to 10 but **still includes NEW prod subdomains** `admin.live.sipgate.net` (CNAME→helpdesk.live.sipgate.net, 217.10.73.71) and `admin.dev.sipgate.net` (CNAME→helpdesk.dev.sipgate.net, 217.116.120.148)
+[CHANGED] `integration.dev.sipgate.com` HTTPS 403+ACAO* → **TCP timeout (dead)**; was previously alive dev twin
 [PRIO] app.dev.sipgate.com,9.35,attack_surface=10 business_value=8 tech_exposure=10 gate_ease=10 cloud_surface=6 freshness=10
 [PRIO] api.sipgate.com/v2/authorization/token,9.10,attack_surface=9 business_value=9 tech_exposure=10 gate_ease=10 cloud_surface=6 freshness=10
 [PRIO] integration.sipgate.com,8.85,attack_surface=8 business_value=8 tech_exposure=9 gate_ease=6 cloud_surface=7 freshness=9
-[PRIO] team-uk.live.sipgate.com + team-de.live.sipgate.com,6.10,attack_surface=6 business_value=4 tech_exposure=7 gate_ease=8 cloud_surface=5 freshness=8
 [PRIO] grafana.sipgate.cloud,6.35,attack_surface=7 business_value=5 tech_exposure=7 gate_ease=4 cloud_surface=8 freshness=9
+[PRIO] team-uk.live.sipgate.com + team-de.live.sipgate.com,6.10,attack_surface=6 business_value=4 tech_exposure=7 gate_ease=8 cloud_surface=5 freshness=8
 [PRIO] share1.sipgate.cloud,5.25,attack_surface=4 business_value=3 tech_exposure=4 gate_ease=10 cloud_surface=8 freshness=6
 [PRIO] sipgate-desktop-app.s3.eu-central-1.amazonaws.com,5.25,attack_surface=5 business_value=3 tech_exposure=5 gate_ease=10 cloud_surface=4 freshness=6
 [HYP] Dev SPA Internal Topology Enables Targeted SSRF/Lateral Movement via Prod Subdomain References

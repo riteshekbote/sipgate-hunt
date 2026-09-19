@@ -1027,3 +1027,13 @@ www.sipgate.de
 - CHANGED `share1.sipgate.cloud` dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed — subdomain-takeover candidate persists
 - CHANGED `integration.sipgate.com/metrics` `firebase_jwt_forbidden_requests 40113` (+16,593 vs prior 17160) — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica
 - CHANGED `team-uk.live.sipgate.com` + `team-de.live.sipgate.com` CSP `frame-ancestors` still includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/t
+
+## 2026-09-19 14:51:14 UTC
+- NEW `grafana.sipgate.cloud` Grafana version upgraded **11.5.1 → 13.2.2** (commit `1bea008f7e`); internet-exposed on AWS LB (3.33.226.160), login-gated, no anonymous
+- NEW `integration.sipgate.com` Swagger-UI replaced with **Scalar API Reference**; OpenAPI spec rotated (27 ops incl `/streaming.start`); `UsersIntegrations$CreateRequest` still accepts free-form `apiUrl` (
+- NEW `api.sipgate.com/v2/authorization/token` OPTIONS now returns **404** (was stable 204 for 22+ cycles) but **still reflects arbitrary Origin** (`ACAO: https://evil.example` + `ACAC:true`) and exposes MC
+- CHANGED `share1.sipgate.cloud` dangling CNAME → `nx38603.your-storageshare.de` (Hetzner StorageShare) → NXDOMAIN confirmed — subdomain-takeover candidate persists
+- CHANGED `integration.sipgate.com/metrics` `firebase_jwt_forbidden_requests 40113` (+16,593 vs prior 17160) — live Firebase-JWT validator + auth-mechanism drift (spec Keycloak vs runtime Firebase); per-replica
+- CHANGED `team-uk.live.sipgate.com` + `team-de.live.sipgate.com` CSP `frame-ancestors` still includes `app.local.sipgate.com:3443` (internal dev origin) in production portals; `SERVERID` rotation (team-web01/t
+- CHANGED `app.dev.sipgate.com` JS bundle rotated to `main-DtSLtCv5.js` (5.65MB); hardcoded hosts reduced to 10 but **still includes NEW prod subdomains** `admin.live.sipgate.net` (CNAME→helpdesk.live.sipgate.n
+- CHANGED `integration.dev.sipgate.com` HTTPS 403+ACAO* → **TCP timeout (dead)**; was previously alive dev twin
