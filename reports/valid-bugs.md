@@ -46,3 +46,13 @@
   - | 5 | api.sipgate.com CORS arbitrary-origin + credentials | **VALID** | 5.3–7.5 | P1 |
   - | 6 | Desktop-app S3 bucket listable | **VALID** | 5.3 | P1 |
   - | 7 | app.dev.sipgate.com dev SPA info leak | **VALID** | 5.3 | P2 |
+
+- 8 lead(s) marked VALID at 2026-09-19 01:37:31 UTC
+  - **Verdict: VALID**
+  - **Verdict: VALID** (subsume into Lead 1 report as secondary vector)
+  - **Verdict: VALID**
+  - **Verdict: VALID** (bundle with Lead 3)
+  - | 1 | Kong JWT Command Injection (`kid`) | **VALID** | 9.8 | P0 |
+  - | 2 | Kong Secondary Injection + Lua Bug | **VALID** | 8.1 | P0 |
+  - | 3 | CLINQ Bridge Redis Endpoint (15 repos) | **VALID** | 7.5 | P1 |
+  - | 4 | CLINQ Bridge Redis TLS Disabled | **VALID** | 5.3 | P1 |
